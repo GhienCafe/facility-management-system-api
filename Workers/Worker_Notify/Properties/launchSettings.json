@@ -1,6 +1,6 @@
 ﻿{
   "profiles": {
-    "Worker_PushNotify": {
+    "Worker_Notify": {
       "commandName": "Project",
       "dotnetRunMessages": true,
       "environmentVariables": {

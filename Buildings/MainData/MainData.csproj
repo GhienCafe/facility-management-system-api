@@ -7,13 +7,13 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\AppCore\AppCore.csproj" />
-    </ItemGroup>
-
-    <ItemGroup>
       <Folder Include="Entities\" />
       <Folder Include="Middlewares\" />
       <Folder Include="Repositories\" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\AppCore\AppCore.csproj" />
     </ItemGroup>
 
 </Project>

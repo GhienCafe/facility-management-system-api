@@ -1,4 +1,4 @@
-namespace Worker_PushNotify;
+namespace Worker_Notify;
 
 public class Worker : BackgroundService
 {

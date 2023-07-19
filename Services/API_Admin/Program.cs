@@ -1,7 +1,6 @@
 using System.Reflection;
 using AppCore.Configs;
 using AppCore.Extensions;
-using MainData;
 using Microsoft.AspNetCore.Mvc.ApiExplorer;
 using Microsoft.EntityFrameworkCore;
 using Serilog;

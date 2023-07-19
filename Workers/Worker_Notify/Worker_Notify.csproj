@@ -1,18 +1,13 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+<Project Sdk="Microsoft.NET.Sdk.Worker">
 
     <PropertyGroup>
         <TargetFramework>net7.0</TargetFramework>
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
+        <UserSecretsId>dotnet-Worker_Notify-2E17BC66-743C-4740-A626-A9B5137F7E65</UserSecretsId>
     </PropertyGroup>
 
     <ItemGroup>
-      <Folder Include="Dtos\" />
-      <Folder Include="Services\" />
+        <PackageReference Include="Microsoft.Extensions.Hosting" Version="7.0.0"/>
     </ItemGroup>
-
-    <ItemGroup>
-      <ProjectReference Include="..\MainData\MainData.csproj" />
-    </ItemGroup>
-
 </Project>

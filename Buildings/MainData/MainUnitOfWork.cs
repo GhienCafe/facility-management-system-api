@@ -1,5 +1,4 @@
-﻿using AppCore.Data;
-namespace MainData;
+﻿namespace MainData;
 
 public class MainUnitOfWork : IDisposable
 {

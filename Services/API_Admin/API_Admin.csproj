@@ -7,12 +7,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <Folder Include="Dtos\" />
-      <Folder Include="Services\" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <ProjectReference Include="..\MainData\MainData.csproj" />
+      <ProjectReference Include="..\..\Buildings\MainData\MainData.csproj" />
     </ItemGroup>
 
 </Project>
