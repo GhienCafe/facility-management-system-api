@@ -18,8 +18,8 @@ jobs:
 
     - name: Build and Push Docker image
       run: |
-        docker build -t covarom/coffee:latest .
-        docker push covarom/coffee:latest
+        docker build -t ${{ secrets.REGISTRY }}/${{ secrets.DOCKER_IMAGE }}:latest .
+        docker push ${{ secrets.REGISTRY }}/coffee:latest
 
     - name: SSH into the server and pull the latest Docker image
       uses: appleboy/ssh-action@master
@@ -29,8 +29,8 @@ jobs:
         key: ${{ secrets.SSH_PRIVATE_KEY }}
         script: |
           ssh-keyscan your_server_ip >> ~/.ssh/known_hosts
-          docker login -u your_docker_username -p your_docker_password
-          docker pull covarom/coffee:latest
-          docker stop coffee_container || true
-          docker rm coffee_container || true
-          docker run -d --name coffee_container -p 5000:80 covarom/coffee:latest
+          docker login -u ${{ secrets.DOCKERHUB_USERNAME }} -p ${{ secrets.DOCKERHUB_TOKEN }}
+          docker pull ${{ secrets.REGISTRY }}/${{ secrets.DOCKER_IMAGE }}:latest
+          docker stop ${{ secrets.DOCKER_CONTAINER }} || true
+          docker rm ${{ secrets.DOCKER_CONTAINER }} || true
+          docker run -d --name coffee_container -p 5000:80 ${{ secrets.REGISTRY }}/${{ secrets.DOCKER_IMAGE }}:latest
