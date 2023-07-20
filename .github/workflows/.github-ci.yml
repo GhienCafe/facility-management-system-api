@@ -24,12 +24,10 @@ jobs:
     - name: SSH into the server and pull the latest Docker image
       uses: appleboy/ssh-action@master
       with:
-        host: your_server_ip
-        username: your_ssh_username
+        host: ${{ secrets.SERVER_IP }}
+        username: ${{ secrets.SSH_USER }}
         key: ${{ secrets.SSH_PRIVATE_KEY }}
         script: |
-          ssh-keyscan your_server_ip >> ~/.ssh/known_hosts
-          docker login -u ${{ secrets.DOCKERHUB_USERNAME }} -p ${{ secrets.DOCKERHUB_TOKEN }}
           docker pull ${{ secrets.REGISTRY }}/${{ secrets.DOCKER_IMAGE }}:latest
           docker stop ${{ secrets.DOCKER_CONTAINER }} || true
           docker rm ${{ secrets.DOCKER_CONTAINER }} || true
