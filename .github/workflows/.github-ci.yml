@@ -19,7 +19,7 @@ jobs:
     - name: Build and Push Docker image
       run: |
         docker build -t ${{ secrets.REGISTRY }}/${{ secrets.DOCKER_IMAGE }}:latest .
-        docker push ${{ secrets.REGISTRY }}/coffee:latest
+        docker push ${{ secrets.REGISTRY }}/coffee:latests
 
     - name: SSH into the server and pull the latest Docker image
       uses: appleboy/ssh-action@master
@@ -28,6 +28,7 @@ jobs:
         username: ${{ secrets.SSH_USER }}
         key: ${{ secrets.SSH_PRIVATE_KEY }}
         script: |
+	  ssh-keyscan ${{ secrets.SERVER_IP }} >> ~/.ssh/known_hosts
           docker pull ${{ secrets.REGISTRY }}/${{ secrets.DOCKER_IMAGE }}:latest
           docker stop ${{ secrets.DOCKER_CONTAINER }} || true
           docker rm ${{ secrets.DOCKER_CONTAINER }} || true
