@@ -1,0 +1,36 @@
+# .github/workflows/deploy.yml
+name: Deploy to Linux Server
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Login to Docker Hub
+      run: echo ${{ secrets.DOCKERHUB_TOKEN }} | docker login -u ${{ secrets.DOCKERHUB_USERNAME }} --password-stdin
+
+    - name: Build and Push Docker image
+      run: |
+        docker build -t covarom/coffee:latest .
+        docker push covarom/coffee:latest
+
+    - name: SSH into the server and pull the latest Docker image
+      uses: appleboy/ssh-action@master
+      with:
+        host: your_server_ip
+        username: your_ssh_username
+        key: ${{ secrets.SSH_PRIVATE_KEY }}
+        script: |
+          ssh-keyscan your_server_ip >> ~/.ssh/known_hosts
+          docker login -u your_docker_username -p your_docker_password
+          docker pull covarom/coffee:latest
+          docker stop coffee_container || true
+          docker rm coffee_container || true
+          docker run -d --name coffee_container -p 5000:80 covarom/coffee:latest
