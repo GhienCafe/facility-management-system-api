@@ -1,0 +1,16 @@
+# Bỏ qua các tệp tạm thời
+*.tmp
+*.temp
+
+# Bỏ qua các tệp ghi nhật ký
+*.log
+
+# Bỏ qua các thư mục và tệp được sinh bởi Node.js (nếu bạn sử dụng frontend Node.js trong dự án của mình)
+node_modules/
+npm-debug.log
+
+# Bỏ qua các tệp và thư mục được sinh bởi .NET Core CLI
+obj/
+bin/
+
+Dockerfile
