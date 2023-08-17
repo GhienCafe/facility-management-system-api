@@ -13,8 +13,6 @@ public class BaseEntity
     public DateTime EditedAt { get; set; }
     public DateTime? DeletedAt { get; set; }
     public bool IsDeleted { get; set; }
-    public bool IsTesting { get; set; }
-    public byte[] RowVersion { get; set; }
 }
 
 public class BaseConfig : IEntityTypeConfiguration<BaseEntity>
@@ -30,7 +28,5 @@ public class BaseConfig : IEntityTypeConfiguration<BaseEntity>
         builder.Property(x => x.EditedAt).HasColumnType("datetime").IsRequired();
         builder.Property(x => x.DeletedAt).HasColumnType("datetime").IsRequired(false);
         builder.Property(x => x.IsDeleted).HasDefaultValue(false).IsRequired();
-        builder.Property(x => x.IsTesting).HasDefaultValue(false).IsRequired();
-        builder.Property(e => e.RowVersion).IsRowVersion();
     }
 }

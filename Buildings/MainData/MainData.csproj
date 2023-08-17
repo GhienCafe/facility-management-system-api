@@ -7,7 +7,6 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <Folder Include="Entities\" />
       <Folder Include="Middlewares\" />
       <Folder Include="Repositories\" />
     </ItemGroup>
