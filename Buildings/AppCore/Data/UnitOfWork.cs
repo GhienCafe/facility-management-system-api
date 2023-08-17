@@ -22,7 +22,7 @@ public class UnitOfWork : IUnitOfWork
 
     public async Task<bool> SaveAsync()
     {
-        return await _context.SaveChangesAsync() >= 1;
+        return await _context.SaveChangesAsync() >= 0;
     }
 
     public async Task BeginTransactionAsync()
@@ -34,7 +34,7 @@ public class UnitOfWork : IUnitOfWork
     {
         try
         {
-            var result = await _context.SaveChangesAsync() >= 1;
+            var result = await _context.SaveChangesAsync() >= 0;
             await _transaction.CommitAsync();
             return result;
         }

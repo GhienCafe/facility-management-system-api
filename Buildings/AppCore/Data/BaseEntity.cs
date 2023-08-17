@@ -12,7 +12,6 @@ public class BaseEntity
     public DateTime CreatedAt { get; set; }
     public DateTime EditedAt { get; set; }
     public DateTime? DeletedAt { get; set; }
-    public bool IsDeleted { get; set; }
 }
 
 public class BaseConfig : IEntityTypeConfiguration<BaseEntity>
@@ -27,6 +26,5 @@ public class BaseConfig : IEntityTypeConfiguration<BaseEntity>
         builder.Property(x => x.CreatedAt).HasColumnType("datetime").IsRequired();
         builder.Property(x => x.EditedAt).HasColumnType("datetime").IsRequired();
         builder.Property(x => x.DeletedAt).HasColumnType("datetime").IsRequired(false);
-        builder.Property(x => x.IsDeleted).HasDefaultValue(false).IsRequired();
     }
 }

@@ -10,16 +10,12 @@ public class User : BaseEntity
     public UserRole Role { get; set; }
     public string? Avatar { get; set; }
     public  UserStatus Status { get; set; }
-    public  AccountType AccountType { get; set; }
     public string Email { get; set; } = null!;
     public string PhoneNumber { get; set; } = null!;
     public string Address { get; set; } = null!;
     public string Password { get; set; } = null!;
     public string Salt { get; set; } = null!;
 
-    public DateTime? ActivePremiumDate { get; set; }
-
-    public TypeOfPremium? TypeOfPremium { get; set; }
     public DateTime? FirstLoginAt { get; set; }
 
     public DateTime? LastLoginAt { get; set; }
@@ -27,18 +23,9 @@ public class User : BaseEntity
 
 public enum UserRole
 {
-    Member = 1, Guest = 2, Admin = 3
+    GlobalAdmin = 1, Manager = 2, HRManager = 3, AssetManager = 4 
 }
 
-public enum AccountType
-{
-    Normal = 1, Premium = 2
-}
-
-public enum TypeOfPremium
-{
-    Monthly = 1, HalfYear = 2 , Yearly = 3
-}
 
 public enum UserStatus
 {
@@ -59,6 +46,5 @@ public class UserConfig : IEntityTypeConfiguration<User>
         builder.Property(x => x.Salt).IsRequired();
         builder.Property(x => x.FirstLoginAt).IsRequired(false);
         builder.Property(x => x.LastLoginAt).IsRequired(false);
-        builder.Property(x => x.AccountType).IsRequired().HasDefaultValue(AccountType.Normal);
     }
 }

@@ -12,7 +12,8 @@ var builder = WebApplication.CreateBuilder(args);
 //Add DbContext
 builder.Services.AddDbContext<DatabaseContext>(options =>
 {
-    options.UseSqlServer(EnvironmentExtension.GetAppConnectionString(),
+    var connectionString = EnvironmentExtension.GetAppConnectionString();
+    options.UseSqlServer(connectionString,
         b =>
         {
             b.CommandTimeout(1200);
