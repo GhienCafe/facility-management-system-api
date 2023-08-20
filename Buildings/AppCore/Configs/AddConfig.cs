@@ -55,16 +55,16 @@ public static class AddConfigServiceCollectionExtensions
         services.AddLogging(EnvironmentExtension.GetAppLogFolder());
     }
 
-    public static void UseConfig(this IApplicationBuilder app, string sourcePath)
+    public static void UseConfig(this IApplicationBuilder app)
     {
         app.Use((context, next) =>
         {
-            context.Request.PathBase = sourcePath;
+            context.Request.PathBase = EnvironmentExtension.GetPath();
             return next();
         });
         app.UseCors(MyAllowAllOrigins);
         app.UseConfigSwagger();
         app.UseAuthentication();
-        app.UseMiddleware<HandleResponseMiddleware>();
+      //  app.UseMiddleware<HandleResponseMiddleware>();
     }
 }

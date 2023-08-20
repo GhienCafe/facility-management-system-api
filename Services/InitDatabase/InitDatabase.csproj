@@ -11,7 +11,10 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Folder Include="Dtos\" />
+      <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="7.0.10">
+        <PrivateAssets>all</PrivateAssets>
+        <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      </PackageReference>
     </ItemGroup>
 
 </Project>

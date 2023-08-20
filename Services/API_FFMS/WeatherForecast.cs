@@ -1,4 +1,4 @@
-namespace API_Admin;
+namespace API_FFMS;
 
 public class WeatherForecast
 {

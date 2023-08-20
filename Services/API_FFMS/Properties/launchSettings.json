@@ -1,0 +1,48 @@
+﻿{
+  "$schema": "https://json.schemastore.org/launchsettings.json",
+  "iisSettings": {
+    "windowsAuthentication": false,
+    "anonymousAuthentication": true,
+    "iisExpress": {
+      "applicationUrl": "http://localhost:5506",
+      "sslPort": 44396
+    }
+  },
+  "profiles": {
+    "http": {
+      "commandName": "Project",
+      "dotnetRunMessages": true,
+      "launchBrowser": true,
+      "launchUrl": "swagger",
+      "applicationUrl": "http://localhost:5018",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "CONNECTION_STRING": "Server=localhost;uid=sa;pwd=123;database=FFMS;TrustServerCertificate=True",
+        "JWT_ACCESS_TOKEN_SECRET": "the-most-strongest-key-ever-czxdcz",
+        "JWT_RESET_TOKEN_SECRET": "the-second-strongest-key-ever-cxzcxz",
+        "JWT_AUDIENCE": "FFMS",
+        "JWT_ISSUER": "FFMS",
+        "JWT_ACCESS_TOKEN_EXPIRES": 180,
+        "JWT_RESET_TOKEN_EXPIRES": 1080
+      }
+    },
+    "https": {
+      "commandName": "Project",
+      "dotnetRunMessages": true,
+      "launchBrowser": true,
+      "launchUrl": "swagger",
+      "applicationUrl": "https://localhost:7227;http://localhost:5018",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      }
+    },
+    "IIS Express": {
+      "commandName": "IISExpress",
+      "launchBrowser": true,
+      "launchUrl": "swagger",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      }
+    }
+  }
+}
