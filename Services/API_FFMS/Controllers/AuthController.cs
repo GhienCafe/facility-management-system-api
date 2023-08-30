@@ -24,7 +24,14 @@ public class AuthController : BaseController
     {
         return await _authService.SignIn(accountCredentialLoginDto);
     }
-    
+    [HttpPost("Token-sign")]
+    [AllowAnonymous]
+    [SwaggerOperation("Login api")]
+    public async Task<ApiResponse<AuthDto>> SignInToken(AuthTokenDto tokenDto)
+    {
+        return await _authService.Token(tokenDto);
+    }
+
     [HttpPost("sign-out")]
     public async Task<ApiResponse> Logout()
     {
