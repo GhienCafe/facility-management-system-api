@@ -16,8 +16,23 @@ public class CampusDetailDto : BaseDto
     public string? Telephone { get; set; }
     public string? Description { get; set; }
     public string? Address { get; set; }
+    public int? TotalBuilding { get; set; }
 }
 
+public class CampusCreateDto
+{
+    public string? CampusName { get; set; }
+    public string? Telephone { get; set; }
+    public string? Description { get; set; }
+    public string? Address { get; set; }
+}
+public class CampusUpdateDto
+{
+    public string? CampusName { get; set; }
+    public string? Telephone { get; set; }
+    public string? Description { get; set; }
+    public string? Address { get; set; }
+}
 public class CampusQueryDto : BaseQueryDto
 {
     public string? CampusName { get; set; }

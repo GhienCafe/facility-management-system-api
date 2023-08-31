@@ -13,13 +13,15 @@ public class Rooms:BaseEntity
     public int? Capacity { get; set; }
     public StatusEnum Status { get; set; }
     public Guid FloorId { get; set; }
-    
+    public Guid ColorStatusId { get; set; }
+
     //Relationship
+    public virtual ColorStatus? ColorStatus { get; set; }
     public virtual Floors? Floors { get; set; }
 }
 public enum StatusEnum  
 {
-    Active = 1, InActive= 2
+    ClassInSession=1,UnderMaintenance=2,NotAvailable,
 }
 
 public enum RoomTypeEnum
@@ -38,10 +40,13 @@ public class RoomsConfig : IEntityTypeConfiguration<Rooms>
         builder.Property(x => x.Capacity).IsRequired(false);
         builder.Property(x => x.Status).IsRequired();
         builder.Property(x => x.FloorId).IsRequired();
-
+        builder.Property(x => x.ColorStatusId).IsRequired();
         //Relationship
         builder.HasOne(x => x.Floors)
             .WithMany(x => x.Rooms)
             .HasForeignKey(x => x.FloorId);
+        builder.HasOne(x => x.ColorStatus)
+            .WithMany(x => x.Rooms)
+            .HasForeignKey(x => x.ColorStatusId);
     }
 }

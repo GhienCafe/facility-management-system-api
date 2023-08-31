@@ -15,7 +15,7 @@ public class DatabaseContext : DbContext
     public DbSet<Buildings> Buildings { get; set; }
     public DbSet<Floors> Floors { get; set; }
     public DbSet<Rooms> Rooms { get; set; }
-
+    public DbSet<ColorStatus> ColorStatus { get; set; }
     
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -26,5 +26,6 @@ public class DatabaseContext : DbContext
         modelBuilder.ApplyConfiguration(new BuildingsConfig());
         modelBuilder.ApplyConfiguration(new FloorsConfig());
         modelBuilder.ApplyConfiguration(new RoomsConfig());
+        modelBuilder.ApplyConfiguration(new ColorStatusConfig());
     }
 }

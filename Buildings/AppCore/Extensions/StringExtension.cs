@@ -88,5 +88,20 @@ namespace AppCore.Extensions
         {
             return string.IsNullOrEmpty(value);
         }
+        public static bool IsPhoneNumberOrNonEmpty(this string str, int n)
+        {
+            // Loại bỏ khoảng trắng và kiểm tra xem chuỗi có đúng n chữ số không
+            string stripped = new string(str.Where(char.IsDigit).ToArray());
+            return stripped.Length == n && !string.IsNullOrWhiteSpace(str);
+        }
+        public static bool IsMinLength(this string str, int minLength)
+        {
+            return !string.IsNullOrEmpty(str) && str.Length >= minLength;
+        }
+        public static bool IsBetweenLength(this string str, int minLength, int maxLength)
+        {
+            return str != null && str.Length >= minLength && str.Length <= maxLength;
+        }
+
     }
 }
