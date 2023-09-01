@@ -98,7 +98,7 @@ namespace AppCore.Extensions
         {
             return !string.IsNullOrEmpty(str) && str.Length >= minLength;
         }
-        public static bool IsBetweenLength(this string str, int minLength, int maxLength)
+        public static bool IsBetweenLength(this string? str, int minLength, int maxLength)
         {
             return str != null && str.Length >= minLength && str.Length <= maxLength;
         }

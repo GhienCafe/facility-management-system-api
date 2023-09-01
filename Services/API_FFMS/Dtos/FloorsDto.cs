@@ -12,7 +12,7 @@ public class FloorsDto
     public List<Rooms> RoomsList { get; }
 }
 
-public class FloorsDetailDto : BaseDto
+public class FloorDetailDto : BaseDto
 {
     public double? Area { get; set; }
     public string? PathFloor { get; set; }
@@ -21,9 +21,23 @@ public class FloorsDetailDto : BaseDto
     public virtual Buildings? Buildings { get; set; }
 }
 
+public class FloorCreateDto
+{
+    public double? Area { get; set; }
+    public string? PathFloor { get; set; }
+    public string? FloorNumber { get; set; }
+    public Guid BuildingId { get; set; }
+}
+
+public class FloorUpdateDto
+{
+    public double? Area { get; set; }
+    public string? PathFloor { get; set; }
+    public string? FloorNumber { get; set; }
+    public Guid BuildingId { get; set; }
+}
 public class FloorsQueryDto : BaseQueryDto
 {
-    public string? PathFloor { get; }
     public string? FloorNumber { get; }
-    public string? BuildingId { get; }
+    public Guid? BuildingId { get; }
 }

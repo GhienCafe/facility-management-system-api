@@ -26,11 +26,17 @@ public class CampusService :BaseService,ICampusService
 
     public async Task<ApiResponses<CampusDto>> GetCampus(CampusQueryDto queryDto)
     {
-        var response = await MainUnitOfWork.CampusRepository.FindResultAsync<CampusDto>(new Expression<Func<Campus, bool>>[]
+        Expression<Func<Campus, bool>>[] conditions = new Expression<Func<Campus, bool>>[]
         {
-            x=>!x.DeletedAt.HasValue,
-            x=>string.IsNullOrEmpty(queryDto.CampusName) || x.CampusName.Trim().ToLower()== queryDto.CampusName.Trim().ToLower()
-        },queryDto.OrderBy,queryDto.Skip(),queryDto.PageSize);
+            x => !x.DeletedAt.HasValue
+        };
+
+        if (string.IsNullOrEmpty(queryDto.CampusName)==false)
+        {
+            conditions = conditions.Append(x => x.CampusName.Trim().ToLower() == queryDto.CampusName.Trim().ToLower()).ToArray();
+        }
+
+        var response = await MainUnitOfWork.CampusRepository.FindResultAsync<CampusDto>(conditions, queryDto.OrderBy, queryDto.Skip(), queryDto.PageSize);
         return ApiResponses<CampusDto>.Success(
             response.Items,
             response.TotalCount,
