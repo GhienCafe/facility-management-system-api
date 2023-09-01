@@ -4,6 +4,7 @@ using MainData;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace InitDatabase.Migrations
 {
     [DbContext(typeof(DatabaseContext))]
-    partial class DatabaseContextModelSnapshot : ModelSnapshot
+    [Migration("20230830215030_u4")]
+    partial class u4
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -104,38 +107,6 @@ namespace InitDatabase.Migrations
                     b.ToTable("Campus");
                 });
 
-            modelBuilder.Entity("MainData.Entities.ColorStatus", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("Color")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<Guid?>("CreatorId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime?>("DeletedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<Guid?>("DeleterId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime>("EditedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<Guid?>("EditorId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("ColorStatus");
-                });
-
             modelBuilder.Entity("MainData.Entities.Floors", b =>
                 {
                     b.Property<Guid>("Id")
@@ -193,9 +164,6 @@ namespace InitDatabase.Migrations
                     b.Property<int?>("Capacity")
                         .HasColumnType("int");
 
-                    b.Property<Guid>("ColorStatusId")
-                        .HasColumnType("uniqueidentifier");
-
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
@@ -232,8 +200,6 @@ namespace InitDatabase.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("ColorStatusId");
 
                     b.HasIndex("FloorId");
 
@@ -383,19 +349,11 @@ namespace InitDatabase.Migrations
 
             modelBuilder.Entity("MainData.Entities.Rooms", b =>
                 {
-                    b.HasOne("MainData.Entities.ColorStatus", "ColorStatus")
-                        .WithMany("Rooms")
-                        .HasForeignKey("ColorStatusId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.HasOne("MainData.Entities.Floors", "Floors")
                         .WithMany("Rooms")
                         .HasForeignKey("FloorId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.Navigation("ColorStatus");
 
                     b.Navigation("Floors");
                 });
@@ -408,11 +366,6 @@ namespace InitDatabase.Migrations
             modelBuilder.Entity("MainData.Entities.Campus", b =>
                 {
                     b.Navigation("Buildings");
-                });
-
-            modelBuilder.Entity("MainData.Entities.ColorStatus", b =>
-                {
-                    b.Navigation("Rooms");
                 });
 
             modelBuilder.Entity("MainData.Entities.Floors", b =>
