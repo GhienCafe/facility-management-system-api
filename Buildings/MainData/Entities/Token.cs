@@ -13,7 +13,7 @@ public class Token : BaseEntity
     public TokenType Type { get; set; }
     public DateTime AccessExpiredAt { get; set; }
     public DateTime RefreshExpiredAt { get; set; }
-
+    
 }
 
 public enum TokenStatus
@@ -32,6 +32,7 @@ public class TokenConfig : IEntityTypeConfiguration<Token>
 {
     public void Configure(EntityTypeBuilder<Token> builder)
     {
+        builder.ToTable("Tokens");
         builder.Property(a => a.UserId).IsRequired();
         builder.Property(a => a.AccessToken).IsRequired();
         builder.Property(a => a.RefreshToken).IsRequired();

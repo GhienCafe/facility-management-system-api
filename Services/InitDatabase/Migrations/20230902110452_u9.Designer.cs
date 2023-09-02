@@ -4,6 +4,7 @@ using MainData;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace InitDatabase.Migrations
 {
     [DbContext(typeof(DatabaseContext))]
-    partial class DatabaseContextModelSnapshot : ModelSnapshot
+    [Migration("20230902110452_u9")]
+    partial class u9
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -157,7 +160,7 @@ namespace InitDatabase.Migrations
 
                     b.Property<string>("HandOverCode")
                         .IsRequired()
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Note")
                         .HasColumnType("nvarchar(max)");
@@ -167,10 +170,7 @@ namespace InitDatabase.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("HandOverCode")
-                        .IsUnique();
-
-                    b.ToTable("AssetHandovers", (string)null);
+                    b.ToTable("AssetHandover");
                 });
 
             modelBuilder.Entity("MainData.Entities.AssetRequest", b =>
@@ -409,7 +409,7 @@ namespace InitDatabase.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
-                    b.Property<Guid>("AssetHandoverId")
+                    b.Property<Guid?>("AssetHandoverId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime>("CreatedAt")
@@ -430,6 +430,10 @@ namespace InitDatabase.Migrations
                     b.Property<Guid?>("EditorId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<string>("HandoverCode")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<double>("Quantity")
                         .HasColumnType("float");
 
@@ -439,7 +443,7 @@ namespace InitDatabase.Migrations
 
                     b.HasIndex("AssetHandoverId");
 
-                    b.ToTable("HandoverDetails", (string)null);
+                    b.ToTable("HandoverDetail");
                 });
 
             modelBuilder.Entity("MainData.Entities.HandoverParticipant", b =>
@@ -481,7 +485,7 @@ namespace InitDatabase.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("HandoverParticipants", (string)null);
+                    b.ToTable("HandoverParticipant");
                 });
 
             modelBuilder.Entity("MainData.Entities.Inventory", b =>
@@ -515,8 +519,7 @@ namespace InitDatabase.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("InventoryCode")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("ScheduledDate")
                         .HasColumnType("datetime2");
@@ -531,10 +534,7 @@ namespace InitDatabase.Migrations
 
                     b.HasIndex("CampusId");
 
-                    b.HasIndex("InventoryCode")
-                        .IsUnique();
-
-                    b.ToTable("Inventories", (string)null);
+                    b.ToTable("Inventory");
                 });
 
             modelBuilder.Entity("MainData.Entities.InventoryDetail", b =>
@@ -582,7 +582,7 @@ namespace InitDatabase.Migrations
 
                     b.HasIndex("InventoryId");
 
-                    b.ToTable("InventoryDetails", (string)null);
+                    b.ToTable("InventoryDetail");
                 });
 
             modelBuilder.Entity("MainData.Entities.InventoryTeam", b =>
@@ -622,49 +622,7 @@ namespace InitDatabase.Migrations
 
                     b.HasIndex("InventoryId");
 
-                    b.ToTable("InventoryTeams", (string)null);
-                });
-
-            modelBuilder.Entity("MainData.Entities.InventoryTeamMember", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<Guid?>("CreatorId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime?>("DeletedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<Guid?>("DeleterId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime>("EditedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<Guid?>("EditorId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid>("InventoryTeamId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<int>("Role")
-                        .HasColumnType("int");
-
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("InventoryTeamId");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("InventoryTeamMembers", (string)null);
+                    b.ToTable("InventoryTeam");
                 });
 
             modelBuilder.Entity("MainData.Entities.Maintenance", b =>
@@ -705,7 +663,7 @@ namespace InitDatabase.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Maintenances", (string)null);
+                    b.ToTable("Maintenance");
                 });
 
             modelBuilder.Entity("MainData.Entities.MaintenanceDetail", b =>
@@ -753,7 +711,7 @@ namespace InitDatabase.Migrations
 
                     b.HasIndex("MaintenanceId");
 
-                    b.ToTable("MaintenanceDetails", (string)null);
+                    b.ToTable("MaintenanceDetail");
                 });
 
             modelBuilder.Entity("MainData.Entities.MaintenanceParticipant", b =>
@@ -795,61 +753,7 @@ namespace InitDatabase.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("MaintenanceParticipants", (string)null);
-                });
-
-            modelBuilder.Entity("MainData.Entities.MediaFile", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("Content")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<Guid?>("CreatorId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime?>("DeletedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<Guid?>("DeleterId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime>("EditedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<Guid?>("EditorId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("Extensions")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("FileName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("FileType")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Key")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("RawUri")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Uri")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("MediaFiles", (string)null);
+                    b.ToTable("MaintenanceParticipant");
                 });
 
             modelBuilder.Entity("MainData.Entities.RequestDetail", b =>
@@ -1050,7 +954,6 @@ namespace InitDatabase.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Color")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("CreatedAt")
@@ -1080,7 +983,7 @@ namespace InitDatabase.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("RoomStatus", (string)null);
+                    b.ToTable("RoomStatus");
                 });
 
             modelBuilder.Entity("MainData.Entities.Token", b =>
@@ -1278,9 +1181,7 @@ namespace InitDatabase.Migrations
 
                     b.HasOne("MainData.Entities.AssetHandover", "AssetHandover")
                         .WithMany("HandoverDetails")
-                        .HasForeignKey("AssetHandoverId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("AssetHandoverId");
 
                     b.Navigation("Asset");
 
@@ -1344,25 +1245,6 @@ namespace InitDatabase.Migrations
                         .IsRequired();
 
                     b.Navigation("Inventory");
-                });
-
-            modelBuilder.Entity("MainData.Entities.InventoryTeamMember", b =>
-                {
-                    b.HasOne("MainData.Entities.InventoryTeam", "InventoryTeam")
-                        .WithMany("InventoryTeamMembers")
-                        .HasForeignKey("InventoryTeamId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
-
-                    b.HasOne("MainData.Entities.User", "User")
-                        .WithMany("InventoryTeamMembers")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
-
-                    b.Navigation("InventoryTeam");
-
-                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("MainData.Entities.MaintenanceDetail", b =>
@@ -1552,11 +1434,6 @@ namespace InitDatabase.Migrations
                     b.Navigation("InventoryTeams");
                 });
 
-            modelBuilder.Entity("MainData.Entities.InventoryTeam", b =>
-                {
-                    b.Navigation("InventoryTeamMembers");
-                });
-
             modelBuilder.Entity("MainData.Entities.Maintenance", b =>
                 {
                     b.Navigation("MaintenanceDetails");
@@ -1577,8 +1454,6 @@ namespace InitDatabase.Migrations
             modelBuilder.Entity("MainData.Entities.User", b =>
                 {
                     b.Navigation("HandoverParticipants");
-
-                    b.Navigation("InventoryTeamMembers");
 
                     b.Navigation("MaintenanceParticipants");
 
