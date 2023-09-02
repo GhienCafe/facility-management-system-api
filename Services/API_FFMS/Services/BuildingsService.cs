@@ -27,7 +27,7 @@ public class BuildingsService : BaseService, IBuildingsService
 
     public async Task<ApiResponses<BuildingsDto>> GetBuildings(BuildingQueryDto queryDto)
     {
-        Expression<Func<Buildings, bool>>[] conditions = new Expression<Func<Buildings, bool>>[]
+        Expression<Func<Building, bool>>[] conditions = new Expression<Func<Building, bool>>[]
         {
             x => !x.DeletedAt.HasValue
         };
@@ -50,7 +50,7 @@ public class BuildingsService : BaseService, IBuildingsService
     public async Task<ApiResponse<BuildingDetailDto>> GetBuildings(Guid id)
     {
       var buildings = await MainUnitOfWork.BuildingsRepository.FindOneAsync<BuildingDetailDto>(
-          new Expression<Func<Buildings, bool>>[]
+          new Expression<Func<Building, bool>>[]
           {
                     x => !x.DeletedAt.HasValue,
                     x => x.Id == id
@@ -83,7 +83,7 @@ public class BuildingsService : BaseService, IBuildingsService
         {
             throw new ApiException("Id cannot null", StatusCode.BAD_REQUEST);
         }
-        var buildings = buildingsDto.ProjectTo<BuildingCreateDto, Buildings>();
+        var buildings = buildingsDto.ProjectTo<BuildingCreateDto, Building>();
         bool response = await MainUnitOfWork.BuildingsRepository.InsertAsync(buildings, AccountId);
         
         if (response)
@@ -106,7 +106,7 @@ public class BuildingsService : BaseService, IBuildingsService
         {
             throw new ApiException("Can not create buildings when description is null or must length of characters 1-255", StatusCode.BAD_REQUEST);
         }
-        var buildingsUpdate = buildingsDto.ProjectTo<BuildingUpdateDto, Buildings>();
+        var buildingsUpdate = buildingsDto.ProjectTo<BuildingUpdateDto, Building>();
         if (!await MainUnitOfWork.BuildingsRepository.UpdateAsync(buildingsUpdate, AccountId, CurrentDate))
             throw new ApiException("Can't not update", StatusCode.SERVER_ERROR);
 

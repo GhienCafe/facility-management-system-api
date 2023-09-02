@@ -27,7 +27,7 @@ public class FloorService : BaseService, IFloorService
 
     public async Task<ApiResponses<FloorsDto>> GetFloor(FloorsQueryDto queryDto)
     {
-        Expression<Func<Floors, bool>>[] conditions = new Expression<Func<Floors, bool>>[]
+        Expression<Func<Floor, bool>>[] conditions = new Expression<Func<Floor, bool>>[]
         {
             x => !x.DeletedAt.HasValue
         };
@@ -50,7 +50,7 @@ public class FloorService : BaseService, IFloorService
     public async Task<ApiResponse<FloorDetailDto>> GetFloor(Guid id)
     {
         var floors = await MainUnitOfWork.FloorsRepository.FindOneAsync<FloorDetailDto>(
-            new Expression<Func<Floors, bool>>[]
+            new Expression<Func<Floor, bool>>[]
             {
                 x => !x.DeletedAt.HasValue,
                 x => x.Id == id
@@ -83,7 +83,7 @@ public class FloorService : BaseService, IFloorService
         {
             throw new ApiException("Id cannot null", StatusCode.BAD_REQUEST);
         }
-        var floors = floorsDto.ProjectTo<FloorCreateDto, Floors>();
+        var floors = floorsDto.ProjectTo<FloorCreateDto, Floor>();
         bool response = await MainUnitOfWork.FloorsRepository.InsertAsync(floors, AccountId);
         
         if (response)
@@ -106,7 +106,7 @@ public class FloorService : BaseService, IFloorService
         {
             throw new ApiException("Can not create floors when description is null or must length of characters 1-255", StatusCode.BAD_REQUEST);
         }
-        var floorsUpdate = floorsDto.ProjectTo<FloorUpdateDto, Floors>();
+        var floorsUpdate = floorsDto.ProjectTo<FloorUpdateDto, Floor>();
         if (!await MainUnitOfWork.FloorsRepository.UpdateAsync(floorsUpdate, AccountId, CurrentDate))
             throw new ApiException("Can't not update", StatusCode.SERVER_ERROR);
 
