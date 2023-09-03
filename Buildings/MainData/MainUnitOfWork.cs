@@ -15,9 +15,9 @@ public class MainUnitOfWork : IDisposable
     public BaseRepository<User> UserRepository => new(_context);
     public BaseRepository<Token> TokenRepository => new(_context);
     public BaseRepository<Campus> CampusRepository => new(_context);
-    public BaseRepository<Buildings> BuildingsRepository => new(_context);
-    public BaseRepository<Floors> FloorsRepository => new(_context);
-    public BaseRepository<Rooms> RoomsRepository => new(_context);
+    public BaseRepository<Building> BuildingsRepository => new(_context);
+    public BaseRepository<Floor> FloorsRepository => new(_context);
+    public BaseRepository<Room> RoomRepository => new(_context);
 
     
     public void Dispose()

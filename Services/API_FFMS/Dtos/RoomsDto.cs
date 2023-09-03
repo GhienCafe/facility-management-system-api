@@ -10,7 +10,7 @@ public class RoomsDto
     public string RoomNumber { get; set; }
     public RoomTypeEnum RoomType { get; set; }
     public int? Capacity { get; set; }
-    public StatusEnum Status { get; set; }
+    //public StatusEnum Status { get; set; }
     public Guid FloorId { get; set; }
 }
 
@@ -21,11 +21,11 @@ public class RoomsDetailDto: BaseDto
     public string RoomNumber { get; set; }
     public RoomTypeEnum RoomType { get; set; }
     public int? Capacity { get; set; }
-    public StatusEnum Status { get; set; }
+    //public StatusEnum Status { get; set; }
     public Guid FloorId { get; set; }
     
     //Relationship
-    public virtual Floors? Floors { get; set; }
+    public virtual Floor? Floors { get; set; }
 }
 
 public class RoomQueryDto : BaseQueryDto

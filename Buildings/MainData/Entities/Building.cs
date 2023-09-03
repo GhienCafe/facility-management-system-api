@@ -4,19 +4,20 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace MainData.Entities;
 
-public class Buildings : BaseEntity
+public class Building : BaseEntity
 {
     public string? BuildingName { get; set; }
     public Guid? CampusId { get; set; }
     //Relationship
-    public virtual IEnumerable<Floors>? Floors { get; set; }
+    public virtual IEnumerable<Floor>? Floors { get; set; }
     public virtual Campus Campus { get; set; }
 }
 
-public class BuildingsConfig : IEntityTypeConfiguration<Buildings>
+public class BuildingConfig : IEntityTypeConfiguration<Building>
 {
-    public void Configure(EntityTypeBuilder<Buildings> builder)
+    public void Configure(EntityTypeBuilder<Building> builder)
     {
+        builder.ToTable("Buildings");
         builder.Property(a => a.BuildingName).IsRequired(false);
         builder.Property(a => a.CampusId).IsRequired();
 

@@ -9,7 +9,7 @@ public class FloorsDto
     public string? PathFloor { get; set; }
     public string? FloorNumber { get; set; }
     public Guid BuildingId { get; set; }
-    public List<Rooms> RoomsList { get; }
+    public List<Room> RoomsList { get; }
 }
 
 public class FloorDetailDto : BaseDto
@@ -18,7 +18,7 @@ public class FloorDetailDto : BaseDto
     public string? PathFloor { get; set; }
     public string? FloorNumber { get; set; }
     public Guid BuildingId { get; set; }
-    public virtual Buildings? Buildings { get; set; }
+    public virtual Building? Buildings { get; set; }
 }
 
 public class FloorCreateDto
