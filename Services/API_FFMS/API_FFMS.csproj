@@ -10,4 +10,8 @@
       <ProjectReference Include="..\..\Buildings\MainData\MainData.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <PackageReference Include="AspNetCore.Firebase.Authentication" Version="2.0.1" />
+    </ItemGroup>
+
 </Project>

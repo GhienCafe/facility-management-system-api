@@ -27,3 +27,7 @@ public class AuthRefreshDto
 {
     [Required] public string RefreshToken { get; set; } = string.Empty;
 }
+public class AuthTokenDto
+{
+    [Required] public string AccessToken { get; set; } = string.Empty;
+}

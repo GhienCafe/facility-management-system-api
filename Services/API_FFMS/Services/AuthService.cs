@@ -1,5 +1,7 @@
-﻿using System.Linq.Expressions;
+﻿using System.IdentityModel.Tokens.Jwt;
+using System.Linq.Expressions;
 using System.Security.Claims;
+using System.Text.RegularExpressions;
 using API_FFMS.Dtos;
 using AppCore.Extensions;
 using AppCore.Models;
@@ -12,6 +14,7 @@ namespace API_FFMS.Services;
 public interface IAuthService : IBaseService
 {
     Task<ApiResponse<AuthDto>> SignIn(AccountCredentialLoginDto accountCredentialLoginDto);
+    Task<ApiResponse<AuthDto>> Token(AuthTokenDto authTokenDto);
     Task<ApiResponse<AuthDto>> RefreshToken(AuthRefreshDto authRefreshDto);
     Task<ApiResponse> RevokeToken();
 }
@@ -23,6 +26,8 @@ public class AuthService : BaseService, IAuthService
     }
     public async Task<ApiResponse<AuthDto>> SignIn(AccountCredentialLoginDto accountCredentialLoginDto)
     {
+        // Mẫu đúng cho định dạng email của FPT hoặc FE
+        string fptOrFeEmailPattern = @"^[A-Za-z0-9._%+-]+@(fpt\.edu\.vn|fe\.edu\.vn)$";
         var user = await MainUnitOfWork.UserRepository.FindOneAsync(new Expression<Func<User, bool>>[]
         {
             x => !x.DeletedAt.HasValue && x.Email == accountCredentialLoginDto.Email
@@ -32,7 +37,11 @@ public class AuthService : BaseService, IAuthService
         {
             throw new ApiException("Not existed user",StatusCode.NOT_FOUND);
         }
-        
+        // Kiểm tra xem email có khớp với mẫu FPT hoặc FE hay không
+        if (!Regex.IsMatch(accountCredentialLoginDto.Email, fptOrFeEmailPattern))
+        {
+            throw new ApiException("Invalid FPT or FE email format", StatusCode.FORBIDDEN);
+        }
         // Check status
         if (user.Status == UserStatus.InActive)
             throw new ApiException(MessageKey.AccountNotActivated, StatusCode.NOT_ACTIVE);
@@ -84,6 +93,90 @@ public class AuthService : BaseService, IAuthService
         if (!await MainUnitOfWork.UserRepository.UpdateAsync(user, Guid.Empty, CurrentDate))
             throw new ApiException("Login fail!", StatusCode.SERVER_ERROR);
         
+        return ApiResponse<AuthDto>.Success(verifyResponse);
+    }
+    public async Task<ApiResponse<AuthDto>> Token(AuthTokenDto authTokenDto)
+    {
+        // Mẫu đúng cho định dạng email của FPT hoặc FE
+        string fptOrFeEmailPattern = @"^[A-Za-z0-9._%+-]+@(fpt\.edu\.vn|fe\.edu\.vn)$";
+        var tokenInfo = new Dictionary<string, string>();
+        var handler = new JwtSecurityTokenHandler();
+        var jwtSecurityToken = handler.ReadJwtToken(authTokenDto.AccessToken);
+        var claimsToken = jwtSecurityToken.Claims.ToList();
+        var verifyResponse = new AuthDto();
+        foreach (var claim in claimsToken)
+        {
+            tokenInfo.Add(claim.Type, claim.Value);
+        }
+        var keys = tokenInfo.Keys;
+        var values = tokenInfo.Values;
+        User? user;
+        foreach (var key in keys)
+        {
+            var value = tokenInfo[key];
+            if (key.Equals("email"))
+            {
+                user = await MainUnitOfWork.UserRepository.FindOneAsync(new Expression<Func<User, bool>>[]
+                {
+                    x => !x.DeletedAt.HasValue && x.Email==value.ToString(),
+                });
+                // Kiểm tra xem email có khớp với mẫu FPT hoặc FE hay không
+                if (!Regex.IsMatch(value, fptOrFeEmailPattern))
+                {
+                    throw new ApiException("Invalid FPT or FE email format", StatusCode.UNAUTHORIZED);
+                }
+                if (user == null)
+                {
+                    throw new ApiException("Not existed user",StatusCode.NOT_FOUND);
+                }
+                // Check status
+                if (user.Status == UserStatus.InActive)
+                    throw new ApiException(MessageKey.AccountNotActivated, StatusCode.NOT_ACTIVE);
+                
+                var claims = SetClaims(user);
+                var minute = EnvironmentExtension.GetJwtAccessTokenExpires();
+                var refreshMinute = EnvironmentExtension.GetJwtResetTokenExpires();
+                var accessExpiredAt = CurrentDate.AddMinutes(minute);
+                var refreshExpiredAt = CurrentDate.AddMinutes(refreshMinute);
+                var accessToken = JwtExtensions.GenerateAccessToken(claims, accessExpiredAt);
+                var refreshToken = JwtExtensions.GenerateRefreshToken();
+
+                var token = new Token
+                {
+                    Id = Guid.NewGuid(),
+                    UserId = user.Id,
+                    Type = TokenType.SignInToken,
+                    AccessToken = accessToken,
+                    RefreshToken = refreshToken,
+                    AccessExpiredAt = accessExpiredAt,
+                    RefreshExpiredAt = refreshExpiredAt,
+                    Status = TokenStatus.Active
+                };
+        
+                if (!await MainUnitOfWork.TokenRepository.InsertAsync(token, user.Id, CurrentDate))
+                    throw new ApiException("Đang k biết lỗi gì", StatusCode.SERVER_ERROR);
+        
+                verifyResponse = new AuthDto
+                {
+                    AccessExpiredAt = accessExpiredAt,
+                    RefreshExpiredAt = refreshExpiredAt,
+                    AccessToken = accessToken,
+                    RefreshToken = refreshToken,
+                    Email = user.Email,
+                    Fullname = user.Fullname,
+                    Role = user.Role,
+                    UserId = user.Id,
+                    IsFirstLogin = (user.FirstLoginAt == null)
+                };
+        
+                user.FirstLoginAt ??= CurrentDate;
+
+                if (!await MainUnitOfWork.UserRepository.UpdateAsync(user, Guid.Empty, CurrentDate))
+                    throw new ApiException("Login fail!", StatusCode.SERVER_ERROR);
+        
+                return ApiResponse<AuthDto>.Success(verifyResponse);
+            }
+        }
         return ApiResponse<AuthDto>.Success(verifyResponse);
     }
 

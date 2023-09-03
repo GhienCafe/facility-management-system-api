@@ -6,7 +6,7 @@ using MainData.Middlewares;
 using Microsoft.AspNetCore.Mvc.ApiExplorer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
-
+using AspNetCore.Firebase.Authentication.Extensions;
 var builder = WebApplication.CreateBuilder(args);
 
 //Add DbContext
@@ -29,6 +29,7 @@ builder.Services.AddDbContext<DatabaseContext>(options =>
 
 //
 builder.Services.AddControllers();
+builder.Services.AddFirebaseAuthentication("https://securetoken.google.com/facility-management-system-fb", "facility-management-system-fb");
 builder.Services.AddScoped<MainUnitOfWork>();
 builder.Services.AddConfig(new List<string>
 {
