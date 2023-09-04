@@ -3,7 +3,7 @@ using MainData.Entities;
 
 namespace API_FFMS.Dtos;
 
-public class BuildingsDto 
+public class BuildingDto  : BaseDto
 {
     public string? BuildingName { get; set; }
     public Guid? CampusId { get; set; }
@@ -28,5 +28,6 @@ public class BuildingUpdateDto
 }
 public class BuildingQueryDto : BaseQueryDto
 {
+    public string? CampusName { get; }
     public string? BuildingName { get; }
 }

@@ -17,13 +17,13 @@ public class BuildingController : BaseController
     
     [HttpGet]
     [SwaggerOperation("Get list building")]
-    public async Task<ApiResponses<BuildingsDto>> GetListCampus([FromQuery]BuildingQueryDto queryDto)
+    public async Task<ApiResponses<BuildingDto>> GetListCampus([FromQuery]BuildingQueryDto queryDto)
     {
         return await _service.GetBuildings(queryDto);
     }
     [HttpPost]
     [SwaggerOperation("Create new building")]
-    public async Task<ApiResponse> InsertEvent([FromBody]BuildingCreateDto buildingDto)
+    public async Task<ApiResponse> InsertFloor([FromBody]BuildingCreateDto buildingDto)
     {
         return await _service.Insert(buildingDto);
     }

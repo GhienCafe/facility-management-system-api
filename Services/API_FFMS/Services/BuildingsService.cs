@@ -10,7 +10,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace API_FFMS.Services;
 public interface IBuildingsService : IBaseService
 {
-    Task<ApiResponses<BuildingsDto>> GetBuildings(BuildingQueryDto queryDto);
+    Task<ApiResponses<BuildingDto>> GetBuildings(BuildingQueryDto queryDto);
     Task<ApiResponse<BuildingDetailDto>> GetBuildings(Guid id);
     
     public Task<ApiResponse> Insert(BuildingCreateDto addBuildingDto);
@@ -25,7 +25,7 @@ public class BuildingsService : BaseService, IBuildingsService
     {
     }
 
-    public async Task<ApiResponses<BuildingsDto>> GetBuildings(BuildingQueryDto queryDto)
+    public async Task<ApiResponses<BuildingDto>> GetBuildings(BuildingQueryDto queryDto)
     {
         Expression<Func<Buildings, bool>>[] conditions = new Expression<Func<Buildings, bool>>[]
         {
@@ -34,11 +34,14 @@ public class BuildingsService : BaseService, IBuildingsService
 
         if (string.IsNullOrEmpty(queryDto.BuildingName)==false)
         {
-            conditions = conditions.Append(x => x.BuildingName.Trim().ToLower() == queryDto.BuildingName.Trim().ToLower()).ToArray();
+            conditions = conditions.Append(x => x.BuildingName.Trim().ToLower().Contains(queryDto.BuildingName.Trim().ToLower())).ToArray();
         }
-
-        var response = await MainUnitOfWork.BuildingsRepository.FindResultAsync<BuildingsDto>(conditions, queryDto.OrderBy, queryDto.Skip(), queryDto.PageSize);
-        return ApiResponses<BuildingsDto>.Success(
+        if (string.IsNullOrEmpty(queryDto.CampusName)==false)
+        {
+            conditions = conditions.Append(x => x.Campus.CampusName.Trim().ToLower().Contains(queryDto.CampusName.Trim().ToLower())).ToArray();
+        }
+        var response = await MainUnitOfWork.BuildingsRepository.FindResultAsync<BuildingDto>(conditions, queryDto.OrderBy, queryDto.Skip(), queryDto.PageSize);
+        return ApiResponses<BuildingDto>.Success(
             response.Items,
             response.TotalCount,
             queryDto.PageSize,
