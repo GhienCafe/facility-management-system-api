@@ -5,6 +5,7 @@ using AppCore.Models;
 using MainData;
 using MainData.Entities;
 using MainData.Repositories;
+using Microsoft.EntityFrameworkCore;
 
 namespace API_FFMS.Services;
 
@@ -71,40 +72,48 @@ public class CampusService :BaseService,ICampusService
     {
         if (!campusDto.Description.IsBetweenLength(1, 255))
         {
-            throw new ApiException("Can't not create campus when description is null or must length of characters 1-255", StatusCode.BAD_REQUEST);
+            return ApiResponse.Failed("Description is null or must have a length between 1 and 255 characters", StatusCode.BAD_REQUEST);
         }
+
         if (!campusDto.Address.IsBetweenLength(1, 255))
         {
-            throw new ApiException("Can not create campus when address is null or must length of characters 1-255", StatusCode.BAD_REQUEST);
+            return ApiResponse.Failed("Address is null or must have a length between 1 and 255 characters", StatusCode.BAD_REQUEST);
         }
+
         if (!campusDto.CampusName.IsMinLength(3))
         {
-            // Thực hiện xử lý khi CampusName không đạt độ dài tối thiểu
-            throw new ApiException("Can not create campus when name is null or lenght must to > 3 characters");
+            return ApiResponse.Failed("Campus name is null or must have a length greater than 3 characters", StatusCode.BAD_REQUEST);
         }
+
         bool isValid = campusDto.Telephone.IsPhoneNumberOrNonEmpty(11);
 
-        if (isValid == false)
+        if (!isValid)
         {
-            throw new ApiException("Can't not create campus when description is null or not valid", StatusCode.BAD_REQUEST);
+            return ApiResponse.Failed("Telephone is null or not valid", StatusCode.BAD_REQUEST);
         }
-        var checkDuplication = MainUnitOfWork.CampusRepository.GetQuery().Where(x => x.CampusName == campusDto.CampusName).SingleOrDefault();
-        if (!checkDuplication.CampusName.Equals(""))
+
+        var checkDuplication = await MainUnitOfWork.CampusRepository.GetQuery()
+            .Where(x => x.CampusName == campusDto.CampusName)
+            .SingleOrDefaultAsync();
+
+        if (checkDuplication != null)
         {
-            throw new ApiException("Can't not create campus when Campus is duplication or not valid", StatusCode.BAD_REQUEST);
+            return ApiResponse.Failed("Campus name is duplicated or not valid", StatusCode.BAD_REQUEST);
         }
+
         var campus = campusDto.ProjectTo<CampusCreateDto, Campus>();
-        bool response = await MainUnitOfWork.CampusRepository.InsertAsync(campus, AccountId);
-        
+        bool response = await MainUnitOfWork.CampusRepository.InsertAsync(campus, AccountId, DateTime.Today);
+
         if (response)
         {
-            return ApiResponse<bool>.Success(true);
+            return ApiResponse.Success("Campus created successfully");
         }
         else
         {
-            return (ApiResponse<bool>)ApiResponse.Failed();
+            return ApiResponse.Failed("Failed to create campus", StatusCode.SERVER_ERROR);
         }
     }
+
     public async Task<ApiResponse<CampusDetailDto>> Update(Guid id, CampusUpdateDto campusDto)
     {
         var campus = await MainUnitOfWork.CampusRepository.FindOneAsync(id);
@@ -131,8 +140,9 @@ public class CampusService :BaseService,ICampusService
         {
             throw new ApiException("Can't not create campus when description is null or not valid", StatusCode.BAD_REQUEST);
         }
+        
         var campusUpdate = campusDto.ProjectTo<CampusUpdateDto, Campus>();
-        if (!await MainUnitOfWork.CampusRepository.UpdateAsync(campusUpdate, AccountId, CurrentDate))
+        if (!await MainUnitOfWork.CampusRepository.UpdateAsync(campusUpdate, AccountId, DateTime.Today))
             throw new ApiException("Can't not update", StatusCode.SERVER_ERROR);
 
         return await GetCampus(id);

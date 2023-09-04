@@ -82,6 +82,14 @@ public class ApiResponse
     {
         return Created(StatusCode.BAD_REQUEST, "Failed");
     }
+    public static ApiResponse Failed(string errorMessage, StatusCode statusCode = StatusCode.BAD_REQUEST)
+    {
+        return new ApiResponse
+        {
+            Message = errorMessage,
+            StatusCode = statusCode
+        };
+    }
 
     public static ApiResponse Created(StatusCode statusCode, string message)
     {

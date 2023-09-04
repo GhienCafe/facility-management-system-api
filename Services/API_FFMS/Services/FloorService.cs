@@ -10,7 +10,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace API_FFMS.Services;
 public interface IFloorService : IBaseService
 {
-    Task<ApiResponses<FloorsDto>> GetFloor(FloorsQueryDto queryDto);
+    Task<ApiResponses<FloorDto>> GetFloor(FloorQueryDto queryDto);
     Task<ApiResponse<FloorDetailDto>> GetFloor(Guid id);
     
     public Task<ApiResponse> Insert(FloorCreateDto addFloorDto);
@@ -25,7 +25,7 @@ public class FloorService : BaseService, IFloorService
     {
     }
 
-    public async Task<ApiResponses<FloorsDto>> GetFloor(FloorsQueryDto queryDto)
+    public async Task<ApiResponses<FloorDto>> GetFloor(FloorQueryDto queryDto)
     {
         Expression<Func<Floor, bool>>[] conditions = new Expression<Func<Floor, bool>>[]
         {
@@ -36,9 +36,12 @@ public class FloorService : BaseService, IFloorService
         {
             conditions = conditions.Append(x => x.FloorNumber.Trim().ToLower() == queryDto.FloorNumber.Trim().ToLower()).ToArray();
         }
-
-        var response = await MainUnitOfWork.FloorsRepository.FindResultAsync<FloorsDto>(conditions, queryDto.OrderBy, queryDto.Skip(), queryDto.PageSize);
-        return ApiResponses<FloorsDto>.Success(
+        if (string.IsNullOrEmpty(queryDto.BuildingName)==false)
+        {
+            conditions = conditions.Append(x => x.Buildings.BuildingName.Trim().ToLower().Contains(queryDto.BuildingName.Trim().ToLower())).ToArray();
+        }
+        var response = await MainUnitOfWork.FloorsRepository.FindResultAsync<FloorDto>(conditions, queryDto.OrderBy, queryDto.Skip(), queryDto.PageSize);
+        return ApiResponses<FloorDto>.Success(
             response.Items,
             response.TotalCount,
             queryDto.PageSize,
@@ -65,26 +68,28 @@ public class FloorService : BaseService, IFloorService
         return ApiResponse<FloorDetailDto>.Success(floors);
     }
 
-    public async Task<ApiResponse> Insert(FloorCreateDto floorsDto)
+    public async Task<ApiResponse> Insert(FloorCreateDto floorDto)
     {
-        if (!floorsDto.FloorNumber.IsBetweenLength(1, 255))
+        if (!floorDto.FloorNumber.IsBetweenLength(1, 255))
         {
             throw new ApiException("Can not create floors when address is null or must length of characters 1-255", StatusCode.ALREADY_EXISTS);
         }
 
-        if (MainUnitOfWork.FloorsRepository.GetQuery()
-                .Where(x => x.FloorNumber.Trim().ToLower().Contains(floorsDto.FloorNumber.Trim().ToLower()))
-                .SingleOrDefault() != null)
+        var existingFloor = MainUnitOfWork.FloorsRepository.GetQuery()
+            .Where(x => x.FloorNumber.Trim().ToLower() == floorDto.FloorNumber.Trim().ToLower())
+            .SingleOrDefault();
+
+        if (existingFloor != null)
         {
             throw new ApiException("Floor name was used, please again!", StatusCode.BAD_REQUEST);
-
         }
-        if (MainUnitOfWork.CampusRepository.GetQuery().SingleOrDefault(x => x.Id == floorsDto.BuildingId)==null)
+
+        if (MainUnitOfWork.BuildingsRepository.GetQuery().SingleOrDefault(x => x.Id == floorDto.BuildingId)==null)
         {
             throw new ApiException("Id cannot null", StatusCode.BAD_REQUEST);
         }
-        var floors = floorsDto.ProjectTo<FloorCreateDto, Floor>();
-        bool response = await MainUnitOfWork.FloorsRepository.InsertAsync(floors, AccountId);
+        var floor = floorDto.ProjectTo<FloorCreateDto, Floor>();
+        bool response = await MainUnitOfWork.FloorsRepository.InsertAsync(floor, AccountId);
         
         if (response)
         {
@@ -95,19 +100,26 @@ public class FloorService : BaseService, IFloorService
             return (ApiResponse<bool>)ApiResponse.Failed();
         }
     }
-    public async Task<ApiResponse<FloorDetailDto>> Update(Guid id, FloorUpdateDto floorsDto)
+    public async Task<ApiResponse<FloorDetailDto>> Update(Guid id, FloorUpdateDto floorDto)
     {
         var floors = await MainUnitOfWork.FloorsRepository.FindOneAsync(id);
         if (floors==null)
         {
             throw new ApiException("Not found this floors", StatusCode.NOT_FOUND);
         }
-        if (!floorsDto.FloorNumber.IsBetweenLength(1, 50))
+        if (!floorDto.FloorNumber.IsBetweenLength(1, 50))
         {
             throw new ApiException("Can not create floors when description is null or must length of characters 1-255", StatusCode.BAD_REQUEST);
         }
-        var floorsUpdate = floorsDto.ProjectTo<FloorUpdateDto, Floor>();
-        if (!await MainUnitOfWork.FloorsRepository.UpdateAsync(floorsUpdate, AccountId, CurrentDate))
+        var totalAreaRoom = MainUnitOfWork.RoomRepository.GetQuery()
+            .Where(room => room.FloorId == id) // Lọc các phòng thuộc tầng cần kiểm tra
+            .Sum(room => room.Area); // Tính tổng diện tích của các phòng
+        if (totalAreaRoom >= floorDto.Area)
+        {
+            throw new ApiException("Can not create floor when area not valid with total area of room", StatusCode.BAD_REQUEST);
+        }
+        var floorUpdate = floorDto.ProjectTo<FloorUpdateDto, Floor>();
+        if (!await MainUnitOfWork.FloorsRepository.UpdateAsync(floorUpdate, AccountId, CurrentDate))
             throw new ApiException("Can't not update", StatusCode.SERVER_ERROR);
 
         return await GetFloor(id);
