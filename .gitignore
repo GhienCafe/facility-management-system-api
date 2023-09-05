@@ -344,3 +344,5 @@ healthchecksdb
 .sonarlint/
 Logs/
 Services/API_FFMS/Properties/launchSettings.json
+/Properties/launchSettings.json
+*/Properties/launchSettings.json
