@@ -17,13 +17,13 @@ public class BuildingController : BaseController
     
     [HttpGet]
     [SwaggerOperation("Get list building")]
-    public async Task<ApiResponses<BuildingsDto>> GetListCampus([FromQuery]BuildingQueryDto queryDto)
+    public async Task<ApiResponses<BuildingDto>> GetListCampus([FromQuery]BuildingQueryDto queryDto)
     {
         return await _service.GetBuildings(queryDto);
     }
     [HttpPost]
     [SwaggerOperation("Create new building")]
-    public async Task<ApiResponse> InsertEvent([FromBody]BuildingCreateDto buildingDto)
+    public async Task<ApiResponse> InsertFloor([FromBody]BuildingCreateDto buildingDto)
     {
         return await _service.Insert(buildingDto);
     }
@@ -38,7 +38,7 @@ public class BuildingController : BaseController
     [HttpPut("{id:guid}")]
         
     [SwaggerOperation("Update building information")]
-    public async Task<ApiResponse<BuildingDetailDto>> Update(Guid id, BuildingUpdateDto buildingDto)
+    public async Task<ApiResponse> Update(Guid id, BuildingUpdateDto buildingDto)
     {
         return await _service.Update(id, buildingDto);
     }

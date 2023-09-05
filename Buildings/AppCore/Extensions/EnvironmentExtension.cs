@@ -1,7 +1,20 @@
-﻿namespace AppCore.Extensions;
+﻿using Microsoft.Extensions.Configuration;
+
+namespace AppCore.Extensions;
 
 public static class EnvironmentExtension
 {
+    private static IConfiguration Configuration { get; }
+
+    static EnvironmentExtension()
+    {
+        var configurationBuilder = new ConfigurationBuilder()
+            .SetBasePath(AppDomain.CurrentDomain.BaseDirectory)
+            .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true);
+
+        Configuration = configurationBuilder.Build();
+    }
+    
     // ==================================== GLOBAL ======================================
     public static string GetAppLogFolder() =>
         Environment.GetEnvironmentVariable("LOG_FOLDER") ?? "Logs";
@@ -15,58 +28,58 @@ public static class EnvironmentExtension
     public static bool IsDevelopment() => GetEnvironment() == "Development";
 
     public static string GetAppConnectionString() =>
-        Environment.GetEnvironmentVariable("CONNECTION_STRING") ?? string.Empty;
+        Configuration["ENV_ENVIRONMENTS:CONNECTION_STRING"] ?? string.Empty;
     
     public static string GetPath() =>
-        Environment.GetEnvironmentVariable("DOMAIN_PATH") ?? string.Empty;
+        Configuration["ENV_ENVIRONMENTS:DOMAIN_PATH"] ?? string.Empty;
     
     public static string GetDomain() =>
-        Environment.GetEnvironmentVariable("DOMAIN") ?? string.Empty;
+        Configuration["ENV_ENVIRONMENTS:DOMAIN"] ?? string.Empty;
 
     public static string GetJwtIssuer() =>
-        Environment.GetEnvironmentVariable("JWT_ISSUER") ?? string.Empty;
+        Configuration["ENV_ENVIRONMENTS:JWT_ISSUER"] ?? string.Empty;
 
     public static string GetJwtAudience() =>
-        Environment.GetEnvironmentVariable("JWT_AUDIENCE") ?? string.Empty;
+        Configuration["ENV_ENVIRONMENTS:JWT_AUDIENCE"] ?? string.Empty;
 
     public static string GetJwtAccessTokenSecret() =>
-        Environment.GetEnvironmentVariable("JWT_ACCESS_TOKEN_SECRET") ?? string.Empty;
+        Configuration["ENV_ENVIRONMENTS:JWT_ACCESS_TOKEN_SECRET"] ?? string.Empty;
 
     public static double GetJwtAccessTokenExpires() =>
-        Convert.ToDouble(Environment.GetEnvironmentVariable("JWT_ACCESS_TOKEN_EXPIRES") ?? "0");
+        Convert.ToDouble(Configuration["ENV_ENVIRONMENTS:JWT_ACCESS_TOKEN_EXPIRES"] ?? string.Empty);
 
     public static string GetJwtResetTokenSecret() =>
-        Environment.GetEnvironmentVariable("JWT_RESET_TOKEN_SECRET") ?? string.Empty;
+        Configuration["ENV_ENVIRONMENTS:JWT_RESET_TOKEN_SECRET"] ?? string.Empty;
 
     public static double GetJwtResetTokenExpires() =>
-        Convert.ToDouble(Environment.GetEnvironmentVariable("JWT_RESET_TOKEN_EXPIRES") ?? "0");
+        Convert.ToDouble(Configuration["ENV_ENVIRONMENTS:JWT_RESET_TOKEN_EXPIRES"] ?? string.Empty);
 
-    public static string GetS3AccessKey() =>
-        Environment.GetEnvironmentVariable("S3_ACCESS_KEY") ?? string.Empty;
-
-    public static string GetS3SecretKey() =>
-        Environment.GetEnvironmentVariable("S3_SECRET_KEY") ?? string.Empty;
-
-    public static string GetS3ServiceUrl() =>
-        Environment.GetEnvironmentVariable("S3_SERVICE_URL") ?? string.Empty;
-
-    public static string GetBucketName() =>
-        Environment.GetEnvironmentVariable("S3_BUCKET_NAME") ?? string.Empty;
-
-    public static string GetS3EndpointUrl() =>
-        Environment.GetEnvironmentVariable("S3_ENDPOINT_URL") ?? string.Empty;
-
-    public static string GetApnBundleId() =>
-        Environment.GetEnvironmentVariable("APN_BUNDLE_ID") ?? string.Empty;
-
-    public static string GetApnCertFilePath() =>
-        Environment.GetEnvironmentVariable("APN_CERT_FILE_PATH") ?? string.Empty;
-
-    public static string GetApnKeyId() =>
-        Environment.GetEnvironmentVariable("APN_KEY_ID") ?? string.Empty;
-
-    public static string GetApnTeamId() =>
-        Environment.GetEnvironmentVariable("APN_TEAM_ID") ?? string.Empty;
+    // public static string GetS3AccessKey() =>
+    //     Environment.GetEnvironmentVariable("S3_ACCESS_KEY") ?? string.Empty;
+    //
+    // public static string GetS3SecretKey() =>
+    //     Environment.GetEnvironmentVariable("S3_SECRET_KEY") ?? string.Empty;
+    //
+    // public static string GetS3ServiceUrl() =>
+    //     Environment.GetEnvironmentVariable("S3_SERVICE_URL") ?? string.Empty;
+    //
+    // public static string GetBucketName() =>
+    //     Environment.GetEnvironmentVariable("S3_BUCKET_NAME") ?? string.Empty;
+    //
+    // public static string GetS3EndpointUrl() =>
+    //     Environment.GetEnvironmentVariable("S3_ENDPOINT_URL") ?? string.Empty;
+    //
+    // public static string GetApnBundleId() =>
+    //     Environment.GetEnvironmentVariable("APN_BUNDLE_ID") ?? string.Empty;
+    //
+    // public static string GetApnCertFilePath() =>
+    //     Environment.GetEnvironmentVariable("APN_CERT_FILE_PATH") ?? string.Empty;
+    //
+    // public static string GetApnKeyId() =>
+    //     Environment.GetEnvironmentVariable("APN_KEY_ID") ?? string.Empty;
+    //
+    // public static string GetApnTeamId() =>
+    //     Environment.GetEnvironmentVariable("APN_TEAM_ID") ?? string.Empty;
 
     public static string GetFireBaseCertFilePath()
     {

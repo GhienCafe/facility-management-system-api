@@ -218,6 +218,26 @@ public class BaseRepository<TEntity> : IBaseRepository<TEntity> where TEntity : 
         await _unitOfWork.SaveAsync();
         return await _unitOfWork.CommitTransactionAsync();
     }
+    public async Task<bool> UpdateAsyncValid(TEntity? entity, Guid? editorId, DateTime? now = null)
+    {
+        await _unitOfWork.BeginTransactionAsync();
+        now ??= DateTime.UtcNow;
+        entity!.EditedAt = now.Value;
+        _dbSet.Entry(entity).State = EntityState.Modified;
+
+        try
+        {
+            await _unitOfWork.SaveAsync();
+            return await _unitOfWork.CommitTransactionAsync();
+        }
+        catch (DbUpdateConcurrencyException ex)
+        {
+            // Handle the concurrency conflict here, e.g., log the conflict or notify the user.
+            // You can also retry the update if desired.
+            // For example, you can fetch the current state of the entity from the database and merge changes.
+            return false; // Indicate that the update failed due to concurrency conflict.
+        }
+    }
 
     public async Task<bool> UpdateAsync(IEnumerable<TEntity?> entities, Guid? editorId, DateTime? now = null)
     {

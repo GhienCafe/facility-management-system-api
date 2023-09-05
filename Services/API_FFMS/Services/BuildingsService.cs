@@ -10,11 +10,11 @@ using Microsoft.AspNetCore.Mvc;
 namespace API_FFMS.Services;
 public interface IBuildingsService : IBaseService
 {
-    Task<ApiResponses<BuildingsDto>> GetBuildings(BuildingQueryDto queryDto);
+    Task<ApiResponses<BuildingDto>> GetBuildings(BuildingQueryDto queryDto);
     Task<ApiResponse<BuildingDetailDto>> GetBuildings(Guid id);
     
     public Task<ApiResponse> Insert(BuildingCreateDto addBuildingDto);
-    public Task<ApiResponse<BuildingDetailDto>> Update(Guid id, BuildingUpdateDto buildingUpdate);
+    public Task<ApiResponse> Update(Guid id, BuildingUpdateDto buildingUpdate);
     Task<ApiResponse> Delete(Guid id);
 
 }
@@ -25,7 +25,7 @@ public class BuildingsService : BaseService, IBuildingsService
     {
     }
 
-    public async Task<ApiResponses<BuildingsDto>> GetBuildings(BuildingQueryDto queryDto)
+    public async Task<ApiResponses<BuildingDto>> GetBuildings(BuildingQueryDto queryDto)
     {
         Expression<Func<Building, bool>>[] conditions = new Expression<Func<Building, bool>>[]
         {
@@ -34,11 +34,14 @@ public class BuildingsService : BaseService, IBuildingsService
 
         if (string.IsNullOrEmpty(queryDto.BuildingName)==false)
         {
-            conditions = conditions.Append(x => x.BuildingName.Trim().ToLower() == queryDto.BuildingName.Trim().ToLower()).ToArray();
+            conditions = conditions.Append(x => x.BuildingName.Trim().ToLower().Contains(queryDto.BuildingName.Trim().ToLower())).ToArray();
         }
-
-        var response = await MainUnitOfWork.BuildingsRepository.FindResultAsync<BuildingsDto>(conditions, queryDto.OrderBy, queryDto.Skip(), queryDto.PageSize);
-        return ApiResponses<BuildingsDto>.Success(
+        if (string.IsNullOrEmpty(queryDto.CampusName)==false)
+        {
+            conditions = conditions.Append(x => x.Campus.CampusName.Trim().ToLower().Contains(queryDto.CampusName.Trim().ToLower())).ToArray();
+        }
+        var response = await MainUnitOfWork.BuildingsRepository.FindResultAsync<BuildingDto>(conditions, queryDto.OrderBy, queryDto.Skip(), queryDto.PageSize);
+        return ApiResponses<BuildingDto>.Success(
             response.Items,
             response.TotalCount,
             queryDto.PageSize,
@@ -84,7 +87,7 @@ public class BuildingsService : BaseService, IBuildingsService
             throw new ApiException("Id cannot null", StatusCode.BAD_REQUEST);
         }
         var buildings = buildingsDto.ProjectTo<BuildingCreateDto, Building>();
-        bool response = await MainUnitOfWork.BuildingsRepository.InsertAsync(buildings, AccountId);
+        bool response = await MainUnitOfWork.BuildingsRepository.InsertAsync(buildings, AccountId, CurrentDate);
         
         if (response)
         {
@@ -95,10 +98,10 @@ public class BuildingsService : BaseService, IBuildingsService
             return (ApiResponse<bool>)ApiResponse.Failed();
         }
     }
-    public async Task<ApiResponse<BuildingDetailDto>> Update(Guid id, BuildingUpdateDto buildingsDto)
+    public async Task<ApiResponse> Update(Guid id, BuildingUpdateDto buildingsDto)
     {
         var buildings = await MainUnitOfWork.BuildingsRepository.FindOneAsync(id);
-        if (buildings==null)
+        if (buildings == null)
         {
             throw new ApiException("Not found this buildings", StatusCode.NOT_FOUND);
         }
@@ -106,12 +109,26 @@ public class BuildingsService : BaseService, IBuildingsService
         {
             throw new ApiException("Can not create buildings when description is null or must length of characters 1-255", StatusCode.BAD_REQUEST);
         }
-        var buildingsUpdate = buildingsDto.ProjectTo<BuildingUpdateDto, Building>();
-        if (!await MainUnitOfWork.BuildingsRepository.UpdateAsync(buildingsUpdate, AccountId, CurrentDate))
-            throw new ApiException("Can't not update", StatusCode.SERVER_ERROR);
 
-        return await GetBuildings(id);
+        var checkCampusExisting = MainUnitOfWork.CampusRepository.GetQuery()
+            .Where(x => x.Id == buildingsDto.CampusId).SingleOrDefault();
+        if (checkCampusExisting == null)
+        {
+            throw new ApiException("Can not create buildings when campus is not found", StatusCode.BAD_REQUEST);
+        }
+
+        // Cập nhật các thuộc tính của thực thể hiện tại
+        buildings.BuildingName = buildingsDto.BuildingName;
+        buildings.CampusId = buildingsDto.CampusId;
+
+        if (!await MainUnitOfWork.BuildingsRepository.UpdateAsync(buildings, AccountId, CurrentDate))
+        {
+            throw new ApiException("Can't not update", StatusCode.SERVER_ERROR);
+        }
+
+        return ApiResponse<bool>.Success(true);
     }
+
     public async Task<ApiResponse> Delete(Guid id)
     {
         var existingbuildings = await MainUnitOfWork.BuildingsRepository.FindOneAsync(id);

@@ -3,13 +3,12 @@ using MainData.Entities;
 
 namespace API_FFMS.Dtos;
 
-public class FloorsDto
+public class FloorDto : BaseDto
 {
     public double? Area { get; set; }
     public string? PathFloor { get; set; }
     public string? FloorNumber { get; set; }
     public Guid BuildingId { get; set; }
-    public List<Room> RoomsList { get; }
 }
 
 public class FloorDetailDto : BaseDto
@@ -18,7 +17,6 @@ public class FloorDetailDto : BaseDto
     public string? PathFloor { get; set; }
     public string? FloorNumber { get; set; }
     public Guid BuildingId { get; set; }
-    public virtual Building? Buildings { get; set; }
 }
 
 public class FloorCreateDto
@@ -36,8 +34,8 @@ public class FloorUpdateDto
     public string? FloorNumber { get; set; }
     public Guid BuildingId { get; set; }
 }
-public class FloorsQueryDto : BaseQueryDto
+public class FloorQueryDto : BaseQueryDto
 {
     public string? FloorNumber { get; }
-    public Guid? BuildingId { get; }
+    public string? BuildingName { get; }
 }
