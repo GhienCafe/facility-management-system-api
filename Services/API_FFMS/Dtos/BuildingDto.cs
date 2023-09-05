@@ -23,6 +23,7 @@ public class BuildingCreateDto
 }
 public class BuildingUpdateDto
 {
+    public Guid? Id { get; set; }
     public string? BuildingName { get; set; }
     public Guid? CampusId { get; set; }
 }

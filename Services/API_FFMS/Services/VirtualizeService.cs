@@ -1,6 +1,7 @@
 ﻿using System.Linq.Expressions;
 using API_FFMS.Dtos;
 using AppCore.Models;
+using DocumentFormat.OpenXml.Spreadsheet;
 using MainData;
 using MainData.Entities;
 using MainData.Repositories;
@@ -24,15 +25,17 @@ public class VirtualizeService : BaseService, IVirtualizeService
             x => !x.DeletedAt.HasValue
         };
 
-        if (string.IsNullOrEmpty(queryDto.FloorNumber)==false)
+        var floorNumber = MainUnitOfWork.FloorsRepository.GetQuery()
+            .Where(x => x.FloorNumber.Trim().ToLower() == queryDto.FloorNumber.Trim().ToLower()).SingleOrDefault();
+        if (!string.IsNullOrEmpty(queryDto.FloorNumber))
         {
-            conditions = conditions.Append(x => x.RoomCode.Trim().ToLower() == queryDto.FloorNumber.Trim().ToLower()).ToArray();
+            conditions = conditions.Append(x => x.Floors.FloorNumber.Trim().ToLower() == queryDto.FloorNumber.Trim().ToLower()).ToArray();
         }
         else
         {
-            conditions = conditions.Append(x => x.Floors.FloorNumber.Trim().ToLower().Contains("floor g")).ToArray();
+            conditions = conditions.Append(x => x.Floors.FloorNumber.Trim().ToLower() == "floor g").ToArray();
         }
-        
+
         var response = await MainUnitOfWork.RoomRepository.FindResultAsync<VirtualizeDto>(conditions, queryDto.OrderBy, queryDto.Skip(), queryDto.PageSize);
         return ApiResponses<VirtualizeDto>.Success(
             response.Items,
@@ -42,4 +45,5 @@ public class VirtualizeService : BaseService, IVirtualizeService
             (int)Math.Ceiling(response.TotalCount / (double)queryDto.PageSize)
         );
     }
+
 }

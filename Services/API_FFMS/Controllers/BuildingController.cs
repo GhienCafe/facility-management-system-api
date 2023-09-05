@@ -38,7 +38,7 @@ public class BuildingController : BaseController
     [HttpPut("{id:guid}")]
         
     [SwaggerOperation("Update building information")]
-    public async Task<ApiResponse<BuildingDetailDto>> Update(Guid id, BuildingUpdateDto buildingDto)
+    public async Task<ApiResponse> Update(Guid id, BuildingUpdateDto buildingDto)
     {
         return await _service.Update(id, buildingDto);
     }

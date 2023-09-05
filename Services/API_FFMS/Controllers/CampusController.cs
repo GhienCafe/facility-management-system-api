@@ -38,7 +38,7 @@ public class CampusController : BaseController
     [HttpPut("{id:guid}")]
         
     [SwaggerOperation("Update campus information")]
-    public async Task<ApiResponse<CampusDetailDto>> Update(Guid id, CampusUpdateDto campusDto)
+    public async Task<ApiResponse> Update(Guid id, CampusUpdateDto campusDto)
     {
         return await _service.Update(id, campusDto);
     }

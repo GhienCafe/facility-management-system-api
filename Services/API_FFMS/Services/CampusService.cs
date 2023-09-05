@@ -15,7 +15,7 @@ public interface ICampusService : IBaseService
     Task<ApiResponse<CampusDetailDto>> GetCampus(Guid id);
     
     public Task<ApiResponse> Insert(CampusCreateDto addCampusDto);
-    Task<ApiResponse<CampusDetailDto>> Update(Guid id, CampusUpdateDto campusUpdateDto);
+    Task<ApiResponse> Update(Guid id, CampusUpdateDto campusUpdateDto);
     Task<ApiResponse> Delete(Guid id);
 
 }
@@ -114,7 +114,7 @@ public class CampusService :BaseService,ICampusService
         }
     }
 
-    public async Task<ApiResponse<CampusDetailDto>> Update(Guid id, CampusUpdateDto campusDto)
+    public async Task<ApiResponse> Update(Guid id, CampusUpdateDto campusDto)
     {
         var campus = await MainUnitOfWork.CampusRepository.FindOneAsync(id);
         if (campus==null)
@@ -140,12 +140,21 @@ public class CampusService :BaseService,ICampusService
         {
             throw new ApiException("Can't not create campus when description is null or not valid", StatusCode.BAD_REQUEST);
         }
-        
-        var campusUpdate = campusDto.ProjectTo<CampusUpdateDto, Campus>();
-        if (!await MainUnitOfWork.CampusRepository.UpdateAsync(campusUpdate, AccountId, DateTime.Today))
-            throw new ApiException("Can't not update", StatusCode.SERVER_ERROR);
 
-        return await GetCampus(id);
+        campus.CampusName = campusDto.CampusName;
+        campus.Address = campusDto.Address;
+        campus.Telephone = campusDto.Telephone;
+        campus.Description = campusDto.Description;
+        bool response = await MainUnitOfWork.CampusRepository.UpdateAsync(campus, AccountId, DateTime.Today);
+
+        if (response)
+        {
+            return ApiResponse.Success("Campus Updated successfully");
+        }
+        else
+        {
+            return ApiResponse.Failed("Failed to create campus", StatusCode.SERVER_ERROR);
+        }
     }
     public async Task<ApiResponse> Delete(Guid id)
     {

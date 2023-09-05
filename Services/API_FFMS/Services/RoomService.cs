@@ -88,9 +88,14 @@ public class RoomService : BaseService, IRoomService
         {
             throw new ApiException("Invalid FloorId, cannot be null", StatusCode.BAD_REQUEST);
         }
-        // Calculate the total area of all rooms on the floor
-        double? totalRoomAreaOnFloor = floor.Rooms.Sum(r => r.Area);
 
+        var RoomList = MainUnitOfWork.RoomRepository.GetQuery()
+            .Where(x => x.FloorId == roomDto.FloorId);
+        double? totalRoomAreaOnFloor = 0;
+        foreach (var SortRoom in RoomList)
+        {
+            totalRoomAreaOnFloor += SortRoom.Area;
+        }
         // Check if adding the new room will exceed the floor's total area
         if (totalRoomAreaOnFloor + roomDto.Area > floor.Area)
         {
@@ -119,7 +124,7 @@ public class RoomService : BaseService, IRoomService
         {
             throw new ApiException("Can not create room when description is null or must length of characters 1-255", StatusCode.BAD_REQUEST);
         }
-        var roomUpdate = roomDto.ProjectTo<RoomUpdateDto, Room>();
+        var roomUpdate = roomDto.ProjectTo<RoomUpdateDto , Room>();
         if (!await MainUnitOfWork.RoomRepository.UpdateAsync(roomUpdate, AccountId, CurrentDate))
             throw new ApiException("Can't not update", StatusCode.SERVER_ERROR);
 

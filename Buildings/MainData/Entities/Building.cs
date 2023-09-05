@@ -10,7 +10,7 @@ public class Building : BaseEntity
     public Guid? CampusId { get; set; }
     //Relationship
     public virtual IEnumerable<Floor>? Floors { get; set; }
-    public virtual Campus Campus { get; set; }
+    public virtual Campus? Campus { get; set; }
 }
 
 public class BuildingConfig : IEntityTypeConfiguration<Building>
