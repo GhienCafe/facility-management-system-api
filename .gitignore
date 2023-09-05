@@ -343,3 +343,4 @@ healthchecksdb
 .sonarqube/
 .sonarlint/
 Logs/
+**/appsettings.json
