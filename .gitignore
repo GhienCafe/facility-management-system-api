@@ -346,3 +346,4 @@ Logs/
 
 # Settings
 Services/API_FFMS/Properties/launchSettings.json
+Services/InitDatabase/Program.cs
