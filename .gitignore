@@ -343,3 +343,5 @@ healthchecksdb
 .sonarqube/
 .sonarlint/
 Logs/
+**/appsettings.json
+Services/API_FFMS/appsettings.json
