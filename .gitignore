@@ -343,6 +343,6 @@ healthchecksdb
 .sonarqube/
 .sonarlint/
 Logs/
+
+# Settings
 Services/API_FFMS/Properties/launchSettings.json
-/Properties/launchSettings.json
-*/Properties/launchSettings.json
