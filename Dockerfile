@@ -16,6 +16,6 @@ COPY --from=build /app/out ./
 
 
 # Chạy ứng dụng
-ENTRYPOINT ["dotnet", "Services/API_FFMS/bin/Debug/net7.0/API_FFMS.dll"]
+ENTRYPOINT ["dotnet", "/app/out/API_FFMS.dll"]
 #CMD ["dotnet", "run", "-p", "Services/API_FFMS", "--", "--port", "5000"]
 
