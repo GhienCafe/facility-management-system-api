@@ -33,4 +33,4 @@ jobs:
           docker pull ${{ secrets.REGISTRY }}/${{ secrets.DOCKER_IMAGE }}:latest
           docker stop ${{ secrets.DOCKER_CONTAINER }} || true
           docker rm ${{ secrets.DOCKER_CONTAINER }} || true
-          docker run -d --name coffee_container -p 5000:80 ${{ secrets.REGISTRY }}/${{ secrets.DOCKER_IMAGE }}:latest
+          docker run -d --name coffee_container -p 80:80 ${{ secrets.REGISTRY }}/${{ secrets.DOCKER_IMAGE }}:latest
