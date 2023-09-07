@@ -65,6 +65,6 @@ public static class AddConfigServiceCollectionExtensions
         app.UseCors(MyAllowAllOrigins);
         app.UseConfigSwagger();
         app.UseAuthentication();
-      //  app.UseMiddleware<HandleResponseMiddleware>();
+        app.UseMiddleware<HandleResponseMiddleware>();
     }
 }
