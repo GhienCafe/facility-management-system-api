@@ -17,6 +17,14 @@ jobs:
       run: echo ${{ secrets.DOCKERHUB_TOKEN }} | docker login -u ${{ secrets.DOCKERHUB_USERNAME }} --password-stdin
 
     - name: Build and Push Docker image
+      env:
+        CONNECTION_STRING : ${{ secrets.CONNECTION_STRING }}
+        JWT_ACCESS_TOKEN_SECRET : ${{ secrets.JWT_ACCESS_TOKEN_SECRET }}
+        JWT_RESET_TOKEN_SECRET : ${{ secrets.JWT_RESET_TOKEN_SECRET }}
+        JWT_AUDIENCE : ${{ secrets.JWT_AUDIENCE }}
+        JWT_ISSUER : ${{ secrets.JWT_ISSUER }}
+        JWT_ACCESS_TOKEN_EXPIRES : ${{ secrets.JWT_ACCESS_TOKEN_EXPIRES }}
+        JWT_RESET_TOKEN_EXPIRES : ${{ secrets.JWT_RESET_TOKEN_EXPIRES }}
       run: |
         docker build -t ${{ secrets.REGISTRY }}/${{ secrets.DOCKER_IMAGE }}:latest .
         docker push ${{ secrets.REGISTRY }}/coffee:latest
