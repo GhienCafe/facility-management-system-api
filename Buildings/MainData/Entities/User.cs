@@ -6,7 +6,7 @@ namespace MainData.Entities;
 
 public class User : BaseEntity
 {
-    public Guid DepartmentId { get; set; }
+    public Guid? DepartmentId { get; set; }
     public string UserCode { get; set; } = null!;
     public string Fullname { get; set; } = null!;
     public UserRole Role { get; set; }
@@ -61,7 +61,7 @@ public class UserConfig : IEntityTypeConfiguration<User>
         builder.Property(x => x.Salt).IsRequired();
         builder.Property(x => x.FirstLoginAt).IsRequired(false);
         builder.Property(x => x.LastLoginAt).IsRequired(false);
-        builder.Property(x => x.DepartmentId).IsRequired();
+        builder.Property(x => x.DepartmentId).IsRequired(false);
         builder.Property(x => x.UserCode).IsRequired();
         builder.Property(x => x.Dob).IsRequired(false);
         builder.Property(x => x.Gender).IsRequired();

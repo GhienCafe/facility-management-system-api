@@ -19,11 +19,33 @@ public class InitController : BaseController
     [AllowAnonymous]
     public async Task<IActionResult> Get()
     {
+        // Create campus
+        var campus = new Campus
+        {
+            Id = Guid.NewGuid(),
+            CampusName = "Hồ Chí Minh Campus",
+            Address = "Tp Hồ Chí Minh",
+            Description = "Không cần mô tả",
+            Telephone = "0977627412"
+        };
+
+        await _unitOfWork.CampusRepository.InsertAsync(campus, Guid.Empty, DateTime.UtcNow);
+
+        var department = new Department
+        {
+            Id = Guid.NewGuid(),
+            CampusId = campus.Id,
+            DepartmentCode = "DE001",
+            DepartmentName = "Ban quản lý"
+        };
+
+        await _unitOfWork.DepartmentRepository.InsertAsync(department, Guid.Empty, DateTime.UtcNow);
+        
         var salt = SecurityExtension.GenerateSalt();
         var user = new User
         {
             Id = Guid.NewGuid(),
-            DepartmentId = new Guid("2a5d5d12-266b-4355-d102-08dbad822bef"),
+            DepartmentId = department.Id,
             UserCode = "SE150747", // Gán giá trị UserCode ở đây
             Email = "giangntse150747@fpt.edu.vn",
             Address = "Thu Duc, TP Ho Chi Minh",
