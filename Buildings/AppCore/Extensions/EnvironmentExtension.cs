@@ -4,16 +4,16 @@ namespace AppCore.Extensions;
 
 public static class EnvironmentExtension
 {
-    private static IConfiguration Configuration { get; }
-
-    static EnvironmentExtension()
-    {
-        var configurationBuilder = new ConfigurationBuilder()
-            .SetBasePath(AppDomain.CurrentDomain.BaseDirectory)
-            .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true);
-
-        Configuration = configurationBuilder.Build();
-    }
+    // private static IConfiguration Configuration { get; }
+    //
+    // static EnvironmentExtension()
+    // {
+    //     var configurationBuilder = new ConfigurationBuilder()
+    //         .SetBasePath(AppDomain.CurrentDomain.BaseDirectory)
+    //         .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true);
+    //
+    //     Configuration = configurationBuilder.Build();
+    // }
     
     // ==================================== GLOBAL ======================================
     public static string GetAppLogFolder() =>
@@ -28,31 +28,31 @@ public static class EnvironmentExtension
     public static bool IsDevelopment() => GetEnvironment() == "Development";
 
     public static string GetAppConnectionString() =>
-        Configuration["ENV_ENVIRONMENTS:CONNECTION_STRING"] ?? string.Empty;
+        Environment.GetEnvironmentVariable("CONNECTION_STRING") ?? string.Empty;
     
     public static string GetPath() =>
-        Configuration["ENV_ENVIRONMENTS:DOMAIN_PATH"] ?? string.Empty;
+        Environment.GetEnvironmentVariable("DOMAIN_PATH") ?? string.Empty;
     
     public static string GetDomain() =>
-        Configuration["ENV_ENVIRONMENTS:DOMAIN"] ?? string.Empty;
+        Environment.GetEnvironmentVariable("DOMAIN") ?? string.Empty;
 
     public static string GetJwtIssuer() =>
-        Configuration["ENV_ENVIRONMENTS:JWT_ISSUER"] ?? string.Empty;
+        Environment.GetEnvironmentVariable("JWT_ISSUER") ?? string.Empty;
 
     public static string GetJwtAudience() =>
-        Configuration["ENV_ENVIRONMENTS:JWT_AUDIENCE"] ?? string.Empty;
+        Environment.GetEnvironmentVariable("JWT_AUDIENCE") ?? string.Empty;
 
     public static string GetJwtAccessTokenSecret() =>
-        Configuration["ENV_ENVIRONMENTS:JWT_ACCESS_TOKEN_SECRET"] ?? string.Empty;
+        Environment.GetEnvironmentVariable("JWT_ACCESS_TOKEN_SECRET") ?? string.Empty;
 
     public static double GetJwtAccessTokenExpires() =>
-        Convert.ToDouble(Configuration["ENV_ENVIRONMENTS:JWT_ACCESS_TOKEN_EXPIRES"] ?? string.Empty);
+        Convert.ToDouble(Environment.GetEnvironmentVariable("JWT_ACCESS_TOKEN_EXPIRES") ?? string.Empty);
 
     public static string GetJwtResetTokenSecret() =>
-        Configuration["ENV_ENVIRONMENTS:JWT_RESET_TOKEN_SECRET"] ?? string.Empty;
+        Environment.GetEnvironmentVariable("JWT_RESET_TOKEN_SECRET") ?? string.Empty;
 
     public static double GetJwtResetTokenExpires() =>
-        Convert.ToDouble(Configuration["ENV_ENVIRONMENTS:JWT_RESET_TOKEN_EXPIRES"] ?? string.Empty);
+        Convert.ToDouble(Environment.GetEnvironmentVariable("JWT_RESET_TOKEN_EXPIRES") ?? string.Empty);
 
     // public static string GetS3AccessKey() =>
     //     Environment.GetEnvironmentVariable("S3_ACCESS_KEY") ?? string.Empty;
