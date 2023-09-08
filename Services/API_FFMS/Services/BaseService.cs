@@ -20,6 +20,6 @@ public class BaseService : IBaseService
         MainUnitOfWork = mainUnitOfWork;
         HttpContextAccessor = httpContextAccessor;
         _mapperRepository = mapperRepository;
-        AccountId = httpContextAccessor.HttpContext?.User.GetUserId();
+        AccountId = httpContextAccessor.HttpContext?.User.GetAccountId();
     }
 }
