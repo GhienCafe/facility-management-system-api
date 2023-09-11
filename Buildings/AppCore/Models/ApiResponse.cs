@@ -2,7 +2,7 @@
 
 public class ApiResponse<T> : ApiResponse
 {
-    public T Items { get; set; }
+    public T Data { get; set; }
 
     public static ApiResponse<T> Success(T result)
     {
@@ -13,7 +13,7 @@ public class ApiResponse<T> : ApiResponse
     {
         return new ApiResponse<T>
         {
-            Items = data,
+            Data = data,
             StatusCode = statusCode,
             Message = message,
         };
