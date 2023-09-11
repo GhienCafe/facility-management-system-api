@@ -118,21 +118,23 @@ public class AuthService : BaseService, IAuthService
             {
                 user = await MainUnitOfWork.UserRepository.FindOneAsync(new Expression<Func<User, bool>>[]
                 {
-                    x => !x.DeletedAt.HasValue && x.Email==value.ToString(),
+                    x => !x.DeletedAt.HasValue && x.Email == value.ToString(),
                 });
                 // Kiểm tra xem email có khớp với mẫu FPT hoặc FE hay không
                 if (!Regex.IsMatch(value, fptOrFeEmailPattern))
                 {
                     throw new ApiException("Invalid FPT or FE email format", StatusCode.UNAUTHORIZED);
                 }
+
                 if (user == null)
                 {
-                    throw new ApiException("Not existed user",StatusCode.NOT_FOUND);
+                    throw new ApiException("Not existed user", StatusCode.NOT_FOUND);
                 }
+
                 // Check status
                 if (user.Status == UserStatus.InActive)
                     throw new ApiException(MessageKey.AccountNotActivated, StatusCode.NOT_ACTIVE);
-                
+
                 var claims = SetClaims(user);
                 var minute = EnvironmentExtension.GetJwtAccessTokenExpires();
                 var refreshMinute = EnvironmentExtension.GetJwtResetTokenExpires();
@@ -152,10 +154,10 @@ public class AuthService : BaseService, IAuthService
                     RefreshExpiredAt = refreshExpiredAt,
                     Status = TokenStatus.Active
                 };
-        
+
                 if (!await MainUnitOfWork.TokenRepository.InsertAsync(token, user.Id, CurrentDate))
                     throw new ApiException("Đang k biết lỗi gì", StatusCode.SERVER_ERROR);
-        
+
                 verifyResponse = new AuthDto
                 {
                     AccessExpiredAt = accessExpiredAt,
@@ -168,14 +170,15 @@ public class AuthService : BaseService, IAuthService
                     UserId = user.Id,
                     IsFirstLogin = (user.FirstLoginAt == null)
                 };
-        
+
                 user.FirstLoginAt ??= CurrentDate;
 
                 if (!await MainUnitOfWork.UserRepository.UpdateAsync(user, Guid.Empty, CurrentDate))
                     throw new ApiException("Login fail!", StatusCode.SERVER_ERROR);
-        
+
                 return ApiResponse<AuthDto>.Success(verifyResponse);
             }
+            else throw new ApiException("Login Fail", StatusCode.UNAUTHORIZED);
         }
         return ApiResponse<AuthDto>.Success(verifyResponse);
     }

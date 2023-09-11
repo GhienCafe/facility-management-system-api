@@ -34,7 +34,7 @@ public class CampusService :BaseService,ICampusService
 
         if (string.IsNullOrEmpty(queryDto.CampusName)==false)
         {
-            conditions = conditions.Append(x => x.CampusName.Trim().ToLower() == queryDto.CampusName.Trim().ToLower()).ToArray();
+            conditions = conditions.Append(x => x.CampusName.Trim().ToLower().Contains(queryDto.CampusName.Trim().ToLower())).ToArray();
         }
 
         var response = await MainUnitOfWork.CampusRepository.FindResultAsync<CampusDto>(conditions, queryDto.OrderBy, queryDto.Skip(), queryDto.PageSize);
