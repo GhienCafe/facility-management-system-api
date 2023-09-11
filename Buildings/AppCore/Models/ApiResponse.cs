@@ -2,7 +2,7 @@
 
 public class ApiResponse<T> : ApiResponse
 {
-    public T Data { get; set; }
+    public T Items { get; set; }
 
     public static ApiResponse<T> Success(T result)
     {
@@ -13,7 +13,7 @@ public class ApiResponse<T> : ApiResponse
     {
         return new ApiResponse<T>
         {
-            Data = data,
+            Items = data,
             StatusCode = statusCode,
             Message = message,
         };
@@ -22,11 +22,11 @@ public class ApiResponse<T> : ApiResponse
 
 public class ApiResponses<T> : ApiResponse
 {
-    public int? TotalCount { get; set; } = 0;
-    public int? PageSize { get; set; } = 0;
-    public int? Offset { get; set; } = 0;
+    public int? TotalItems { get; set; } = 0;
+    public int? ItemsPerPage { get; set; } = 0;
+    public int? Page { get; set; } = 0;
     public int? TotalPages { get; set; } = 0;
-    public IEnumerable<T> Data { get; set; }
+    public IEnumerable<T> Items { get; set; }
 
     public static ApiResponses<T> Success(IEnumerable<T> data, int? totalCount = null, int? pageSize = null,
         int? offset = null,
@@ -51,12 +51,12 @@ public class ApiResponses<T> : ApiResponse
     {
         return new ApiResponses<T>
         {
-            Data = data,
+            Items = data,
             StatusCode = statusCode,
             Message = message,
-            TotalCount = totalCount,
-            PageSize = pageSize,
-            Offset = offset,
+            TotalItems = totalCount,
+            ItemsPerPage = pageSize,
+            Page = offset,
             TotalPages = totalPages
         };
     }

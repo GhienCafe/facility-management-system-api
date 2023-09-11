@@ -8,9 +8,9 @@ namespace API_FFMS.Controllers;
 
 public class AccountController : BaseController
 {
-    private readonly IUserService _userService;
+    private readonly IAccountService _userService;
 
-    public AccountController(IUserService userService)
+    public AccountController(IAccountService userService)
     {
         _userService = userService;
     }
