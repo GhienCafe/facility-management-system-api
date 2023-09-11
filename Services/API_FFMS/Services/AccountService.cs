@@ -8,11 +8,11 @@ using Microsoft.EntityFrameworkCore;
 
 namespace API_FFMS.Services;
 
-public interface IUserService : IBaseService
+public interface IAccountService : IBaseService
 {
     Task<ApiResponse<AccountDto>> GetAccountInformation();
 }
-public class AccountService : BaseService, IUserService
+public class AccountService : BaseService, IAccountService
 {
     public AccountService(MainUnitOfWork mainUnitOfWork, IHttpContextAccessor httpContextAccessor, IMapperRepository mapperRepository) : base(mainUnitOfWork, httpContextAccessor, mapperRepository)
     {
@@ -31,7 +31,7 @@ public class AccountService : BaseService, IUserService
         }
 
         var user = MainUnitOfWork.UserRepository.GetQuery()
-            .Include(u => u.Department) // Đảm bảo rằng Department được nạp (include) để tránh lỗi NullReferenceException
+            .Include(u => u.Department) // Department  (include) to avoid NullReferenceException
             .SingleOrDefault(x => x.Id == account.Id);
 
         if (user == null)
@@ -39,9 +39,9 @@ public class AccountService : BaseService, IUserService
             throw new ApiException("Not found user", StatusCode.NOT_FOUND);
         }
 
-        account.DepartmentName = user.Department?.DepartmentName; // Sử dụng ?. để tránh lỗi NullReferenceException
+        account.DepartmentName = user.Department?.DepartmentName; // Use ?. to avoid NullReferenceException
 
-        // Lấy tên của UserRole bằng cách sử dụng Enum.GetName
+        // take name UserRole by Enum.GetName
         account.RoleString = Enum.GetName(typeof(UserRole), user.Role);
         return ApiResponse<AccountDto>.Success(account);
     }
