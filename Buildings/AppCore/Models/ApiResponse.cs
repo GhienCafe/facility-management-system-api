@@ -26,7 +26,7 @@ public class ApiResponses<T> : ApiResponse
     public int? ItemsPerPage { get; set; } = 0;
     public int? Page { get; set; } = 0;
     public int? TotalPages { get; set; } = 0;
-    public IEnumerable<T> Items { get; set; }
+    public IEnumerable<T> Data { get; set; }
 
     public static ApiResponses<T> Success(IEnumerable<T> data, int? totalCount = null, int? pageSize = null,
         int? offset = null,
@@ -51,7 +51,7 @@ public class ApiResponses<T> : ApiResponse
     {
         return new ApiResponses<T>
         {
-            Items = data,
+            Data = data,
             StatusCode = statusCode,
             Message = message,
             TotalItems = totalCount,
