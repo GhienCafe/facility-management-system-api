@@ -114,12 +114,11 @@ public class AuthService : BaseService, IAuthService
         foreach (var key in keys)
         {
             var value = tokenInfo[key];
-            if (key.Equals("email"))
+            if (key.Trim().ToLower().Equals("email"))
             {
-                user = await MainUnitOfWork.UserRepository.FindOneAsync(new Expression<Func<User, bool>>[]
-                {
-                    x => !x.DeletedAt.HasValue && x.Email == value.ToString(),
-                });
+                // Ensure both the token email claim and the database email are in the same case
+                user = MainUnitOfWork.UserRepository.GetQuery()
+                    .Where(x => x.Email.Trim().ToLower() == value.Trim().ToLower()).SingleOrDefault();
                 // Kiểm tra xem email có khớp với mẫu FPT hoặc FE hay không
                 if (!Regex.IsMatch(value, fptOrFeEmailPattern))
                 {
@@ -178,9 +177,9 @@ public class AuthService : BaseService, IAuthService
 
                 return ApiResponse<AuthDto>.Success(verifyResponse);
             }
-            else throw new ApiException("Login Fail", StatusCode.UNAUTHORIZED);
+            
         }
-        return ApiResponse<AuthDto>.Success(verifyResponse);
+        throw new ApiException("Login Fail", StatusCode.UNAUTHORIZED);
     }
 
     public async Task<ApiResponse<AuthDto>> RefreshToken(AuthRefreshDto authRefreshDto)

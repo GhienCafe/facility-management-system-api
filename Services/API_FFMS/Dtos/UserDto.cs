@@ -16,7 +16,6 @@ public class UserDto : BaseDto
 public class UserUpdateDto
 {
     public Guid? DepartmentId { get; set; }
-    public string UserCode { get; set; } = null!;
     public string Fullname { get; set; } = null!;
     public UserRole Role { get; set; }
     public string? Avatar { get; set; }
