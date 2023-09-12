@@ -85,12 +85,12 @@ public class AssetService : BaseService, IAssetService
 
         if (string.IsNullOrEmpty(queryDto.AssetName) == false)
         {
-            conditions = conditions.Append(x => x.AssetName.Trim().ToLower() == queryDto.AssetName.Trim().ToLower()).ToArray();
+            conditions = conditions.Append(x => x.AssetName.Trim().ToLower().Contains(queryDto.AssetName.Trim().ToLower())).ToArray();
         }
 
         if (string.IsNullOrEmpty(queryDto.AssetCode) == false)
         {
-            conditions = conditions.Append(x => x.AssetCode.Trim().ToLower() == queryDto.AssetCode.Trim().ToLower()).ToArray();
+            conditions = conditions.Append(x => x.AssetCode.Trim().ToLower().Contains(queryDto.AssetCode.Trim().ToLower())).ToArray();
         }
 
         var response = await MainUnitOfWork.AssetRepository.FindResultAsync<AssetDto>(conditions, queryDto.OrderBy, queryDto.Skip(), queryDto.PageSize);

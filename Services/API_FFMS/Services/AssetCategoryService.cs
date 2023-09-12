@@ -25,10 +25,6 @@ namespace API_FFMS.Services
 
         public async Task<ApiResponse> Create(AssetCategoryCreateDto createDto)
         {
-            if (!createDto.CategoryName.IsBetweenLength(1, 255))
-            {
-                throw new ApiException("Cannot create asset category when the name is null or must have a length between 1 and 255 characters", StatusCode.ALREADY_EXISTS);
-            }
 
             var existingCategory = MainUnitOfWork.AssetCategoryRepository.GetQuery()
                                    .Where(x => x.CategoryName.Trim().ToLower() == createDto.CategoryName.Trim().ToLower())
@@ -85,7 +81,7 @@ namespace API_FFMS.Services
 
             if (string.IsNullOrEmpty(queryDto.CategoryCode) == false)
             {
-                conditions = conditions.Append(x => x.CategoryCode.Trim().ToLower() == queryDto.CategoryCode.Trim().ToLower()).ToArray();
+                conditions = conditions.Append(x => x.CategoryCode.Trim().ToLower().Contains(queryDto.CategoryCode.Trim().ToLower())).ToArray();
             }
 
             var response = await MainUnitOfWork.AssetCategoryRepository.FindResultAsync<AssetCategoryDto>(

@@ -1,5 +1,4 @@
 ﻿using AppCore.Data;
-using AppCore.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
