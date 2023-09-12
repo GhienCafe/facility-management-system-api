@@ -3,6 +3,7 @@ using System.Text.RegularExpressions;
 using API_FFMS.Dtos;
 using AppCore.Extensions;
 using AppCore.Models;
+using DocumentFormat.OpenXml.Office2016.Drawing.ChartDrawing;
 using MainData;
 using MainData.Entities;
 using MainData.Repositories;
@@ -12,16 +13,31 @@ namespace API_FFMS.Services;
 
 public interface IUserService : IBaseService
 {
-    Task<ApiResponse> UpdateUser(Guid id, UserUpdateDto updateDto);
-    Task<ApiResponse> CreateUser(UserCreateDto createDto);
+    Task<ApiResponse> Update(Guid id, UserUpdateDto updateDto);
+    Task<ApiResponse> Create(UserCreateDto createDto);
+    Task<ApiResponse> Delete(Guid id);
+    Task<ApiResponses<UserDto>> GetList(UserQueryDto queryDto);
+    Task<ApiResponse<UserDetailDto>> GetDetail(Guid id);
 }
 public class UserService : BaseService, IUserService
 {
+    private async Task CheckPermission(Guid accountId)
+    {
+        var user = await MainUnitOfWork.UserRepository.GetQuery()
+            .Where(x => x.Id == accountId)
+            .SingleOrDefaultAsync();
+
+        if (user?.Role != UserRole.Administrator)
+        {
+            throw new ApiException("Not valid with role", StatusCode.FORBIDDEN);
+        }
+    }
     public UserService(MainUnitOfWork mainUnitOfWork, IHttpContextAccessor httpContextAccessor, IMapperRepository mapperRepository) : base(mainUnitOfWork, httpContextAccessor, mapperRepository)
     {
     }
-    public async Task<ApiResponse> UpdateUser(Guid id, UserUpdateDto updateDto)
+    public async Task<ApiResponse> Update(Guid id, UserUpdateDto updateDto)
     {
+        await CheckPermission(AccountId.Value);
         var user = await MainUnitOfWork.UserRepository.FindOneAsync(new Expression<Func<User, bool>>[]
         {
             x => !x.DeletedAt.HasValue,
@@ -41,16 +57,6 @@ public class UserService : BaseService, IUserService
 
         if (user.Id != AccountId)
         {
-            var checkRole = await MainUnitOfWork.UserRepository.FindOneAsync(new Expression<Func<User, bool>>[]
-            {
-                x => !x.DeletedAt.HasValue,
-                x => x.Id == AccountId,
-                x => x.Role == UserRole.GlobalManager || x.Role == UserRole.CampusManagers
-            });
-
-            if (checkRole == null)
-                throw new ApiException("Can't update information of this user", StatusCode.BAD_REQUEST);
-
             if (updateDto.Role != null)
             {
                 user.Role = updateDto.Role;
@@ -84,8 +90,9 @@ public class UserService : BaseService, IUserService
     }
     
     
-    public async Task<ApiResponse> CreateUser(UserCreateDto createDto)
+    public async Task<ApiResponse> Create(UserCreateDto createDto)
     {
+        await CheckPermission(AccountId.Value);
         var existedEmail = await MainUnitOfWork.UserRepository.FindAsync(new Expression<Func<User, bool>>[]
         {
             x => !x.DeletedAt.HasValue,
@@ -104,7 +111,9 @@ public class UserService : BaseService, IUserService
         user.Avatar = createDto.Avatar ?? user.Avatar;
         user.Salt = salt;
         
-        string email = createDto.Email;
+        
+        // Get the part of the email address after the "@" symbol and limit it to 8 characters
+        string email = createDto.Email.ToLower();
         if (string.IsNullOrWhiteSpace(email))
         {
             throw new ApiException("Email must not be empty.", StatusCode.BAD_REQUEST);
@@ -124,6 +133,26 @@ public class UserService : BaseService, IUserService
                 throw new ApiException("Invalid email address.", StatusCode.BAD_REQUEST);
             }
         }
+        int atIndex = email.IndexOf('@');
+    
+        if (atIndex == -1 || atIndex + 8 >= email.Length)
+        {
+            throw new ApiException("Email address must contain at least 8 characters after '@'.", StatusCode.BAD_REQUEST);
+        }
+
+        string userCode = email.Substring(atIndex - 8, 8);
+
+        string UserCode=null;
+        // Check if the user code already exists in the system
+        if (MainUnitOfWork.UserRepository.GetQuery()
+            .Where(x => x.UserCode.Trim().ToLower() == userCode.Trim().ToLower())
+            .SingleOrDefault()!=null)
+        {
+            userCode = email.Substring(atIndex - 9, 8);
+        };
+
+
+        user.UserCode = userCode;
         
         string phoneNumber = createDto.PhoneNumber;
         if (user.Address.Equals(""))
@@ -196,6 +225,83 @@ public class UserService : BaseService, IUserService
             return ApiResponse.Success();
         }
         else throw new ApiException("Register user fail", StatusCode.SERVER_ERROR);
+        return ApiResponse.Success();
+    }
+    
+    
+    public async Task<ApiResponse<UserDetailDto>> GetDetail(Guid id)
+    {
+        await CheckPermission(AccountId.Value);
+        var existingUser = await MainUnitOfWork.UserRepository.FindOneAsync<UserDetailDto>(
+            new Expression<Func<User, bool>>[]
+            {
+                x => !x.DeletedAt.HasValue,
+                x => x.Id == id
+            });
+
+        if (existingUser == null)
+            throw new ApiException("Not found this user", StatusCode.NOT_FOUND);
+
+        existingUser = await _mapperRepository.MapCreator(existingUser);
+        
+        var departmentIsDeleted = await MainUnitOfWork.DepartmentRepository.FindOneAsync(
+            new Expression<Func<Department, bool>>[]
+            {
+                x => !x.DeletedAt.HasValue,
+                x => x.CreatorId == AccountId,
+                x => x.Id == existingUser.DepartmentId
+            }) ;
+        if (departmentIsDeleted == null)
+        {
+            throw new ApiException("Department is delete with user");
+        }
+        return ApiResponse<UserDetailDto>.Success(existingUser);
+    }
+
+    public async Task<ApiResponses<UserDto>> GetList(UserQueryDto queryDto)
+    {
+        await CheckPermission(AccountId.Value);
+
+        Expression<Func<User, bool>>[] conditions = new Expression<Func<User, bool>>[]
+        {
+            x => !x.DeletedAt.HasValue
+        };
+
+        if (string.IsNullOrEmpty(queryDto.UserCode)==false)
+        {
+            conditions = conditions.Append(x => x.UserCode.Trim().ToLower().Contains(queryDto.UserCode.Trim().ToLower())).ToArray();
+        }
+        if (string.IsNullOrEmpty(queryDto.Fullname)==false)
+        {
+            conditions = conditions.Append(x => x.Fullname.Trim().ToLower().Contains(queryDto.Fullname.Trim().ToLower())).ToArray();
+        }
+        if (string.IsNullOrEmpty(queryDto.Email)==false)
+        {
+            conditions = conditions.Append(x => x.Email.Trim().ToLower().Contains(queryDto.Email.Trim().ToLower())).ToArray();
+        }
+        var response = await MainUnitOfWork.UserRepository.FindResultAsync<UserDto>(conditions, queryDto.OrderBy, queryDto.Skip(), queryDto.PageSize);
+        return ApiResponses<UserDto>.Success(
+            response.Items,
+            response.TotalCount,
+            queryDto.PageSize,
+            queryDto.Skip(),
+            (int)Math.Ceiling(response.TotalCount / (double)queryDto.PageSize)
+        );
+    }
+
+
+    public async Task<ApiResponse> Delete(Guid id)
+    {
+        if (MainUnitOfWork.UserRepository.GetQuery().Where(x=>x.Id==AccountId).SingleOrDefault().Role != UserRole.Administrator)
+        {
+            throw new ApiException("Not valid with role", StatusCode.FORBIDDEN);
+        }
+        var existingUsers = await MainUnitOfWork.UserRepository.FindOneAsync(id);
+        if (existingUsers == null)
+            throw new ApiException("Not found this user", StatusCode.NOT_FOUND);
+        if (!await MainUnitOfWork.UserRepository.DeleteAsync(existingUsers, AccountId, CurrentDate))
+            throw new ApiException("Can't not delete", StatusCode.SERVER_ERROR);
+
         return ApiResponse.Success();
     }
 }

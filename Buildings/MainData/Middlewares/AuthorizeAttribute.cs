@@ -39,7 +39,7 @@ public class AuthorizeAttribute : Attribute, IAuthorizationFilter
             }
             else
             {
-                if (_roles.Any() && _roles.All(x => x != UserRole.GlobalManager))
+                if (_roles.Any() && _roles.All(x => x != UserRole.Administrator))
                 {
                     if (!user.GetActive() && !_allowInactive)
                         throw new ApiException(MessageKey.Forbidden, StatusCode.FORBIDDEN);

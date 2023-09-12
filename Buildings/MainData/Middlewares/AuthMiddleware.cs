@@ -46,7 +46,7 @@ public class AuthMiddleware
                 return;
             }
 
-            if (account.Role is UserRole.GlobalManager)
+            if (account.Role is UserRole.Administrator)
             {
                 httpContext.User = new ClaimsPrincipal(new ClaimsIdentity(new[]
                 {
