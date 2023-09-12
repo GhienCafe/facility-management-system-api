@@ -52,7 +52,7 @@ public class InitController : BaseController
             Fullname = "Nguyen Truong Giang",
             Gender = true,
             Password = SecurityExtension.HashPassword<User>("Giang123@", salt),
-            Role = UserRole.GlobalManager,
+            Role = UserRole.Administrator,
             Salt = salt,
             Status = UserStatus.Active,
             PhoneNumber = "0977264752",

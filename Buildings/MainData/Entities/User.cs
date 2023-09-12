@@ -34,10 +34,9 @@ public class User : BaseEntity
 
 public enum UserRole
 {
-    GlobalManager = 1,
-    CampusManagers = 2,
-    FacilitiesManager = 3,
-    TechnicalSpecialist = 4
+    Administrator = 1,
+    CampusManager = 2,
+    Staff = 3
 }
 
 

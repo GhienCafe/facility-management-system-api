@@ -10,4 +10,5 @@
       <ProjectReference Include="..\AppCore\AppCore.csproj" />
     </ItemGroup>
 
+
 </Project>
