@@ -19,14 +19,10 @@ public class Room : BaseEntity
     public virtual IEnumerable<RoomAsset>? RoomAssets { get; set; }
     public virtual RoomStatus? Status { get; set; }
 }
-// public enum StatusEnum  
-// {
-//     ClassInSession=1,UnderMaintenance=2,NotAvailable,
-// }
 
 public enum RoomTypeEnum
 {
-    Library = 1, TeaBreak=2, ClassRoom = 3, ItSupport = 4, GD_WS = 5, HallA=6, HallB=7, HallC=8, Studio = 9, LB=10 , WareHouse = 11
+    Library = 1, TeaBreak=2, ClassRoom = 3, ItSupport = 4, GD_WS = 5, Hall = 6, Studio = 7, InstrumentClassroom = 8, WareHouse = 9
 }
 
 public class RoomConfig : IEntityTypeConfiguration<Room>
@@ -35,7 +31,7 @@ public class RoomConfig : IEntityTypeConfiguration<Room>
     {
         builder.ToTable("Rooms");
         builder.Property(x => x.Area).IsRequired(false);
-        builder.Property(x => x.PathRoom).IsRequired();
+        builder.Property(x => x.PathRoom).IsRequired(false);
         builder.Property(x => x.RoomCode).IsRequired();
         builder.Property(x => x.RoomType).IsRequired();
         builder.Property(x => x.Capacity).IsRequired(false);

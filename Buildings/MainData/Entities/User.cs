@@ -24,20 +24,17 @@ public class User : BaseEntity
     public DateTime? LastLoginAt { get; set; }
     
     //
-    public virtual Department? Department { get; set; }
-    public virtual IEnumerable<RequestParticipant>? RequestParticipants { get; set; }
-    public virtual IEnumerable<HandoverParticipant>? HandoverParticipants { get; set; }
-    public virtual IEnumerable<MaintenanceParticipant>? MaintenanceParticipants { get; set; }
-    public virtual IEnumerable<InventoryTeamMember>? InventoryTeamMembers { get; set; }
-
+    public virtual IEnumerable<Token>? Tokens { get; set; }
+    public virtual IEnumerable<Maintenance>? Maintenances { get; set; }
+    public virtual IEnumerable<Replacement>? Replacements { get; set; }
+    public virtual IEnumerable<Notification>? Notifications { get; set; }
 }
 
 public enum UserRole
 {
-    GlobalManager = 1,
-    CampusManagers = 2,
-    FacilitiesManager = 3,
-    TechnicalSpecialist = 4
+    Administrator = 1,
+    Manager = 2,
+    Staff = 3
 }
 
 
@@ -71,29 +68,20 @@ public class UserConfig : IEntityTypeConfiguration<User>
         builder.HasIndex(x => x.UserCode).IsUnique();
         
         //Relationship
-        builder.HasOne(x => x.Department)
-            .WithMany(x => x.Users)
-            .HasForeignKey(x => x.DepartmentId);
-        
-        builder.HasOne(x => x.Department)
-            .WithMany(x => x.Users)
-            .HasForeignKey(x => x.DepartmentId);
-        
-        builder.HasMany(x => x.RequestParticipants)
+        builder.HasMany(x => x.Tokens)
             .WithOne(x => x.User)
             .HasForeignKey(x => x.UserId);
         
-        builder.HasMany(x => x.HandoverParticipants)
+        builder.HasMany(x => x.Maintenances)
+            .WithOne(x => x.User)
+            .HasForeignKey(x => x.CreatorId);
+        
+        builder.HasMany(x => x.Replacements)
+            .WithOne(x => x.User)
+            .HasForeignKey(x => x.CreatorId);
+        
+        builder.HasMany(x => x.Notifications)
             .WithOne(x => x.User)
             .HasForeignKey(x => x.UserId);
-        
-        builder.HasMany(x => x.MaintenanceParticipants)
-            .WithOne(x => x.User)
-            .HasForeignKey(x => x.UserId);
-        
-        builder.HasMany(x => x.InventoryTeamMembers)
-            .WithOne(x => x.User)
-            .HasForeignKey(x => x.UserId)
-            .OnDelete(DeleteBehavior.Restrict);
     }
 }

@@ -27,7 +27,7 @@ public class InitController : BaseController
             Address = "Thu Duc, TP Ho Chi Minh",
             Fullname = "Nguyen Truong Giang",
             Password = SecurityExtension.HashPassword<User>("Giang123@", salt),
-            Role = UserRole.GlobalManager,
+            Role = UserRole.Manager,
             Salt = salt,
             Status = UserStatus.Active,
             PhoneNumber = "0977264752",
