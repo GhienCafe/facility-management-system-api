@@ -11,7 +11,7 @@ public class User : BaseEntity
     public string Fullname { get; set; } = null!;
     public UserRole Role { get; set; }
     public string? Avatar { get; set; }
-    public  UserStatus Status { get; set; }
+    public UserStatus Status { get; set; }
     public string Email { get; set; } = null!;
     public string PhoneNumber { get; set; } = null!;
     public string Address { get; set; } = null!;
@@ -22,20 +22,18 @@ public class User : BaseEntity
     public string Salt { get; set; } = null!;
     public DateTime? FirstLoginAt { get; set; }
     public DateTime? LastLoginAt { get; set; }
-    
-    //
-    public virtual Department? Department { get; set; }
-    public virtual IEnumerable<RequestParticipant>? RequestParticipants { get; set; }
-    public virtual IEnumerable<HandoverParticipant>? HandoverParticipants { get; set; }
-    public virtual IEnumerable<MaintenanceParticipant>? MaintenanceParticipants { get; set; }
-    public virtual IEnumerable<InventoryTeamMember>? InventoryTeamMembers { get; set; }
 
+    //
+    public virtual IEnumerable<Token>? Tokens { get; set; }
+    public virtual IEnumerable<Maintenance>? Maintenances { get; set; }
+    public virtual IEnumerable<Replacement>? Replacements { get; set; }
+    public virtual IEnumerable<Notification>? Notifications { get; set; }
 }
 
 public enum UserRole
 {
     Administrator = 1,
-    CampusManager = 2,
+    Manager = 2,
     Staff = 3
 }
 
@@ -65,34 +63,25 @@ public class UserConfig : IEntityTypeConfiguration<User>
         builder.Property(x => x.Dob).IsRequired(false);
         builder.Property(x => x.Gender).IsRequired();
         builder.Property(x => x.PersonalIdentifyNumber).IsRequired(false);
-        
+
         // Attributes
         builder.HasIndex(x => x.UserCode).IsUnique();
-        
+
         //Relationship
-        builder.HasOne(x => x.Department)
-            .WithMany(x => x.Users)
-            .HasForeignKey(x => x.DepartmentId);
-        
-        builder.HasOne(x => x.Department)
-            .WithMany(x => x.Users)
-            .HasForeignKey(x => x.DepartmentId);
-        
-        builder.HasMany(x => x.RequestParticipants)
+        builder.HasMany(x => x.Tokens)
             .WithOne(x => x.User)
             .HasForeignKey(x => x.UserId);
-        
-        builder.HasMany(x => x.HandoverParticipants)
+
+        builder.HasMany(x => x.Maintenances)
+            .WithOne(x => x.User)
+            .HasForeignKey(x => x.CreatorId);
+
+        builder.HasMany(x => x.Replacements)
+            .WithOne(x => x.User)
+            .HasForeignKey(x => x.CreatorId);
+
+        builder.HasMany(x => x.Notifications)
             .WithOne(x => x.User)
             .HasForeignKey(x => x.UserId);
-        
-        builder.HasMany(x => x.MaintenanceParticipants)
-            .WithOne(x => x.User)
-            .HasForeignKey(x => x.UserId);
-        
-        builder.HasMany(x => x.InventoryTeamMembers)
-            .WithOne(x => x.User)
-            .HasForeignKey(x => x.UserId)
-            .OnDelete(DeleteBehavior.Restrict);
     }
 }

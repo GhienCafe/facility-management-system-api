@@ -343,5 +343,8 @@ healthchecksdb
 .sonarqube/
 .sonarlint/
 Logs/
-**/appsettings.json
-Services/API_FFMS/appsettings.json
+
+# Settings
+Services/API_FFMS/Properties/launchSettings.json
+Services/InitDatabase/Program.cs
+**/Services/API_FFMS/Properties/launchSettings.json

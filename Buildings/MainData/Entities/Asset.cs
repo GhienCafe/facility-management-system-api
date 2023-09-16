@@ -6,23 +6,22 @@ namespace MainData.Entities;
 
 public class Asset : BaseEntity
 {
-    public Guid CategoryId { get; set; }
+    public Guid TypeId { get; set; }
     public string AssetName { get; set; } = null!;
     public string? AssetCode { get; set; }
+    public bool IsMovable { get; set; }
     public AssetStatus Status { get; set; }
-    public DateTime ManufacturingYear { get; set; }
+    public DateTime? ManufacturingYear { get; set; }
     public string? SerialNumber { get; set; }
     public double Quantity { get; set; }
     public string? Description { get; set; }
     public DateTime? LastMaintenanceTime { get; set; }
     
     //
-    public virtual AssetCategory? AssetCategory { get; set; }
+    public virtual AssetType? Type { get; set; }
     public virtual IEnumerable<RoomAsset>? RoomAssets { get; set; }
-    public virtual IEnumerable<HandoverDetail>? HandoverDetails { get; set; }
     public virtual IEnumerable<MaintenanceDetail>? MaintenanceDetails { get; set; }
-    public virtual IEnumerable<InventoryDetail>? InventoryDetails { get; set; }
-    
+    public virtual IEnumerable<ReplacementDetail>? ReplacementDetails { get; set; }
 }
 
 public enum AssetStatus
@@ -45,11 +44,12 @@ public class AssetConfig : IEntityTypeConfiguration<Asset>
     {
         builder.ToTable("Assets");
         
-        builder.Property(a => a.CategoryId).IsRequired();
+        builder.Property(a => a.TypeId).IsRequired();
         builder.Property(a => a.AssetName).IsRequired();
-        builder.Property(a => a.AssetCode).IsRequired();
+        builder.Property(a => a.AssetCode).IsRequired(false);
         builder.Property(a => a.Status).IsRequired();
-        builder.Property(a => a.ManufacturingYear).IsRequired();
+        builder.Property(a => a.IsMovable).IsRequired();
+        builder.Property(a => a.ManufacturingYear).IsRequired(false);
         builder.Property(a => a.SerialNumber).IsRequired(false);
         builder.Property(a => a.Quantity).IsRequired();
         builder.Property(a => a.LastMaintenanceTime).IsRequired(false);
@@ -59,27 +59,20 @@ public class AssetConfig : IEntityTypeConfiguration<Asset>
         builder.HasIndex(a => a.AssetCode).IsUnique();
 
         //Relationship
-        builder.HasOne(x => x.AssetCategory)
+        builder.HasOne(x => x.Type)
             .WithMany(x => x.Assets)
-            .HasForeignKey(x => x.CategoryId);
+            .HasForeignKey(x => x.TypeId);
         
         builder.HasMany(x => x.RoomAssets)
             .WithOne(x => x.Asset)
             .HasForeignKey(x => x.AssetId);
-        
-        builder.HasMany(x => x.HandoverDetails)
-            .WithOne(x => x.Asset)
-            .HasForeignKey(x => x.AssetCode) 
-            .HasPrincipalKey(x => x.AssetCode); 
-        
+
         builder.HasMany(x => x.MaintenanceDetails)
             .WithOne(x => x.Asset)
-            .HasForeignKey(x => x.AssetCode) 
-            .HasPrincipalKey(x => x.AssetCode); 
+            .HasForeignKey(x => x.AssetId);
 
-        builder.HasMany(x => x.InventoryDetails)
+        builder.HasMany(x => x.ReplacementDetails)
             .WithOne(x => x.Asset)
-            .HasForeignKey(x => x.AssetCode) 
-            .HasPrincipalKey(x => x.AssetCode); 
+            .HasForeignKey(x => x.AssetId);
     }
 }   
