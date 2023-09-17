@@ -123,29 +123,30 @@ public class AssetService : BaseService, IAssetService
 
     public async Task<ApiResponse<AssetDetailDto>> Update(Guid id, AssetUpdateDto updateDto)
     {
-        var existingAsset = await MainUnitOfWork.AssetRepository.FindOneAsync(id);
-        if (existingAsset == null)
-        {
-            throw new ApiException("Not found this asset", StatusCode.NOT_FOUND);
-        }
-
-        //var assetUpdate = updateDto.ProjectTo<AssetUpdateDto, Asset>();
-
-        var assetUpdate = existingAsset;
-
-        existingAsset.CategoryId = updateDto.CategoryId ?? existingAsset.CategoryId;
-        existingAsset.AssetName = updateDto.AssetName ?? existingAsset.AssetName;
-        existingAsset.Status = updateDto.Status ?? existingAsset.Status;
-        existingAsset.ManufacturingYear = updateDto.ManufacturingYear ?? existingAsset.ManufacturingYear;
-        existingAsset.SerialNumber = updateDto.SerialNumber ?? existingAsset.SerialNumber;
-        existingAsset.Quantity = updateDto.Quantity ?? existingAsset.Quantity;
-        existingAsset.Description = updateDto.Description ?? existingAsset.Description;
-
-        if (!await MainUnitOfWork.AssetRepository.UpdateAsync(assetUpdate, AccountId, CurrentDate))
-        {
-            throw new ApiException("Can't not update", StatusCode.SERVER_ERROR);
-        }
-
-        return await GetAsset(id);
+        // var existingAsset = await MainUnitOfWork.AssetRepository.FindOneAsync(id);
+        // if (existingAsset == null)
+        // {
+        //     throw new ApiException("Not found this asset", StatusCode.NOT_FOUND);
+        // }
+        //
+        // //var assetUpdate = updateDto.ProjectTo<AssetUpdateDto, Asset>();
+        //
+        // var assetUpdate = existingAsset;
+        //
+        // existingAsset.CategoryId = updateDto.CategoryId ?? existingAsset.CategoryId;
+        // existingAsset.AssetName = updateDto.AssetName ?? existingAsset.AssetName;
+        // existingAsset.Status = updateDto.Status ?? existingAsset.Status;
+        // existingAsset.ManufacturingYear = updateDto.ManufacturingYear ?? existingAsset.ManufacturingYear;
+        // existingAsset.SerialNumber = updateDto.SerialNumber ?? existingAsset.SerialNumber;
+        // existingAsset.Quantity = updateDto.Quantity ?? existingAsset.Quantity;
+        // existingAsset.Description = updateDto.Description ?? existingAsset.Description;
+        //
+        // if (!await MainUnitOfWork.AssetRepository.UpdateAsync(assetUpdate, AccountId, CurrentDate))
+        // {
+        //     throw new ApiException("Can't not update", StatusCode.SERVER_ERROR);
+        // }
+        //
+        // return await GetAsset(id);
+        throw new ApiException("Not implement");
     }
 }

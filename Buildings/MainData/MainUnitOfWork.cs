@@ -21,7 +21,7 @@ public class MainUnitOfWork : IDisposable
 
     public BaseRepository<RoomStatus> RoomStatusRepository => new(_context);
 
-    public BaseRepository<AssetCategory> AssetCategoryRepository => new(_context);
+    public BaseRepository<AssetType> AssetTypeRepository => new(_context);
     public BaseRepository<Asset> AssetRepository => new(_context);
 
     public void Dispose()

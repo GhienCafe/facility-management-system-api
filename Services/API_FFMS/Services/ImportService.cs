@@ -22,74 +22,75 @@ namespace API_FFMS.Services
 
         public async Task<ApiResponse<ImportError>> ImportAssets(IFormFile formFile)
         {
-            validationErrors.Clear();
-
-            if (formFile == null)
-            {
-                throw new ApiException("Not recognized file");
-            }
-
-            string[] extensions = { ".xlsx", ".xls" };
-            if (!extensions.Contains(Path.GetExtension(formFile.FileName)))
-            {
-                throw new ApiException("Not supported file extension");
-            }
-
-            try
-            {
-                var assetDtos = ExcelReader.AssetReader(formFile.OpenReadStream());
-
-                var assets = assetDtos.Select(dto => new Asset
-                {
-                    AssetName = dto.AssetName,
-                    AssetCode = dto.AssetCode,
-                    AssetCategory = GetAssetCategoryByCode(dto.CategoryCode),
-                    Status = dto.Status,
-                    ManufacturingYear = dto.ManufacturingYear,
-                    SerialNumber = dto.SerialNumber,
-                    Quantity = dto.Quantity,
-                    Description = dto.Description
-                }).ToList();
-
-                // Validation checks
-                CheckAllFieldsNotBlank(assetDtos);
-                CheckUniqueAssetCodes(assets);
-                await CheckUniqueAssetCodesInDatabase(assets);
-                await CheckCategoryCodeExistInDatabase(assets);
-                CheckManufacturingYear(assets);
-                CheckQuantity(assets);
-                CheckStatusValueRange(assets);
-
-                // Filter out assets with validation errors
-                var validAssets = assets.Where(a => !validationErrors.Any(e => e.Row == assets.IndexOf(a) + 2)).ToList();
-
-                if (validationErrors.Count > 0 && validAssets.Count > 0)
-                {
-                    if (!await MainUnitOfWork.AssetRepository.InsertAsync(validAssets, AccountId, CurrentDate))
-                    {
-                        throw new ApiException("Import assets failed", StatusCode.SERVER_ERROR);
-                    }
-                    return ApiResponse<ImportError>.Failed("Import failed due to validation errors", StatusCode.BAD_REQUEST, validationErrors);
-                }
-
-                //if (validAssets.Count > 0)
-                //{
-                    
-                //}
-
-                return (ApiResponse<ImportError>)ApiResponse<ImportError>.Success();
-            }
-            catch (Exception exception)
-            {
-                throw new ApiException(exception.Message);
-            }
+            // validationErrors.Clear();
+            //
+            // if (formFile == null)
+            // {
+            //     throw new ApiException("Not recognized file");
+            // }
+            //
+            // string[] extensions = { ".xlsx", ".xls" };
+            // if (!extensions.Contains(Path.GetExtension(formFile.FileName)))
+            // {
+            //     throw new ApiException("Not supported file extension");
+            // }
+            //
+            // try
+            // {
+            //     var assetDtos = ExcelReader.AssetReader(formFile.OpenReadStream());
+            //
+            //     var assets = assetDtos.Select(dto => new Asset
+            //     {
+            //         AssetName = dto.AssetName,
+            //         AssetCode = dto.AssetCode,
+            //         AssetCategory = GetAssetCategoryByCode(dto.CategoryCode),
+            //         Status = dto.Status,
+            //         ManufacturingYear = dto.ManufacturingYear,
+            //         SerialNumber = dto.SerialNumber,
+            //         Quantity = dto.Quantity,
+            //         Description = dto.Description
+            //     }).ToList();
+            //
+            //     // Validation checks
+            //     CheckAllFieldsNotBlank(assetDtos);
+            //     CheckUniqueAssetCodes(assets);
+            //     await CheckUniqueAssetCodesInDatabase(assets);
+            //     await CheckCategoryCodeExistInDatabase(assets);
+            //     CheckManufacturingYear(assets);
+            //     CheckQuantity(assets);
+            //     CheckStatusValueRange(assets);
+            //
+            //     // Filter out assets with validation errors
+            //     var validAssets = assets.Where(a => !validationErrors.Any(e => e.Row == assets.IndexOf(a) + 2)).ToList();
+            //
+            //     if (validationErrors.Count > 0 && validAssets.Count > 0)
+            //     {
+            //         if (!await MainUnitOfWork.AssetRepository.InsertAsync(validAssets, AccountId, CurrentDate))
+            //         {
+            //             throw new ApiException("Import assets failed", StatusCode.SERVER_ERROR);
+            //         }
+            //         return ApiResponse<ImportError>.Failed("Import failed due to validation errors", StatusCode.BAD_REQUEST, validationErrors);
+            //     }
+            //
+            //     //if (validAssets.Count > 0)
+            //     //{
+            //         
+            //     //}
+            //
+            //     return (ApiResponse<ImportError>)ApiResponse<ImportError>.Success();
+            // }
+            // catch (Exception exception)
+            // {
+            //     throw new ApiException(exception.Message);
+            // }
+            throw new ApiException("Not implement");
         }
 
-        private AssetCategory? GetAssetCategoryByCode(string? categoryCode)
+        private AssetType? GetAssetCategoryByCode(string? categoryCode)
         {
-            var assetCategory = MainUnitOfWork.AssetCategoryRepository.GetQuery()
-                                .Where(x => x.CategoryCode.Trim().ToLower()
-                                .Contains(categoryCode.Trim().ToLower()))
+            var assetCategory = MainUnitOfWork.AssetTypeRepository.GetQuery()
+                                .Where(x => x.TypeCode.Trim().ToLower()
+                                .Contains(categoryCode!.Trim().ToLower()))
                                 .FirstOrDefault();
             if (assetCategory == null)
             {
@@ -172,33 +173,33 @@ namespace API_FFMS.Services
 
         private void CheckUniqueAssetCategories(List<Asset> assets)
         {
-            var duplicateCategories = assets
-                .GroupBy(a => a.AssetCategory?.CategoryCode)
-                .Where(g => g.Count() > 1)
-                .Select(g => g.Key)
-                .ToList();
-
-            if (duplicateCategories.Any())
-            {
-                var duplicates = assets
-                    .Where(a => duplicateCategories.Contains(a.AssetCategory?.CategoryCode))
-                    .Select(a => new
-                    {
-                        CategoryCode = a.AssetCategory?.CategoryCode,
-                        Row = assets.IndexOf(a) + 2
-                    })
-                    .ToList();
-
-                var duplicateError = string.Join(", ", duplicates.Select(d => $"AssetCategory '{d.CategoryCode}' in row {d.Row}"));
-                throw new ApiException($"Duplicate AssetCategories: {duplicateError}");
-
-                // Set the Row property for each validation error
-                foreach (var error in validationErrors.Where(e => e.ErrorMessage.Contains("Duplicate AssetCategories")))
-                {
-                    var assetCode = error.ErrorMessage.Split('\'')[1];
-                    error.Row = duplicates.First(d => d.CategoryCode == assetCode).Row;
-                }
-            }
+            // var duplicateCategories = assets
+            //     .GroupBy(a => a.AssetCategory?.CategoryCode)
+            //     .Where(g => g.Count() > 1)
+            //     .Select(g => g.Key)
+            //     .ToList();
+            //
+            // if (duplicateCategories.Any())
+            // {
+            //     var duplicates = assets
+            //         .Where(a => duplicateCategories.Contains(a.AssetCategory?.CategoryCode))
+            //         .Select(a => new
+            //         {
+            //             CategoryCode = a.AssetCategory?.CategoryCode,
+            //             Row = assets.IndexOf(a) + 2
+            //         })
+            //         .ToList();
+            //
+            //     var duplicateError = string.Join(", ", duplicates.Select(d => $"AssetCategory '{d.CategoryCode}' in row {d.Row}"));
+            //     throw new ApiException($"Duplicate AssetCategories: {duplicateError}");
+            //
+            //     // Set the Row property for each validation error
+            //     foreach (var error in validationErrors.Where(e => e.ErrorMessage.Contains("Duplicate AssetCategories")))
+            //     {
+            //         var assetCode = error.ErrorMessage.Split('\'')[1];
+            //         error.Row = duplicates.First(d => d.CategoryCode == assetCode).Row;
+            //     }
+            // }
         }
 
         private async Task CheckUniqueAssetCodesInDatabase(List<Asset> assets)
@@ -223,22 +224,22 @@ namespace API_FFMS.Services
 
         private async Task CheckCategoryCodeExistInDatabase(List<Asset> assets)
         {
-            foreach (var asset in assets)
-            {
-                var existingCategory = await MainUnitOfWork.AssetCategoryRepository.GetQuery()
-                                             .Where(a => a.CategoryCode.Equals(asset.AssetCategory.CategoryCode))
-                                             .FirstOrDefaultAsync();
-
-                if (existingCategory == null)
-                {
-                    var row = assets.IndexOf(asset) + 2;
-                    validationErrors.Add(new ImportError 
-                    { 
-                        Row = row, 
-                        ErrorMessage = $"Category Code '{asset.AssetCategory}' in row {row} does not exist" 
-                    });
-                }
-            }
+            // foreach (var asset in assets)
+            // {
+            //     var existingCategory = await MainUnitOfWork.AssetCategoryRepository.GetQuery()
+            //                                  .Where(a => a.CategoryCode.Equals(asset.AssetCategory.CategoryCode))
+            //                                  .FirstOrDefaultAsync();
+            //
+            //     if (existingCategory == null)
+            //     {
+            //         var row = assets.IndexOf(asset) + 2;
+            //         validationErrors.Add(new ImportError 
+            //         { 
+            //             Row = row, 
+            //             ErrorMessage = $"Category Code '{asset.AssetCategory}' in row {row} does not exist" 
+            //         });
+            //     }
+            // }
         }
 
         private void CheckManufacturingYear(List<Asset> assets)
