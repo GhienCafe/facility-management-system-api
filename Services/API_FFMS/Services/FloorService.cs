@@ -12,7 +12,6 @@ public interface IFloorService : IBaseService
 {
     Task<ApiResponses<FloorDto>> GetFloor(FloorQueryDto queryDto);
     Task<ApiResponse<FloorDetailDto>> GetFloor(Guid id);
-
     public Task<ApiResponse> Insert(FloorCreateDto addFloorDto);
     public Task<ApiResponse<FloorDetailDto>> Update(Guid id, FloorUpdateDto floorUpdate);
     Task<ApiResponse> Delete(Guid id);

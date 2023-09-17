@@ -5,8 +5,7 @@ namespace API_FFMS.Dtos;
 
 public class FloorDto : BaseDto
 {
-    public double? Area { get; set; }
-    public string? PathFloor { get; set; }
+    public string? FloorMap { get; set; }
     public string? FloorNumber { get; set; }
     public Guid BuildingId { get; set; }
 }
@@ -37,5 +36,4 @@ public class FloorUpdateDto
 public class FloorQueryDto : BaseQueryDto
 {
     public string? FloorNumber { get; }
-    public string? BuildingName { get; }
 }
