@@ -37,7 +37,7 @@ public class AccountUpdate
     public DateTime? FirstLoginAt { get; set; }
     public DateTime? LastLoginAt { get; set; }
 }
-public class UserQuery : BaseQueryDto
+public class AccountQueryDto : BaseQueryDto
 {
     public string? Keyword { get; set; }
 }

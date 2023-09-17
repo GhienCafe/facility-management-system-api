@@ -7,7 +7,7 @@ namespace API_FFMS.Controllers;
 [ApiController]
 [ApiVersion("1")]
 [Route("api/v{version:apiVersion}/[Controller]")]
-[Authorize(new[] { UserRole.CampusManagers , UserRole.FacilitiesManager, UserRole.GlobalManager, UserRole.TechnicalSpecialist})]
+[Authorize(new[] { UserRole.Manager , UserRole.Administrator, UserRole.Staff})]
 public class BaseController : ControllerBase
 {
     

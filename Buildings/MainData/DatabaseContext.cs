@@ -17,26 +17,19 @@ public class DatabaseContext : DbContext
     public DbSet<Room> Rooms { get; set; }
     public DbSet<RoomAsset> RoomAssets { get; set; }
     public DbSet<Asset> Assets { get; set; }
-    public DbSet<AssetCategory> AssetCategories { get; set; }
-    public DbSet<AssetRequest> AssetRequests { get; set; }
-    public DbSet<Department> Departments { get; set; }
-    public DbSet<RequestParticipant> RequestParticipants { get; set; }
-    public DbSet<RequestDetail> RequestDetails { get; set; }
-    
-    public DbSet<AssetHandover> AssetHandovers { get; set; }
-    public DbSet<HandoverDetail> HandoverDetails { get; set; }
-    public DbSet<HandoverParticipant> HandoverParticipants { get; set; }
-    public DbSet<Inventory> Inventories { get; set; }
-    public DbSet<InventoryTeam> InventoryTeams { get; set; }
-    public DbSet<InventoryTeamMember> InventoryTeamMembers { get; set; }
-    public DbSet<InventoryDetail> InventoryDetails { get; set; }
+    public DbSet<AssetType> AssetTypes { get; set; }
     
     public DbSet<Maintenance> Maintenances { get; set; }
-    public DbSet<MaintenanceParticipant> MaintenanceParticipants { get; set; }
     public DbSet<MaintenanceDetail> MaintenanceDetails { get; set; }
+    public DbSet<MaintenanceScheduleConfig> MaintenanceScheduleConfigs { get; set; }
     public DbSet<RoomStatus> RoomStatus { get; set; }
     
     public DbSet<MediaFile> MediaFiles { get; set; }
+    
+    public DbSet<Replacement> Replacements { get; set; }
+    public DbSet<ReplacementDetail> ReplacementDetails { get; set; }
+    
+    public DbSet<Notification> Notifications { get; set; }
     
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -50,24 +43,17 @@ public class DatabaseContext : DbContext
         modelBuilder.ApplyConfiguration(new AssetConfig());
         modelBuilder.ApplyConfiguration(new RoomAssetConfig());
         modelBuilder.ApplyConfiguration(new AssetCategoryConfig());
-        modelBuilder.ApplyConfiguration(new AssetRequestConfig());
-        modelBuilder.ApplyConfiguration(new DepartmentConfig());
-        modelBuilder.ApplyConfiguration(new RequestDetailConfig());
-        modelBuilder.ApplyConfiguration(new RequestParticipantConfig());
-        
-        modelBuilder.ApplyConfiguration(new AssetHandoverConfig());
-        modelBuilder.ApplyConfiguration(new HandoverDetailConfig());
-        modelBuilder.ApplyConfiguration(new HandoverParticipantConfig());
-        modelBuilder.ApplyConfiguration(new InventoryConfig());
-        modelBuilder.ApplyConfiguration(new InventoryDetailConfig());
-        modelBuilder.ApplyConfiguration(new InventoryTeamConfig());
-        modelBuilder.ApplyConfiguration(new InventoryTeamMemberConfig());
         
         modelBuilder.ApplyConfiguration(new MaintenanceConfig());
-        modelBuilder.ApplyConfiguration(new MaintenanceParticipantConfig());
         modelBuilder.ApplyConfiguration(new MaintenanceDetailConfig());
         
         modelBuilder.ApplyConfiguration(new RoomStatusConfig());
         modelBuilder.ApplyConfiguration(new MediaFileConfig());
+        
+        modelBuilder.ApplyConfiguration(new MaintenanceScheduleConfigConfig());
+        
+        modelBuilder.ApplyConfiguration(new ReplacementConfig());
+        modelBuilder.ApplyConfiguration(new ReplacementDetailConfig());
+        modelBuilder.ApplyConfiguration(new NotificationConfig());
     }
 }

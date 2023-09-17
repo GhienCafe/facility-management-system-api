@@ -4,27 +4,21 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace MainData.Entities;
 
-public class Maintenance : BaseEntity
+public class Replacement : BaseEntity
 {
     public DateTime RequestedDate { get; set; }
     public DateTime? CompletionDate { get; set; }
     public string? Description { get; set; }
-    public MaintenanceStatus Status { get; set; }
-    public MaintenanceType Type { get; set; }
+    public string? Reason { get; set; }
+    public ReplacementStatus Status { get; set; }
     public Guid? AssignedTo { get; set; }
     
     //
-    public virtual IEnumerable<MaintenanceDetail>? MaintenanceDetails { get; set; }
+    public virtual IEnumerable<ReplacementDetail>? ReplacementDetails { get; set; }
     public virtual User? User { get; set; }
 }
 
-public enum MaintenanceType
-{
-    Permanent = 1,
-    Unexpected  = 2
-}
-
-public enum MaintenanceStatus
+public enum ReplacementStatus
 {
     NotStarted = 1,
     InProgress = 1,
@@ -32,25 +26,25 @@ public enum MaintenanceStatus
     Cancelled = 4,
 }
 
-public class MaintenanceConfig : IEntityTypeConfiguration<Maintenance>
+public class ReplacementConfig : IEntityTypeConfiguration<Replacement>
 {
-    public void Configure(EntityTypeBuilder<Maintenance> builder)
+    public void Configure(EntityTypeBuilder<Replacement> builder)
     {
-        builder.ToTable("Maintenances");
+        builder.ToTable("Replacements");
         builder.Property(x => x.RequestedDate).IsRequired();
         builder.Property(x => x.CompletionDate).IsRequired(false);
         builder.Property(x => x.Description).IsRequired(false);
+        builder.Property(x => x.Reason).IsRequired(false);
         builder.Property(x => x.Status).IsRequired();
-        builder.Property(x => x.Type).IsRequired();
         builder.Property(x => x.AssignedTo).IsRequired(false);
    
         //Relationship
-        builder.HasMany(x => x.MaintenanceDetails)
-            .WithOne(x => x.Maintenance)
-            .HasForeignKey(x => x.MaintenanceId);
+        builder.HasMany(x => x.ReplacementDetails)
+            .WithOne(x => x.Replacement)
+            .HasForeignKey(x => x.ReplacementId);
         
         builder.HasOne(x => x.User)
-            .WithMany(x => x.Maintenances)
+            .WithMany(x => x.Replacements)
             .HasForeignKey(x => x.CreatorId);
 
     }

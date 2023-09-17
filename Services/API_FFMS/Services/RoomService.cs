@@ -67,51 +67,52 @@ public class RoomService : BaseService, IRoomService
 
     public async Task<ApiResponse> Insert(RoomCreateDto roomDto)
     {
-        if (!roomDto.RoomCode.IsBetweenLength(1, 255))
-        {
-            throw new ApiException("Can not create room when address is null or must length of characters 1-255", StatusCode.ALREADY_EXISTS);
-        }
-        
-        if (MainUnitOfWork.RoomRepository.GetQuery()
-                .Where(x => x.RoomCode.Trim().ToLower().Contains(roomDto.RoomCode.Trim().ToLower()))
-                .SingleOrDefault() != null)
-        {
-            throw new ApiException("Room name was used, please again!", StatusCode.BAD_REQUEST);
-
-        }
-        
-        var floor = MainUnitOfWork.FloorsRepository.GetQuery()
-            .Where(x => x.Id == roomDto.FloorId)
-            .SingleOrDefault();
-
-        if (floor == null)
-        {
-            throw new ApiException("Invalid FloorId, cannot be null", StatusCode.BAD_REQUEST);
-        }
-
-        var RoomList = MainUnitOfWork.RoomRepository.GetQuery()
-            .Where(x => x.FloorId == roomDto.FloorId);
-        double? totalRoomAreaOnFloor = 0;
-        foreach (var SortRoom in RoomList)
-        {
-            totalRoomAreaOnFloor += SortRoom.Area;
-        }
-        // Check if adding the new room will exceed the floor's total area
-        if (totalRoomAreaOnFloor + roomDto.Area > floor.Area)
-        {
-            throw new ApiException("The total room area exceeds the floor's total area", StatusCode.BAD_REQUEST);
-        }
-        var room =roomDto.ProjectTo<RoomCreateDto, Room>();
-        bool response = await MainUnitOfWork.RoomRepository.InsertAsync(room, AccountId);
-        
-        if (response)
-        {
-            return ApiResponse<bool>.Success(true);
-        }
-        else
-        {
-            return (ApiResponse<bool>)ApiResponse.Failed();
-        }
+        // if (!roomDto.RoomCode.IsBetweenLength(1, 255))
+        // {
+        //     throw new ApiException("Can not create room when address is null or must length of characters 1-255", StatusCode.ALREADY_EXISTS);
+        // }
+        //
+        // if (MainUnitOfWork.RoomRepository.GetQuery()
+        //         .Where(x => x.RoomCode.Trim().ToLower().Contains(roomDto.RoomCode.Trim().ToLower()))
+        //         .SingleOrDefault() != null)
+        // {
+        //     throw new ApiException("Room name was used, please again!", StatusCode.BAD_REQUEST);
+        //
+        // }
+        //
+        // var floor = MainUnitOfWork.FloorsRepository.GetQuery()
+        //     .Where(x => x.Id == roomDto.FloorId)
+        //     .SingleOrDefault();
+        //
+        // if (floor == null)
+        // {
+        //     throw new ApiException("Invalid FloorId, cannot be null", StatusCode.BAD_REQUEST);
+        // }
+        //
+        // var RoomList = MainUnitOfWork.RoomRepository.GetQuery()
+        //     .Where(x => x.FloorId == roomDto.FloorId);
+        // double? totalRoomAreaOnFloor = 0;
+        // foreach (var SortRoom in RoomList)
+        // {
+        //     totalRoomAreaOnFloor += SortRoom.Area;
+        // }
+        // // Check if adding the new room will exceed the floor's total area
+        // if (totalRoomAreaOnFloor + roomDto.Area > floor.Area)
+        // {
+        //     throw new ApiException("The total room area exceeds the floor's total area", StatusCode.BAD_REQUEST);
+        // }
+        // var room =roomDto.ProjectTo<RoomCreateDto, Room>();
+        // bool response = await MainUnitOfWork.RoomRepository.InsertAsync(room, AccountId);
+        //
+        // if (response)
+        // {
+        //     return ApiResponse<bool>.Success(true);
+        // }
+        // else
+        // {
+        //     return (ApiResponse<bool>)ApiResponse.Failed();
+        // }
+        throw new ApiException("Not implements");
     }
     public async Task<ApiResponse<RoomDetailDto>> Update(Guid id, RoomUpdateDto roomDto)
     {
