@@ -78,7 +78,7 @@ public class ApiResponse
 
     public string Message { get; set; }
 
-    public List<ImportError> Error { get; set; }
+    public List<ImportError>? Error { get; set; }
 
     public static ApiResponse Success()
     {
