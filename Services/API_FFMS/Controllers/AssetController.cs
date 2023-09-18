@@ -36,9 +36,9 @@ namespace API_FFMS.Controllers
             return await _assetService.Create(createDto);
         }
 
-        [HttpPut]
+        [HttpPut("{id:guid}")]
         [SwaggerOperation("Update an asset")]
-        public async Task<ApiResponse<AssetDetailDto>> Update(Guid id, AssetUpdateDto updateDto)
+        public async Task<ApiResponse> Update(Guid id, AssetUpdateDto updateDto)
         {
             return await _assetService.Update(id, updateDto);
         }

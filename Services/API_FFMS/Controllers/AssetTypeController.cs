@@ -37,8 +37,8 @@ namespace API_FFMS.Controllers
         }
 
         [HttpPut("{id:guid}")]
-        [SwaggerOperation("Update asset type")]
-        public async Task<ApiResponse<AssetTypeDetailDto>> UpdateAssetType(Guid id, AssetTypeUpdateDto updateDto)
+        [SwaggerOperation("Update type information")]
+        public async Task<ApiResponse> UpdateAssetType(Guid id, AssetTypeUpdateDto updateDto)
         {
             return await _service.Update(id, updateDto);
         }

@@ -6,6 +6,7 @@ namespace API_FFMS.Dtos;
 public class BuildingDto  : BaseDto
 {
     public string? BuildingName { get; set; }
+    public string? BuildingCode { get; set; }
     public Guid? CampusId { get; set; }
 }
 

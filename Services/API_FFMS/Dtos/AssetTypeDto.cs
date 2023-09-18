@@ -4,7 +4,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace API_FFMS.Dtos
 {
-    public class AssetTypeDto
+    public class AssetTypeDto: BaseDto
     {
         public string? TypeCode { get; set; }
         public string? TypeName { get; set; }
@@ -24,11 +24,11 @@ namespace API_FFMS.Dtos
     {
         [Required(ErrorMessage = "Asset type code is required.")]
         [StringLength(255, ErrorMessage = "Asset type code cannot exceed 255 characters.")]
-        public string? TypeCode { get; set; }
+        public string TypeCode { get; set; } = null!;
 
         [Required(ErrorMessage = "Asset Name is required.")]
         [StringLength(255, MinimumLength = 1, ErrorMessage = "Asset type name must be between 1 and 255 characters.")]
-        public string? TypeName { get; set; }
+        public string TypeName { get; set; } = null!;
 
         [StringLength(255, ErrorMessage = "Description cannot exceed 255 characters.")]
         public string? Description { get; set; }
