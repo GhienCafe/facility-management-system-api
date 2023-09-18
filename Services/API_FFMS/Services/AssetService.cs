@@ -47,7 +47,7 @@ public class AssetService : BaseService, IAssetService
 
         if (response)
         {
-            return ApiResponse.Success();
+            return ApiResponse.Created("Create successfully");
         }
         else
         {

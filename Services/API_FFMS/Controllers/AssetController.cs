@@ -6,9 +6,7 @@ using Swashbuckle.AspNetCore.Annotations;
 
 namespace API_FFMS.Controllers
 {
-    [Route("api/[controller]")]
-    [ApiController]
-    public class AssetController : ControllerBase
+    public class AssetController : BaseController
     {
         private readonly IAssetService _assetService;
 

@@ -6,9 +6,7 @@ using Swashbuckle.AspNetCore.Annotations;
 
 namespace API_FFMS.Controllers
 {
-    [Route("api/[controller]")]
-    [ApiController]
-    public class ImportController : ControllerBase
+    public class ImportController : BaseController
     {
         private readonly IImportAssetService _importService;
 
