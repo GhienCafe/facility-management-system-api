@@ -12,7 +12,7 @@ public interface IAssetService : IBaseService
     Task<ApiResponses<AssetDto>> GetAllAssets(AssetQueryDto queryDto);
     Task<ApiResponse<AssetDetailDto>> GetAsset(Guid id);
     Task<ApiResponse> Create(AssetCreateDto createDto);
-    Task<ApiResponse<AssetDetailDto>> Update(Guid id, AssetUpdateDto updateDto);
+    Task<ApiResponse> Update(Guid id, AssetUpdateDto updateDto);
     Task<ApiResponse> Delete(Guid id);
 }
 
@@ -43,16 +43,10 @@ public class AssetService : BaseService, IAssetService
 
         var asset = createDto.ProjectTo<AssetCreateDto, Asset>();
 
-        bool response = await MainUnitOfWork.AssetRepository.InsertAsync(asset, AccountId);
-
-        if (response)
-        {
-            return ApiResponse.Success();
-        }
-        else
-        {
-            return ApiResponse.Failed();
-        }
+        if (!await MainUnitOfWork.AssetRepository.InsertAsync(asset, AccountId, CurrentDate))
+            throw new ApiException("Insert fail", StatusCode.SERVER_ERROR);
+        
+        return ApiResponse.Created("Create successfully");
     }
 
     public async Task<ApiResponse> Delete(Guid id)
@@ -60,20 +54,12 @@ public class AssetService : BaseService, IAssetService
         var existingAsset = await MainUnitOfWork.AssetRepository.FindOneAsync(id);
 
         if (existingAsset == null)
-        {
             throw new ApiException("Asset not found", StatusCode.NOT_FOUND);
-        }
 
-        bool result = await MainUnitOfWork.AssetRepository.DeleteAsync(existingAsset, AccountId, CurrentDate);
+        if (! await MainUnitOfWork.AssetRepository.DeleteAsync(existingAsset, AccountId, CurrentDate))
+            throw new ApiException("Delete fail", StatusCode.SERVER_ERROR);
 
-        if (result)
-        {
-            return ApiResponse.Success();
-        }
-        else
-        {
-            return ApiResponse.Failed();
-        }
+        return ApiResponse.Success();
     }
 
     public async Task<ApiResponses<AssetDto>> GetAllAssets(AssetQueryDto queryDto)
@@ -121,7 +107,7 @@ public class AssetService : BaseService, IAssetService
         return ApiResponse<AssetDetailDto>.Success(existingAsset);
     }
 
-    public async Task<ApiResponse<AssetDetailDto>> Update(Guid id, AssetUpdateDto updateDto)
+    public async Task<ApiResponse> Update(Guid id, AssetUpdateDto updateDto)
     {
         var existingAsset = await MainUnitOfWork.AssetRepository.FindOneAsync(id);
         if (existingAsset == null)
@@ -135,7 +121,7 @@ public class AssetService : BaseService, IAssetService
 
         existingAsset.TypeId = updateDto.TypeId ?? existingAsset.TypeId;
         existingAsset.AssetName = updateDto.AssetName ?? existingAsset.AssetName;
-        //existingAsset.Status = updateDto.Status ?? existingAsset.Status;
+        existingAsset.Status = updateDto.Status ?? existingAsset.Status;
         existingAsset.ManufacturingYear = updateDto.ManufacturingYear ?? existingAsset.ManufacturingYear;
         existingAsset.SerialNumber = updateDto.SerialNumber ?? existingAsset.SerialNumber;
         existingAsset.Quantity = updateDto.Quantity ?? existingAsset.Quantity;
@@ -146,6 +132,6 @@ public class AssetService : BaseService, IAssetService
             throw new ApiException("Can't not update", StatusCode.SERVER_ERROR);
         }
 
-        return await GetAsset(id);
+        return ApiResponse.Success();
     }
 }

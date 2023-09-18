@@ -65,11 +65,11 @@ namespace API_FFMS.Dtos
         public Guid? TypeId { get; set; }
 
         [StringLength(255, MinimumLength = 1, ErrorMessage = "Asset Name must be between 1 and 255 characters.")]
-        public string AssetName { get; set; } = null!;
+        public string? AssetName { get; set; }
 
         [StringLength(255, ErrorMessage = "Asset Code cannot exceed 255 characters.")]
 
-        //public AssetStatus? Status { get; set; }
+        public AssetStatus? Status { get; set; }
 
         public DateTime? ManufacturingYear { get; set; }
 

@@ -6,6 +6,7 @@ namespace API_FFMS.Dtos;
 
 public class RoomDto : BaseDto
 {
+    public string? RoomName { get; set; }
     public double? Area { get; set; }
     public string? PathRoom { get; set; }
     public string RoomCode { get; set; } = null!;
@@ -15,8 +16,9 @@ public class RoomDto : BaseDto
     public Guid FloorId { get; set; }
 }
 
-public class RoomDetailDto: BaseDto
+public class RoomDetailDto : BaseDto
 {
+    public string? RoomName { get; set; }
     public double? Area { get; set; }
     public string? PathRoom { get; set; }
     public string RoomCode { get; set; } = null!;
@@ -28,6 +30,7 @@ public class RoomDetailDto: BaseDto
 
 public class RoomCreateDto
 {
+    public string? RoomName { get; set; }
     public double? Area { get; set; }
     public string? PathRoom { get; set; }
     [Required]
@@ -43,6 +46,7 @@ public class RoomCreateDto
 
 public class RoomUpdateDto
 {
+    public string? RoomName { get; set; }
     public double? Area { get; set; }
     public string? PathRoom { get; set; }
     public string? RoomCode { get; set; }
@@ -53,6 +57,7 @@ public class RoomUpdateDto
 }
 public class RoomQueryDto : BaseQueryDto
 {
+    public string? RoomName { get; set; }
     public double? FromArea { get; set; }
     public double? ToArea { get; set; }
     public double? FromCapacity { get; set; }
