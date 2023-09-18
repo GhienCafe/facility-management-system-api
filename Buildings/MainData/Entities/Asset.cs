@@ -22,6 +22,7 @@ public class Asset : BaseEntity
     public virtual IEnumerable<RoomAsset>? RoomAssets { get; set; }
     public virtual IEnumerable<MaintenanceDetail>? MaintenanceDetails { get; set; }
     public virtual IEnumerable<ReplacementDetail>? ReplacementDetails { get; set; }
+    public virtual IEnumerable<TransportationDetail>? TransportationDetails { get; set; }
 }
 
 public enum AssetStatus
@@ -72,6 +73,10 @@ public class AssetConfig : IEntityTypeConfiguration<Asset>
             .HasForeignKey(x => x.AssetId);
 
         builder.HasMany(x => x.ReplacementDetails)
+            .WithOne(x => x.Asset)
+            .HasForeignKey(x => x.AssetId);
+
+        builder.HasMany(x => x.TransportationDetails)
             .WithOne(x => x.Asset)
             .HasForeignKey(x => x.AssetId);
     }
