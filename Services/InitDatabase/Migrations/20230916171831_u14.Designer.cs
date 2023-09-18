@@ -4,6 +4,7 @@ using MainData;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace InitDatabase.Migrations
 {
     [DbContext(typeof(DatabaseContext))]
-    partial class DatabaseContextModelSnapshot : ModelSnapshot
+    [Migration("20230916171831_u14")]
+    partial class u14
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -820,7 +823,7 @@ namespace InitDatabase.Migrations
                     b.Property<Guid?>("DeleterId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid?>("DepartmentId")
+                    b.Property<Guid>("DepartmentId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime?>("Dob")

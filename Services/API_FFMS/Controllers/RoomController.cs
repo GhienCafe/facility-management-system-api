@@ -38,7 +38,7 @@ public class RoomController : BaseController
     [HttpPut("{id:guid}")]
         
     [SwaggerOperation("Update room information")]
-    public async Task<ApiResponse<RoomDetailDto>> Update(Guid id, RoomUpdateDto updateDto)
+    public async Task<ApiResponse> Update(Guid id, RoomUpdateDto updateDto)
     {
         return await _service.Update(id, updateDto);
     }

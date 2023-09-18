@@ -1,10 +1,12 @@
-﻿using AppCore.Models;
+﻿using AppCore.Attributes;
+using AppCore.Models;
 
 namespace API_FFMS.Dtos;
 
 public class CampusDto : BaseDto
 {
-    public string? CampusName { get; set; }
+    [Required] public string CampusName { get; set; } = null!;
+    [Required] public string CampusCode { get; set; } = null!;
     public string? Telephone { get; set; }
     public string? Description { get; set; }
     public string? Address { get; set; }
@@ -21,7 +23,8 @@ public class CampusDetailDto : BaseDto
 
 public class CampusCreateDto
 {
-    public string? CampusName { get; set; }
+    [Required] public string CampusName { get; set; } = null!;
+    [Required] public string CampusCode { get; set; } = null!;
     public string? Telephone { get; set; }
     public string? Description { get; set; }
     public string? Address { get; set; }
@@ -29,6 +32,7 @@ public class CampusCreateDto
 public class CampusUpdateDto
 {
     public string? CampusName { get; set; }
+    public string? CampusCode { get; set; }
     public string? Telephone { get; set; }
     public string? Description { get; set; }
     public string? Address { get; set; }
