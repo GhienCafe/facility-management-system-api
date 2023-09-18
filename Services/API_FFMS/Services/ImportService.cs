@@ -43,7 +43,7 @@ namespace API_FFMS.Services
                 {
                     AssetName = dto.AssetName,
                     AssetCode = dto.AssetCode,
-                    Type = dto.TypeCode,
+                    Type = GetAssetTypeByCode(dto.TypeCode),
                     Status = dto.Status,
                     ManufacturingYear = dto.ManufacturingYear,
                     SerialNumber = dto.SerialNumber,
@@ -73,12 +73,23 @@ namespace API_FFMS.Services
                     return ApiResponse<ImportError>.Failed("Import failed due to validation errors", StatusCode.BAD_REQUEST, validationErrors);
                 }
 
-                return (ApiResponse<ImportError>)ApiResponse.Success();
+                return ApiResponse<ImportError>.Success(new ImportError { ErrorMessage = "Success" });
+
+
             }
             catch (Exception exception)
             {
                 throw new ApiException(exception.Message);
             }
+        }
+
+        private AssetType? GetAssetTypeByCode(string typeCode)
+        {
+            var assetCategory = MainUnitOfWork.AssetTypeRepository.GetQuery()
+                                .Where(x => x.TypeCode.Trim().ToLower()
+                                .Contains(typeCode.Trim().ToLower()))
+                                .FirstOrDefault();
+            return assetCategory;
         }
 
         private async Task CheckExistTypeCode(List<Asset> assets)

@@ -19,7 +19,7 @@ public class ApiResponse<T> : ApiResponse
         };
     }
 
-    public static ApiResponse<T> Failed(string errorMessage, StatusCode statusCode = StatusCode.BAD_REQUEST, List<ImportError>? importErrors = null)
+    public static ApiResponse<T> Failed(string errorMessage, StatusCode statusCode = StatusCode.BAD_REQUEST, List<ImportError> importErrors = null)
     {
         return new ApiResponse<T>
         {
@@ -78,7 +78,7 @@ public class ApiResponse
 
     public string Message { get; set; }
 
-    public List<ImportError>? Error { get; set; }
+    public List<ImportError> Error { get; set; }
 
     public static ApiResponse Success()
     {
@@ -103,7 +103,7 @@ public class ApiResponse
         };
     }
 
-    public static ApiResponse Failed(string errorMessage, StatusCode statusCode = StatusCode.BAD_REQUEST, List<ImportError>? importErrors = null)
+    public static ApiResponse Failed(string errorMessage, StatusCode statusCode = StatusCode.BAD_REQUEST, List<ImportError> importErrors = null)
     {
         return new ApiResponse
         {
