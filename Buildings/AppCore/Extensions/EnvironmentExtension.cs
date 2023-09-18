@@ -27,6 +27,11 @@ public static class EnvironmentExtension
     public static bool IsStaging() => GetEnvironment() == "Staging";
     public static bool IsDevelopment() => GetEnvironment() == "Development";
 
+    public static string GetTypeFirebase() => Environment.GetEnvironmentVariable("service_account") ?? string.Empty;
+    public static string GetProjectIdFirebase() => Environment.GetEnvironmentVariable("project_id") ?? string.Empty;
+    public static string GetPrivateKeyIdFirebase() => Environment.GetEnvironmentVariable("private_key_id") ?? string.Empty;
+    public static string GetPrivateKeyFirebase() => Environment.GetEnvironmentVariable("private_key") ?? string.Empty;
+    public static string GetClientEmailFireBase() => Environment.GetEnvironmentVariable("client_email") ?? string.Empty;
     public static string GetAppConnectionString() =>
         Environment.GetEnvironmentVariable("CONNECTION_STRING") ?? string.Empty;
     
@@ -80,7 +85,8 @@ public static class EnvironmentExtension
     //
     // public static string GetApnTeamId() =>
     //     Environment.GetEnvironmentVariable("APN_TEAM_ID") ?? string.Empty;
-
+// Định nghĩa một lớp để đọc tệp launchSettings.json
+    
     public static string GetFireBaseCertFilePath()
     {
         if (IsProduction())

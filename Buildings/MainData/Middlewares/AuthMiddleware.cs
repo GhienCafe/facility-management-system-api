@@ -22,7 +22,7 @@ public class AuthMiddleware
     {
         var accessToken = httpContext.Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
         var tokenClaim = JwtExtensions.ValidateAccessToken(accessToken ?? string.Empty).ToList();
-        var accountIdString = tokenClaim.Find(x => x.Type == AppClaimTypes.AccountId)?.Value;
+        var accountIdString = tokenClaim.Find(x => x.Type == AppClaimTypes.UserId)?.Value;
         Guid.TryParse(accountIdString, out var accountId);
         if (accountId != Guid.Empty)
         {
@@ -50,7 +50,7 @@ public class AuthMiddleware
             {
                 httpContext.User = new ClaimsPrincipal(new ClaimsIdentity(new[]
                 {
-                    new Claim(AppClaimTypes.AccountId, account.Id.ToString()),
+                    new Claim(AppClaimTypes.UserId, account.Id.ToString()),
                     new Claim(AppClaimTypes.Role, account.Role.ToString()),
                     new Claim(AppClaimTypes.Status, account.Status.ToString()),
                 }));
@@ -60,7 +60,7 @@ public class AuthMiddleware
 
             httpContext.User = new ClaimsPrincipal(new ClaimsIdentity(new[]
             {
-                new Claim(AppClaimTypes.AccountId, account.Id.ToString()),
+                new Claim(AppClaimTypes.UserId, account.Id.ToString()),
                 new Claim(AppClaimTypes.Role, account.Role.ToString()),
                 new Claim(AppClaimTypes.Status, account.Status.ToString()),
             }));

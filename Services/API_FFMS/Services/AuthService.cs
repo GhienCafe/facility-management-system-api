@@ -275,7 +275,7 @@ public class AuthService : BaseService, IAuthService
         // Create token
         var claims = new Claim[]
         {
-            new(AppClaimTypes.AccountId, account.Id.ToString()),
+            new(AppClaimTypes.UserId, account.Id.ToString()),
             new(AppClaimTypes.Role, account.Role.ToString()),
             new(AppClaimTypes.Status, account.Status.ToString()),
         }.ToList();
