@@ -6,6 +6,7 @@ namespace MainData.Entities;
 
 public class Room : BaseEntity
 {
+    public string? RoomName { get; set; }
     public double? Area { get; set; }
     public string? PathRoom { get; set; }
     public string RoomCode { get; set; } = null!;
@@ -30,6 +31,7 @@ public class RoomConfig : IEntityTypeConfiguration<Room>
     public void Configure(EntityTypeBuilder<Room> builder)
     {
         builder.ToTable("Rooms");
+        builder.Property(x => x.RoomName).IsRequired(false);
         builder.Property(x => x.Area).IsRequired(false);
         builder.Property(x => x.PathRoom).IsRequired(false);
         builder.Property(x => x.RoomCode).IsRequired();
