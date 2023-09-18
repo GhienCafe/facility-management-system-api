@@ -32,9 +32,9 @@ public class ApiResponse<T> : ApiResponse
 
 public class ApiResponses<T> : ApiResponse
 {
-    public int? TotalItems { get; set; } = 0;
-    public int? ItemsPerPage { get; set; } = 0;
-    public int? Page { get; set; } = 0;
+    public int? TotalCount { get; set; } = 0;
+    public int? PageSize { get; set; } = 0;
+    public int? Offset { get; set; } = 0;
     public int? TotalPages { get; set; } = 0;
     public IEnumerable<T> Data { get; set; }
 
@@ -64,9 +64,9 @@ public class ApiResponses<T> : ApiResponse
             Data = data,
             StatusCode = statusCode,
             Message = message,
-            TotalItems = totalCount,
-            ItemsPerPage = pageSize,
-            Page = offset,
+            TotalCount = totalCount,
+            PageSize = pageSize,
+            Offset = offset,
             TotalPages = totalPages
         };
     }
