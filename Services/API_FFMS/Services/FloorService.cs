@@ -26,33 +26,26 @@ public class FloorService : BaseService, IFloorService
 
     public async Task<ApiResponses<FloorDto>> GetFloor(FloorQueryDto queryDto)
     {
-        // Expression<Func<Floor, bool>>[] conditions = new Expression<Func<Floor, bool>>[]
-        // {
-        //     x => !x.DeletedAt.HasValue
-        // };
+        var floors = await MainUnitOfWork.FloorRepository.FindResultAsync<FloorDto>(new Expression<Func<Floor, bool>>[]
+        {
+             x => !x.DeletedAt.HasValue,
+             x => queryDto.FloorNumber == null || queryDto.FloorNumber == x.FloorNumber
+        }, queryDto.OrderBy, queryDto.Skip(), queryDto.PageSize);
 
-        // if (string.IsNullOrEmpty(queryDto.FloorNumber) == false)
-        // {
-        //     conditions = conditions.Append(x => x.FloorNumber.Trim().ToLower() == queryDto.FloorNumber.Trim().ToLower()).ToArray();
-        // }
-        // if (string.IsNullOrEmpty(queryDto.BuildingName) == false)
-        // {
-        //     conditions = conditions.Append(x => x.Buildings.BuildingName.Trim().ToLower().Contains(queryDto.BuildingName.Trim().ToLower())).ToArray();
-        // }
-        // var response = await MainUnitOfWork.FloorsRepository.FindResultAsync<FloorDto>(conditions, queryDto.OrderBy, queryDto.Skip(), queryDto.PageSize);
-        // return ApiResponses<FloorDto>.Success(
-        //     response.Items,
-        //     response.TotalCount,
-        //     queryDto.PageSize,
-        //     queryDto.Skip(),
-        //     (int)Math.Ceiling(response.TotalCount / (double)queryDto.PageSize)
-        // );
-        throw new ApiException("Not implement", StatusCode.SERVER_ERROR);
+        floors.Items = await _mapperRepository.MapCreator(floors.Items.ToList());
+
+        return ApiResponses<FloorDto>.Success(
+            floors.Items,
+            floors.TotalCount,
+            queryDto.PageSize,
+            queryDto.Skip(),
+            (int)Math.Ceiling(floors.TotalCount / (double)queryDto.PageSize)
+        );
     }
 
     public async Task<ApiResponse<FloorDetailDto>> GetFloor(Guid id)
     {
-        var floors = await MainUnitOfWork.FloorsRepository.FindOneAsync<FloorDetailDto>(
+        var floors = await MainUnitOfWork.FloorRepository.FindOneAsync<FloorDetailDto>(
             new Expression<Func<Floor, bool>>[]
             {
                 x => !x.DeletedAt.HasValue,
@@ -60,7 +53,7 @@ public class FloorService : BaseService, IFloorService
             });
 
         if (floors == null)
-            throw new ApiException("Not found this floors", StatusCode.NOT_FOUND);
+            throw new ApiException("Not found", StatusCode.NOT_FOUND);
 
         // Map CDC for the post
         floors = await _mapperRepository.MapCreator(floors);
@@ -70,67 +63,35 @@ public class FloorService : BaseService, IFloorService
 
     public async Task<ApiResponse> Insert(FloorCreateDto floorDto)
     {
-        // if (!floorDto.FloorNumber.IsBetweenLength(1, 255))
-        // {
-        //     throw new ApiException("Can not create floors when address is null or must length of characters 1-255", StatusCode.ALREADY_EXISTS);
-        // }
-
-        // var existingFloor = MainUnitOfWork.FloorsRepository.GetQuery()
-        //     .Where(x => x.FloorNumber.Trim().ToLower() == floorDto.FloorNumber.Trim().ToLower())
-        //     .SingleOrDefault();
-
-        // if (existingFloor != null)
-        // {
-        //     throw new ApiException("Floor name was used, please again!", StatusCode.BAD_REQUEST);
-        // }
-
-        // if (MainUnitOfWork.BuildingsRepository.GetQuery().SingleOrDefault(x => x.Id == floorDto.BuildingId)==null)
-        // {
-        //     throw new ApiException("Id cannot null", StatusCode.BAD_REQUEST);
-        // }
-        // var floor = floorDto.ProjectTo<FloorCreateDto, Floor>();
-        // bool response = await MainUnitOfWork.FloorsRepository.InsertAsync(floor, AccountId);
-
-        // if (response)
-        // {
-        //     return ApiResponse<bool>.Success(true);
-        // }
-        // else
-        // {
-        //     return (ApiResponse<bool>)ApiResponse.Failed();
-        // }
-        throw new ApiException("Not implement", StatusCode.SERVER_ERROR);
+        var floor = floorDto.ProjectTo<FloorCreateDto, Floor>();
+        if (!await MainUnitOfWork.FloorRepository.InsertAsync(floor, AccountId, CurrentDate))
+            throw new ApiException("Insert fail!", StatusCode.SERVER_ERROR);
+        
+        return ApiResponse.Success();
     }
+    
     public async Task<ApiResponse<FloorDetailDto>> Update(Guid id, FloorUpdateDto floorDto)
     {
-        var floors = await MainUnitOfWork.FloorsRepository.FindOneAsync(id);
-        if (floors == null)
-        {
+        var floor = await MainUnitOfWork.FloorRepository.FindOneAsync(id);
+        if (floor == null)
             throw new ApiException("Not found this floors", StatusCode.NOT_FOUND);
-        }
-        if (!floorDto.FloorNumber.IsBetweenLength(1, 50))
-        {
-            throw new ApiException("Can not create floors when description is null or must length of characters 1-255", StatusCode.BAD_REQUEST);
-        }
-        var totalAreaRoom = MainUnitOfWork.RoomRepository.GetQuery()
-            .Where(room => room.FloorId == id) // Lọc các phòng thuộc tầng cần kiểm tra
-            .Sum(room => room.Area); // Tính tổng diện tích của các phòng
-        if (totalAreaRoom >= floorDto.Area)
-        {
-            throw new ApiException("Can not create floor when area not valid with total area of room", StatusCode.BAD_REQUEST);
-        }
-        var floorUpdate = floorDto.ProjectTo<FloorUpdateDto, Floor>();
-        if (!await MainUnitOfWork.FloorsRepository.UpdateAsync(floorUpdate, AccountId, CurrentDate))
+
+        floor.FloorNumber = floorDto.FloorNumber ?? floor.FloorNumber;
+        floor.FloorMap = floorDto.FloorMap ?? floor.FloorMap;
+        floor.BuildingId = floorDto.BuildingId ?? floor.BuildingId;
+        
+        if (!await MainUnitOfWork.FloorRepository.UpdateAsync(floor, AccountId, CurrentDate))
             throw new ApiException("Can't not update", StatusCode.SERVER_ERROR);
 
         return await GetFloor(id);
     }
     public async Task<ApiResponse> Delete(Guid id)
     {
-        var existingfloors = await MainUnitOfWork.FloorsRepository.FindOneAsync(id);
-        if (existingfloors == null)
+        var existingFloor = await MainUnitOfWork.FloorRepository.FindOneAsync(id);
+        if (existingFloor == null)
             throw new ApiException("Not found this floors", StatusCode.NOT_FOUND);
-        if (!await MainUnitOfWork.FloorsRepository.DeleteAsync(existingfloors, AccountId, CurrentDate))
+        
+        if (!await MainUnitOfWork.FloorRepository.DeleteAsync(existingFloor, AccountId, CurrentDate))
             throw new ApiException("Can't not delete", StatusCode.SERVER_ERROR);
 
         return ApiResponse.Success();

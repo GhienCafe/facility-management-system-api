@@ -31,5 +31,5 @@ public class RoomStatusUpdateDto
 
 public class RoomStatusQueryDto : BaseQueryDto
 {
-    public string? Color { get; }
+    public string? StatusName { get; set; }
 }

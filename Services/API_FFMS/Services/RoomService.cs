@@ -5,7 +5,7 @@ using AppCore.Models;
 using MainData;
 using MainData.Entities;
 using MainData.Repositories;
-using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace API_FFMS.Services;
 public interface IRoomService : IBaseService
@@ -13,7 +13,7 @@ public interface IRoomService : IBaseService
     Task<ApiResponses<RoomDto>> GetRoom(RoomQueryDto queryDto);
     Task<ApiResponse<RoomDetailDto>> GetRoom(Guid id);
     public Task<ApiResponse> Insert(RoomCreateDto addRoomDto);
-    public Task<ApiResponse<RoomDetailDto>> Update(Guid id, RoomUpdateDto floorUpdate);
+    public Task<ApiResponse> Update(Guid id, RoomUpdateDto floorUpdate);
     Task<ApiResponse> Delete(Guid id);
 
 }
@@ -26,22 +26,63 @@ public class RoomService : BaseService, IRoomService
 
     public async Task<ApiResponses<RoomDto>> GetRoom(RoomQueryDto queryDto)
     {
-        var rooms = await MainUnitOfWork.RoomRepository.FindResultAsync<RoomDto>(new Expression<Func<Room, bool>>[]
-        {
-            x => !x.DeletedAt.HasValue,
-            x => queryDto.RoomCode == null || x.RoomCode == queryDto.RoomCode,
-            x => queryDto.RoomType == null || x.RoomType == queryDto.RoomType
-        }, queryDto.OrderBy, queryDto.Skip(), queryDto.PageSize);
+        var roomQuerySet = MainUnitOfWork.RoomRepository.GetQuery().Where(x => !x!.DeletedAt.HasValue);
 
-        rooms.Items = await _mapperRepository.MapCreator(rooms.Items.ToList());
+        if (queryDto.RoomType != null)
+        {
+            roomQuerySet = roomQuerySet.Where(x => x!.RoomType == queryDto.RoomType);
+        }
+
+        if (!string.IsNullOrEmpty(queryDto.RoomCode))
+        {
+            roomQuerySet = roomQuerySet.Where(x => x!.RoomCode.Equals(queryDto.RoomCode));
+        }
+
+        if (!string.IsNullOrEmpty(queryDto.Status))
+        {
+            var statusId = MainUnitOfWork.RoomStatusRepository.GetQuery().Where(
+                    x => !x!.DeletedAt.HasValue && x.StatusName.ToLower().Equals(queryDto.Status.Trim().ToLower()))
+                .Select(x => x!.Id);
+            
+            roomQuerySet = roomQuerySet.Where(x => x!.StatusId.Equals(statusId));
+        }
+
+        if (queryDto.FromArea != null)
+        {
+            roomQuerySet = roomQuerySet.Where(x => x!.Area >= queryDto.FromArea);
+        }
         
+        if (queryDto.ToArea != null)
+        {
+            roomQuerySet = roomQuerySet.Where(x => x!.Area <= queryDto.ToArea);
+        }
+
+        if (queryDto.FromCapacity != null)
+        {
+            roomQuerySet = roomQuerySet.Where(x => x!.Capacity >= queryDto.FromCapacity);
+        }
+        
+        if (queryDto.ToCapacity != null)
+        {
+            roomQuerySet = roomQuerySet.Where(x => x!.Capacity <= queryDto.ToCapacity);
+        }
+
+        var totalCount = roomQuerySet.Count();
+
+        roomQuerySet = roomQuerySet.Skip(queryDto.Skip())
+            .Take(queryDto.PageSize);
+
+        var rooms = (await roomQuerySet.ToListAsync())!.ProjectTo<Room, RoomDto>();
+
+        rooms = await _mapperRepository.MapCreator(rooms);
+        
+        // Return data
         return ApiResponses<RoomDto>.Success(
-            rooms.Items,
-            rooms.TotalCount,
-            queryDto.PageSize,
-            queryDto.Page,
-            rooms.TotalCount/queryDto.PageSize
-            );
+            rooms, 
+            totalCount, 
+            queryDto.PageSize, 
+            queryDto.Skip(), 
+            (int)Math.Ceiling(totalCount/ (double)queryDto.PageSize));
     }
 
     public async Task<ApiResponse<RoomDetailDto>> GetRoom(Guid id)
@@ -64,33 +105,42 @@ public class RoomService : BaseService, IRoomService
 
     public async Task<ApiResponse> Insert(RoomCreateDto roomDto)
     {
-       
-        throw new ApiException("Not implements");
+        var room = roomDto.ProjectTo<RoomCreateDto, Room>();
+        if (!await MainUnitOfWork.RoomRepository.InsertAsync(room, AccountId, CurrentDate))
+            throw new ApiException("Insert fail", StatusCode.SERVER_ERROR);
+        
+        return ApiResponse.Created("Created successfully");
     }
-    public async Task<ApiResponse<RoomDetailDto>> Update(Guid id, RoomUpdateDto roomDto)
+    public async Task<ApiResponse> Update(Guid id, RoomUpdateDto roomDto)
     {
         var room = await MainUnitOfWork.RoomRepository.FindOneAsync(id);
         if (room==null)
         {
             throw new ApiException("Not found this room", StatusCode.NOT_FOUND);
         }
-        if (!roomDto.RoomCode.IsBetweenLength(1, 50))
-        {
-            throw new ApiException("Can not create room when description is null or must length of characters 1-255", StatusCode.BAD_REQUEST);
-        }
-        var roomUpdate = roomDto.ProjectTo<RoomUpdateDto , Room>();
-        if (!await MainUnitOfWork.RoomRepository.UpdateAsync(roomUpdate, AccountId, CurrentDate))
-            throw new ApiException("Can't not update", StatusCode.SERVER_ERROR);
 
-        return await GetRoom(id);
+        room.RoomCode = roomDto.RoomCode ?? room.RoomCode;
+        room.RoomType = roomDto.RoomType ?? room.RoomType;
+        room.Area = roomDto.Area ?? room.Area;
+        room.Capacity = roomDto.Capacity ?? room.Capacity;
+        room.FloorId = roomDto.FloorId ?? room.FloorId;
+        room.PathRoom = roomDto.PathRoom ?? room.PathRoom;
+        room.StatusId = roomDto.StatusId ?? room.StatusId;
+      
+        if (!await MainUnitOfWork.RoomRepository.UpdateAsync(room, AccountId, CurrentDate))
+            throw new ApiException("Update fail", StatusCode.SERVER_ERROR);
+
+        return ApiResponse.Success();
     }
     public async Task<ApiResponse> Delete(Guid id)
     {
-        var existingroom = await MainUnitOfWork.RoomRepository.FindOneAsync(id);
-        if (existingroom == null)
+        var existingRoom = await MainUnitOfWork.RoomRepository.FindOneAsync(id);
+        
+        if (existingRoom == null)
             throw new ApiException("Not found this room", StatusCode.NOT_FOUND);
-        if (!await MainUnitOfWork.RoomRepository.DeleteAsync(existingroom, AccountId, CurrentDate))
-            throw new ApiException("Can't not delete", StatusCode.SERVER_ERROR);
+        
+        if (!await MainUnitOfWork.RoomRepository.DeleteAsync(existingRoom, AccountId, CurrentDate))
+            throw new ApiException("Delete fail", StatusCode.SERVER_ERROR);
 
         return ApiResponse.Success();
     }
