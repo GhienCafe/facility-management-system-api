@@ -13,7 +13,7 @@ namespace API_FFMS.Services
         Task<ApiResponses<AssetTypeDto>> GetAssetTypes(AssetTypeQueryDto queryDto);
         Task<ApiResponse<AssetTypeDetailDto>> GetAssetType(Guid id);
         Task<ApiResponse> Create(AssetTypeCreateDto createDto);
-        public Task<ApiResponse<AssetTypeDetailDto>> Update(Guid id, AssetTypeUpdateDto updateDto);
+        public Task<ApiResponse> Update(Guid id, AssetTypeUpdateDto updateDto);
         Task<ApiResponse> Delete(Guid id);
     }
 
@@ -27,28 +27,18 @@ namespace API_FFMS.Services
         {
 
             var existingCategory = MainUnitOfWork.AssetTypeRepository.GetQuery()
-                                   .Where(x => x.TypeName.Trim().ToLower() == createDto.TypeName.Trim().ToLower())
+                                   .Where(x => !x!.DeletedAt.HasValue && x!.TypeCode.Trim().ToLower() == createDto.TypeCode.Trim().ToLower())
                                    .SingleOrDefault();
 
             if (existingCategory != null)
-            {
-                throw new ApiException("Asset category name is already in use, please choose a different name.", StatusCode.BAD_REQUEST);
-            }
+                throw new ApiException("Asset category name is already exists", StatusCode.ALREADY_EXISTS);
 
             var assetCategory = createDto.ProjectTo<AssetTypeCreateDto, AssetType>();
 
-            // You can add additional validation logic here if needed before inserting the category.
-
-            bool response = await MainUnitOfWork.AssetTypeRepository.InsertAsync(assetCategory, AccountId);
-
-            if (response)
-            {
-                return ApiResponse.Success();
-            }
-            else
-            {
-                return ApiResponse.Failed();
-            }
+            if (!await MainUnitOfWork.AssetTypeRepository.InsertAsync(assetCategory, AccountId, CurrentDate))
+                throw new ApiException("Insert fail!", StatusCode.SERVER_ERROR);
+            
+            return ApiResponse.Created("Create successfully!");
         }
 
         public async Task<ApiResponse> Delete(Guid id)
@@ -60,44 +50,33 @@ namespace API_FFMS.Services
                     throw new ApiException("Asset category not found", StatusCode.NOT_FOUND);
                 }
 
-                bool result = await MainUnitOfWork.AssetTypeRepository.DeleteAsync(existingAssetCategory, AccountId, CurrentDate);
-
-                if (result)
-                {
-                    return ApiResponse.Success();
-                }
-                else
-                {
-                    return ApiResponse.Failed();
-                }
+                if (await MainUnitOfWork.AssetTypeRepository.DeleteAsync(existingAssetCategory, AccountId, CurrentDate))
+                    throw new ApiException("Delete fail", StatusCode.SERVER_ERROR);
+                
+                return ApiResponse.Success();
         }
 
         public async Task<ApiResponses<AssetTypeDto>> GetAssetTypes(AssetTypeQueryDto queryDto)
         {
-                Expression<Func<AssetType, bool>>[] conditions = new Expression<Func<AssetType, bool>>[]
-            {
-             x => !x.DeletedAt.HasValue
-            };
-
-                if (string.IsNullOrEmpty(queryDto.TypeCode) == false)
+            var response = await MainUnitOfWork.AssetTypeRepository.FindResultAsync<AssetTypeDto>(
+                new Expression<Func<AssetType, bool>>[]
                 {
-                    conditions = conditions.Append(x => x.TypeCode.Trim().ToLower().Contains(queryDto.TypeCode.Trim().ToLower())).ToArray();
-                }
+                    x => !x.DeletedAt.HasValue,
+                    x => string.IsNullOrEmpty(queryDto.TypeName) ||
+                         x.TypeName.ToLower().Contains(queryDto.TypeName.Trim().ToLower()),
+                    x => string.IsNullOrEmpty(queryDto.TypeCode) ||
+                         x.TypeCode.ToLower().Equals(queryDto.TypeCode.Trim().ToLower())
+                }, queryDto.OrderBy, queryDto.Skip(), queryDto.PageSize);
 
-                var response = await MainUnitOfWork.AssetTypeRepository.FindResultAsync<AssetTypeDto>(
-                    conditions,
-                    queryDto.OrderBy,
-                    queryDto.Skip(),
-                    queryDto.PageSize
-                );
+            response.Items = await _mapperRepository.MapCreator(response.Items.ToList());
 
-                return ApiResponses<AssetTypeDto>.Success(
-                    response.Items,
-                    response.TotalCount,
-                    queryDto.PageSize,
-                    queryDto.Skip(),
-                    (int)Math.Ceiling(response.TotalCount / (double)queryDto.PageSize)
-                );
+            return ApiResponses<AssetTypeDto>.Success(
+                response.Items,
+                response.TotalCount,
+                queryDto.PageSize,
+                queryDto.Skip(),
+                (int)Math.Ceiling(response.TotalCount / (double)queryDto.PageSize)
+            );
         }
 
         public async Task<ApiResponse<AssetTypeDetailDto>> GetAssetType(Guid id)
@@ -119,7 +98,7 @@ namespace API_FFMS.Services
             return ApiResponse<AssetTypeDetailDto>.Success(assetCategory);
         }
 
-        public async Task<ApiResponse<AssetTypeDetailDto>> Update(Guid id, AssetTypeUpdateDto updateDto)
+        public async Task<ApiResponse> Update(Guid id, AssetTypeUpdateDto updateDto)
         {
             var existingAssetCategory = await MainUnitOfWork.AssetTypeRepository.FindOneAsync(id);
 
@@ -128,20 +107,16 @@ namespace API_FFMS.Services
                 throw new ApiException("Asset category not found", StatusCode.NOT_FOUND);
             }
 
-            var assetCategoryUpdate = existingAssetCategory;
-
             existingAssetCategory.TypeName = updateDto.TypeName ?? existingAssetCategory.TypeName;
             existingAssetCategory.Description = updateDto.Description ?? existingAssetCategory.Description;
             existingAssetCategory.Unit = updateDto.Unit ?? existingAssetCategory.Unit;
 
-            //var result = updateDto.ProjectTo<AssetCategoryUpdateDto, AssetCategory>();
-
-            if (!await MainUnitOfWork.AssetTypeRepository.UpdateAsync(assetCategoryUpdate, AccountId, CurrentDate))
+            if (!await MainUnitOfWork.AssetTypeRepository.UpdateAsync(existingAssetCategory, AccountId, CurrentDate))
             {
                 throw new ApiException("Can't not update", StatusCode.SERVER_ERROR);
             }
 
-            return await GetAssetType(id);
+            return ApiResponse.Success();
 
         }
     }
