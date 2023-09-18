@@ -6,7 +6,6 @@ namespace MainData.Entities;
 
 public class User : BaseEntity
 {
-    public Guid? DepartmentId { get; set; }
     public string UserCode { get; set; } = null!;
     public string Fullname { get; set; } = null!;
     public UserRole Role { get; set; }
@@ -28,6 +27,7 @@ public class User : BaseEntity
     public virtual IEnumerable<Maintenance>? Maintenances { get; set; }
     public virtual IEnumerable<Replacement>? Replacements { get; set; }
     public virtual IEnumerable<Notification>? Notifications { get; set; }
+    public virtual IEnumerable<Transportation>? Transportations { get; set; }
 }
 
 public enum UserRole
@@ -58,7 +58,6 @@ public class UserConfig : IEntityTypeConfiguration<User>
         builder.Property(x => x.Salt).IsRequired();
         builder.Property(x => x.FirstLoginAt).IsRequired(false);
         builder.Property(x => x.LastLoginAt).IsRequired(false);
-        builder.Property(x => x.DepartmentId).IsRequired(false);
         builder.Property(x => x.UserCode).IsRequired();
         builder.Property(x => x.Dob).IsRequired(false);
         builder.Property(x => x.Gender).IsRequired();
@@ -83,5 +82,9 @@ public class UserConfig : IEntityTypeConfiguration<User>
         builder.HasMany(x => x.Notifications)
             .WithOne(x => x.User)
             .HasForeignKey(x => x.UserId);
+
+        builder.HasMany(x => x.Transportations)
+            .WithOne(x => x.User)
+            .HasForeignKey(x => x.CreatorId);
     }
 }
