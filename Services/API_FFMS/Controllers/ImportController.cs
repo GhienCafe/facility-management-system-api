@@ -29,7 +29,7 @@ namespace API_FFMS.Controllers
                 // Define the column headers
                 worksheet.Cell(currentRow, 1).Value = "Asset Name";
                 worksheet.Cell(currentRow, 2).Value = "Asset Code";
-                worksheet.Cell(currentRow, 3).Value = "Category Code";
+                worksheet.Cell(currentRow, 3).Value = "Type Code";
                 worksheet.Cell(currentRow, 4).Value = "Status";
                 worksheet.Cell(currentRow, 5).Value = "Manufacturing Year";
                 worksheet.Cell(currentRow, 6).Value = "SerialNumber";

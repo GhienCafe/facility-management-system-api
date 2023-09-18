@@ -22,108 +22,91 @@ namespace API_FFMS.Services
 
         public async Task<ApiResponse<ImportError>> ImportAssets(IFormFile formFile)
         {
-            // validationErrors.Clear();
-            //
-            // if (formFile == null)
-            // {
-            //     throw new ApiException("Not recognized file");
-            // }
-            //
-            // string[] extensions = { ".xlsx", ".xls" };
-            // if (!extensions.Contains(Path.GetExtension(formFile.FileName)))
-            // {
-            //     throw new ApiException("Not supported file extension");
-            // }
-            //
-            // try
-            // {
-            //     var assetDtos = ExcelReader.AssetReader(formFile.OpenReadStream());
-            //
-            //     var assets = assetDtos.Select(dto => new Asset
-            //     {
-            //         AssetName = dto.AssetName,
-            //         AssetCode = dto.AssetCode,
-            //         AssetCategory = GetAssetCategoryByCode(dto.CategoryCode),
-            //         Status = dto.Status,
-            //         ManufacturingYear = dto.ManufacturingYear,
-            //         SerialNumber = dto.SerialNumber,
-            //         Quantity = dto.Quantity,
-            //         Description = dto.Description
-            //     }).ToList();
-            //
-            //     // Validation checks
-            //     CheckAllFieldsNotBlank(assetDtos);
-            //     CheckUniqueAssetCodes(assets);
-            //     await CheckUniqueAssetCodesInDatabase(assets);
-            //     await CheckCategoryCodeExistInDatabase(assets);
-            //     CheckManufacturingYear(assets);
-            //     CheckQuantity(assets);
-            //     CheckStatusValueRange(assets);
-            //
-            //     // Filter out assets with validation errors
-            //     var validAssets = assets.Where(a => !validationErrors.Any(e => e.Row == assets.IndexOf(a) + 2)).ToList();
-            //
-            //     if (validationErrors.Count > 0 && validAssets.Count > 0)
-            //     {
-            //         if (!await MainUnitOfWork.AssetRepository.InsertAsync(validAssets, AccountId, CurrentDate))
-            //         {
-            //             throw new ApiException("Import assets failed", StatusCode.SERVER_ERROR);
-            //         }
-            //         return ApiResponse<ImportError>.Failed("Import failed due to validation errors", StatusCode.BAD_REQUEST, validationErrors);
-            //     }
-            //
-            //     //if (validAssets.Count > 0)
-            //     //{
-            //         
-            //     //}
-            //
-            //     return (ApiResponse<ImportError>)ApiResponse<ImportError>.Success();
-            // }
-            // catch (Exception exception)
-            // {
-            //     throw new ApiException(exception.Message);
-            // }
-            throw new ApiException("Not implement");
-        }
+            validationErrors.Clear();
 
-        private AssetType? GetAssetCategoryByCode(string? categoryCode)
-        {
-            var assetCategory = MainUnitOfWork.AssetTypeRepository.GetQuery()
-                                .Where(x => x.TypeCode.Trim().ToLower()
-                                .Contains(categoryCode!.Trim().ToLower()))
-                                .FirstOrDefault();
-            if (assetCategory == null)
+            if (formFile == null)
             {
-                throw new ApiException("Category code does not exist", StatusCode.BAD_REQUEST);
+                throw new ApiException("Not recognized file");
             }
 
-            return assetCategory;
+            string[] extensions = { ".xlsx", ".xls" };
+            if (!extensions.Contains(Path.GetExtension(formFile.FileName)))
+            {
+                throw new ApiException("Not supported file extension");
+            }
+
+            try
+            {
+                var assetDtos = ExcelReader.AssetReader(formFile.OpenReadStream());
+
+                var assets = assetDtos.Select(dto => new Asset
+                {
+                    AssetName = dto.AssetName,
+                    AssetCode = dto.AssetCode,
+                    Type = dto.TypeCode,
+                    Status = dto.Status,
+                    ManufacturingYear = dto.ManufacturingYear,
+                    SerialNumber = dto.SerialNumber,
+                    Quantity = dto.Quantity,
+                    Description = dto.Description
+                }).ToList();
+
+                // Validation checks
+                CheckAllFieldsNotBlank(assetDtos);
+                CheckUniqueAssetCodes(assets);
+                await CheckExistTypeCode(assets);
+                await CheckUniqueAssetCodesInDatabase(assets);
+                await CheckTypeCodeExistInDatabase(assets);
+                CheckManufacturingYear(assets);
+                CheckQuantity(assets);
+                CheckStatusValueRange(assets);
+
+                // Filter out assets with validation errors
+                var validAssets = assets.Where(a => !validationErrors.Any(e => e.Row == assets.IndexOf(a) + 2)).ToList();
+
+                if (validationErrors.Count > 0 && validAssets.Count > 0)
+                {
+                    if (!await MainUnitOfWork.AssetRepository.InsertAsync(validAssets, AccountId, CurrentDate))
+                    {
+                        throw new ApiException("Import assets failed", StatusCode.SERVER_ERROR);
+                    }
+                    return ApiResponse<ImportError>.Failed("Import failed due to validation errors", StatusCode.BAD_REQUEST, validationErrors);
+                }
+
+                return (ApiResponse<ImportError>)ApiResponse.Success();
+            }
+            catch (Exception exception)
+            {
+                throw new ApiException(exception.Message);
+            }
+        }
+
+        private async Task CheckExistTypeCode(List<Asset> assets)
+        {
+            foreach (var asset in assets)
+            {
+                var existingTypeCode = await MainUnitOfWork.AssetTypeRepository.GetQuery()
+                                       .Where(t => t.TypeCode.Equals(asset.Type.TypeCode))
+                                       .FirstOrDefaultAsync();
+                if (existingTypeCode == null)
+                {
+                    var row = assets.IndexOf(asset) + 2;
+                    validationErrors.Add(new ImportError
+                    {
+                        Row = row,
+                        ErrorMessage = $"Type code '{asset.Type.TypeCode}' in row {row} does not exist"
+                    });
+                }
+            }
         }
 
         private void CheckAllFieldsNotBlank(List<ImportAssetDto> assetDtos)
         {
-            //for (var i = 0; i < assetDtos.Count; i++)
-            //{
-            //    var dto = assetDtos[i];
-            //    if (string.IsNullOrWhiteSpace(dto.AssetName) ||
-            //        string.IsNullOrWhiteSpace(dto.AssetCode) ||
-            //        string.IsNullOrWhiteSpace(dto.CategoryCode) ||
-            //        dto.Status == default(AssetStatus) ||
-            //        dto.ManufacturingYear == default ||
-            //        dto.Quantity <= 0)
-            //    {
-            //        //throw new ApiException($"All fields must be filled in for row {i + 2}");
-            //        validationErrors.Add(new ImportError
-            //        {
-            //            ErrorMessage = $"All fields must be filled in row {i + 2}"
-            //        });
-            //    }
-            //}
             foreach (var assetDto in assetDtos)
             {
                 if (string.IsNullOrWhiteSpace(assetDto.AssetName) ||
                     string.IsNullOrWhiteSpace(assetDto.AssetCode) ||
-                    string.IsNullOrWhiteSpace(assetDto.CategoryCode) ||
+                    string.IsNullOrWhiteSpace(assetDto.TypeCode.ToString()) ||
                     string.IsNullOrWhiteSpace(assetDto.Status.ToString()) ||
                     string.IsNullOrWhiteSpace(assetDto.ManufacturingYear.ToString()) ||
                     string.IsNullOrWhiteSpace(assetDto.Quantity.ToString()))
@@ -158,9 +141,9 @@ namespace API_FFMS.Services
                     .ToList();
 
                 var duplicateError = string.Join(", ", duplicates.Select(d => $"'{d.AssetCode}' in row {d.Row}"));
-                validationErrors.Add(new ImportError 
-                { 
-                    ErrorMessage = $"Duplicate AssetCodes: {duplicateError}" 
+                validationErrors.Add(new ImportError
+                {
+                    ErrorMessage = $"Duplicate AssetCodes: {duplicateError}"
                 });
                 // Set the Row property for each validation error
                 foreach (var error in validationErrors.Where(e => e.ErrorMessage.Contains("Duplicate AssetCodes")))
@@ -222,24 +205,24 @@ namespace API_FFMS.Services
             }
         }
 
-        private async Task CheckCategoryCodeExistInDatabase(List<Asset> assets)
+        private async Task CheckTypeCodeExistInDatabase(List<Asset> assets)
         {
-            // foreach (var asset in assets)
-            // {
-            //     var existingCategory = await MainUnitOfWork.AssetCategoryRepository.GetQuery()
-            //                                  .Where(a => a.CategoryCode.Equals(asset.AssetCategory.CategoryCode))
-            //                                  .FirstOrDefaultAsync();
-            //
-            //     if (existingCategory == null)
-            //     {
-            //         var row = assets.IndexOf(asset) + 2;
-            //         validationErrors.Add(new ImportError 
-            //         { 
-            //             Row = row, 
-            //             ErrorMessage = $"Category Code '{asset.AssetCategory}' in row {row} does not exist" 
-            //         });
-            //     }
-            // }
+            foreach (var asset in assets)
+            {
+                var existingCategory = await MainUnitOfWork.AssetTypeRepository.GetQuery()
+                                             .Where(a => a.TypeCode.Equals(asset.Type.TypeCode))
+                                             .FirstOrDefaultAsync();
+
+                if (existingCategory == null)
+                {
+                    var row = assets.IndexOf(asset) + 2;
+                    validationErrors.Add(new ImportError
+                    {
+                        Row = row,
+                        ErrorMessage = $"Type Code '{asset.Type}' in row {row} does not exist"
+                    });
+                }
+            }
         }
 
         private void CheckManufacturingYear(List<Asset> assets)
@@ -251,10 +234,10 @@ namespace API_FFMS.Services
                 if (asset.ManufacturingYear >= currentDate)
                 {
                     var row = assets.IndexOf(asset) + 2;
-                    validationErrors.Add(new ImportError 
-                    { 
-                        Row = row, 
-                        ErrorMessage = $"ManufacturingYear in row {row} is not before the current date" 
+                    validationErrors.Add(new ImportError
+                    {
+                        Row = row,
+                        ErrorMessage = $"ManufacturingYear in row {row} is not before the current date"
                     });
                 }
             }
@@ -267,10 +250,10 @@ namespace API_FFMS.Services
                 if (asset.Quantity <= 0)
                 {
                     var row = assets.IndexOf(asset) + 2;
-                    validationErrors.Add(new ImportError 
-                    { 
+                    validationErrors.Add(new ImportError
+                    {
                         Row = row,
-                        ErrorMessage = $"Quantity in row {row} must be greater than 0" 
+                        ErrorMessage = $"Quantity in row {row} must be greater than 0"
                     });
                 }
             }
@@ -283,10 +266,10 @@ namespace API_FFMS.Services
                 if (asset.Status is < 0 or > (AssetStatus)10)
                 {
                     var row = assets.IndexOf(asset) + 2;
-                    validationErrors.Add(new ImportError 
-                    { 
-                        Row = row, 
-                        ErrorMessage = $"Status value must be between 0 and 10 for row {row}" 
+                    validationErrors.Add(new ImportError
+                    {
+                        Row = row,
+                        ErrorMessage = $"Status value must be between 0 and 10 for row {row}"
                     });
                 }
             }

@@ -23,9 +23,9 @@ namespace API_FFMS.Services
                     {
                         assets.Add(new ImportAssetDto
                         {
-                            AssetName = dataRow.Cell(1).Value.ToString()?.Trim(),
+                            AssetName = dataRow.Cell(1).Value.ToString().Trim(),
                             AssetCode = dataRow.Cell(2).Value.ToString()?.Trim(),
-                            CategoryCode = dataRow.Cell(3).Value.ToString()?.Trim(),
+                            TypeCode = new AssetType { TypeCode = dataRow.Cell(3).Value.ToString().Trim() },
                             Status = (AssetStatus)Enum.Parse(typeof(AssetStatus), dataRow.Cell(4).Value.ToString().Trim()),
                             ManufacturingYear = DateTime.Parse(dataRow.Cell(5).Value.ToString().Trim()),
                             SerialNumber = dataRow.Cell(6).Value.ToString()?.Trim(),

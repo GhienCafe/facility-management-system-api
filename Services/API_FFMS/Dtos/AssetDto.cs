@@ -6,7 +6,7 @@ namespace API_FFMS.Dtos
 {
     public class AssetDto
     {
-        public Guid CategoryId { get; set; }
+        public Guid TypeId { get; set; }
         public string AssetName { get; set; } = null!;
         public string? AssetCode { get; set; }
         public AssetStatus Status { get; set; }
@@ -19,7 +19,7 @@ namespace API_FFMS.Dtos
 
     public class AssetDetailDto : BaseDto
     {
-        public Guid CategoryId { get; set; }
+        public Guid TypeId { get; set; }
         public string AssetName { get; set; } = null!;
         public string? AssetCode { get; set; }
         public AssetStatus Status { get; set; }
@@ -32,8 +32,8 @@ namespace API_FFMS.Dtos
 
     public class AssetCreateDto
     {
-        [Required(ErrorMessage = "Category ID is required.")]
-        public Guid CategoryId { get; set; }
+        [Required(ErrorMessage = "Type ID is required.")]
+        public Guid TypeId { get; set; }
 
         [Required(ErrorMessage = "Asset name is required.")]
         [StringLength(255, MinimumLength = 1, ErrorMessage = "Asset name must be between 1 and 255 characters.")]
@@ -62,14 +62,14 @@ namespace API_FFMS.Dtos
 
     public class AssetUpdateDto
     {
-        public Guid? CategoryId { get; set; }
+        public Guid? TypeId { get; set; }
 
         [StringLength(255, MinimumLength = 1, ErrorMessage = "Asset Name must be between 1 and 255 characters.")]
         public string AssetName { get; set; } = null!;
 
         [StringLength(255, ErrorMessage = "Asset Code cannot exceed 255 characters.")]
 
-        public AssetStatus? Status { get; set; }
+        //public AssetStatus? Status { get; set; }
 
         public DateTime? ManufacturingYear { get; set; }
 
@@ -87,5 +87,4 @@ namespace API_FFMS.Dtos
         public string? AssetName { get; set; }
         public string? AssetCode { get; set; }
     }
-
 }
