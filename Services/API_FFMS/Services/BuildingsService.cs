@@ -12,7 +12,6 @@ public interface IBuildingsService : IBaseService
 {
     Task<ApiResponses<BuildingDto>> GetBuildings(BuildingQueryDto queryDto);
     Task<ApiResponse<BuildingDetailDto>> GetBuildings(Guid id);
-    
     public Task<ApiResponse> Insert(BuildingCreateDto addBuildingDto);
     public Task<ApiResponse> Update(Guid id, BuildingUpdateDto buildingUpdate);
     Task<ApiResponse> Delete(Guid id);
@@ -27,32 +26,30 @@ public class BuildingsService : BaseService, IBuildingsService
 
     public async Task<ApiResponses<BuildingDto>> GetBuildings(BuildingQueryDto queryDto)
     {
-        Expression<Func<Building, bool>>[] conditions = new Expression<Func<Building, bool>>[]
-        {
-            x => !x.DeletedAt.HasValue
-        };
+        var buildings = await MainUnitOfWork.BuildingRepository.FindResultAsync<BuildingDto>(
+            new Expression<Func<Building, bool>>[]
+            {
+                x => !x.DeletedAt.HasValue,
+                x => string.IsNullOrEmpty(queryDto.BuildingName) ||
+                     x.BuildingName!.ToLower().Contains(queryDto.BuildingName.Trim().ToLower()),
+                x => string.IsNullOrEmpty(queryDto.BuildingCode) ||
+                     x.BuildingCode!.ToLower().Contains(queryDto.BuildingCode.Trim().ToLower())
+            }, queryDto.OrderBy, queryDto.Skip(), queryDto.PageSize);
 
-        if (string.IsNullOrEmpty(queryDto.BuildingName)==false)
-        {
-            conditions = conditions.Append(x => x.BuildingName.Trim().ToLower().Contains(queryDto.BuildingName.Trim().ToLower())).ToArray();
-        }
-        if (string.IsNullOrEmpty(queryDto.CampusName)==false)
-        {
-            conditions = conditions.Append(x => x.Campus.CampusName.Trim().ToLower().Contains(queryDto.CampusName.Trim().ToLower())).ToArray();
-        }
-        var response = await MainUnitOfWork.BuildingsRepository.FindResultAsync<BuildingDto>(conditions, queryDto.OrderBy, queryDto.Skip(), queryDto.PageSize);
+        buildings.Items = await _mapperRepository.MapCreator(buildings.Items.ToList());
+        
         return ApiResponses<BuildingDto>.Success(
-            response.Items,
-            response.TotalCount,
+            buildings.Items,
+            buildings.TotalCount,
             queryDto.PageSize,
             queryDto.Skip(),
-            (int)Math.Ceiling(response.TotalCount / (double)queryDto.PageSize)
+            (int)Math.Ceiling(buildings.TotalCount / (double)queryDto.PageSize)
         );
     }
 
     public async Task<ApiResponse<BuildingDetailDto>> GetBuildings(Guid id)
     {
-      var buildings = await MainUnitOfWork.BuildingsRepository.FindOneAsync<BuildingDetailDto>(
+      var buildings = await MainUnitOfWork.BuildingRepository.FindOneAsync<BuildingDetailDto>(
           new Expression<Func<Building, bool>>[]
           {
                     x => !x.DeletedAt.HasValue,
@@ -60,7 +57,7 @@ public class BuildingsService : BaseService, IBuildingsService
           });
 
       if (buildings == null)
-        throw new ApiException("Not found this buildings", StatusCode.NOT_FOUND);
+          throw new ApiException("Not found this buildings", StatusCode.NOT_FOUND);
 
       // Map CDC for the post
       buildings = await _mapperRepository.MapCreator(buildings);
@@ -68,75 +65,43 @@ public class BuildingsService : BaseService, IBuildingsService
       return ApiResponse<BuildingDetailDto>.Success(buildings);
     }
 
-    public async Task<ApiResponse> Insert(BuildingCreateDto buildingsDto)
+    public async Task<ApiResponse> Insert(BuildingCreateDto buildingDto)
     {
-        if (!buildingsDto.BuildingName.IsBetweenLength(1, 255))
-        {
-            throw new ApiException("Can not create buildings when address is null or must length of characters 1-255", StatusCode.ALREADY_EXISTS);
-        }
+        var building = buildingDto.ProjectTo<BuildingCreateDto, Building>();
 
-        if (MainUnitOfWork.BuildingsRepository.GetQuery()
-                .Where(x => x.BuildingName.Trim().ToLower().Contains(buildingsDto.BuildingName.Trim().ToLower()))
-                .SingleOrDefault() != null)
-        {
-            throw new ApiException("Building name was used, please again!", StatusCode.BAD_REQUEST);
-
-        }
-        if (MainUnitOfWork.CampusRepository.GetQuery().SingleOrDefault(x => x.Id == buildingsDto.CampusId)==null)
-        {
-            throw new ApiException("Id cannot null", StatusCode.BAD_REQUEST);
-        }
-        var buildings = buildingsDto.ProjectTo<BuildingCreateDto, Building>();
-        bool response = await MainUnitOfWork.BuildingsRepository.InsertAsync(buildings, AccountId, CurrentDate);
+        if (!await MainUnitOfWork.BuildingRepository.InsertAsync(building, AccountId, CurrentDate))
+            throw new ApiException("Insert fail", StatusCode.SERVER_ERROR);
         
-        if (response)
-        {
-            return ApiResponse<bool>.Success(true);
-        }
-        else
-        {
-            return (ApiResponse<bool>)ApiResponse.Failed();
-        }
+        return ApiResponse.Created("Create successfully!");
     }
-    public async Task<ApiResponse> Update(Guid id, BuildingUpdateDto buildingsDto)
+    public async Task<ApiResponse> Update(Guid id, BuildingUpdateDto buildingDto)
     {
-        var buildings = await MainUnitOfWork.BuildingsRepository.FindOneAsync(id);
-        if (buildings == null)
+        var building = await MainUnitOfWork.BuildingRepository.FindOneAsync(id);
+        if (building == null)
         {
             throw new ApiException("Not found this buildings", StatusCode.NOT_FOUND);
         }
-        if (!buildingsDto.BuildingName.IsBetweenLength(1, 50))
-        {
-            throw new ApiException("Can not create buildings when description is null or must length of characters 1-255", StatusCode.BAD_REQUEST);
-        }
+        
+        building.BuildingName = buildingDto.BuildingName ?? building.BuildingName;
+        building.CampusId = buildingDto.CampusId ?? building.CampusId;
+        building.BuildingCode = buildingDto.BuildingCode ?? building.BuildingCode;
 
-        var checkCampusExisting = MainUnitOfWork.CampusRepository.GetQuery()
-            .Where(x => x.Id == buildingsDto.CampusId).SingleOrDefault();
-        if (checkCampusExisting == null)
-        {
-            throw new ApiException("Can not create buildings when campus is not found", StatusCode.BAD_REQUEST);
-        }
+        if (!await MainUnitOfWork.BuildingRepository.UpdateAsync(building, AccountId, CurrentDate))
+            throw new ApiException("Update failed!", StatusCode.SERVER_ERROR);
 
-        // Cập nhật các thuộc tính của thực thể hiện tại
-        buildings.BuildingName = buildingsDto.BuildingName;
-        buildings.CampusId = buildingsDto.CampusId;
-
-        if (!await MainUnitOfWork.BuildingsRepository.UpdateAsync(buildings, AccountId, CurrentDate))
-        {
-            throw new ApiException("Can't not update", StatusCode.SERVER_ERROR);
-        }
-
-        return ApiResponse<bool>.Success(true);
+        return ApiResponse.Success("Update successfully");
     }
 
     public async Task<ApiResponse> Delete(Guid id)
     {
-        var existingbuildings = await MainUnitOfWork.BuildingsRepository.FindOneAsync(id);
-        if (existingbuildings == null)
+        var existingBuilding = await MainUnitOfWork.BuildingRepository.FindOneAsync(id);
+        
+        if (existingBuilding == null)
             throw new ApiException("Not found this buildings", StatusCode.NOT_FOUND);
-        if (!await MainUnitOfWork.BuildingsRepository.DeleteAsync(existingbuildings, AccountId, CurrentDate))
+        
+        if (!await MainUnitOfWork.BuildingRepository.DeleteAsync(existingBuilding, AccountId, CurrentDate))
             throw new ApiException("Can't not delete", StatusCode.SERVER_ERROR);
 
-        return ApiResponse.Success();
+        return ApiResponse.Success("Delete successfully!");
     }
 }

@@ -26,8 +26,6 @@ public class AuthService : BaseService, IAuthService
     }
     public async Task<ApiResponse<AuthDto>> SignIn(AccountCredentialLoginDto accountCredentialLoginDto)
     {
-        // Mẫu đúng cho định dạng email của FPT hoặc FE
-        string fptOrFeEmailPattern = @"^[A-Za-z0-9._%+-]+@(fpt\.edu\.vn|fe\.edu\.vn)$";
         var user = await MainUnitOfWork.UserRepository.FindOneAsync(new Expression<Func<User, bool>>[]
         {
             x => !x.DeletedAt.HasValue && x.Email == accountCredentialLoginDto.Email
@@ -37,11 +35,7 @@ public class AuthService : BaseService, IAuthService
         {
             throw new ApiException("Not existed user",StatusCode.NOT_FOUND);
         }
-        // Kiểm tra xem email có khớp với mẫu FPT hoặc FE hay không
-        if (!Regex.IsMatch(accountCredentialLoginDto.Email, fptOrFeEmailPattern))
-        {
-            throw new ApiException("Invalid FPT or FE email format", StatusCode.FORBIDDEN);
-        }
+        
         // Check status
         if (user.Status == UserStatus.InActive)
             throw new ApiException(MessageKey.AccountNotActivated, StatusCode.NOT_ACTIVE);
@@ -73,7 +67,7 @@ public class AuthService : BaseService, IAuthService
         };
         
          if (!await MainUnitOfWork.TokenRepository.InsertAsync(token, user.Id, CurrentDate))
-             throw new ApiException("Đang k biết lỗi gì", StatusCode.SERVER_ERROR);
+             throw new ApiException("Token fail", StatusCode.SERVER_ERROR);
         
         var verifyResponse = new AuthDto
         {
