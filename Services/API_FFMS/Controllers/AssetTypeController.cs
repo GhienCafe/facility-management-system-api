@@ -6,9 +6,7 @@ using Swashbuckle.AspNetCore.Annotations;
 
 namespace API_FFMS.Controllers
 {
-    [Route("api/[controller]")]
-    [ApiController]
-    public class AssetTypeController : ControllerBase
+    public class AssetTypeController : BaseController
     {
         private readonly IAssetTypeService _service;
 
@@ -39,8 +37,8 @@ namespace API_FFMS.Controllers
         }
 
         [HttpPut("{id:guid}")]
-        [SwaggerOperation("Update asset type")]
-        public async Task<ApiResponse<AssetTypeDetailDto>> UpdateAssetType(Guid id, AssetTypeUpdateDto updateDto)
+        [SwaggerOperation("Update type information")]
+        public async Task<ApiResponse> UpdateAssetType(Guid id, AssetTypeUpdateDto updateDto)
         {
             return await _service.Update(id, updateDto);
         }
