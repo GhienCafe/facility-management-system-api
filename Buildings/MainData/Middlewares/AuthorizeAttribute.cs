@@ -1,4 +1,5 @@
-﻿using AppCore.Extensions;
+﻿using System.Security.Claims;
+using AppCore.Extensions;
 using AppCore.Models;
 using MainData.Entities;
 using Microsoft.AspNetCore.Mvc.Filters;
@@ -26,7 +27,7 @@ public class AuthorizeAttribute : Attribute, IAuthorizationFilter
             return;
 
         var user = context.HttpContext.User;
-        if (user.GetAccountId() == null || user.GetAccountId() == Guid.Empty)
+        if (user.GetUserId() == null || user.GetUserId() == Guid.Empty)
         {
             throw new ApiException(MessageKey.Unauthorized, StatusCode.UNAUTHORIZED);
         }

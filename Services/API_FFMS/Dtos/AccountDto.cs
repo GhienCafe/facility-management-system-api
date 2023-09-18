@@ -5,11 +5,9 @@ namespace API_FFMS.Dtos;
 
 public class AccountDto : BaseDto
 {
-    public string DepartmentName { get; set; }
     public string UserCode { get; set; } = null!;
     public string Fullname { get; set; } = null!;
     public UserRole Role { get; set; }
-    public string? RoleString{ get; set; }
     public string? Avatar { get; set; }
     public string Email { get; set; } = null!;
     public string PhoneNumber { get; set; } = null!;
@@ -23,7 +21,6 @@ public class AccountDto : BaseDto
 
 public class AccountUpdate
 {
-    public string DepartmentName { get; set; }
     public string UserCode { get; set; } = null!;
     public string Fullname { get; set; } = null!;
     public UserRole Role { get; set; }
