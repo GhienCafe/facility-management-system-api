@@ -30,7 +30,9 @@ public class DatabaseContext : DbContext
     public DbSet<ReplacementDetail> ReplacementDetails { get; set; }
     
     public DbSet<Notification> Notifications { get; set; }
-    
+    public DbSet<Transportation> Transportations { get; set; }
+    public DbSet<TransportationDetail> TransportationDetails { get; set; }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         //modelBuilder.ApplyConfigurationsFromAssembly(typeof(DatabaseContext).Assembly);
@@ -55,5 +57,7 @@ public class DatabaseContext : DbContext
         modelBuilder.ApplyConfiguration(new ReplacementConfig());
         modelBuilder.ApplyConfiguration(new ReplacementDetailConfig());
         modelBuilder.ApplyConfiguration(new NotificationConfig());
+        modelBuilder.ApplyConfiguration(new TransportationConfig());
+        modelBuilder.ApplyConfiguration(new TransportationDetailConfig());
     }
 }
