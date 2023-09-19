@@ -70,8 +70,7 @@ namespace API_FFMS.Services
                     {
                         throw new ApiException("Import assets failed", StatusCode.SERVER_ERROR);
                     }
-                    //return ApiResponses<ImportError>.Failed("Import failed due to validation errors", StatusCode.BAD_REQUEST, validationErrors);
-                    return ApiResponses<ImportError>.Fail(validationErrors, StatusCode.BAD_REQUEST, "Import failed due to validation errors");
+                    return ApiResponses<ImportError>.Fail(validationErrors, StatusCode.UNPROCESSABLE_ENTITY, "Some Asset imports failed due to validation errors");
                 }
 
                 return ApiResponses<ImportError>.Success((IEnumerable<ImportError>)validAssets);
