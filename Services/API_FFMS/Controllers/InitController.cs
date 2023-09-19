@@ -23,12 +23,12 @@ public class InitController : BaseController
         var user = new User
         {
             Id = Guid.NewGuid(),
-            UserCode = "SE150550", // Gán giá trị UserCode ở đây
-            Email = "admin@fpt.edu.vn",
+            UserCode = "SE150747", // Gán giá trị UserCode ở đây
+            Email = "giangntse150747@fpt.edu.vn",
             Address = "Thu Duc, TP Ho Chi Minh",
             Fullname = "Nguyen Truong Giang",
             Gender = true,
-            Password = SecurityExtension.HashPassword<User>("Admin123@", salt),
+            Password = SecurityExtension.HashPassword<User>("Giang123@", salt),
             Role = UserRole.Manager,
             Salt = salt,
             Status = UserStatus.Active,

@@ -11,10 +11,11 @@ namespace API_FFMS.Controllers;
 public class AuthController : BaseController
 {
     private readonly IAuthService _authService;
-
-    public AuthController(IAuthService authService)
+    private readonly ITokenDeviceService _tokenDeviceService;
+    public AuthController(IAuthService authService, ITokenDeviceService tokenDeviceService)
     {
         _authService = authService;
+        _tokenDeviceService = tokenDeviceService;
     }
     
     [HttpPost("sign-in")]
@@ -44,5 +45,12 @@ public class AuthController : BaseController
     public async Task<ApiResponse<AuthDto>> SignIn(AuthRefreshDto authRefreshDto)
     {
         return await _authService.RefreshToken(authRefreshDto);
+    }
+    [HttpPost("check-token-device")]
+    [SwaggerOperation("Check token device")]
+    [Authorize(new[] { UserRole.Staff })]
+    public async Task<ApiResponse> CheckTokenDevice(TokenDeviceDto tokenDto)
+    {
+        return await _tokenDeviceService.CheckTokenDevice(tokenDto);
     }
 }
