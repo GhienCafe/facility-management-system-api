@@ -23,7 +23,7 @@ public class FloorController : BaseController
     }
     [HttpPost]
     [SwaggerOperation("Create new floor")]
-    public async Task<ApiResponse> Insert([FromBody]FloorCreateDto floorDto)
+    public async Task<ApiResponse> Insert([FromForm]FloorCreateDto floorDto)
     {
         return await _service.Insert(floorDto);
     }
@@ -38,7 +38,7 @@ public class FloorController : BaseController
     [HttpPut("{id:guid}")]
         
     [SwaggerOperation("Update floor information")]
-    public async Task<ApiResponse<FloorDetailDto>> Update(Guid id, FloorUpdateDto updateDto)
+    public async Task<ApiResponse> Update(Guid id, [FromForm]FloorUpdateDto updateDto)
     {
         return await _service.Update(id, updateDto);
     }
