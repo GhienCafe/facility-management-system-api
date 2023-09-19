@@ -1,9 +1,6 @@
 ﻿using API_FFMS.Dtos;
 using API_FFMS.Services;
 using Microsoft.AspNetCore.Mvc;
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 
 namespace API_FFMS.Controllers
 {
@@ -21,8 +18,7 @@ namespace API_FFMS.Controllers
         {
             try
             {
-                var registrationDto = new RegistrationDto { Token = token };
-                await _notificationService.SendSingleMessage(fcmNotiMessage, registrationDto);
+                await _notificationService.SendSingleMessage(fcmNotiMessage, token);
                 return Ok("Message sent successfully");
             }
             catch (Exception ex)
