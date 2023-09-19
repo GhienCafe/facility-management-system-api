@@ -29,4 +29,13 @@ namespace API_FFMS.Dtos
         public Guid RoomId { get; set; }
     }
 
+    public class RoomAssetCreateDto
+    {
+        public Guid RoomId { get; set; }
+        public Guid AssetId { get; set; }
+        public AssetStatus Status { get; set; }
+        public DateTime? FromDate { get; set; }
+        public DateTime? ToDate { get; set; }
+    }
+
 }

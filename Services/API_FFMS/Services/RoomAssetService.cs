@@ -4,6 +4,7 @@ using MainData;
 using MainData.Entities;
 using MainData.Repositories;
 using System.Linq.Expressions;
+using AppCore.Extensions;
 
 namespace API_FFMS.Services
 {
@@ -11,6 +12,7 @@ namespace API_FFMS.Services
     {
         Task<ApiResponses<AssetTrackingDto>> AssetUsedTracking(RoomTrackingQueryDto queryDto);
         Task<ApiResponses<RoomTrackingDto>> RoomTracking(RoomTrackingQueryDto queryDto);
+        Task<ApiResponse> AddRoomAsset(RoomAssetCreateDto roomAssetCreateDto);
     }
 
     public class RoomAssetService : BaseService, IRoomAssetService
@@ -61,6 +63,16 @@ namespace API_FFMS.Services
                 queryDto.Skip(),
             (int)Math.Ceiling(response.TotalCount / (double)queryDto.PageSize)
                 );
+        }
+
+        public async Task<ApiResponse> AddRoomAsset(RoomAssetCreateDto roomAssetCreateDto)
+        {
+            var roomAsset = roomAssetCreateDto.ProjectTo<RoomAssetCreateDto, RoomAsset>();
+
+            if (!await MainUnitOfWork.RoomAssetRepository.InsertAsync(roomAsset, AccountId, CurrentDate))
+                throw new ApiException("Insert fail", StatusCode.SERVER_ERROR);
+            
+            return ApiResponse.Created("Create successfully");
         }
     }
 }
