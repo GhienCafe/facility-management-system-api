@@ -1,4 +1,5 @@
 ﻿using System.Linq.Expressions;
+using System.Text;
 using API_FFMS.Dtos;
 using AppCore.Extensions;
 using AppCore.Models;
@@ -13,7 +14,7 @@ public interface IFloorService : IBaseService
     Task<ApiResponses<FloorDto>> GetFloor(FloorQueryDto queryDto);
     Task<ApiResponse<FloorDetailDto>> GetFloor(Guid id);
     public Task<ApiResponse> Insert(FloorCreateDto addFloorDto);
-    public Task<ApiResponse<FloorDetailDto>> Update(Guid id, FloorUpdateDto floorUpdate);
+    public Task<ApiResponse> Update(Guid id, FloorUpdateDto floorUpdate);
     Task<ApiResponse> Delete(Guid id);
 
 }
@@ -64,26 +65,41 @@ public class FloorService : BaseService, IFloorService
     public async Task<ApiResponse> Insert(FloorCreateDto floorDto)
     {
         var floor = floorDto.ProjectTo<FloorCreateDto, Floor>();
+        
+        if (floorDto.SvgFile != null)
+        {
+            var streamReader = new StreamReader(floorDto.SvgFile.OpenReadStream(), Encoding.UTF8);
+            floor.FloorMap = await streamReader.ReadToEndAsync();
+        }
+        
         if (!await MainUnitOfWork.FloorRepository.InsertAsync(floor, AccountId, CurrentDate))
             throw new ApiException("Insert fail!", StatusCode.SERVER_ERROR);
         
         return ApiResponse.Success();
     }
     
-    public async Task<ApiResponse<FloorDetailDto>> Update(Guid id, FloorUpdateDto floorDto)
+    public async Task<ApiResponse> Update(Guid id, FloorUpdateDto floorDto)
     {
         var floor = await MainUnitOfWork.FloorRepository.FindOneAsync(id);
-        if (floor == null)
+        if (floor == null )
             throw new ApiException("Not found this floors", StatusCode.NOT_FOUND);
 
+        var svgString = string.Empty;
+        
+        if (floorDto.SvgFile != null)
+        {
+            var streamReader = new StreamReader(floorDto.SvgFile.OpenReadStream(), Encoding.UTF8);
+            svgString = await streamReader.ReadToEndAsync();
+        }
+
         floor.FloorNumber = floorDto.FloorNumber ?? floor.FloorNumber;
-        floor.FloorMap = floorDto.FloorMap ?? floor.FloorMap;
+        floor.FloorMap = !string.IsNullOrEmpty(svgString) ? svgString : floor.FloorMap;
         floor.BuildingId = floorDto.BuildingId ?? floor.BuildingId;
         
         if (!await MainUnitOfWork.FloorRepository.UpdateAsync(floor, AccountId, CurrentDate))
             throw new ApiException("Can't not update", StatusCode.SERVER_ERROR);
 
-        return await GetFloor(id);
+        return ApiResponse.Success();
     }
     public async Task<ApiResponse> Delete(Guid id)
     {
