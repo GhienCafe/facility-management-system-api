@@ -2,6 +2,8 @@
 using MainData;
 using MainData.Repositories;
 using AppCore.Extensions;
+using AppCore.Models;
+
 namespace API_FFMS.Services;
 using FirebaseAdmin;
 using FirebaseAdmin.Messaging;
@@ -47,13 +49,20 @@ public class NotificationService : BaseService, INotificationService
 
         string response = await FirebaseMessaging.DefaultInstance.SendAsync(message).ConfigureAwait(false);
 
+        var notification = new MainData.Entities.Notification()
+        {
+            Title = noti.Title,
+            Content = noti.Body,
+            IsSendAll = false,
+        };
         if (string.IsNullOrEmpty(response))
         {
-            Console.WriteLine("Error sending message: " + response);
-            throw new Exception("Server error for not valid sent message");
+            throw new ApiException("Server error for not valid sent message", StatusCode.BAD_REQUEST);
         }
-
-        Console.WriteLine("Successfully sent message: " + response);
+        if (!await MainUnitOfWork.NotificationRepository.InsertAsync(notification, AccountId, CurrentDate))
+        {
+            throw new ApiException("Server error for not insert notification", StatusCode.BAD_REQUEST);
+        }
     }
 
     public async Task SendMultipleMessages(RequestDto request)
