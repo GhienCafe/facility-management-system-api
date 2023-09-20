@@ -1,4 +1,5 @@
-﻿using API_FFMS.Dtos;
+﻿using System.Linq.Expressions;
+using API_FFMS.Dtos;
 using MainData;
 using MainData.Repositories;
 using AppCore.Extensions;
@@ -13,12 +14,34 @@ public interface INotificationService : IBaseService
 {
     Task SendSingleMessage(NotificationDto noti, string token);
     Task SendMultipleMessages(RequestDto request);
+    Task<ApiResponses<NotificationDto>> GetNotification(NotificationQueryDto queryDto);
 }
 public class NotificationService : BaseService, INotificationService
 {
     public NotificationService(MainUnitOfWork mainUnitOfWork, IHttpContextAccessor httpContextAccessor, IMapperRepository mapperRepository) : base(mainUnitOfWork, httpContextAccessor, mapperRepository)
     {
     }
+
+    public async Task<ApiResponses<NotificationDto>> GetNotification(NotificationQueryDto queryDto)
+    {
+        var notification = await MainUnitOfWork.NotificationRepository.FindResultAsync<NotificationDto>(
+            new Expression<Func<MainData.Entities.Notification, bool>>[]
+            {
+                x => !x.DeletedAt.HasValue,
+                x => x.UserId == AccountId
+            }, queryDto.OrderBy, queryDto.Skip(), queryDto.PageSize);
+
+        notification.Items = await _mapperRepository.MapCreator(notification.Items.ToList());
+        
+        return ApiResponses<NotificationDto>.Success(
+            notification.Items,
+            notification.TotalCount,
+            queryDto.PageSize,
+            queryDto.Skip(),
+            (int)Math.Ceiling(notification.TotalCount / (double)queryDto.PageSize)
+        );
+    }
+
     public async Task SendSingleMessage(NotificationDto noti, string token)
     {
         // Khởi tạo Firebase nếu chưa được khởi tạo
@@ -54,6 +77,7 @@ public class NotificationService : BaseService, INotificationService
             Title = noti.Title,
             Content = noti.Body,
             IsSendAll = false,
+            UserId = AccountId
         };
         if (string.IsNullOrEmpty(response))
         {
