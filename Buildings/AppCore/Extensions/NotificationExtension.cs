@@ -1,13 +1,19 @@
-﻿using FirebaseAdmin;
+﻿using AppCore.Data;
+using FirebaseAdmin;
 using FirebaseAdmin.Messaging;
 using Google.Apis.Auth.OAuth2;
 using AppCore.Models;
 
 namespace AppCore.Extensions
 {
-    public class SendNotification
+    public interface ISendNotification
     {
-        public static async Task SendFirebaseMessage(Notification noti, Registration registrationToken)
+        Task SendFirebaseMessage(Notification noti, Registration registrationToken);
+        Task SendFirebaseMulticastMessage(Request request);
+    }
+    public class SendNotification : ISendNotification
+    {
+        public async Task SendFirebaseMessage(Notification noti, Registration registrationToken)
         {
             await InitializeFirebase();
 
@@ -35,14 +41,9 @@ namespace AppCore.Extensions
             };
 
             string response = await FirebaseMessaging.DefaultInstance.SendAsync(message).ConfigureAwait(false);
-
-            if (string.IsNullOrEmpty(response))
-            {
-                throw new ApiException("Server error for not valid sent message", StatusCode.BAD_REQUEST);
-            }
         }
 
-        public static async Task SendFirebaseMulticastMessage(Request request)
+        public async Task SendFirebaseMulticastMessage(Request request)
         {
             await InitializeFirebase();
 
@@ -72,27 +73,9 @@ namespace AppCore.Extensions
                 };
 
                 BatchResponse response = await FirebaseMessaging.DefaultInstance.SendMulticastAsync(message).ConfigureAwait(false);
-
-                if (response.FailureCount > 0)
-                {
-                    List<string> invalidTokens = new List<string>();
-                    for (int i = 0; i < response.Responses.Count; i++)
-                    {
-                        if (!response.Responses[i].IsSuccess)
-                        {
-                            string errorToken = request.ListToken.Tokens![i];
-                            invalidTokens.Add(errorToken);
-                        }
-                    }
-
-                    if (invalidTokens.Count > 0)
-                    {
-                        string invalidTokensList = string.Join(", ", invalidTokens);
-                        throw new ApiException($"Server error for not valid sent message to tokens: {invalidTokensList}", StatusCode.BAD_REQUEST);
-                    }
-                }
             }
         }
+        
         public static string GetHtmlContent(Notification noti)
         {
             string title = noti.Title ?? "Thông báo";

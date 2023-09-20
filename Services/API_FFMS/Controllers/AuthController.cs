@@ -48,7 +48,8 @@ public class AuthController : BaseController
     }
     [HttpPost("check-token-device")]
     [SwaggerOperation("Check token device")]
-    [Authorize(new[] { UserRole.Staff })]
+    [AllowAnonymous]
+
     public async Task<ApiResponse> CheckTokenDevice(TokenDeviceDto tokenDto)
     {
         return await _tokenDeviceService.CheckTokenDevice(tokenDto);

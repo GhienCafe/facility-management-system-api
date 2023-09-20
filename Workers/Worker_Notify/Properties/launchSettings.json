@@ -4,7 +4,12 @@
       "commandName": "Project",
       "dotnetRunMessages": true,
       "environmentVariables": {
-        "DOTNET_ENVIRONMENT": "Development"
+        "DOTNET_ENVIRONMENT": "Development",
+        "type": "service_account",
+        "project_id": "facility-management-system-fb",
+        "private_key_id": "57fada743162a2f3114asdfasfdss108",
+        "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEasdfaFDFDSFSDFasfBAQEFADFFDfDFDFAAoIBAQDD8CNDdACHkxuV\nHjehoXK3M23aIZFDSFSDFhtQck1mHhxn2bRbWGhkt3iYSaI+RhRCc\ngs0QyGKnkcTxqQw6ThhxPJvQTM35DU0X/l9vAi4UKEsdIKqvyaQXl/nBU77IJ/K2\npI1hHtGefLIo/DL+zmS25oAkIZsEuaiuhp5S9ZEl3/3qotdzr/RMt+5g4BvAPfGl\n4/xEu8PelCafj1KNw1+ZNkkZqn0PpUfS8kSgduOTNc6umsH4rHQwg6bX7+8oieS5\naS3o3KAoqA/nJGQFXXt/GOnUTl/VMu4j3pV59cEva4x/kAbJLT8X8gN4v0gU/LVi\nLTsrm/qDAgMBAAECggEABo+bdq5DOEb2RPuCjGB+GWFY+9VlMIfzTDtUQhCM8R3c\nSiTcJGrQtCeTeHt1qMyt7CnEp5gluo80m7ELkdTL7OWGLTtmY+tqiRwo8YQo336R\nBs0nP+3YQieJQFvwKzu6yWl23QDjYgtoZrJC464nAcIWKyYqxPp/R9qXDt6rNLC9\nvVONQfYPb2bFWT/80veRALv7SyaMZLxtLXXcVlBRkA0pkfMWDh5lSNQRuTGvTFNj\naFDZ9CcQwAD+T1CjjU8z8wZ/nWMzxTi8b15bo4PuK/TX4tm5k7Oy8EU0bv3xXFAH\n0QfsOn8tAdAGHfkwfZ3xo+TAeJn0xW2HB7sE/UBCzQKBgQD5pbuwd6qo+n202jq5\nw8+15TkSpj2nsaRUmnen+tfJef5tL8fevji5BEI9MnkZ/8Q9Rw4/k8ddfDdMqLFH\nb7y2FbQ7eyb+tmbmrq93arpsldhTlRYzNbS2tJ9XU5HrNOVfyYaQ6IHrS0MyI97w\nZ0IXRoFAnsGOIUWQjaEJ/H6s1QKBgQDI7IczcKHxn31+yAqMv4VBk8Sda3GvsWna\nayJkt3hR11juyxoaIyF/TRxYSBX5UBN3p1UzxP+tZQIWblMRM4PdV3ogxlIqbrHR\nhpREAqVbxkEzhQVVVTKFrxo9uthLiKJ3TmrE4j9XFpt/+tUFfXT0KKcjZqCme+8V\nwGs2HD7V9wKBgBsA+2FmQFaQ6eITLQEFFkW1qsvCoa6u/3iLUOAhuQ+5G3VSEsuc\nReR1enjGKeVPDjoWoorsAEezdQPcx3hTtNT5WgqJErnAnzbatG41ZD70onbADKuz\nZn3Q4d9/Uaxgh2MqGF06WTtLY9RbnvTgJn0ACmEkCwnFvZGaUE4VOtqVAoGAQt/e\n/DMP47EW/vyr7j7Mpo/9T/v0AetF9SnVb7pVNMA9XHWDQZHR02Ih/gw4LBwH7rpm\nNG3sP5UwBbFAuqfvytsTzhbUQEVJsBhf/ub2jL5G81Ph+43429/1Fvi6hyF6GcWi\n6db4CA+BQC6HemVQaPei8bh13hO/9vhtdrwd+e8CgYEAw/QVHWeO699VT/3OUakG\nZY9Hv8ZpeQXajIjPflzMamQ/o2Uo2MdUBN0NW5F6m2dZmgIkxBPZzQVx+cL8VcRI\nrLxbCOELNp5FlIe4aAbbTwkPc8nDPdxKN4fALH3RRRpgHlmwSHbK7+hmxMyTn5gV\n/Ftqndfvy/5VIvfolebhtD4=\n-----END PRIVATE KEY-----\n",
+        "client_email": "firebase-adminsdk-58mjh@facility-management-system-fb.iam.gserviceaccount.com"
       }
     }
   }

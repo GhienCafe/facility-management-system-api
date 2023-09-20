@@ -31,7 +31,6 @@ public class NotificationService : BaseService, INotificationService
                 x => x.UserId == AccountId
             }, queryDto.OrderBy, queryDto.Skip(), queryDto.PageSize);
 
-        notification.Items = await _mapperRepository.MapCreator(notification.Items.ToList());
         
         return ApiResponses<NotificationDto>.Success(
             notification.Items,
