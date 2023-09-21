@@ -1,4 +1,5 @@
-﻿using AppCore.Data;
+﻿using System.ComponentModel.DataAnnotations;
+using AppCore.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -7,13 +8,31 @@ namespace MainData.Entities;
 public class Notification : BaseEntity
 {
     public Guid? UserId { get; set; }
-    public bool IsSendAll { get; set; }
     public string? Title { get; set; }
     public string? ShortContent { get; set; }
     public string? Content { get; set; }
+    public bool? IsRead { get; set; } 
+    public NotificationType Type { get; set; }
+    public NotificationStatus Status { get; set; }
+    
+    public Guid? ItemId { get; set; }
     
     //
     public virtual User? User { get; set; }
+}
+
+public enum NotificationType
+{
+    [Display(Name = "Nhiệm vụ")] Task = 1,
+    [Display(Name = "Hệ thống")] System = 2,
+    [Display(Name = "Thông tin")] Info = 3,
+}
+
+public enum NotificationStatus
+{
+    [Display(Name = "Chờ")] Waiting = 1,
+    [Display(Name = "Đã gửi")] Sent = 2,
+    [Display(Name = "Hủy")] Cancel = 3,
 }
 
 public class NotificationConfig : IEntityTypeConfiguration<Notification>
@@ -22,10 +41,13 @@ public class NotificationConfig : IEntityTypeConfiguration<Notification>
     {
         builder.ToTable("Notifications");
         builder.Property(x => x.UserId).IsRequired(false);
-        builder.Property(x => x.IsSendAll).IsRequired();
+        builder.Property(x => x.IsRead).IsRequired();
+        builder.Property(x => x.Type).IsRequired();
+        builder.Property(x => x.Status).IsRequired();
         builder.Property(x => x.Title).IsRequired();
         builder.Property(x => x.ShortContent).IsRequired(false);
         builder.Property(x => x.Content).IsRequired();
+        builder.Property(x => x.ItemId).IsRequired(false);
 
         //Relationship
         builder.HasOne(x => x.User)

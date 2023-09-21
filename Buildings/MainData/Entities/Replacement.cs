@@ -9,13 +9,18 @@ public class Replacement : BaseEntity
     public DateTime RequestedDate { get; set; }
     public DateTime? CompletionDate { get; set; }
     public string? Description { get; set; }
+    public string? Note { get; set; }
     public string? Reason { get; set; }
     public ReplacementStatus Status { get; set; }
     public Guid? AssignedTo { get; set; }
+    public Guid? AssetId { get; set; }
+    public Guid? NewAssetId { get; set; }
     
     //
-    public virtual IEnumerable<ReplacementDetail>? ReplacementDetails { get; set; }
-    public virtual User? User { get; set; }
+    public virtual User? PersonInCharge { get; set; }
+    public virtual User? Creator { get; set; }
+    public virtual Asset? Asset { get; set; }
+    public virtual Asset? NewAsset { get; set; }
 }
 
 public enum ReplacementStatus
@@ -37,15 +42,28 @@ public class ReplacementConfig : IEntityTypeConfiguration<Replacement>
         builder.Property(x => x.Reason).IsRequired(false);
         builder.Property(x => x.Status).IsRequired();
         builder.Property(x => x.AssignedTo).IsRequired(false);
-   
-        //Relationship
-        builder.HasMany(x => x.ReplacementDetails)
-            .WithOne(x => x.Replacement)
-            .HasForeignKey(x => x.ReplacementId);
+        builder.Property(x => x.NewAssetId).IsRequired(false);
+        builder.Property(x => x.AssetId).IsRequired(false);
         
-        builder.HasOne(x => x.User)
+        //Relationship
+
+        // builder.HasOne(x => x.Creator)
+        //     .WithMany(x => x.Replacements)
+        //     .HasForeignKey(x => x.CreatorId);
+        
+        builder.HasOne(x => x.PersonInCharge)
             .WithMany(x => x.Replacements)
-            .HasForeignKey(x => x.CreatorId);
+            .HasForeignKey(x => x.AssignedTo);
+        
+        builder.HasOne(x => x.Asset)
+            .WithMany(x => x.Replacements)
+            .HasForeignKey(x => x.AssetId);
+        
+        // builder.HasOne(x => x.NewAsset)
+        //     .WithMany(x => x.Replacements)
+        //     .HasForeignKey(x => x.AssetId);
+
+        builder.Ignore(x => x.NewAsset);
 
     }
 }

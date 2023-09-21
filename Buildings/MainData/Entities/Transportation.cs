@@ -11,9 +11,13 @@ public class Transportation : BaseEntity
     public string? Description { get; set; }
     public TransportationStatus Status { get; set; }
     public Guid? AssignedTo { get; set; }
+    public Guid? AssetId { get; set; }
+    public Guid? ToRoomId { get; set; } 
 
-    public virtual IEnumerable<TransportationDetail>? TransportationDetails { get; set; }
-    public virtual User? User { get; set; }
+    public virtual Asset? Asset { get; set; }
+    public virtual Room? ToRoom { get; set; }
+    public virtual User? PersonInCharge { get; set; }
+    public virtual User? Creator { get; set; }
 }
 
 public enum TransportationStatus
@@ -36,12 +40,21 @@ public class TransportationConfig : IEntityTypeConfiguration<Transportation>
         builder.Property(x => x.AssignedTo).IsRequired(false);
 
         //Relationship
-        builder.HasMany(x => x.TransportationDetails)
-            .WithOne(x => x.Transportation)
-            .HasForeignKey(x => x.TransportationId);
 
-        builder.HasOne(x => x.User)
+        // builder.HasOne(x => x.Creator)
+        //     .WithMany(x => x.Transportations)
+        //     .HasForeignKey(x => x.CreatorId);
+        
+        builder.HasOne(x => x.PersonInCharge)
             .WithMany(x => x.Transportations)
             .HasForeignKey(x => x.CreatorId);
+        
+        builder.HasOne(x => x.Asset)
+            .WithMany(x => x.Transportations)
+            .HasForeignKey(x => x.AssetId);
+        
+        builder.HasOne(x => x.ToRoom)
+            .WithMany(x => x.Transportations)
+            .HasForeignKey(x => x.ToRoomId);
     }
 }
