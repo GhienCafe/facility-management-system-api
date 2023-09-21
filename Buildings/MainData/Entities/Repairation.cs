@@ -19,7 +19,7 @@ public class Repairation : BaseEntity
 
     //
     public virtual User? PersonInCharge { get; set; }
-    public virtual User? Creator { get; set; }
+    //public virtual User? Creator { get; set; }
     public virtual Asset? Asset { get; set; }
 }
 

@@ -4,6 +4,7 @@ using MainData;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace InitDatabase.Migrations
 {
     [DbContext(typeof(DatabaseContext))]
-    partial class DatabaseContextModelSnapshot : ModelSnapshot
+    [Migration("20230921180831_u18")]
+    partial class u18
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -351,6 +354,9 @@ namespace InitDatabase.Migrations
                     b.Property<string>("Note")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<Guid?>("PersonInChargeId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<DateTime>("RequestedDate")
                         .HasColumnType("datetime2");
 
@@ -364,7 +370,7 @@ namespace InitDatabase.Migrations
 
                     b.HasIndex("AssetId");
 
-                    b.HasIndex("AssignedTo");
+                    b.HasIndex("PersonInChargeId");
 
                     b.ToTable("Maintenances", (string)null);
                 });
@@ -622,6 +628,8 @@ namespace InitDatabase.Migrations
 
                     b.HasIndex("AssignedTo");
 
+                    b.HasIndex("CreatorId");
+
                     b.ToTable("Repairation");
                 });
 
@@ -681,6 +689,8 @@ namespace InitDatabase.Migrations
                     b.HasIndex("AssetId");
 
                     b.HasIndex("AssignedTo");
+
+                    b.HasIndex("CreatorId");
 
                     b.ToTable("Replacements", (string)null);
                 });
@@ -973,8 +983,6 @@ namespace InitDatabase.Migrations
 
                     b.HasIndex("AssetId");
 
-                    b.HasIndex("AssignedTo");
-
                     b.HasIndex("ToRoomId");
 
                     b.ToTable("Transportations", (string)null);
@@ -1133,7 +1141,7 @@ namespace InitDatabase.Migrations
 
                     b.HasOne("MainData.Entities.User", "PersonInCharge")
                         .WithMany("Maintenances")
-                        .HasForeignKey("AssignedTo");
+                        .HasForeignKey("PersonInChargeId");
 
                     b.Navigation("Asset");
 
@@ -1176,7 +1184,13 @@ namespace InitDatabase.Migrations
                         .WithMany("Repairations")
                         .HasForeignKey("AssignedTo");
 
+                    b.HasOne("MainData.Entities.User", "Creator")
+                        .WithMany()
+                        .HasForeignKey("CreatorId");
+
                     b.Navigation("Asset");
+
+                    b.Navigation("Creator");
 
                     b.Navigation("PersonInCharge");
                 });
@@ -1191,7 +1205,13 @@ namespace InitDatabase.Migrations
                         .WithMany("Replacements")
                         .HasForeignKey("AssignedTo");
 
+                    b.HasOne("MainData.Entities.User", "Creator")
+                        .WithMany()
+                        .HasForeignKey("CreatorId");
+
                     b.Navigation("Asset");
+
+                    b.Navigation("Creator");
 
                     b.Navigation("PersonInCharge");
                 });
@@ -1251,17 +1271,11 @@ namespace InitDatabase.Migrations
                         .WithMany("Transportations")
                         .HasForeignKey("AssetId");
 
-                    b.HasOne("MainData.Entities.User", "PersonInCharge")
-                        .WithMany("Transportations")
-                        .HasForeignKey("AssignedTo");
-
                     b.HasOne("MainData.Entities.Room", "ToRoom")
                         .WithMany("Transportations")
                         .HasForeignKey("ToRoomId");
 
                     b.Navigation("Asset");
-
-                    b.Navigation("PersonInCharge");
 
                     b.Navigation("ToRoom");
                 });
@@ -1352,8 +1366,6 @@ namespace InitDatabase.Migrations
                     b.Navigation("Replacements");
 
                     b.Navigation("Tokens");
-
-                    b.Navigation("Transportations");
                 });
 #pragma warning restore 612, 618
         }

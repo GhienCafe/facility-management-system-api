@@ -54,9 +54,9 @@
             //     .WithMany(x => x.Maintenances)
             //     .HasForeignKey(x => x.CreatorId);
             
-            builder.HasOne(x => x.PersonInCharge)
-                .WithMany(x => x.Maintenances)
-                .HasForeignKey(x => x.AssignedTo);
+            // builder.HasOne(x => x.PersonInCharge)
+            //     .WithMany(x => x.Maintenances)
+            //     .HasForeignKey(x => x.AssignedTo);
             
             builder.HasOne(x => x.Asset)
                 .WithMany(x => x.Maintenances)

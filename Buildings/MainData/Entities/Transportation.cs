@@ -17,7 +17,7 @@ public class Transportation : BaseEntity
     public virtual Asset? Asset { get; set; }
     public virtual Room? ToRoom { get; set; }
     public virtual User? PersonInCharge { get; set; }
-    public virtual User? Creator { get; set; }
+    //public virtual User? Creator { get; set; }
 }
 
 public enum TransportationStatus
@@ -47,7 +47,7 @@ public class TransportationConfig : IEntityTypeConfiguration<Transportation>
         
         builder.HasOne(x => x.PersonInCharge)
             .WithMany(x => x.Transportations)
-            .HasForeignKey(x => x.CreatorId);
+            .HasForeignKey(x => x.AssignedTo);
         
         builder.HasOne(x => x.Asset)
             .WithMany(x => x.Transportations)

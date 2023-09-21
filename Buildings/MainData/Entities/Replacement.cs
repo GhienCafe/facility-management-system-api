@@ -18,7 +18,7 @@ public class Replacement : BaseEntity
     
     //
     public virtual User? PersonInCharge { get; set; }
-    public virtual User? Creator { get; set; }
+    //public virtual User? Creator { get; set; }
     public virtual Asset? Asset { get; set; }
     public virtual Asset? NewAsset { get; set; }
 }
