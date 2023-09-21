@@ -11,8 +11,11 @@ public class MaintenanceScheduleConfig : BaseEntity
     public int Period { get; set; }
     public DateTime SpecificDate { get; set; }
     
+    public Guid? AssignedTo { get; set; }
+    
     //
     public virtual AssetType? AssetType { get; set; }
+    public virtual User? PersonInCharge { get; set; }
 }
 
 public enum TimeUnit
@@ -36,6 +39,10 @@ public class MaintenanceScheduleConfigConfig : IEntityTypeConfiguration<Maintena
         builder.HasOne(x => x.AssetType)
             .WithMany(x => x.MaintenanceScheduleConfigs)
             .HasForeignKey(x => x.AssetTypeId);
+        
+        builder.HasOne(x => x.PersonInCharge)
+            .WithMany(x => x.MaintenanceScheduleConfigs)
+            .HasForeignKey(x => x.AssignedTo);
 
     }
 }
