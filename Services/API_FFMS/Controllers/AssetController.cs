@@ -49,5 +49,12 @@ namespace API_FFMS.Controllers
         {
             return await _assetService.Delete(id);
         }
+        
+        [HttpGet("room/{id:guid}")]
+        [SwaggerOperation("Get assets in room")]
+        public async Task<ApiResponses<RoomAssetDto>> GetAssetsInRoom(Guid id, [FromQuery]RoomAssetQueryDto queryDto)
+        {
+            return await _assetService.GetAssetsInRoom(id, queryDto);
+        }
     }
 }

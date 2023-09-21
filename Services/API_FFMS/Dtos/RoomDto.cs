@@ -55,6 +55,7 @@ public class RoomUpdateDto
     public Guid? StatusId { get; set; }
     public Guid? FloorId { get; set; }
 }
+
 public class RoomQueryDto : BaseQueryDto
 {
     public string? RoomName { get; set; }

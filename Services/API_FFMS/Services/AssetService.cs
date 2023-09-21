@@ -15,6 +15,7 @@ public interface IAssetService : IBaseService
     Task<ApiResponse> Create(AssetCreateDto createDto);
     Task<ApiResponse> Update(Guid id, AssetUpdateDto updateDto);
     Task<ApiResponse> Delete(Guid id);
+    Task<ApiResponses<RoomAssetDto>> GetAssetsInRoom(Guid roomId, RoomAssetQueryDto queryDto);
 }
 
 public class AssetService : BaseService, IAssetService
@@ -25,23 +26,6 @@ public class AssetService : BaseService, IAssetService
 
     public async Task<ApiResponse> Create(AssetCreateDto createDto)
     {
-        // var existingAssetCode = MainUnitOfWork.AssetRepository.GetQuery()
-        //                         .Where(x => x.AssetCode.Trim().ToLower() == createDto.AssetCode.Trim().ToLower())
-        //                         .SingleOrDefault();
-        // var exstingSerialNumber = MainUnitOfWork.AssetRepository.GetQuery()
-        //                         .Where(x => x.SerialNumber.Trim().ToLower() == createDto.SerialNumber.Trim().ToLower())
-        //                         .SingleOrDefault();
-
-        // if (existingAssetCode != null)
-        // {
-        //     throw new ApiException("Asset Code is already in use, please choose a different name.", StatusCode.BAD_REQUEST);
-        // }
-        //
-        // if (exstingSerialNumber != null)
-        // {
-        //     throw new ApiException("Serial Number is already in use, please choose a different name.", StatusCode.BAD_REQUEST);
-        // }
-
         var asset = createDto.ProjectTo<AssetCreateDto, Asset>();
 
         if (!await MainUnitOfWork.AssetRepository.InsertAsync(asset, AccountId, CurrentDate))
@@ -145,4 +129,64 @@ public class AssetService : BaseService, IAssetService
 
         return ApiResponse.Success();
     }
+    
+     
+     public async Task<ApiResponses<RoomAssetDto>> GetAssetsInRoom(Guid roomId, RoomAssetQueryDto queryDto)
+     {
+            // var room = await MainUnitOfWork.RoomRepository.FindOneAsync<RoomDto>(new Expression<Func<Room, bool>>[]
+            // {
+            //     x => !x.DeletedAt.HasValue,
+            //     x => x.Id == roomId
+            // });
+            //
+            // if (room == null)
+            //     throw new ApiException("Not find room", StatusCode.NOT_FOUND);
+            //
+            // var listAssetRoomQuery = MainUnitOfWork.RoomAssetRepository.GetQuery()
+            //     .Where(x => !x!.DeletedAt.HasValue && x.RoomId == roomId);
+            //
+            // if (queryDto.IsInCurrent is true)
+            // {
+            //     listAssetRoomQuery = listAssetRoomQuery.Where(x => x!.ToDate == null);
+            // }
+            // else if (queryDto.ToDate != null)
+            // {
+            //     listAssetRoomQuery = listAssetRoomQuery.Where(x => x!.ToDate <= queryDto.ToDate);
+            // }
+            //
+            // if(queryDto.FromDate != null)
+            //     listAssetRoomQuery = listAssetRoomQuery.Where(x => x!.FromDate >= queryDto.FromDate);
+            //
+            // var listAssetIds = listAssetRoomQuery.Select(x => x!.AssetId).ToList();
+            //
+            // var assetQuery = MainUnitOfWork.AssetRepository.GetQuery()
+            //     .Where(x => !x!.DeletedAt.HasValue && listAssetIds.Contains(x.Id));
+            //
+            // if (!string.IsNullOrEmpty(queryDto.AssetCode))
+            //     assetQuery = assetQuery.Where(x => x!.AssetCode!.ToLower().Equals(queryDto.AssetCode.Trim().ToLower()));
+            //
+            // if (queryDto.Status != null)
+            //     assetQuery = assetQuery.Where(x => x!.Status == queryDto.Status);
+            //
+            // if (!string.IsNullOrEmpty(queryDto.AssetName))
+            //     assetQuery = assetQuery.Where(x => x!.AssetName!.ToLower().Contains(queryDto.AssetName.Trim().ToLower()));
+            //
+            //
+            // var totalCount = assetQuery.Count();
+            //
+            // var assets = (await assetQuery.Skip(queryDto.Skip())
+            //     .Take(queryDto.PageSize)
+            //     .ToListAsync())!.ProjectTo<Asset, AssetDto>();
+            //
+            // assets = await _mapperRepository.MapCreator(assets);
+            //
+            // return ApiResponses<RoomAssetDto>.Success(
+            //     assets,
+            //     totalCount,
+            //     queryDto.PageSize,
+            //     queryDto.Skip(),
+            //     (int)Math.Ceiling(totalCount / (double)queryDto.PageSize)
+            // );
+            throw new ApiException("Not implement");
+     }
 }
