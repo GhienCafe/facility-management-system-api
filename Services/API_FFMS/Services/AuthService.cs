@@ -278,6 +278,7 @@ public class AuthService : BaseService, IAuthService
             new(AppClaimTypes.UserId, account.Id.ToString()),
             new(AppClaimTypes.Role, account.Role.ToString()),
             new(AppClaimTypes.Status, account.Status.ToString()),
+            new(AppClaimTypes.IsActive, (account.Status == UserStatus.Active).ToString()),
         }.ToList();
         return claims;
     }
