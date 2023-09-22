@@ -10,9 +10,11 @@ public class AssetType : BaseEntity
     public string TypeName { get; set; } = null!;
     public string? Description { get; set; }
     public Unit Unit { get; set; }
+    public Guid? CategoryId { get; set; }
     
     //
     public virtual IEnumerable<Asset>? Assets { get; set; }
+    public virtual Category? Category { get; set; }
     public virtual IEnumerable<MaintenanceScheduleConfig>? MaintenanceScheduleConfigs { get; set; }
 }
 
@@ -48,6 +50,10 @@ public class AssetCategoryConfig : IEntityTypeConfiguration<AssetType>
         builder.HasMany(x => x.Assets)
             .WithOne(x => x.Type)
             .HasForeignKey(x => x.TypeId);
+        
+        builder.HasOne(x => x.Category)
+            .WithMany(x => x.AssetTypes)
+            .HasForeignKey(x => x.CategoryId);
         
         builder.HasMany(x => x.MaintenanceScheduleConfigs)
             .WithOne(x => x.AssetType)
