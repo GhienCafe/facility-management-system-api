@@ -4,6 +4,7 @@ using MainData;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace InitDatabase.Migrations
 {
     [DbContext(typeof(DatabaseContext))]
-    partial class DatabaseContextModelSnapshot : ModelSnapshot
+    [Migration("20230921181542_u19")]
+    partial class u19
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -960,6 +963,9 @@ namespace InitDatabase.Migrations
                     b.Property<Guid?>("EditorId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<Guid?>("PersonInChargeId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<DateTime>("ScheduledDate")
                         .HasColumnType("datetime2");
 
@@ -973,7 +979,7 @@ namespace InitDatabase.Migrations
 
                     b.HasIndex("AssetId");
 
-                    b.HasIndex("AssignedTo");
+                    b.HasIndex("PersonInChargeId");
 
                     b.HasIndex("ToRoomId");
 
@@ -1252,8 +1258,8 @@ namespace InitDatabase.Migrations
                         .HasForeignKey("AssetId");
 
                     b.HasOne("MainData.Entities.User", "PersonInCharge")
-                        .WithMany("Transportations")
-                        .HasForeignKey("AssignedTo");
+                        .WithMany()
+                        .HasForeignKey("PersonInChargeId");
 
                     b.HasOne("MainData.Entities.Room", "ToRoom")
                         .WithMany("Transportations")
@@ -1352,8 +1358,6 @@ namespace InitDatabase.Migrations
                     b.Navigation("Replacements");
 
                     b.Navigation("Tokens");
-
-                    b.Navigation("Transportations");
                 });
 #pragma warning restore 612, 618
         }
