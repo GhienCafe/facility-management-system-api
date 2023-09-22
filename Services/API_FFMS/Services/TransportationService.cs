@@ -13,7 +13,7 @@ namespace API_FFMS.Services
     {
         Task<ApiResponses<TransportDto>> GetTransports(TransportQueryDto queryDto);
         public Task<ApiResponse> Create(TransportCreateDto createDto);
-        public Task<ApiResponse> UpdateTransport(Guid id, TransportUpdateDto updateDto);
+        public Task<ApiResponse> Update(Guid id, TransportUpdateDto updateDto);
         Task<ApiResponse<TransportDetailDto>> GetTransport(Guid id);
         Task<ApiResponse> Delete(Guid id);
     }
@@ -26,6 +26,40 @@ namespace API_FFMS.Services
 
         public async Task<ApiResponse> Create(TransportCreateDto createDto)
         {
+            var existingAsset = await MainUnitOfWork.AssetRepository.FindOneAsync(new Expression<Func<Asset, bool>>[]
+            {
+                x => !x.DeletedAt.HasValue
+                && x.Id == createDto.AssetId
+                && x.Status == AssetStatus.Operational
+            });
+            if (existingAsset == null)
+            {
+                throw new ApiException("Not found this asset", StatusCode.NOT_FOUND);
+            }
+
+            var existingAssignee = await MainUnitOfWork.UserRepository.FindOneAsync(new Expression<Func<User, bool>>[]
+            {
+                x => !x.DeletedAt.HasValue && x.Id == createDto.AssignedTo
+            });
+            if (existingAssignee == null)
+            {
+                throw new ApiException("Not found this user", StatusCode.NOT_FOUND);
+            }
+
+            var existingRoom = await MainUnitOfWork.RoomRepository.FindOneAsync(new Expression<Func<Room, bool>>[]
+            {
+                x => !x.DeletedAt.HasValue && x.Id == createDto.ToRoomId
+            });
+            if (existingRoom == null)
+            {
+                throw new ApiException("Not found this room", StatusCode.NOT_FOUND);
+            }
+
+            if (!existingAssignee.TeamId.Equals(existingAsset.Type.Category.TeamId))
+            {
+                throw new ApiException("Assigne have wrong major for this asset", StatusCode.BAD_REQUEST);
+            }
+
             var transport = createDto.ProjectTo<TransportCreateDto, Transportation>();
 
             transport.Status = TransportationStatus.NotStarted;
@@ -43,10 +77,14 @@ namespace API_FFMS.Services
             var existingTransport = await MainUnitOfWork.TransportationRepository.FindOneAsync(id);
 
             if (existingTransport == null)
+            {
                 throw new ApiException("Not found this transportation", StatusCode.NOT_FOUND);
+            }
 
             if (!await MainUnitOfWork.TransportationRepository.DeleteAsync(existingTransport, AccountId, CurrentDate))
+            {
                 throw new ApiException("Delete fail", StatusCode.SERVER_ERROR);
+            }
 
             return ApiResponse.Success();
         }
@@ -144,22 +182,58 @@ namespace API_FFMS.Services
                    (int)Math.Ceiling(totalCount / (double)queryDto.PageSize));
         }
 
-        public async Task<ApiResponse> UpdateTransport(Guid id, TransportUpdateDto updateDto)
+        public async Task<ApiResponse> Update(Guid id, TransportUpdateDto updateDto)
         {
-            var existingTransport = await MainUnitOfWork.TransportationRepository.FindOneAsync(id);
+            var existingTransport = await MainUnitOfWork.TransportationRepository.FindOneAsync(new Expression<Func<Transportation, bool>>[]
+            {
+                x => !x.DeletedAt.HasValue
+                && x.Id == id
+                && x.Status == TransportationStatus.NotStarted
+            });
             if (existingTransport == null)
             {
                 throw new ApiException("Not found this transportation", StatusCode.NOT_FOUND);
             }
 
-            if (existingTransport.Status == TransportationStatus.NotStarted)
+            existingTransport.ScheduledDate = updateDto.ScheduledDate ?? existingTransport.ScheduledDate;
+            existingTransport.ActualDate = updateDto.ActualDate ?? existingTransport.ActualDate;
+            //transportation.Status = updateDto.Status ?? transportation.Status;
+            existingTransport.AssetId = updateDto.AssetId ?? existingTransport.AssetId;
+            existingTransport.Description = updateDto.Description ?? existingTransport.Description;
+            existingTransport.AssignedTo = updateDto.AssignedTo ?? existingTransport.AssignedTo;
+
+            var existingAsset = await MainUnitOfWork.AssetRepository.FindOneAsync(new Expression<Func<Asset, bool>>[]
             {
-                existingTransport.ScheduledDate = updateDto.ScheduledDate ?? existingTransport.ScheduledDate;
-                existingTransport.ActualDate = updateDto.ActualDate ?? existingTransport.ActualDate;
-                //transportation.Status = updateDto.Status ?? transportation.Status;
-                existingTransport.AssetId = updateDto.AssetId ?? existingTransport.AssetId;
-                existingTransport.Description = updateDto.Description ?? existingTransport.Description;
-                existingTransport.AssignedTo = updateDto.AssignedTo ?? existingTransport.AssignedTo;
+                x => !x.DeletedAt.HasValue
+                && x.Id == updateDto.AssetId
+                && x.Status == AssetStatus.Operational
+            });
+            if (existingAsset == null)
+            {
+                throw new ApiException("Not found this asset", StatusCode.NOT_FOUND);
+            }
+
+            var existingAssignee = await MainUnitOfWork.UserRepository.FindOneAsync(new Expression<Func<User, bool>>[]
+            {
+                x => !x.DeletedAt.HasValue && x.Id == updateDto.AssignedTo
+            });
+            if (existingAssignee == null)
+            {
+                throw new ApiException("Not found this user", StatusCode.NOT_FOUND);
+            }
+
+            var existingRoom = await MainUnitOfWork.RoomRepository.FindOneAsync(new Expression<Func<Room, bool>>[]
+            {
+                x => !x.DeletedAt.HasValue && x.Id == updateDto.ToRoomId
+            });
+            if (existingRoom == null)
+            {
+                throw new ApiException("Not found this room", StatusCode.NOT_FOUND);
+            }
+
+            if (!existingAssignee.TeamId.Equals(existingAsset.Type.Category.TeamId))
+            {
+                throw new ApiException("Assigne have wrong major for this asset", StatusCode.BAD_REQUEST);
             }
 
             if (!await MainUnitOfWork.TransportationRepository.UpdateAsync(existingTransport, AccountId, CurrentDate))
