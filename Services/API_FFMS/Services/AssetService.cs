@@ -133,60 +133,68 @@ public class AssetService : BaseService, IAssetService
      
      public async Task<ApiResponses<RoomAssetDto>> GetAssetsInRoom(Guid roomId, RoomAssetQueryDto queryDto)
      {
-            // var room = await MainUnitOfWork.RoomRepository.FindOneAsync<RoomDto>(new Expression<Func<Room, bool>>[]
-            // {
-            //     x => !x.DeletedAt.HasValue,
-            //     x => x.Id == roomId
-            // });
-            //
-            // if (room == null)
-            //     throw new ApiException("Not find room", StatusCode.NOT_FOUND);
-            //
-            // var listAssetRoomQuery = MainUnitOfWork.RoomAssetRepository.GetQuery()
-            //     .Where(x => !x!.DeletedAt.HasValue && x.RoomId == roomId);
-            //
-            // if (queryDto.IsInCurrent is true)
-            // {
-            //     listAssetRoomQuery = listAssetRoomQuery.Where(x => x!.ToDate == null);
-            // }
-            // else if (queryDto.ToDate != null)
-            // {
-            //     listAssetRoomQuery = listAssetRoomQuery.Where(x => x!.ToDate <= queryDto.ToDate);
-            // }
-            //
-            // if(queryDto.FromDate != null)
-            //     listAssetRoomQuery = listAssetRoomQuery.Where(x => x!.FromDate >= queryDto.FromDate);
-            //
-            // var listAssetIds = listAssetRoomQuery.Select(x => x!.AssetId).ToList();
-            //
-            // var assetQuery = MainUnitOfWork.AssetRepository.GetQuery()
-            //     .Where(x => !x!.DeletedAt.HasValue && listAssetIds.Contains(x.Id));
-            //
-            // if (!string.IsNullOrEmpty(queryDto.AssetCode))
-            //     assetQuery = assetQuery.Where(x => x!.AssetCode!.ToLower().Equals(queryDto.AssetCode.Trim().ToLower()));
-            //
-            // if (queryDto.Status != null)
-            //     assetQuery = assetQuery.Where(x => x!.Status == queryDto.Status);
-            //
-            // if (!string.IsNullOrEmpty(queryDto.AssetName))
-            //     assetQuery = assetQuery.Where(x => x!.AssetName!.ToLower().Contains(queryDto.AssetName.Trim().ToLower()));
-            //
-            //
-            // var totalCount = assetQuery.Count();
-            //
-            // var assets = (await assetQuery.Skip(queryDto.Skip())
-            //     .Take(queryDto.PageSize)
-            //     .ToListAsync())!.ProjectTo<Asset, AssetDto>();
-            //
-            // assets = await _mapperRepository.MapCreator(assets);
-            //
-            // return ApiResponses<RoomAssetDto>.Success(
-            //     assets,
-            //     totalCount,
-            //     queryDto.PageSize,
-            //     queryDto.Skip(),
-            //     (int)Math.Ceiling(totalCount / (double)queryDto.PageSize)
-            // );
-            throw new ApiException("Not implement");
+         var room = await MainUnitOfWork.RoomRepository.FindOneAsync<RoomDto>(new Expression<Func<Room, bool>>[]
+            {
+                x => !x.DeletedAt.HasValue,
+                x => x.Id == roomId
+            });
+            
+            if (room == null)
+                throw new ApiException("Not find room", StatusCode.NOT_FOUND);
+
+            var roomAssetDataset = MainUnitOfWork.RoomAssetRepository.GetQuery();
+            var assetDataset = MainUnitOfWork.AssetRepository.GetQuery();
+            
+            var joinedAssets = from roomAsset in roomAssetDataset
+                join asset in assetDataset on roomAsset.AssetId equals asset.Id
+                where roomAsset.RoomId == roomId
+                select new
+                {
+                    RoomAsset = roomAsset,
+                    Asset = asset
+                };
+            
+            if (queryDto.IsInCurrent is true)
+            {
+                joinedAssets = joinedAssets.Where(x => x!.RoomAsset.ToDate == null);
+            }
+            else if (queryDto.ToDate != null)
+            {
+                joinedAssets = joinedAssets.Where(x => x!.RoomAsset.ToDate <= queryDto.ToDate);
+            }
+            
+            if(queryDto.FromDate != null)
+                joinedAssets = joinedAssets.Where(x => x!.RoomAsset.FromDate >= queryDto.FromDate);
+
+            if (!string.IsNullOrEmpty(queryDto.AssetCode))
+                joinedAssets = joinedAssets.Where(x => x!.Asset!.AssetCode!.ToLower().Equals(queryDto.AssetCode.Trim().ToLower()));
+            
+            if (queryDto.Status != null)
+                joinedAssets = joinedAssets.Where(x => x!.Asset.Status == queryDto.Status);
+            
+            if (!string.IsNullOrEmpty(queryDto.AssetName))
+                joinedAssets = joinedAssets.Where(x => x!.Asset.AssetName!.ToLower().Contains(queryDto.AssetName.Trim().ToLower()));
+            
+            var totalCount = joinedAssets.Count();
+
+            joinedAssets = joinedAssets.Skip(queryDto.Skip()).Take(queryDto.PageSize);
+
+            var assets = await joinedAssets.Select(x => new RoomAssetDto
+            {
+                FromDate = x.RoomAsset.FromDate,
+                ToDate = x.RoomAsset.ToDate,
+                Status = x.RoomAsset.Status,
+                Asset = x.Asset.ProjectTo<Asset, AssetDto>()
+            }).ToListAsync();
+
+            assets = await _mapperRepository.MapCreator(assets);
+            
+            return ApiResponses<RoomAssetDto>.Success(
+                assets,
+                totalCount,
+                queryDto.PageSize,
+                queryDto.Skip(),
+                (int)Math.Ceiling(totalCount / (double)queryDto.PageSize)
+            );
      }
 }

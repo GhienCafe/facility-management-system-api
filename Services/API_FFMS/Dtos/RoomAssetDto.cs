@@ -44,7 +44,7 @@ namespace API_FFMS.Dtos
         public AssetStatus Status { get; set; }
         public DateTime? FromDate { get; set; }
         public DateTime? ToDate { get; set; }
-        public AssetDto? AssetDto { get; set; }
+        public AssetDto? Asset { get; set; }
     }
 
     public class RoomAssetQueryDto : BaseQueryDto

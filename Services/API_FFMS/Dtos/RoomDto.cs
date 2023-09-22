@@ -14,6 +14,7 @@ public class RoomDto : BaseDto
     public int? Capacity { get; set; }
     public Guid StatusId { get; set; }
     public Guid FloorId { get; set; }
+    public RoomStatusDto? Status { get; set; }
 }
 
 public class RoomDetailDto : BaseDto
@@ -26,6 +27,7 @@ public class RoomDetailDto : BaseDto
     public int? Capacity { get; set; }
     public Guid StatusId { get; set; }
     public Guid FloorId { get; set; }
+    public RoomStatusDto? Status { get; set; }
 }
 
 public class RoomCreateDto
@@ -66,4 +68,5 @@ public class RoomQueryDto : BaseQueryDto
     public string? Status { get; set; }
     public string? RoomCode { get; set; }
     public RoomTypeEnum? RoomType { get; set; }
+    public Guid? FloorId { get; set; }
 }
