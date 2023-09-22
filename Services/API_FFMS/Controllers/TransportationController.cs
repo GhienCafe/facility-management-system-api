@@ -14,25 +14,40 @@ namespace API_FFMS.Controllers
             _transportationService = transportationService;
         }
 
+        [HttpGet]
+        [SwaggerOperation("Get all transportations")]
+        public async Task<ApiResponses<TransportDto>> GetTransports([FromQuery] TransportQueryDto queryDto)
+        {
+            return await _transportationService.GetTransports(queryDto);
+        }
+
+        [HttpGet("{id:guid}")]
+        [SwaggerOperation("Get detail transportation")]
+        public async Task<ApiResponse<TransportDetailDto>> GetTransport(Guid id)
+        {
+            return await _transportationService.GetTransport(id);
+        }
+
         [HttpPost]
         [SwaggerOperation("Create new transportation")]
-        public async Task<ApiResponse> Create([FromBody] TransportCreateDto createDto)
+        public async Task<ApiResponse> Create([FromBody]TransportCreateDto createDto)
         {
             return await _transportationService.Create(createDto);
         }
 
-        [HttpPut("{id:guid}")]
+        [HttpPut]
         [SwaggerOperation("Update transportation")]
         public async Task<ApiResponse> UpdateTransportation(Guid id, TransportUpdateDto updateDto)
         {
             return await _transportationService.UpdateTransport(id, updateDto);
         }
 
-        [HttpPut]
-        [SwaggerOperation("Update asset in transportation")]
-        public async Task<ApiResponse> UpdateTransportationDetail(Guid id, List<TransportDetailUpdateDto> updateDto)
+        [HttpDelete]
+        [SwaggerOperation("Delete transportation")]
+        public async Task<ApiResponse> Delete(Guid id)
         {
-            return await _transportationService.UpdateTransportDetail(id, updateDto);
+            return await _transportationService.Delete(id);
         }
+
     }
 }
