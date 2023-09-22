@@ -19,17 +19,18 @@ public class FloorDetailDto : BaseDto
 
 public class FloorCreateDto
 {
-    public string? FloorMap { get; set; }
+    public IFormFile? SvgFile { get; set; }
     public int FloorNumber { get; set; }
     public Guid BuildingId { get; set; }
 }
 
 public class FloorUpdateDto
 {
-    public string? FloorMap { get; set; }
     public int? FloorNumber { get; set; }
     public Guid? BuildingId { get; set; }
+    public IFormFile? SvgFile { get; set; }
 }
+
 public class FloorQueryDto : BaseQueryDto
 {
     public int? FloorNumber { get; set; }
