@@ -30,11 +30,15 @@ namespace API_FFMS.Services
             {
                 x => !x.DeletedAt.HasValue
                 && x.Id == createDto.AssetId
-                && x.Status == AssetStatus.Operational
             });
             if (existingAsset == null)
             {
                 throw new ApiException("Not found this asset", StatusCode.NOT_FOUND);
+            }
+
+            if(existingAsset.Status != AssetStatus.Operational)
+            {
+                throw new ApiException("This asset is in another request", StatusCode.NOT_ACTIVE);
             }
 
             var existingAssignee = await MainUnitOfWork.UserRepository.FindOneAsync(new Expression<Func<User, bool>>[]
