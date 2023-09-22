@@ -21,13 +21,18 @@ public class User : BaseEntity
     public string Salt { get; set; } = null!;
     public DateTime? FirstLoginAt { get; set; }
     public DateTime? LastLoginAt { get; set; }
+    
+    public Guid? TeamId { get; set; }
 
     //
+    public virtual Team? Team { get; set; }
     public virtual IEnumerable<Token>? Tokens { get; set; }
     public virtual IEnumerable<Maintenance>? Maintenances { get; set; }
     public virtual IEnumerable<Replacement>? Replacements { get; set; }
     public virtual IEnumerable<Notification>? Notifications { get; set; }
     public virtual IEnumerable<Transportation>? Transportations { get; set; }
+    public virtual IEnumerable<Repairation>? Repairations { get; set; }
+    public virtual IEnumerable<MaintenanceScheduleConfig>? MaintenanceScheduleConfigs { get; set; }
 }
 
 public enum UserRole
@@ -70,21 +75,52 @@ public class UserConfig : IEntityTypeConfiguration<User>
         builder.HasMany(x => x.Tokens)
             .WithOne(x => x.User)
             .HasForeignKey(x => x.UserId);
-
-        builder.HasMany(x => x.Maintenances)
-            .WithOne(x => x.User)
-            .HasForeignKey(x => x.CreatorId);
-
-        builder.HasMany(x => x.Replacements)
-            .WithOne(x => x.User)
-            .HasForeignKey(x => x.CreatorId);
-
+        
         builder.HasMany(x => x.Notifications)
             .WithOne(x => x.User)
             .HasForeignKey(x => x.UserId);
 
+        // the creator
+        // builder.HasMany(x => x.Maintenances)
+        //     .WithOne(x => x.Creator)
+        //     .HasForeignKey(x => x.CreatorId);
+        //
+        // builder.HasMany(x => x.Replacements)
+        //     .WithOne(x => x.Creator)
+        //     .HasForeignKey(x => x.CreatorId);
+        //
+        // builder.HasMany(x => x.Transportations)
+        //     .WithOne(x => x.Creator)
+        //     .HasForeignKey(x => x.CreatorId);
+        //
+        // builder.HasMany(x => x.Repairations)
+        //     .WithOne(x => x.Creator)
+        //     .HasForeignKey(x => x.CreatorId);
+        //
+        
+        //The handle
+        builder.HasMany(x => x.Maintenances)
+            .WithOne(x => x.PersonInCharge)
+            .HasForeignKey(x => x.AssignedTo);
+
+        builder.HasMany(x => x.Replacements)
+            .WithOne(x => x.PersonInCharge)
+            .HasForeignKey(x => x.AssignedTo);
+
         builder.HasMany(x => x.Transportations)
-            .WithOne(x => x.User)
-            .HasForeignKey(x => x.CreatorId);
+            .WithOne(x => x.PersonInCharge)
+            .HasForeignKey(x => x.AssignedTo);
+        
+        builder.HasMany(x => x.Repairations)
+            .WithOne(x => x.PersonInCharge)
+            .HasForeignKey(x => x.AssignedTo);
+        
+        builder.HasMany(x => x.MaintenanceScheduleConfigs)
+            .WithOne(x => x.PersonInCharge)
+            .HasForeignKey(x => x.AssignedTo);
+        
+        builder.HasOne(x => x.Team)
+            .WithMany(x => x.Users)
+            .HasForeignKey(x => x.TeamId);
     }
 }

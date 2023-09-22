@@ -6,7 +6,6 @@ namespace MainData.Entities;
 
 public class Asset : BaseEntity
 {
-    public Guid TypeId { get; set; }
     public string AssetName { get; set; } = null!;
     public string? AssetCode { get; set; }
     public bool IsMovable { get; set; }
@@ -16,13 +15,17 @@ public class Asset : BaseEntity
     public double Quantity { get; set; }
     public string? Description { get; set; }
     public DateTime? LastMaintenanceTime { get; set; }
+    public Guid? TypeId { get; set; }
+    public Guid? ModelId { get; set; }
     
     //
     public virtual AssetType? Type { get; set; }
+    public virtual Model? Model { get; set; }
     public virtual IEnumerable<RoomAsset>? RoomAssets { get; set; }
-    public virtual IEnumerable<MaintenanceDetail>? MaintenanceDetails { get; set; }
-    public virtual IEnumerable<ReplacementDetail>? ReplacementDetails { get; set; }
-    public virtual IEnumerable<TransportationDetail>? TransportationDetails { get; set; }
+    public virtual IEnumerable<Maintenance>? Maintenances { get; set; }
+    public virtual IEnumerable<Replacement>? Replacements { get; set; }
+    public virtual IEnumerable<Transportation>? Transportations { get; set; }
+    public virtual IEnumerable<Repairation>? Repairations { get; set; }
 }
 
 public enum AssetStatus
@@ -64,19 +67,31 @@ public class AssetConfig : IEntityTypeConfiguration<Asset>
             .WithMany(x => x.Assets)
             .HasForeignKey(x => x.TypeId);
         
+        builder.HasOne(x => x.Model)
+            .WithMany(x => x.Assets)
+            .HasForeignKey(x => x.ModelId);
+        
         builder.HasMany(x => x.RoomAssets)
             .WithOne(x => x.Asset)
             .HasForeignKey(x => x.AssetId);
 
-        builder.HasMany(x => x.MaintenanceDetails)
+        builder.HasMany(x => x.Maintenances)
             .WithOne(x => x.Asset)
             .HasForeignKey(x => x.AssetId);
 
-        builder.HasMany(x => x.ReplacementDetails)
+        builder.HasMany(x => x.Replacements)
             .WithOne(x => x.Asset)
             .HasForeignKey(x => x.AssetId);
+        
+        builder.HasMany(x => x.Replacements)
+            .WithOne(x => x.Asset)
+            .HasForeignKey(x => x.NewAssetId);
 
-        builder.HasMany(x => x.TransportationDetails)
+        builder.HasMany(x => x.Transportations)
+            .WithOne(x => x.Asset)
+            .HasForeignKey(x => x.AssetId);
+        
+        builder.HasMany(x => x.Repairations)
             .WithOne(x => x.Asset)
             .HasForeignKey(x => x.AssetId);
     }

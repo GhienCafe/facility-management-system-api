@@ -19,6 +19,7 @@ public class Room : BaseEntity
     public virtual Floor? Floors { get; set; }
     public virtual IEnumerable<RoomAsset>? RoomAssets { get; set; }
     public virtual RoomStatus? Status { get; set; }
+    public virtual IEnumerable<Transportation>? Transportations { get; set; }
 }
 
 public enum RoomTypeEnum
@@ -55,6 +56,10 @@ public class RoomConfig : IEntityTypeConfiguration<Room>
         builder.HasOne(x => x.Status)
             .WithMany(x => x.Rooms)
             .HasForeignKey(x => x.StatusId);
+
+        builder.HasMany(x => x.Transportations)
+            .WithOne(x => x.ToRoom)
+            .HasForeignKey(x => x.ToRoomId);
         
     }
 }
