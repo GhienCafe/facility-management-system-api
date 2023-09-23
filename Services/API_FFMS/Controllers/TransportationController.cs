@@ -35,14 +35,14 @@ namespace API_FFMS.Controllers
             return await _transportationService.Create(createDto);
         }
 
-        [HttpPut]
+        [HttpPut("{id}")]
         [SwaggerOperation("Update transportation")]
         public async Task<ApiResponse> Update(Guid id, TransportUpdateDto updateDto)
         {
             return await _transportationService.Update(id, updateDto);
         }
 
-        [HttpDelete]
+        [HttpDelete("{id}")]
         [SwaggerOperation("Delete transportation")]
         public async Task<ApiResponse> Delete(Guid id)
         {
