@@ -8,10 +8,10 @@ public class VirtualizeDto:BaseDto
     public double? Area { get; set; }
     public string? PathRoom { get; set; }
     public string RoomCode { get; set; } = null!;
-    public RoomTypeEnum RoomType { get; set; }
+    public Guid? RoomTypeId { get; set; }
     public int? Capacity { get; set; }
-    public string StatusName { get; set; }
-    public string FloorNumber { get; set; }
+    public string? StatusName { get; set; }
+    public string? FloorNumber { get; set; }
 }
 
 public class VirtualizeQueryDto : BaseQueryDto

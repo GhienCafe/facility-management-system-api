@@ -20,6 +20,7 @@ public class MainUnitOfWork : IDisposable
     public BaseRepository<Room> RoomRepository => new(_context);
 
     public BaseRepository<RoomStatus> RoomStatusRepository => new(_context);
+    public BaseRepository<RoomType> RoomTypeRepository => new(_context);
 
     public BaseRepository<AssetType> AssetTypeRepository => new(_context);
     public BaseRepository<Asset> AssetRepository => new(_context);
