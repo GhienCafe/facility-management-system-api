@@ -71,13 +71,42 @@ public class RoomService : BaseService, IRoomService
         {
             roomQuerySet = roomQuerySet.Where(x => x!.RoomName!.ToLower().Contains(queryDto.RoomName.Trim().ToLower()));
         }
+        
+        if (queryDto.FloorId != null)
+        {
+            roomQuerySet = roomQuerySet.Where(x => x!.FloorId == queryDto.FloorId);
+        }
 
-        var totalCount = roomQuerySet.Count();
+        var response = from room in roomQuerySet
+            join status in MainUnitOfWork.RoomStatusRepository.GetQuery() on room.StatusId equals status.Id
+            select new
+            {
+                Room = room,
+                status = status
+            };
 
-        roomQuerySet = roomQuerySet.Skip(queryDto.Skip())
+        var totalCount = response.Count();
+
+        response = response.Skip(queryDto.Skip())
             .Take(queryDto.PageSize);
 
-        var rooms = (await roomQuerySet.ToListAsync())!.ProjectTo<Room, RoomDto>();
+        var rooms = await response.Select(
+            x => new RoomDto
+            {
+                Area = x.Room.Area,
+                Capacity = x.Room.Capacity,
+                Id = x.Room.Id,
+                FloorId = x.Room.FloorId,
+                PathRoom = x.Room.PathRoom,
+                RoomName = x.Room.RoomName,
+                RoomType = x.Room.RoomType,
+                CreatedAt = x.Room.CreatedAt,
+                EditedAt = x.Room.EditedAt,
+                RoomCode = x.Room.RoomCode,
+                StatusId = x.Room.StatusId,
+                Status = x.status.ProjectTo<RoomStatus, RoomStatusDto>()
+            }
+            ).ToListAsync();
 
         rooms = await _mapperRepository.MapCreator(rooms);
 

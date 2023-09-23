@@ -53,6 +53,7 @@ public class AuthMiddleware
                     new Claim(AppClaimTypes.UserId, account.Id.ToString()),
                     new Claim(AppClaimTypes.Role, account.Role.ToString()),
                     new Claim(AppClaimTypes.Status, account.Status.ToString()),
+                    new Claim(AppClaimTypes.IsActive, (account.Status == UserStatus.Active).ToString()),
                 }));
                 await _next(httpContext);
                 return;
@@ -63,6 +64,7 @@ public class AuthMiddleware
                 new Claim(AppClaimTypes.UserId, account.Id.ToString()),
                 new Claim(AppClaimTypes.Role, account.Role.ToString()),
                 new Claim(AppClaimTypes.Status, account.Status.ToString()),
+                new Claim(AppClaimTypes.IsActive, (account.Status == UserStatus.Active).ToString()),
             }));
             await _next(httpContext);
             return;

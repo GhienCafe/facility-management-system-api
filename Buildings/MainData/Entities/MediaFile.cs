@@ -13,6 +13,8 @@ public class MediaFile : BaseEntity
     public string Extensions { get; set; } = null!;
     public FileType FileType { get; set; }
     public string Content { get; set; } = null!;
+    
+    public Guid? ItemId { get; set; }
 }
 
 public enum FileType
@@ -34,5 +36,6 @@ public class MediaFileConfig : IEntityTypeConfiguration<MediaFile>
         builder.Property(a => a.Extensions).IsRequired();
         builder.Property(a => a.FileType).IsRequired();
         builder.Property(a => a.Content).IsRequired(false);
+        builder.Property(a => a.ItemId).IsRequired(false);
     }
 }
