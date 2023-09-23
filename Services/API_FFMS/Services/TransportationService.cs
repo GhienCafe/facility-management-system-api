@@ -67,6 +67,7 @@ namespace API_FFMS.Services
             var transport = createDto.ProjectTo<TransportCreateDto, Transportation>();
 
             transport.Status = TransportationStatus.NotStarted;
+            existingAsset.Status = AssetStatus.Pending;
 
             if (!await MainUnitOfWork.TransportationRepository.InsertAsync(transport, AccountId, CurrentDate))
             {
@@ -84,6 +85,9 @@ namespace API_FFMS.Services
             {
                 throw new ApiException("Not found this transportation", StatusCode.NOT_FOUND);
             }
+
+            existingTransport.Status = TransportationStatus.Cancelled;
+            existingTransport.Asset.Status = AssetStatus.Operational;
 
             if (!await MainUnitOfWork.TransportationRepository.DeleteAsync(existingTransport, AccountId, CurrentDate))
             {
