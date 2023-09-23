@@ -79,14 +79,18 @@ public class RoomService : BaseService, IRoomService
         }
 
         var response = from room in roomQuerySet
-                       join status in MainUnitOfWork.RoomStatusRepository.GetQuery() on room.StatusId equals status.Id
-                       join type in MainUnitOfWork.RoomTypeRepository.GetQuery() on room.RoomTypeId equals type.Id
-                       select new
-                       {
-                           Room = room,
-                           Status = status,
-                           Type = type
-                       };
+            join status in MainUnitOfWork.RoomStatusRepository.GetQuery() on room.StatusId equals status.Id
+                into statusGroup
+            from status in statusGroup.DefaultIfEmpty()
+            join type in MainUnitOfWork.RoomTypeRepository.GetQuery() on room.RoomTypeId equals type.Id
+                into typeGroup
+            from type in typeGroup.DefaultIfEmpty()
+            select new
+            {
+                Room = room,
+                Status = status,
+                Type = type
+            };
 
         var totalCount = response.Count();
 
