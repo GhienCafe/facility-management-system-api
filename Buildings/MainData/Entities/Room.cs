@@ -1,4 +1,5 @@
-﻿using AppCore.Data;
+﻿using System.ComponentModel.DataAnnotations;
+using AppCore.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -24,7 +25,32 @@ public class Room : BaseEntity
 
 public enum RoomTypeEnum
 {
-    Library = 1, TeaBreak=2, ClassRoom = 3, ItSupport = 4, GD_WS = 5, Hall = 6, Studio = 7, InstrumentClassroom = 8, WareHouse = 9
+    [Display(Name = "Thư viện")]
+    Library = 1,
+
+    [Display(Name = "Phòng nghỉ")]
+    TeaBreak = 2,
+
+    [Display(Name = "Phòng học")]
+    ClassRoom = 3,
+
+    [Display(Name = "Phòng IT")]
+    ItSupport = 4,
+
+    [Display(Name = "Không gian GD")]
+    GD_WS = 5,
+
+    [Display(Name = "Hội trường")]
+    Hall = 6,
+
+    [Display(Name = "Studio")]
+    Studio = 7,
+
+    [Display(Name = "Phòng học nhạc cụ")]
+    InstrumentClassroom = 8,
+
+    [Display(Name = "Kho")]
+    WareHouse = 9
 }
 
 public class RoomConfig : IEntityTypeConfiguration<Room>

@@ -6,6 +6,7 @@ using MainData;
 using MainData.Entities;
 using MainData.Repositories;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.OpenApi.Extensions;
 
 namespace API_FFMS.Services;
 public interface IRoomService : IBaseService
@@ -71,13 +72,44 @@ public class RoomService : BaseService, IRoomService
         {
             roomQuerySet = roomQuerySet.Where(x => x!.RoomName!.ToLower().Contains(queryDto.RoomName.Trim().ToLower()));
         }
+        
+        if (queryDto.FloorId != null)
+        {
+            roomQuerySet = roomQuerySet.Where(x => x!.FloorId == queryDto.FloorId);
+        }
 
-        var totalCount = roomQuerySet.Count();
+        var response = from room in roomQuerySet
+            join status in MainUnitOfWork.RoomStatusRepository.GetQuery() on room.StatusId equals status.Id
+            select new
+            {
+                Room = room,
+                Status = status
+            };
 
-        roomQuerySet = roomQuerySet.Skip(queryDto.Skip())
+        var totalCount = response.Count();
+
+        response = response.Skip(queryDto.Skip())
             .Take(queryDto.PageSize);
 
-        var rooms = (await roomQuerySet.ToListAsync())!.ProjectTo<Room, RoomDto>();
+        var rooms = await response.Select(
+            x => new RoomDto
+            {
+                Area = x.Room.Area,
+                Capacity = x.Room.Capacity,
+                Id = x.Room.Id,
+                FloorId = x.Room.FloorId,
+                PathRoom = x.Room.PathRoom,
+                RoomName = x.Room.RoomName,
+                RoomType = x.Room.RoomType.GetValue(),
+                CreatedAt = x.Room.CreatedAt,
+                EditedAt = x.Room.EditedAt,
+                RoomCode = x.Room.RoomCode,
+                StatusId = x.Room.StatusId,
+                CreatorId = x.Room.CreatorId ?? Guid.Empty,
+                EditorId = x.Room.EditorId ?? Guid.Empty,
+                Status = x.Status.ProjectTo<RoomStatus, RoomStatusDto>()
+            }
+            ).ToListAsync();
 
         rooms = await _mapperRepository.MapCreator(rooms);
 
