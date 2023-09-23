@@ -29,9 +29,9 @@ public class RoomService : BaseService, IRoomService
     {
         var roomQuerySet = MainUnitOfWork.RoomRepository.GetQuery().Where(x => !x!.DeletedAt.HasValue);
 
-        if (queryDto.RoomType != null)
+        if (queryDto.RoomTypeId != null)
         {
-            roomQuerySet = roomQuerySet.Where(x => x!.RoomType == queryDto.RoomType);
+            roomQuerySet = roomQuerySet.Where(x => x!.RoomTypeId == queryDto.RoomTypeId);
         }
 
         if (!string.IsNullOrEmpty(queryDto.RoomCode))
@@ -72,7 +72,7 @@ public class RoomService : BaseService, IRoomService
         {
             roomQuerySet = roomQuerySet.Where(x => x!.RoomName!.ToLower().Contains(queryDto.RoomName.Trim().ToLower()));
         }
-        
+
         if (queryDto.FloorId != null)
         {
             roomQuerySet = roomQuerySet.Where(x => x!.FloorId == queryDto.FloorId);
@@ -80,10 +80,16 @@ public class RoomService : BaseService, IRoomService
 
         var response = from room in roomQuerySet
             join status in MainUnitOfWork.RoomStatusRepository.GetQuery() on room.StatusId equals status.Id
+                into statusGroup
+            from status in statusGroup.DefaultIfEmpty()
+            join type in MainUnitOfWork.RoomTypeRepository.GetQuery() on room.RoomTypeId equals type.Id
+                into typeGroup
+            from type in typeGroup.DefaultIfEmpty()
             select new
             {
                 Room = room,
-                Status = status
+                Status = status,
+                Type = type
             };
 
         var totalCount = response.Count();
@@ -100,14 +106,15 @@ public class RoomService : BaseService, IRoomService
                 FloorId = x.Room.FloorId,
                 PathRoom = x.Room.PathRoom,
                 RoomName = x.Room.RoomName,
-                RoomType = x.Room.RoomType.GetValue(),
+                RoomTypeId = x.Room.RoomTypeId,
                 CreatedAt = x.Room.CreatedAt,
                 EditedAt = x.Room.EditedAt,
                 RoomCode = x.Room.RoomCode,
                 StatusId = x.Room.StatusId,
                 CreatorId = x.Room.CreatorId ?? Guid.Empty,
                 EditorId = x.Room.EditorId ?? Guid.Empty,
-                Status = x.Status.ProjectTo<RoomStatus, RoomStatusDto>()
+                Status = x.Status.ProjectTo<RoomStatus, RoomStatusDto>(),
+                RoomType = x.Type.ProjectTo<RoomType, RoomTypeDto>()
             }
             ).ToListAsync();
 
@@ -134,6 +141,18 @@ public class RoomService : BaseService, IRoomService
         if (room == null)
             throw new ApiException("Not found this room", StatusCode.NOT_FOUND);
 
+        room.Status = await MainUnitOfWork.RoomStatusRepository.FindOneAsync<RoomStatusDto>(new Expression<Func<RoomStatus, bool>>[]
+        {
+            x => !x.DeletedAt.HasValue,
+            x => x.Id == room.StatusId
+        });
+
+        room.RoomType = await MainUnitOfWork.RoomTypeRepository.FindOneAsync<RoomTypeDto>(new Expression<Func<RoomType, bool>>[]
+        {
+            x => !x.DeletedAt.HasValue,
+            x => x.Id == room.RoomTypeId
+        });
+
         // Map CDC for the post
         room = await _mapperRepository.MapCreator(room);
 
@@ -158,7 +177,7 @@ public class RoomService : BaseService, IRoomService
 
         room.RoomName = roomDto.RoomName ?? room.RoomName;
         room.RoomCode = roomDto.RoomCode ?? room.RoomCode;
-        room.RoomType = roomDto.RoomType ?? room.RoomType;
+        room.RoomTypeId = roomDto.RoomTypeId ?? room.RoomTypeId;
         room.Area = roomDto.Area ?? room.Area;
         room.Capacity = roomDto.Capacity ?? room.Capacity;
         room.FloorId = roomDto.FloorId ?? room.FloorId;

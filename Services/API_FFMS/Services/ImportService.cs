@@ -9,7 +9,7 @@ namespace API_FFMS.Services
 {
     public interface IImportAssetService : IBaseService
     {
-        Task<ApiResponse<ImportError>> ImportAssets(IFormFile formFile);
+        Task<ApiResponses<ImportError>> ImportAssets(IFormFile formFile);
     }
     public class ImportService : BaseService, IImportAssetService
     {
@@ -20,7 +20,7 @@ namespace API_FFMS.Services
             validationErrors = new List<ImportError>();
         }
 
-        public async Task<ApiResponse<ImportError>> ImportAssets(IFormFile formFile)
+        public async Task<ApiResponses<ImportError>> ImportAssets(IFormFile formFile)
         {
             validationErrors.Clear();
 
@@ -70,10 +70,10 @@ namespace API_FFMS.Services
                     {
                         throw new ApiException("Import assets failed", StatusCode.SERVER_ERROR);
                     }
-                    return ApiResponse<ImportError>.Failed("Import fail");
+                    return ApiResponses<ImportError>.Fail(validationErrors, StatusCode.UNPROCESSABLE_ENTITY, "Some Asset imports failed due to validation errors");
                 }
 
-                return ApiResponse<ImportError>.Success(new ImportError { ErrorMessage = "Success" });
+                return ApiResponses<ImportError>.Success((IEnumerable<ImportError>)validAssets);
 
 
             }

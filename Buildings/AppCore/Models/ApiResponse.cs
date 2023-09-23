@@ -69,6 +69,16 @@ public class ApiResponses<T> : ApiResponse
             TotalPages = totalPages
         };
     }
+
+    public static ApiResponses<T> Fail(IEnumerable<T> data, StatusCode statusCode, string message)
+    {
+        return new ApiResponses<T>
+        {
+            Data = data,
+            StatusCode = statusCode,
+            Message = message
+        };
+    }
 }
 
 public class ApiResponse
