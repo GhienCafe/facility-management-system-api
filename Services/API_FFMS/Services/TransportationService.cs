@@ -112,14 +112,14 @@ namespace API_FFMS.Services
             var transportQuery = MainUnitOfWork.TransportationRepository.GetQuery()
                                  .Where(x => !x!.DeletedAt.HasValue);
 
-            if (queryDto.ScheduledDate != null)
+            if (queryDto.RequestedDate != null)
             {
-                transportQuery = transportQuery.Where(x => x!.ScheduledDate == queryDto.ScheduledDate);
+                transportQuery = transportQuery.Where(x => x!.RequestedDate == queryDto.RequestedDate);
             }
 
-            if (queryDto.ActualDate != null)
+            if (queryDto.CompletionDate != null)
             {
-                transportQuery = transportQuery.Where(x => x!.ActualDate == queryDto.ActualDate);
+                transportQuery = transportQuery.Where(x => x!.CompletionDate == queryDto.CompletionDate);
             }
 
             if (queryDto.Status != null)
@@ -195,8 +195,8 @@ namespace API_FFMS.Services
                 throw new ApiException("Not found this transportation", StatusCode.NOT_FOUND);
             }
 
-            existingTransport.ScheduledDate = updateDto.ScheduledDate ?? existingTransport.ScheduledDate;
-            existingTransport.ActualDate = updateDto.ActualDate ?? existingTransport.ActualDate;
+            existingTransport.RequestedDate = updateDto.RequestedDate ?? existingTransport.RequestedDate;
+            existingTransport.CompletionDate = updateDto.CompletionDate ?? existingTransport.CompletionDate;
             //transportation.Status = updateDto.Status ?? transportation.Status;
             existingTransport.AssetId = updateDto.AssetId ?? existingTransport.AssetId;
             existingTransport.Description = updateDto.Description ?? existingTransport.Description;
