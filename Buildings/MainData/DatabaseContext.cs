@@ -22,6 +22,7 @@ public class DatabaseContext : DbContext
     public DbSet<Maintenance> Maintenances { get; set; }
     public DbSet<MaintenanceScheduleConfig> MaintenanceScheduleConfigs { get; set; }
     public DbSet<RoomStatus> RoomStatus { get; set; }
+    public DbSet<RoomType> RoomTypes { get; set; }
     
     public DbSet<MediaFile> MediaFiles { get; set; }
     
@@ -33,6 +34,7 @@ public class DatabaseContext : DbContext
     public DbSet<Category> Categories { get; set; }
     public DbSet<Team> Teams { get; set; }
     public DbSet<Model> Models { get; set; }
+    
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -61,5 +63,6 @@ public class DatabaseContext : DbContext
         modelBuilder.ApplyConfiguration(new TeamConfig());
         modelBuilder.ApplyConfiguration(new ModelConfig());
         modelBuilder.ApplyConfiguration(new CategoryConfig());
+        modelBuilder.ApplyConfiguration(new RoomTypeConfig());
     }
 }
