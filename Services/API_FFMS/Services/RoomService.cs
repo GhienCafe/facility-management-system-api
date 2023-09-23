@@ -6,6 +6,7 @@ using MainData;
 using MainData.Entities;
 using MainData.Repositories;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.OpenApi.Extensions;
 
 namespace API_FFMS.Services;
 public interface IRoomService : IBaseService
@@ -82,7 +83,7 @@ public class RoomService : BaseService, IRoomService
             select new
             {
                 Room = room,
-                status = status
+                Status = status
             };
 
         var totalCount = response.Count();
@@ -99,12 +100,14 @@ public class RoomService : BaseService, IRoomService
                 FloorId = x.Room.FloorId,
                 PathRoom = x.Room.PathRoom,
                 RoomName = x.Room.RoomName,
-                RoomType = x.Room.RoomType,
+                RoomType = x.Room.RoomType.GetValue(),
                 CreatedAt = x.Room.CreatedAt,
                 EditedAt = x.Room.EditedAt,
                 RoomCode = x.Room.RoomCode,
                 StatusId = x.Room.StatusId,
-                Status = x.status.ProjectTo<RoomStatus, RoomStatusDto>()
+                CreatorId = x.Room.CreatorId ?? Guid.Empty,
+                EditorId = x.Room.EditorId ?? Guid.Empty,
+                Status = x.Status.ProjectTo<RoomStatus, RoomStatusDto>()
             }
             ).ToListAsync();
 
