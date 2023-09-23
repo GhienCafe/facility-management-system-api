@@ -11,47 +11,48 @@ public class Room : BaseEntity
     public double? Area { get; set; }
     public string? PathRoom { get; set; }
     public string RoomCode { get; set; } = null!;
-    public RoomTypeEnum RoomType { get; set; }
+    public Guid? RoomTypeId { get; set; }
     public int? Capacity { get; set; }
     public Guid StatusId { get; set; }
     public Guid FloorId { get; set; }
 
     //Relationship
     public virtual Floor? Floors { get; set; }
+    public virtual RoomType? RoomType { get; set; }
     public virtual IEnumerable<RoomAsset>? RoomAssets { get; set; }
     public virtual RoomStatus? Status { get; set; }
     public virtual IEnumerable<Transportation>? Transportations { get; set; }
 }
 
-public enum RoomTypeEnum
-{
-    [Display(Name = "Thư viện")]
-    Library = 1,
-
-    [Display(Name = "Phòng nghỉ")]
-    TeaBreak = 2,
-
-    [Display(Name = "Phòng học")]
-    ClassRoom = 3,
-
-    [Display(Name = "Phòng IT")]
-    ItSupport = 4,
-
-    [Display(Name = "Không gian GD")]
-    GD_WS = 5,
-
-    [Display(Name = "Hội trường")]
-    Hall = 6,
-
-    [Display(Name = "Studio")]
-    Studio = 7,
-
-    [Display(Name = "Phòng học nhạc cụ")]
-    InstrumentClassroom = 8,
-
-    [Display(Name = "Kho")]
-    WareHouse = 9
-}
+// public enum RoomTypeEnum
+// {
+//     [Display(Name = "Thư viện")]
+//     Library = 1,
+//
+//     [Display(Name = "Phòng nghỉ")]
+//     TeaBreak = 2,
+//
+//     [Display(Name = "Phòng học")]
+//     ClassRoom = 3,
+//
+//     [Display(Name = "Phòng IT")]
+//     ItSupport = 4,
+//
+//     [Display(Name = "Không gian GD")]
+//     GD_WS = 5,
+//
+//     [Display(Name = "Hội trường")]
+//     Hall = 6,
+//
+//     [Display(Name = "Studio")]
+//     Studio = 7,
+//
+//     [Display(Name = "Phòng học nhạc cụ")]
+//     InstrumentClassroom = 8,
+//
+//     [Display(Name = "Kho")]
+//     WareHouse = 9
+// }
 
 public class RoomConfig : IEntityTypeConfiguration<Room>
 {
@@ -62,7 +63,7 @@ public class RoomConfig : IEntityTypeConfiguration<Room>
         builder.Property(x => x.Area).IsRequired(false);
         builder.Property(x => x.PathRoom).IsRequired(false);
         builder.Property(x => x.RoomCode).IsRequired();
-        builder.Property(x => x.RoomType).IsRequired();
+        builder.Property(x => x.RoomTypeId).IsRequired(false);
         builder.Property(x => x.Capacity).IsRequired(false);
         builder.Property(x => x.StatusId).IsRequired();
         builder.Property(x => x.FloorId).IsRequired();
@@ -74,6 +75,10 @@ public class RoomConfig : IEntityTypeConfiguration<Room>
         builder.HasOne(x => x.Floors)
             .WithMany(x => x.Rooms)
             .HasForeignKey(x => x.FloorId);
+        
+        builder.HasOne(x => x.RoomType)
+            .WithMany(x => x.Rooms)
+            .HasForeignKey(x => x.RoomTypeId);
 
         builder.HasMany(x => x.RoomAssets)
             .WithOne(x => x.Room)

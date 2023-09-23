@@ -6,10 +6,12 @@ namespace MainData.Entities;
 
 public class Transportation : BaseEntity
 {
-    public DateTime ScheduledDate { get; set; }
-    public DateTime? ActualDate { get; set; }
+    public DateTime RequestedDate { get; set; }
+    public DateTime? CompletionDate { get; set; }
     public string? Description { get; set; }
+    public string? Note { get; set; }
     public TransportationStatus Status { get; set; }
+    public int? Quantity { get; set; }
     public Guid? AssignedTo { get; set; }
     public Guid? AssetId { get; set; }
     public Guid? ToRoomId { get; set; } 
@@ -33,9 +35,11 @@ public class TransportationConfig : IEntityTypeConfiguration<Transportation>
     public void Configure(EntityTypeBuilder<Transportation> builder)
     {
         builder.ToTable("Transportations");
-        builder.Property(x => x.ScheduledDate).IsRequired();
-        builder.Property(x => x.ActualDate).IsRequired(false);
+        builder.Property(x => x.RequestedDate).IsRequired();
+        builder.Property(x => x.CompletionDate).IsRequired(false);
         builder.Property(x => x.Description).IsRequired(false);
+        builder.Property(x => x.Note).IsRequired(false);
+        builder.Property(x => x.Quantity).IsRequired(false);
         builder.Property(x => x.Status).IsRequired();
         builder.Property(x => x.AssignedTo).IsRequired(false);
 
