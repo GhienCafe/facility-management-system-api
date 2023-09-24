@@ -41,4 +41,9 @@ jobs:
             -e JWT_ISSUER="${{ secrets.JWT_ISSUER }}" \
             -e JWT_ACCESS_TOKEN_EXPIRES="${{ secrets.JWT_ACCESS_TOKEN_EXPIRES }}" \
             -e JWT_RESET_TOKEN_EXPIRES="${{ secrets.JWT_RESET_TOKEN_EXPIRES }}" \
+            -e TYPE="${{ secrets.TYPE }}" \
+            -e PROJECT_ID="${{ secrets.PROJECT_ID }}" \
+            -e PRIVATE_KEY_ID="${{ secrets.PRIVATE_KEY_ID }}" \
+            -e PRIVATE_KEY="${{ secrets.PRIVATE_KEY }}" \
+            -e CLIENT_EMAIL="${{ secrets.CLIENT_EMAIL }}" \
             ${{ secrets.REGISTRY }}/${{ secrets.DOCKER_IMAGE }}:latest
