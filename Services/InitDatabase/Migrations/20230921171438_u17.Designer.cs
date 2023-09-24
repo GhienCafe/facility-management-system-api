@@ -4,6 +4,7 @@ using MainData;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace InitDatabase.Migrations
 {
     [DbContext(typeof(DatabaseContext))]
-    partial class DatabaseContextModelSnapshot : ModelSnapshot
+    [Migration("20230921171438_u17")]
+    partial class u17
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -622,6 +625,8 @@ namespace InitDatabase.Migrations
 
                     b.HasIndex("AssignedTo");
 
+                    b.HasIndex("CreatorId");
+
                     b.ToTable("Repairation");
                 });
 
@@ -682,6 +687,8 @@ namespace InitDatabase.Migrations
 
                     b.HasIndex("AssignedTo");
 
+                    b.HasIndex("CreatorId");
+
                     b.ToTable("Replacements", (string)null);
                 });
 
@@ -728,8 +735,8 @@ namespace InitDatabase.Migrations
                     b.Property<string>("RoomName")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<Guid?>("RoomTypeId")
-                        .HasColumnType("uniqueidentifier");
+                    b.Property<int>("RoomType")
+                        .HasColumnType("int");
 
                     b.Property<Guid>("StatusId")
                         .HasColumnType("uniqueidentifier");
@@ -740,8 +747,6 @@ namespace InitDatabase.Migrations
 
                     b.HasIndex("RoomCode")
                         .IsUnique();
-
-                    b.HasIndex("RoomTypeId");
 
                     b.HasIndex("StatusId");
 
@@ -834,42 +839,6 @@ namespace InitDatabase.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("RoomStatus", (string)null);
-                });
-
-            modelBuilder.Entity("MainData.Entities.RoomType", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<Guid?>("CreatorId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime?>("DeletedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<Guid?>("DeleterId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("Description")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime>("EditedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<Guid?>("EditorId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("TypeName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("RoomTypes", (string)null);
                 });
 
             modelBuilder.Entity("MainData.Entities.Team", b =>
@@ -968,19 +937,22 @@ namespace InitDatabase.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<DateTime?>("ActualDate")
+                        .HasColumnType("datetime2");
+
                     b.Property<Guid?>("AssetId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid?>("AssignedTo")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<DateTime?>("CompletionDate")
-                        .HasColumnType("datetime2");
-
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
                     b.Property<Guid?>("CreatorId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("CreatorId1")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime?>("DeletedAt")
@@ -998,13 +970,7 @@ namespace InitDatabase.Migrations
                     b.Property<Guid?>("EditorId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<string>("Note")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int?>("Quantity")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("RequestedDate")
+                    b.Property<DateTime>("ScheduledDate")
                         .HasColumnType("datetime2");
 
                     b.Property<int>("Status")
@@ -1017,7 +983,9 @@ namespace InitDatabase.Migrations
 
                     b.HasIndex("AssetId");
 
-                    b.HasIndex("AssignedTo");
+                    b.HasIndex("CreatorId");
+
+                    b.HasIndex("CreatorId1");
 
                     b.HasIndex("ToRoomId");
 
@@ -1220,7 +1188,13 @@ namespace InitDatabase.Migrations
                         .WithMany("Repairations")
                         .HasForeignKey("AssignedTo");
 
+                    b.HasOne("MainData.Entities.User", "Creator")
+                        .WithMany()
+                        .HasForeignKey("CreatorId");
+
                     b.Navigation("Asset");
+
+                    b.Navigation("Creator");
 
                     b.Navigation("PersonInCharge");
                 });
@@ -1235,7 +1209,13 @@ namespace InitDatabase.Migrations
                         .WithMany("Replacements")
                         .HasForeignKey("AssignedTo");
 
+                    b.HasOne("MainData.Entities.User", "Creator")
+                        .WithMany()
+                        .HasForeignKey("CreatorId");
+
                     b.Navigation("Asset");
+
+                    b.Navigation("Creator");
 
                     b.Navigation("PersonInCharge");
                 });
@@ -1248,10 +1228,6 @@ namespace InitDatabase.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("MainData.Entities.RoomType", "RoomType")
-                        .WithMany("Rooms")
-                        .HasForeignKey("RoomTypeId");
-
                     b.HasOne("MainData.Entities.RoomStatus", "Status")
                         .WithMany("Rooms")
                         .HasForeignKey("StatusId")
@@ -1259,8 +1235,6 @@ namespace InitDatabase.Migrations
                         .IsRequired();
 
                     b.Navigation("Floors");
-
-                    b.Navigation("RoomType");
 
                     b.Navigation("Status");
                 });
@@ -1303,13 +1277,19 @@ namespace InitDatabase.Migrations
 
                     b.HasOne("MainData.Entities.User", "PersonInCharge")
                         .WithMany("Transportations")
-                        .HasForeignKey("AssignedTo");
+                        .HasForeignKey("CreatorId");
+
+                    b.HasOne("MainData.Entities.User", "Creator")
+                        .WithMany()
+                        .HasForeignKey("CreatorId1");
 
                     b.HasOne("MainData.Entities.Room", "ToRoom")
                         .WithMany("Transportations")
                         .HasForeignKey("ToRoomId");
 
                     b.Navigation("Asset");
+
+                    b.Navigation("Creator");
 
                     b.Navigation("PersonInCharge");
 
@@ -1378,11 +1358,6 @@ namespace InitDatabase.Migrations
                 });
 
             modelBuilder.Entity("MainData.Entities.RoomStatus", b =>
-                {
-                    b.Navigation("Rooms");
-                });
-
-            modelBuilder.Entity("MainData.Entities.RoomType", b =>
                 {
                     b.Navigation("Rooms");
                 });

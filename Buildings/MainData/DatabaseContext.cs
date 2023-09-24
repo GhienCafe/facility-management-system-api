@@ -20,18 +20,21 @@ public class DatabaseContext : DbContext
     public DbSet<AssetType> AssetTypes { get; set; }
     
     public DbSet<Maintenance> Maintenances { get; set; }
-    public DbSet<MaintenanceDetail> MaintenanceDetails { get; set; }
     public DbSet<MaintenanceScheduleConfig> MaintenanceScheduleConfigs { get; set; }
     public DbSet<RoomStatus> RoomStatus { get; set; }
+    public DbSet<RoomType> RoomTypes { get; set; }
     
     public DbSet<MediaFile> MediaFiles { get; set; }
     
     public DbSet<Replacement> Replacements { get; set; }
-    public DbSet<ReplacementDetail> ReplacementDetails { get; set; }
     
     public DbSet<Notification> Notifications { get; set; }
     public DbSet<Transportation> Transportations { get; set; }
-    public DbSet<TransportationDetail> TransportationDetails { get; set; }
+    
+    public DbSet<Category> Categories { get; set; }
+    public DbSet<Team> Teams { get; set; }
+    public DbSet<Model> Models { get; set; }
+    
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -47,7 +50,6 @@ public class DatabaseContext : DbContext
         modelBuilder.ApplyConfiguration(new AssetCategoryConfig());
         
         modelBuilder.ApplyConfiguration(new MaintenanceConfig());
-        modelBuilder.ApplyConfiguration(new MaintenanceDetailConfig());
         
         modelBuilder.ApplyConfiguration(new RoomStatusConfig());
         modelBuilder.ApplyConfiguration(new MediaFileConfig());
@@ -55,9 +57,12 @@ public class DatabaseContext : DbContext
         modelBuilder.ApplyConfiguration(new MaintenanceScheduleConfigConfig());
         
         modelBuilder.ApplyConfiguration(new ReplacementConfig());
-        modelBuilder.ApplyConfiguration(new ReplacementDetailConfig());
         modelBuilder.ApplyConfiguration(new NotificationConfig());
         modelBuilder.ApplyConfiguration(new TransportationConfig());
-        modelBuilder.ApplyConfiguration(new TransportationDetailConfig());
+        
+        modelBuilder.ApplyConfiguration(new TeamConfig());
+        modelBuilder.ApplyConfiguration(new ModelConfig());
+        modelBuilder.ApplyConfiguration(new CategoryConfig());
+        modelBuilder.ApplyConfiguration(new RoomTypeConfig());
     }
 }
