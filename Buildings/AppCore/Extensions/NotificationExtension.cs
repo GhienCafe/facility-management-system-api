@@ -1,19 +1,18 @@
-﻿using AppCore.Data;
-using FirebaseAdmin;
+﻿using FirebaseAdmin;
 using FirebaseAdmin.Messaging;
 using Google.Apis.Auth.OAuth2;
-using AppCore.Models;
 
 namespace AppCore.Extensions
 {
+    
     public interface ISendNotification
     {
-        Task SendFirebaseMessage(Notification noti, Registration registrationToken);
+        Task SendFirebaseMessage(Notification notification, Registration registrationToken);
         Task SendFirebaseMulticastMessage(Request request);
     }
     public class SendNotification : ISendNotification
     {
-        public async Task SendFirebaseMessage(Notification noti, Registration registrationToken)
+        public async Task SendFirebaseMessage(Notification notification, Registration registrationToken)
         {
             await InitializeFirebase();
 
@@ -26,21 +25,21 @@ namespace AppCore.Extensions
                 },
                 Notification = new FirebaseAdmin.Messaging.Notification()
                 {
-                    Title = noti.Title,
-                    Body = noti.Body,
+                    Title = notification.Title,
+                    Body = notification.Body,
                 },
                 Token = registrationToken.Token,
                 Webpush = new WebpushConfig
                 {
                     Notification = new WebpushNotification
                     {
-                        Title = noti.Title,
-                        Body = noti.Body,
+                        Title = notification.Title,
+                        Body = notification.Body,
                     },
                 },
             };
 
-            string response = await FirebaseMessaging.DefaultInstance.SendAsync(message).ConfigureAwait(false);
+           await FirebaseMessaging.DefaultInstance.SendAsync(message).ConfigureAwait(false);
         }
 
         public async Task SendFirebaseMulticastMessage(Request request)
@@ -72,14 +71,14 @@ namespace AppCore.Extensions
                     },
                 };
 
-                BatchResponse response = await FirebaseMessaging.DefaultInstance.SendMulticastAsync(message).ConfigureAwait(false);
+                await FirebaseMessaging.DefaultInstance.SendMulticastAsync(message).ConfigureAwait(false);
             }
         }
         
-        public static string GetHtmlContent(Notification noti)
+        public static string GetHtmlContent(Notification notification)
         {
-            string title = noti.Title ?? "Thông báo";
-            string body = noti.Body ?? "Nội dung thông báo";
+            string title = notification.Title ?? "Thông báo";
+            string body = notification.Body ?? "Nội dung thông báo";
 
             string htmlContent = $@"
                 <!DOCTYPE html>
@@ -162,15 +161,18 @@ namespace AppCore.Extensions
             return Task.CompletedTask;
         }
     }
+    
     public class Notification
     {
-        public string? Title { get; set; }= null!;
-        public string? Body { get; set; }= null!;
+        public string? Title { get; set; }
+        public string? Body { get; set; }
+        public string? UserId { get; set; }
+
     }
 
     public class Registration
     {
-        public string? Token { get; set; }= null!;
+        public string? Token { get; set; }
     }
 
     public class PriorityDto
@@ -180,12 +182,12 @@ namespace AppCore.Extensions
 
     public class ListToken
     {
-        public List<string>? Tokens { get; set; } = null!;
+        public List<string>? Tokens { get; set; }
     }
 
     public class Request
     {
-        public ListToken? ListToken { get; set; }= null!;
-        public Notification? Notification { get; set; }= null!;
+        public ListToken? ListToken { get; set; }
+        public Notification? Notification { get; set; }
     }
 }

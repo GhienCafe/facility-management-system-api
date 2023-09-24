@@ -18,8 +18,6 @@ public class TokenDeviceService :BaseService, ITokenDeviceService
 
     public async Task<ApiResponse> CheckTokenDevice(TokenDeviceDto tokenDto)
     {
-        // Check if the user is valid
-        // Check if the user is valid (not deleted)
         var user = MainUnitOfWork.UserRepository
             .GetQuery()
             .SingleOrDefault(x =>x != null && !x.DeletedAt.HasValue && x.Id == AccountId);
@@ -28,26 +26,28 @@ public class TokenDeviceService :BaseService, ITokenDeviceService
             throw new ApiException("User not found", StatusCode.BAD_REQUEST);
         }
 
-        // Check if a token with Type as DeviceToken and corresponding UserId already exists
         var existingToken = MainUnitOfWork.TokenRepository
             .GetQuery()
             .SingleOrDefault(x => x != null && x.UserId == AccountId && x.Type == TokenType.DeviceToken);
 
         if (existingToken != null)
         {
-            throw new ApiException("Token with Type DeviceToken already exists", StatusCode.ALREADY_EXISTS);
+            existingToken.Type = TokenType.DeviceToken;
+            await MainUnitOfWork.TokenRepository.UpdateAsync(existingToken, AccountId, CurrentDate);
+            // Return a success message
+            return ApiResponse.Success();
         }
 
         // Create a new token and store it in the database
         var newToken = new Token
         {
-            AccessToken = tokenDto.Token, // Replace with your logic for generating an access token
-            RefreshToken = tokenDto.Token, // Replace with your logic for generating a refresh token
+            AccessToken = tokenDto.Token,
+            RefreshToken = tokenDto.Token, 
             Status = TokenStatus.Active,
             UserId = AccountId ?? Guid.Empty,
             Type = TokenType.DeviceToken,
-            AccessExpiredAt = DateTime.UtcNow.AddHours(1), // Token expiration time
-            RefreshExpiredAt = DateTime.UtcNow.AddMonths(1), // Refresh token expiration time
+            AccessExpiredAt = DateTime.UtcNow.AddHours(1), 
+            RefreshExpiredAt = DateTime.UtcNow.AddMonths(1), 
         };
 
         if (!await MainUnitOfWork.TokenRepository.InsertAsync(newToken, AccountId, CurrentDate))

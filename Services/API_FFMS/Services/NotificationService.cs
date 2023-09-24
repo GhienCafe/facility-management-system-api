@@ -75,7 +75,7 @@ public class NotificationService : BaseService, INotificationService
         {
             Title = noti.Title,
             Content = noti.Body,
-            IsSendAll = false,
+            IsRead = false,
             UserId = AccountId
         };
         if (string.IsNullOrEmpty(response))

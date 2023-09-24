@@ -19,11 +19,11 @@ public class Worker : BackgroundService
         {
             using (var scope = _serviceProvider.CreateScope())
             {
-                var pushNotiService = scope.ServiceProvider.GetRequiredService<IPushNotificationService>();
-                await pushNotiService.SendAndMarkAsSent();
+                var pushNotificationService = scope.ServiceProvider.GetRequiredService<IPushNotificationService>();
+                await pushNotificationService.SendAndMarkAsSent();
             }
             _logger.LogInformation("Worker running at: {time}", DateTimeOffset.Now);
-            await Task.Delay(100000, stoppingToken);
+            await Task.Delay(1000, stoppingToken);
         }
     }
 }

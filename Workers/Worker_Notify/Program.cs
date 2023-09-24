@@ -1,5 +1,3 @@
-using System.Reflection;
-using AppCore.Configs;
 using AppCore.Extensions;
 using MainData;
 using MainData.Repositories;
@@ -16,6 +14,7 @@ IHost host = Host.CreateDefaultBuilder(args)
             options.UseSqlServer(connectionString, b =>
             {
                 b.CommandTimeout(1200);
+                b.EnableRetryOnFailure(3, TimeSpan.FromSeconds(5), null);
             });
             options.UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking);
             options.EnableDetailedErrors();
