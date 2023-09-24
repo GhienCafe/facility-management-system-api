@@ -39,9 +39,10 @@ public enum AssetStatus
     Pending = 7,
     NotAvailable = 8,
     NeedInspection = 9,
-    Upgraded = 10
+    Upgraded = 10,
+    Replacement = 11
 }
-
+public enum RoomRequestStatus{}
 public class AssetConfig : IEntityTypeConfiguration<Asset>
 {
     public void Configure(EntityTypeBuilder<Asset> builder)
