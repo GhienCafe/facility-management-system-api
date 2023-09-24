@@ -1,8 +1,10 @@
-﻿using API_FFMS.Dtos;
-using AppCore.Models;
+﻿using System.Linq.Expressions;
+using API_FFMS.Dtos;
 using MainData;
 using MainData.Repositories;
 using AppCore.Extensions;
+using AppCore.Models;
+
 namespace API_FFMS.Services;
 using FirebaseAdmin;
 using FirebaseAdmin.Messaging;
@@ -10,95 +12,130 @@ using Google.Apis.Auth.OAuth2;
 
 public interface INotificationService : IBaseService
 {
-    Task SendSingleMessage(NotificationDto noti, RegistrationDto registrationToken);
+    Task SendSingleMessage(NotificationDto noti, string token);
     Task SendMultipleMessages(RequestDto request);
+    Task<ApiResponses<NotificationDto>> GetNotification(NotificationQueryDto queryDto);
 }
 public class NotificationService : BaseService, INotificationService
 {
-    
     public NotificationService(MainUnitOfWork mainUnitOfWork, IHttpContextAccessor httpContextAccessor, IMapperRepository mapperRepository) : base(mainUnitOfWork, httpContextAccessor, mapperRepository)
     {
     }
-    // NotificationService.cs
-    public async Task SendSingleMessage(NotificationDto noti, RegistrationDto registrationToken)
+
+    public async Task<ApiResponses<NotificationDto>> GetNotification(NotificationQueryDto queryDto)
     {
-        if (FirebaseApp.DefaultInstance == null)
+        var notification = await MainUnitOfWork.NotificationRepository.FindResultAsync<NotificationDto>(
+            new Expression<Func<MainData.Entities.Notification, bool>>[]
+            {
+                x => !x.DeletedAt.HasValue,
+                x => x.UserId == AccountId
+            }, queryDto.OrderBy, queryDto.Skip(), queryDto.PageSize);
+
+        
+        return ApiResponses<NotificationDto>.Success(
+            notification.Items,
+            notification.TotalCount,
+            queryDto.PageSize,
+            queryDto.Skip(),
+            (int)Math.Ceiling(notification.TotalCount / (double)queryDto.PageSize)
+        );
+    }
+
+    public async Task SendSingleMessage(NotificationDto noti, string token)
+    {
+        // Khởi tạo Firebase nếu chưa được khởi tạo
+        await InitializeFirebase();
+
+        var message = new Message()
         {
-            string projectId = EnvironmentExtension.GetProjectIdFirebase();
-            string privateKeyId = EnvironmentExtension.GetPrivateKeyIdFirebase();
-            string privateKey = EnvironmentExtension.GetPrivateKeyFirebase();
-            string clientEmail = EnvironmentExtension.GetClientEmailFireBase();
-
-            FirebaseApp.Create(new AppOptions
+            Data = new Dictionary<string, string>()
             {
-                Credential = GoogleCredential.FromJson($@"
-        {{
-            ""type"": ""service_account"",
-            ""project_id"": ""{projectId}"",
-            ""private_key_id"": ""{privateKeyId}"", // Sử dụng giá trị từ biến môi trường
-            ""private_key"": ""{privateKey}"",
-            ""client_email"": ""{clientEmail}""
-        }}")
-            });
-
-            var message = new Message()
+                { "score", "850" },
+                { "time", "1:00" },
+            },
+            Notification = new Notification
             {
-                Data = new Dictionary<string, string>()
-                {
-                    { "score", "850" },
-                    { "time", "1:00" },
-                },
-                Notification = new FirebaseAdmin.Messaging.Notification()
+                Title = noti.Title,
+                Body = noti.Body,
+            },
+            Token = token,
+            Webpush = new WebpushConfig
+            {
+                Notification = new WebpushNotification
                 {
                     Title = noti.Title,
                     Body = noti.Body,
                 },
-                Token = registrationToken.Token,
-            };
+            },
+        };
 
-            string response = await FirebaseMessaging.DefaultInstance.SendAsync(message).ConfigureAwait(false);
+        string response = await FirebaseMessaging.DefaultInstance.SendAsync(message).ConfigureAwait(false);
 
-            if (string.IsNullOrEmpty(response))
-            {
-                Console.WriteLine("Error sending message: " + response);
-                throw new Exception("Server error for not valid sent message");
-            }
-
-            Console.WriteLine("Successfully sent message: " + response);
+        var notification = new MainData.Entities.Notification()
+        {
+            Title = noti.Title,
+            Content = noti.Body,
+            IsRead = false,
+            UserId = AccountId
+        };
+        if (string.IsNullOrEmpty(response))
+        {
+            throw new ApiException("Server error for not valid sent message", StatusCode.BAD_REQUEST);
         }
-        else
+        if (!await MainUnitOfWork.NotificationRepository.InsertAsync(notification, AccountId, CurrentDate))
         {
-            // FirebaseApp.DefaultInstance đã được khởi tạo, bạn có thể sử dụng nó để gửi thông báo.
-            FirebaseMessaging messaging = FirebaseMessaging.DefaultInstance;
-
-            var message = new Message()
-            {
-                Data = new Dictionary<string, string>()
-                {
-                    { "score", "850" },
-                    { "time", "1:00" },
-                },
-                Notification = new FirebaseAdmin.Messaging.Notification()
-                {
-                    Title = noti.Title,
-                    Body = noti.Body,
-                },
-                Token = registrationToken.Token,
-            };
-
-            string response = await messaging.SendAsync(message).ConfigureAwait(false);
-
-            if (string.IsNullOrEmpty(response))
-            {
-                Console.WriteLine("Error sending message: " + response);
-                throw new Exception("Server error for not valid sent message");
-            }
-
-            Console.WriteLine("Successfully sent message: " + response);
+            throw new ApiException("Server error for not insert notification", StatusCode.BAD_REQUEST);
         }
     }
-    
+
     public async Task SendMultipleMessages(RequestDto request)
+    {
+        // Khởi tạo Firebase nếu chưa được khởi tạo
+        await InitializeFirebase();
+
+        var message = new MulticastMessage()
+        {
+            Tokens = request.ListToken!.Tokens,
+            Notification = new Notification
+            {
+                Title = request.Notification?.Title,
+                Body = request.Notification?.Body,
+            },
+            Data = new Dictionary<string, string>()
+            {
+                { "content_type", "notification" },
+                { "value", "2" }
+            },
+            Webpush = new WebpushConfig
+            {
+                Notification = new WebpushNotification
+                {
+                    Title = request.Notification?.Title,
+                    Body = request.Notification?.Body,
+                },
+            },
+        };
+
+        BatchResponse response = await FirebaseMessaging.DefaultInstance.SendMulticastAsync(message).ConfigureAwait(false);
+
+        if (response.FailureCount > 0)
+        {
+            Console.WriteLine($"Failed to send {response.FailureCount} messages");
+
+            for (int i = 0; i < response.Responses.Count; i++)
+            {
+                if (!response.Responses[i].IsSuccess)
+                {
+                    string errorToken = request.ListToken.Tokens[i];
+                    Console.WriteLine($"Failed to send message to token: {errorToken}");
+                }
+            }
+
+            throw new Exception("Server error for not valid sent message");
+        }
+    }
+
+    private static Task InitializeFirebase()
     {
         if (FirebaseApp.DefaultInstance == null)
         {
@@ -118,75 +155,8 @@ public class NotificationService : BaseService, INotificationService
             ""client_email"": ""{clientEmail}""
         }}")
             });
-            var message = new MulticastMessage()
-            {
-                Tokens = request.ListToken.Tokens, // Sử dụng danh sách tokens từ ListToken
-                Notification = new FirebaseAdmin.Messaging.Notification()
-                {
-                    Title = request.Notification?.Title,
-                    Body = request.Notification?.Body,
-                },
-                Data = new Dictionary<string, string>()
-                {
-                    { "content_type", "notification" },
-                    { "value", "2" }
-                },
-            };
-
-            BatchResponse response = await FirebaseMessaging.DefaultInstance.SendMulticastAsync(message).ConfigureAwait(false);
-
-            if (response.FailureCount > 0)
-            {
-                Console.WriteLine($"Failed to send {response.FailureCount} messages");
-
-                // Xử lý danh sách các registration tokens không thành công
-                for (int i = 0; i < response.Responses.Count; i++)
-                {
-                    if (!response.Responses[i].IsSuccess)
-                    {
-                        string errorToken = request.ListToken.Tokens[i];
-                        Console.WriteLine($"Failed to send message to token: {errorToken}");
-                    }
-                }
-
-                throw new Exception("Server error for not valid sent message");
-            }
         }
-        else
-        {
-            var message = new MulticastMessage()
-            {
-                Tokens = request.ListToken.Tokens, // Sử dụng danh sách tokens từ ListToken
-                Notification = new FirebaseAdmin.Messaging.Notification()
-                {
-                    Title = request.Notification?.Title,
-                    Body = request.Notification?.Body,
-                },
-                Data = new Dictionary<string, string>()
-                {
-                    { "content_type", "notification" },
-                    { "value", "2" }
-                },
-            };
 
-            BatchResponse response = await FirebaseMessaging.DefaultInstance.SendMulticastAsync(message).ConfigureAwait(false);
-
-            if (response.FailureCount > 0)
-            {
-                Console.WriteLine($"Failed to send {response.FailureCount} messages");
-
-                // Xử lý danh sách các registration tokens không thành công
-                for (int i = 0; i < response.Responses.Count; i++)
-                {
-                    if (!response.Responses[i].IsSuccess)
-                    {
-                        string errorToken = request.ListToken.Tokens[i];
-                        Console.WriteLine($"Failed to send message to token: {errorToken}");
-                    }
-                }
-
-                throw new Exception("Server error for not valid sent message");
-            }
-        }
+        return Task.CompletedTask;
     }
 }

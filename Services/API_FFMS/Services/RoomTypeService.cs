@@ -72,7 +72,11 @@ namespace API_FFMS.Services
                 throw new ApiException("Not found this room type", StatusCode.NOT_FOUND);
             }
 
-            //roomType.RoomInclude = MainUnitOfWork
+            roomType.TotalRooms = MainUnitOfWork.RoomRepository.GetQuery().Count(x => !x!.DeletedAt.HasValue
+                    && x.RoomTypeId == roomType.Id);
+
+            roomType.Rooms = (IEnumerable<RoomIncludeDto>?)MainUnitOfWork.RoomRepository.GetQuery()
+                            .Where(x => x!.RoomTypeId == roomType.Id).ToList();
 
             roomType = await _mapperRepository.MapCreator(roomType);
             return ApiResponse<RoomTypeDetailDto>.Success(roomType);

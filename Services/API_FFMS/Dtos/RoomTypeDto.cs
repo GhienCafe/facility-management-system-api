@@ -13,7 +13,8 @@ public class RoomTypeDetailDto : BaseDto
 {
     public string TypeName { get; set; } = null!;
     public string? Description { get; set; }
-    //public List<RoomIncludeDto>? RoomInclude { get; set; }
+    public int? TotalRooms { get; set; }
+    public IEnumerable<RoomIncludeDto>? Rooms { get; set; }
 }
 
 public class RoomIncludeDto

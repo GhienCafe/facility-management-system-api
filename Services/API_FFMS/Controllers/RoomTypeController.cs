@@ -36,8 +36,7 @@ namespace API_FFMS.Controllers
             return await _service.GetRoomType(id);
         }
 
-        [HttpPut("{id:guid}")]
-
+        [HttpPut]
         [SwaggerOperation("Update room type")]
         public async Task<ApiResponse> Update(Guid id, RoomTypeUpdateDto updateDto)
         {
