@@ -30,7 +30,7 @@ public class TransportUpdateDto
     public string? Note{ get; set; }
     public int? Quantity{ get; set; }
     public Guid? AssignedTo { get; set; }
-    public Guid? AssetId { get; set; }
+    //public Guid? AssetId { get; set; }
     public Guid? ToRoomId { get; set; }
 }
 
@@ -72,6 +72,11 @@ public class TransportDto : BaseDto
     public RoomDto? FromRoom { get; set; }
     public RoomDto? ToRoom { get; set; }
     public AssetDto? Asset { get; set; }
+}
+
+public class TransportUpdateStatusDto
+{
+    public TransportationStatus Status { get; set; }
 }
 
 public class FutureDateAttribute : ValidationAttribute

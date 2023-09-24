@@ -1,4 +1,5 @@
 ﻿using API_FFMS.Dtos;
+using AppCore.Extensions;
 using AppCore.Models;
 using MainData;
 using MainData.Entities;
@@ -10,13 +11,32 @@ namespace API_FFMS.Services
     public interface IRoomTypeService : IBaseService
     {
         Task<ApiResponses<RoomTypeDto>> GetRoomTypes(RoomTypeQueryDto queryDto);
-        Task<ApiResponse<RoomTypeDto>> GetRoomTypes(Guid id);
+        Task<ApiResponse<RoomTypeDetailDto>> GetRoomType(Guid id);
+        public Task<ApiResponse> Insert(RoomTypeCreateDto createDto);
+        Task<ApiResponse> Delete(Guid id);
+        Task<ApiResponse> Update(Guid id, RoomTypeUpdateDto updateDto);
     }
 
     public class RoomTypeService : BaseService, IRoomTypeService
     {
         public RoomTypeService(MainUnitOfWork mainUnitOfWork, IHttpContextAccessor httpContextAccessor, IMapperRepository mapperRepository) : base(mainUnitOfWork, httpContextAccessor, mapperRepository)
         {
+        }
+
+        public async Task<ApiResponse> Delete(Guid id)
+        {
+            var existingRoomType = await MainUnitOfWork.RoomTypeRepository.FindOneAsync(id);
+            if (existingRoomType == null)
+            {
+                throw new ApiException("Not found this room type", StatusCode.NOT_FOUND);
+            }
+
+            if (!await MainUnitOfWork.RoomTypeRepository.DeleteAsync(existingRoomType, AccountId, CurrentDate))
+            {
+                throw new ApiException("Can't not delete", StatusCode.SERVER_ERROR);
+            }
+
+            return ApiResponse.Success();
         }
 
         public async Task<ApiResponses<RoomTypeDto>> GetRoomTypes(RoomTypeQueryDto queryDto)
@@ -38,20 +58,60 @@ namespace API_FFMS.Services
             (int)Math.Ceiling(roomTypes.TotalCount / (double)queryDto.PageSize));
         }
 
-        public async Task<ApiResponse<RoomTypeDto>> GetRoomTypes(Guid id)
+        public async Task<ApiResponse<RoomTypeDetailDto>> GetRoomType(Guid id)
         {
-            //var roomType = await MainUnitOfWork.RoomTypeRepository.FindOneAsync<RoomTypeDto>(
-            //    new Expression<Func<RoomType, bool>>[]
-            //    {
-            //        x => !x.DeletedAt.HasValue,
-            //        x => x.Id == id
-            //    });
+            var roomType = await MainUnitOfWork.RoomTypeRepository.FindOneAsync<RoomTypeDetailDto>(
+                new Expression<Func<RoomType, bool>>[]
+                {
+                    x => !x.DeletedAt.HasValue,
+                    x => x.Id == id,
+                });
 
-            //if(roomType != null)
-            //{
-            //    throw new ApiException("Not found this room type", StatusCode.NOT_FOUND);
-            //}
-            throw new ApiException("");
+            if (roomType == null)
+            {
+                throw new ApiException("Not found this room type", StatusCode.NOT_FOUND);
+            }
+
+            roomType.TotalRooms = MainUnitOfWork.RoomRepository.GetQuery().Count(x => !x!.DeletedAt.HasValue
+                    && x.RoomTypeId == roomType.Id);
+
+            roomType.Rooms = (IEnumerable<RoomIncludeDto>?)MainUnitOfWork.RoomRepository.GetQuery()
+                            .Where(x => x!.RoomTypeId == roomType.Id).ToList();
+
+            roomType = await _mapperRepository.MapCreator(roomType);
+            return ApiResponse<RoomTypeDetailDto>.Success(roomType);
+        }
+
+        public async Task<ApiResponse> Insert(RoomTypeCreateDto createDto)
+        {
+            var roomType = createDto.ProjectTo<RoomTypeCreateDto, RoomType>();
+
+            if (!await MainUnitOfWork.RoomTypeRepository.InsertAsync(roomType, AccountId, CurrentDate))
+            {
+                throw new ApiException("Insert fail", StatusCode.SERVER_ERROR);
+            }
+
+            return ApiResponse.Created("Create successfully");
+        }
+
+        public async Task<ApiResponse> Update(Guid id, RoomTypeUpdateDto updateDto)
+        {
+            var roomType = await MainUnitOfWork.RoomTypeRepository.FindOneAsync(id);
+
+            if (roomType == null)
+            {
+                throw new ApiException("Not found this room type", StatusCode.NOT_FOUND);
+            }
+
+            roomType.TypeName = updateDto.TypeName ?? roomType.TypeName;
+            roomType.Description = updateDto.Description ?? roomType.Description;
+
+            if (!await MainUnitOfWork.RoomTypeRepository.UpdateAsync(roomType, AccountId, CurrentDate))
+            {
+                throw new ApiException("Insert fail", StatusCode.SERVER_ERROR);
+            }
+
+            return ApiResponse.Success();
         }
     }
 }
