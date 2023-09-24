@@ -74,6 +74,11 @@ public class TransportDto : BaseDto
     public AssetDto? Asset { get; set; }
 }
 
+public class TransportUpdateStatusDto
+{
+    public TransportationStatus Status { get; set; }
+}
+
 public class FutureDateAttribute : ValidationAttribute
 {
     public override bool IsValid(object value)
