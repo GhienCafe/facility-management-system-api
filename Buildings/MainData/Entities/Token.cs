@@ -27,7 +27,8 @@ public enum TokenType
 {
     SignInToken = 1,
     ResetPassword = 2,
-    ActiveAccount = 3
+    ActiveAccount = 3,
+    DeviceToken = 4
 }
 
 public class TokenConfig : IEntityTypeConfiguration<Token>
