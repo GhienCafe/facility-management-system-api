@@ -30,7 +30,7 @@ public class TransportUpdateDto
     public string? Note{ get; set; }
     public int? Quantity{ get; set; }
     public Guid? AssignedTo { get; set; }
-    public Guid? AssetId { get; set; }
+    //public Guid? AssetId { get; set; }
     public Guid? ToRoomId { get; set; }
 }
 

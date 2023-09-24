@@ -27,9 +27,9 @@ public enum TransportationStatus
 {
     [Display(Name = "Chưa bắt đầu")]
     NotStarted = 1,
-    [Display(Name = "Chưa thực hiện")]
+    [Display(Name = "Đang thực hiện")]
     InProgress = 2,
-    [Display(Name = "Hoa thành")]
+    [Display(Name = "Hoàn thành")]
     Completed = 3,
     [Display(Name = "Hủy")]
     Cancelled = 4,
