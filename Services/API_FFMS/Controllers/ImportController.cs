@@ -58,7 +58,7 @@ namespace API_FFMS.Controllers
 
         [HttpPost]
         [SwaggerOperation("Import asset")]
-        public async Task<ApiResponse<ImportError>> ImportAsset(IFormFile file)
+        public async Task<ApiResponses<ImportError>> ImportAsset(IFormFile file)
         {
             return await _importService.ImportAssets(file);
         }
