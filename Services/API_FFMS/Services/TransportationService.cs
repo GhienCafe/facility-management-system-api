@@ -105,7 +105,7 @@ namespace API_FFMS.Services
             }
 
             existingTransport.Status = TransportationStatus.Cancelled;
-            existingTransport.Asset.Status = AssetStatus.Operational;
+            existingTransport.Asset!.Status = AssetStatus.Operational;
 
             if (!await MainUnitOfWork.TransportationRepository.DeleteAsync(existingTransport, AccountId, CurrentDate))
             {
@@ -155,40 +155,16 @@ namespace API_FFMS.Services
 
             if (queryDto.AssignedTo != null)
             {
-                // var existingUser = MainUnitOfWork.UserRepository.GetQuery()
-                //                  .Where(x => !x!.DeletedAt.HasValue && x.Id == queryDto.AssignedTo);
-                //
-                // if (existingUser == null)
-                // {
-                //     throw new ApiException("Not found this user", StatusCode.NOT_FOUND);
-                // }
-
                 transportQuery = transportQuery.Where(x => x!.AssignedTo == queryDto.AssignedTo);
             }
 
             if (queryDto.AssetId != null)
             {
-                // var existingAsset = MainUnitOfWork.AssetRepository.GetQuery()
-                //                  .Where(x => !x!.DeletedAt.HasValue && x.Id == queryDto.AssetId);
-
-                // if (existingAsset == null)
-                // {
-                //     throw new ApiException("Not found this asset", StatusCode.NOT_FOUND);
-                // }
-
                 transportQuery = transportQuery.Where(x => x!.AssetId == queryDto.AssetId);
             }
 
             if (queryDto.ToRoomId != null)
             {
-                // var existingRoom = MainUnitOfWork.RoomRepository.GetQuery()
-                //                  .Where(x => !x!.DeletedAt.HasValue && x.Id == queryDto.ToRoomId);
-
-                // if (existingRoom == null)
-                // {
-                //     throw new ApiException("Not found this room", StatusCode.NOT_FOUND);
-                // }
-
                 transportQuery = transportQuery.Where(x => x!.ToRoomId == queryDto.ToRoomId);
             }
 
