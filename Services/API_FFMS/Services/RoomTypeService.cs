@@ -51,6 +51,7 @@ namespace API_FFMS.Services
             //{
             //    throw new ApiException("Not found this room type", StatusCode.NOT_FOUND);
             //}
+            throw new ApiException("");
         }
     }
 }

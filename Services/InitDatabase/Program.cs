@@ -7,7 +7,7 @@ var builder = WebApplication.CreateBuilder(args);
 //Add DbContext
 builder.Services.AddDbContext<DatabaseContext>(options =>
 {
-    var connectString = "Server=ffms-server.database.windows.net;uid=ffms-admin;pwd=password123@;database=FFMS;TrustServerCertificate=True";
+    var connectString = "Server=localhost;uid=sa;pwd=123;database=FFMS;TrustServerCertificate=True";
     options.UseSqlServer(connectString,
         b =>
         {
