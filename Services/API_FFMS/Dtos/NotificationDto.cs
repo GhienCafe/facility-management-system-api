@@ -1,14 +1,16 @@
-﻿namespace API_FFMS.Dtos
+﻿using AppCore.Models;
+
+namespace API_FFMS.Dtos
 {
     public class NotificationDto
     {
-        public string? Title { get; set; }
-        public string? Body { get; set; }
+        public string? Title { get; set; } = null!;
+        public string? Body { get; set; }= null!;
     }
 
     public class RegistrationDto
     {
-        public string? Token { get; set; }
+        public string? Token { get; set; }= null!;
     }
 
     public class PriorityDto
@@ -18,12 +20,17 @@
 
     public class ListToken
     {
-        public List<string> Tokens { get; set; }
+        public List<string> Tokens { get; set; }= null!;
     }
 
     public class RequestDto
     {
-        public ListToken? ListToken { get; set; }
-        public NotificationDto? Notification { get; set; }
+        public ListToken? ListToken { get; set; }= null!;
+        public NotificationDto? Notification { get; set; }= null!;
+    }
+
+    public class NotificationQueryDto : BaseQueryDto
+    {
+        
     }
 }

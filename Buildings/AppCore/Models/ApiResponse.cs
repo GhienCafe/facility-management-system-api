@@ -109,7 +109,7 @@ public class ApiResponse
             StatusCode = statusCode
         };
     }
-    
+
     public static ApiResponse Created(StatusCode statusCode, string message)
     {
         return new ApiResponse

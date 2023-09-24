@@ -1,4 +1,5 @@
-﻿using AppCore.Data;
+﻿using System.ComponentModel.DataAnnotations;
+using AppCore.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -24,9 +25,13 @@ public class Transportation : BaseEntity
 
 public enum TransportationStatus
 {
+    [Display(Name = "Chưa bắt đầu")]
     NotStarted = 1,
-    InProgress = 1,
+    [Display(Name = "Đang thực hiện")]
+    InProgress = 2,
+    [Display(Name = "Hoàn thành")]
     Completed = 3,
+    [Display(Name = "Hủy")]
     Cancelled = 4,
 }
 

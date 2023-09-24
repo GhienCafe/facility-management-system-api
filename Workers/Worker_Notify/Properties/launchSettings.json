@@ -4,7 +4,20 @@
       "commandName": "Project",
       "dotnetRunMessages": true,
       "environmentVariables": {
-        "DOTNET_ENVIRONMENT": "Development"
+        "DOTNET_ENVIRONMENT": "Development",
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "CONNECTION_STRING": "YOUR_CONNECTION_STRING",
+        "JWT_ACCESS_TOKEN_SECRET": "the-most-strongest-key-ever-czxdcz",
+        "JWT_RESET_TOKEN_SECRET": "the-second-strongest-key-ever-cxzcxz",
+        "JWT_AUDIENCE": "facility-management-system-fb",
+        "JWT_ISSUER": "facility-management-system-fb",
+        "JWT_ACCESS_TOKEN_EXPIRES": "180",
+        "JWT_RESET_TOKEN_EXPIRES": "1080",
+        "TYPE": "service_account",
+        "PROJECT_ID": "facility-management-system-fb",
+        "PRIVATE_KEY_ID": "YOUR_PRIVATE_ID",
+        "PRIVATE_KEY": "YOUR_PRIVATE_KEY",
+        "CLIENT_EMAIL": "YOUR_CLIENT_EMAIL"
       }
     }
   }
