@@ -33,7 +33,7 @@ namespace Worker_Notify.Services
             try
             {
                 var notificationsToSend = await MainUnitOfWork.NotificationRepository.FindAsync(
-                    filters: new Expression<Func<MainData.Entities.Notification, bool>>[]
+                    filters: new Expression<Func<Notification, bool>>[]
                     {
                         x => x.DeletedAt.HasValue == false && x.IsRead == false
                     },
@@ -55,7 +55,7 @@ namespace Worker_Notify.Services
 
                 var sendNotifications = notificationsToSend
                     .Where(notification => notification!.UserId.HasValue && tokenDictionary.ContainsKey(notification.UserId.Value))
-                    .Select(notification => new Notification
+                    .Select(notification => new NotificationModel
                     {
                         Title = notification!.Title,
                         Body = notification.Content, // Use the 'Content' property since 'Body' may not be available
@@ -90,7 +90,7 @@ namespace Worker_Notify.Services
                     }
 
                     List<string> tokenAccessTokens = notifications
-                        .Select(notification => tokenAccessToken)
+                        .Select(x => tokenAccessToken)
                         .ToList();
                     if (notifications.Count > 1)
                     {
@@ -99,7 +99,7 @@ namespace Worker_Notify.Services
                         await _sendNotification.SendFirebaseMulticastMessage(new Request
                         {
                             ListToken = new ListToken { Tokens = tokenAccessTokens },
-                            Notification = new Notification
+                            Notification = new NotificationModel
                             {
                                 Title = notifications.FirstOrDefault()?.Title,
                                 Body = notifications.FirstOrDefault()?.Body,
@@ -157,7 +157,7 @@ namespace Worker_Notify.Services
         }
 
 
-        public async Task UpdateNotificationAsync(MainData.Entities.Notification notification,
+        public async Task UpdateNotificationAsync(Notification notification,
             DateTime? currentDate)
         {
             try

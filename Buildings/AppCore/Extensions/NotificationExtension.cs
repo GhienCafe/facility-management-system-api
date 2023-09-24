@@ -1,4 +1,5 @@
-﻿using FirebaseAdmin;
+﻿using AppCore.Models;
+using FirebaseAdmin;
 using FirebaseAdmin.Messaging;
 using Google.Apis.Auth.OAuth2;
 
@@ -7,12 +8,12 @@ namespace AppCore.Extensions
     
     public interface ISendNotification
     {
-        Task SendFirebaseMessage(Notification notification, Registration registrationToken);
+        Task SendFirebaseMessage(NotificationModel notification, Registration registrationToken);
         Task SendFirebaseMulticastMessage(Request request);
     }
     public class SendNotification : ISendNotification
     {
-        public async Task SendFirebaseMessage(Notification notification, Registration registrationToken)
+        public async Task SendFirebaseMessage(NotificationModel notification, Registration registrationToken)
         {
             await InitializeFirebase();
 
@@ -160,34 +161,5 @@ namespace AppCore.Extensions
 
             return Task.CompletedTask;
         }
-    }
-    
-    public class Notification
-    {
-        public string? Title { get; set; }
-        public string? Body { get; set; }
-        public string? UserId { get; set; }
-
-    }
-
-    public class Registration
-    {
-        public string? Token { get; set; }
-    }
-
-    public class PriorityDto
-    {
-        public bool Priority { get; set; }
-    }
-
-    public class ListToken
-    {
-        public List<string>? Tokens { get; set; }
-    }
-
-    public class Request
-    {
-        public ListToken? ListToken { get; set; }
-        public Notification? Notification { get; set; }
     }
 }
