@@ -35,7 +35,7 @@ namespace Worker_Notify.Services
                 var notificationsToSend = await MainUnitOfWork.NotificationRepository.FindAsync(
                     filters: new Expression<Func<Notification, bool>>[]
                     {
-                        x => x.DeletedAt.HasValue == false && x.IsRead == false
+                        x => x.DeletedAt.HasValue == false && x.Status == NotificationStatus.Waiting
                     },
                     null
                 );
