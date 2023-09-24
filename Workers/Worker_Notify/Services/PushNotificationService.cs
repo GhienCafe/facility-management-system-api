@@ -37,7 +37,7 @@ namespace Worker_Notify.Services
                     {
                         x => x.DeletedAt.HasValue == false && x.IsRead == false
                     },
-                    orderBy: null
+                    null
                 );
 
                 var userIds = notificationsToSend.Select(notification => notification!.UserId).Distinct().ToList();
@@ -114,16 +114,12 @@ namespace Worker_Notify.Services
                         await _sendNotification.SendFirebaseMessage(notifications.FirstOrDefault()!, new Registration { Token = tokenAccessToken });
                     }
                 }
-
-                // foreach (var notification in notificationsToSend)
-                // {
-                //     await UpdateNotificationAsync(notification!.Id);
-                // }
                 
-                notificationsToSend.Select(notification => {
-                    notification!.IsRead = true;
+                notificationsToSend = notificationsToSend.Select(notification => {
+                    notification.Status = NotificationStatus.Sent;
                     return notification;
-                });
+                }).ToList();
+
 
                 if (!await MainUnitOfWork.NotificationRepository.UpdateAsync(notificationsToSend, Guid.Empty, CurrentDate))
                     Console.WriteLine("Update fail");

@@ -10,11 +10,11 @@ IHost host = Host.CreateDefaultBuilder(args)
     {
         services.AddDbContext<DatabaseContext>(options =>
         {
-            var connectionString = hostContext.Configuration.GetConnectionString("DefaultConnection");
+            var connectionString = EnvironmentExtension.GetAppConnectionString();
             options.UseSqlServer(connectionString, b =>
             {
                 b.CommandTimeout(1200);
-                b.EnableRetryOnFailure(3, TimeSpan.FromSeconds(5), null);
+              //  b.EnableRetryOnFailure(3, TimeSpan.FromSeconds(5), null);
             });
             options.UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking);
             options.EnableDetailedErrors();
