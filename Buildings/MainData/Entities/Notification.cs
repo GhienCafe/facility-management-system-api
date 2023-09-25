@@ -26,6 +26,8 @@ public enum NotificationType
     [Display(Name = "Nhiệm vụ")] Task = 1,
     [Display(Name = "Hệ thống")] System = 2,
     [Display(Name = "Thông tin")] Info = 3,
+    [Display(Name = "Bảo trì")] Maintenance = 4,
+    [Display(Name = "Thay thế")] Replacement = 5,
 }
 
 public enum NotificationStatus
