@@ -1,4 +1,5 @@
-﻿    using AppCore.Data;
+﻿    using System.ComponentModel.DataAnnotations;
+    using AppCore.Data;
     using Microsoft.EntityFrameworkCore;
     using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -23,7 +24,9 @@
 
     public enum MaintenanceType
     {
+        [Display(Name = "Bảo trì định kỳ")]
         Permanent = 1,
+        [Display(Name = "Bảo trì đột xất")]
         Unexpected  = 2
     }
 
