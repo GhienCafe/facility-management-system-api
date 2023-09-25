@@ -45,6 +45,7 @@ public class TransportDetailDto : BaseDto
     public Guid? AssignedTo { get; set; }
     public Guid? AssetId { get; set; }
     public Guid? ToRoomId { get; set; }
+    public AssetDto? Asset { get; set; }
 }
 
 public class TransportQueryDto : BaseQueryDto
