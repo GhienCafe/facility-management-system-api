@@ -1,6 +1,5 @@
 ﻿using System.Linq.Expressions;
 using API_FFMS.Dtos;
-using AppCore.Data;
 using AppCore.Extensions;
 using AppCore.Models;
 using MainData;
@@ -180,6 +179,8 @@ public class MaintenanceService : BaseService, IMaintenanceService
 
         maintenance.Status = MaintenanceStatus.NotStarted;
         maintenance.Type = MaintenanceType.Unexpected;
+
+        //// check asset is rent or not
 
         if (!await MainUnitOfWork.MaintenanceRepository.InsertAsync(maintenance, AccountId, CurrentDate))
             throw new ApiException("Tạo yêu cầu thất bại", StatusCode.SERVER_ERROR);
