@@ -20,4 +20,11 @@ public class AccountController : BaseController
     {
         return await _userService.GetAccountInformation();
     }
+
+    [HttpPut]
+    [SwaggerOperation("Update current account information")]
+    public async Task<ApiResponse> Update(AccountUpdateDto updateDto)
+    {
+        return await _userService.AccountUpdate(updateDto);
+    }
 }
