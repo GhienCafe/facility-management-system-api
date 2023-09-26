@@ -32,6 +32,9 @@ public static class EnvironmentExtension
     public static string GetPrivateKeyIdFirebase() => Environment.GetEnvironmentVariable("PRIVATE_KEY_ID") ?? string.Empty;
     public static string GetPrivateKeyFirebase() => Environment.GetEnvironmentVariable("PRIVATE_KEY") ?? string.Empty;
     public static string GetClientEmailFireBase() => Environment.GetEnvironmentVariable("CLIENT_EMAIL") ?? string.Empty;
+    public static string GetAccountEmailSystem() => Environment.GetEnvironmentVariable("ACCOUNT_EMAIL_SYSTEM") ?? string.Empty;
+    public static string GetPasswordEmailPrivate() => Environment.GetEnvironmentVariable("PASSWORD_EMAIL_PRIVATE") ?? string.Empty;
+    
     public static string GetAppConnectionString() =>
         Environment.GetEnvironmentVariable("CONNECTION_STRING") ?? string.Empty;
     

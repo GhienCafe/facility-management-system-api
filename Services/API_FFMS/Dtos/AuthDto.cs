@@ -23,6 +23,18 @@ public class AuthDto
     public bool IsFirstLogin { get; set; }
 }
 
+public class ResetPasswordDto
+{
+    [Required] public string Email { get; set; } = string.Empty;
+}
+public class UpdatePasswordDto
+{
+    [Required] public string Email { get; set; } = string.Empty;
+
+    [Required] public string ResetCode { get; set; } = string.Empty;
+    [Required] public string NewPassword { get; set; } = string.Empty;
+}
+
 public class AuthRefreshDto
 {
     [Required] public string RefreshToken { get; set; } = string.Empty;

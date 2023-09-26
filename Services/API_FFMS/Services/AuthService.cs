@@ -8,6 +8,7 @@ using AppCore.Models;
 using MainData;
 using MainData.Entities;
 using MainData.Repositories;
+using Microsoft.EntityFrameworkCore;
 
 namespace API_FFMS.Services;
 
@@ -17,6 +18,8 @@ public interface IAuthService : IBaseService
     Task<ApiResponse<AuthDto>> Token(AuthTokenDto authTokenDto);
     Task<ApiResponse<AuthDto>> RefreshToken(AuthRefreshDto authRefreshDto);
     Task<ApiResponse> RevokeToken();
+    Task<ApiResponse> ResetPassword(UpdatePasswordDto resetPasswordDto);
+    Task<ApiResponse> SendMailConfirmPassword(ResetPasswordDto email);
 }
 
 public class AuthService : BaseService, IAuthService
@@ -269,6 +272,106 @@ public class AuthService : BaseService, IAuthService
 
         return ApiResponse.Success();
     }
+    
+    public async Task<ApiResponse> SendMailConfirmPassword(ResetPasswordDto email)
+{
+    var user =  MainUnitOfWork.UserRepository.GetQuery().SingleOrDefault(x => !x!.DeletedAt.HasValue && x.Email == email.Email);
+    if (user == null)
+    {
+        throw new ApiException("Người dùng không tìm thấy", StatusCode.NOT_FOUND);
+    }
+
+    var resetCode = GenerateRandomCode(6);
+    var claims = SetClaims(user);
+    var accessExpiredAt = CurrentDate.AddMinutes(EnvironmentExtension.GetJwtAccessTokenExpires());
+
+    var resetToken =  MainUnitOfWork.TokenRepository.GetQuery()
+        .SingleOrDefault(x =>!x!.DeletedAt.HasValue && x.UserId == user.Id && x.Type == TokenType.ResetPassword);
+
+    if (resetToken == null)
+    {
+        resetToken = new Token
+        {
+            Id = Guid.NewGuid(),
+            UserId = user.Id,
+            Type = TokenType.ResetPassword,
+            AccessToken = JwtExtensions.GenerateAccessToken(claims, accessExpiredAt),
+            RefreshToken = resetCode,
+            AccessExpiredAt = DateTime.Now.AddMinutes(2),
+            RefreshExpiredAt = DateTime.Now.AddMinutes(2),
+            Status = TokenStatus.Active
+        };
+
+        if (!await MainUnitOfWork.TokenRepository.InsertAsync(resetToken, user.Id, CurrentDate))
+        {
+            throw new ApiException("Không thể gửi mã vui lòng thử lại sau", StatusCode.BAD_REQUEST);
+        }
+    }
+    else
+    {
+        // Nếu token đã tồn tại, cập nhật lại các giá trị phù hợp
+        resetToken.AccessToken = JwtExtensions.GenerateAccessToken(claims, accessExpiredAt);
+        resetToken.RefreshToken = resetCode;
+        resetToken.AccessExpiredAt = DateTime.Now.AddMinutes(2);
+        resetToken.RefreshExpiredAt = DateTime.Now.AddMinutes(2);
+        resetToken.Status = TokenStatus.Active;
+
+        // Thử cập nhật token
+        if (!await MainUnitOfWork.TokenRepository.UpdateAsync(resetToken, user.Id, CurrentDate))
+        {
+            throw new ApiException("Không thể gửi mã vui lòng thử lại sau", StatusCode.BAD_REQUEST);
+        }
+    }
+
+    MailExtension mailExtension = new MailExtension();
+    var resetEmailBody = $"Mã code của bạn là: {resetCode}";
+    mailExtension.SendMailCommon("Cập nhật lại mật khẩu", user.Fullname, user.Email, resetEmailBody);
+
+    return ApiResponse.Success();
+}
+
+  public async Task<ApiResponse> ResetPassword(UpdatePasswordDto resetPasswordDto)
+  {
+    var user = await MainUnitOfWork.UserRepository.GetQuery().SingleOrDefaultAsync(x => !x!.DeletedAt.HasValue && x.Email == resetPasswordDto.Email);
+    if (user == null)
+    {
+      throw new ApiException("Không tìm thấy người dùng", StatusCode.NOT_FOUND);
+    }
+
+    var resetToken = await MainUnitOfWork.TokenRepository.GetQuery().SingleOrDefaultAsync(x => x!.UserId == user.Id && x.RefreshToken == resetPasswordDto.ResetCode);
+
+    if (resetToken == null)
+    {
+      throw new ApiException("Mã không hợp lẹ", StatusCode.BAD_REQUEST);
+    }
+
+    if (resetToken.RefreshExpiredAt < DateTime.Now)
+    {
+      throw new ApiException("Mã xác nhận đã hết hạn, vui lòng yêu cầu lại mã mới", StatusCode.UNAUTHORIZED);
+    }
+    if (resetToken.AccessExpiredAt < DateTime.Now)
+    {
+        throw new ApiException("Mã xác nhận đã hết hạn, vui lòng yêu cầu lại mã mới", StatusCode.UNAUTHORIZED);
+    }
+    var salt = SecurityExtension.GenerateSalt();
+    user.Password = SecurityExtension.HashPassword<User>(resetPasswordDto.NewPassword, salt);
+    user.Salt = salt;
+    if (!await MainUnitOfWork.UserRepository.UpdateAsync(user, AccountId, CurrentDate))
+      throw new ApiException("Update Password fail", StatusCode.SERVER_ERROR);
+
+    return ApiResponse.Success();
+  }
+
+  private string GenerateRandomCode(int length)
+  {
+    var random = new Random();
+    var code = string.Empty;
+    for (int i = 0; i < length; i++)
+    {
+      code += random.Next(0, 9).ToString();
+    }
+    return code;
+  }
     
     private IEnumerable<Claim> SetClaims(User account)
     {
