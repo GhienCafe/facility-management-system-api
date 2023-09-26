@@ -280,6 +280,12 @@ public class AuthService : BaseService, IAuthService
     {
         throw new ApiException("Người dùng không tìm thấy", StatusCode.NOT_FOUND);
     }
+    if (!user.Email.EndsWith("@fpt.edu.vn") && !user.Email.EndsWith("@fu.edu.vn"))
+    {
+        // Nếu không kết thúc bằng các giá trị cần kiểm tra
+        throw new ApiException("Email không hợp lệ", StatusCode.BAD_REQUEST);
+    }
+
 
     var resetCode = GenerateRandomCode(6);
     var claims = SetClaims(user);
