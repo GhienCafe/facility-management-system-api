@@ -6,12 +6,13 @@ using MainData;
 using MainData.Entities;
 using MainData.Repositories;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace API_FFMS.Services;
 public interface IBuildingsService : IBaseService
 {
     Task<ApiResponses<BuildingDto>> GetBuildings(BuildingQueryDto queryDto);
-    Task<ApiResponse<BuildingDetailDto>> GetBuildings(Guid id);
+    Task<ApiResponse<BuildingDetailDto>> GetBuilding(Guid id);
     public Task<ApiResponse> Insert(BuildingCreateDto addBuildingDto);
     public Task<ApiResponse> Update(Guid id, BuildingUpdateDto buildingUpdate);
     Task<ApiResponse> Delete(Guid id);
@@ -26,43 +27,81 @@ public class BuildingsService : BaseService, IBuildingsService
 
     public async Task<ApiResponses<BuildingDto>> GetBuildings(BuildingQueryDto queryDto)
     {
-        var buildings = await MainUnitOfWork.BuildingRepository.FindResultAsync<BuildingDto>(
-            new Expression<Func<Building, bool>>[]
-            {
-                x => !x.DeletedAt.HasValue,
-                x => string.IsNullOrEmpty(queryDto.BuildingName) ||
-                     x.BuildingName!.ToLower().Contains(queryDto.BuildingName.Trim().ToLower()),
-                x => string.IsNullOrEmpty(queryDto.BuildingCode) ||
-                     x.BuildingCode!.ToLower().Contains(queryDto.BuildingCode.Trim().ToLower())
-            }, queryDto.OrderBy, queryDto.Skip(), queryDto.PageSize);
+        var buildingDataset = MainUnitOfWork.BuildingRepository.GetQuery().Where(x => !x!.DeletedAt.HasValue);
 
-        buildings.Items = await _mapperRepository.MapCreator(buildings.Items.ToList());
+        if (!string.IsNullOrEmpty(queryDto.BuildingName))
+        {
+            buildingDataset = buildingDataset.Where(x =>
+                x!.BuildingName!.ToLower().Contains(queryDto.BuildingName.Trim().ToLower()));
+        }
+        
+        if (!string.IsNullOrEmpty(queryDto.BuildingCode))
+        {
+            buildingDataset = buildingDataset.Where(x =>
+                x!.BuildingCode!.ToLower().Contains(queryDto.BuildingCode.Trim().ToLower()));
+        }
+
+        var joinTables = from building in buildingDataset
+            join campus in MainUnitOfWork.CampusRepository.GetQuery() on building.CampusId equals campus.Id into campusGroup
+            from campus in campusGroup.DefaultIfEmpty()
+            select new
+            {
+                Building = building,
+                Campus = campus
+            };
+        
+        var totalCount = joinTables.Count();
+
+        joinTables = joinTables.Skip(queryDto.Skip()).Take(queryDto.PageSize);
+
+        var buildings = await joinTables.Select(
+            x => new BuildingDto
+            {
+                Id = x.Building.Id,
+                CampusId = x.Building.CampusId,
+                BuildingCode = x.Building.BuildingCode,
+                BuildingName = x.Building.BuildingName,
+                CreatedAt = x.Building.CreatedAt,
+                EditedAt = x.Building.EditedAt,
+                CreatorId = x.Building.CreatorId ?? Guid.Empty,
+                EditorId = x.Building.EditorId ?? Guid.Empty,
+                Campus = x.Campus.ProjectTo<Campus, CampusDto>()
+            }).ToListAsync();
+
+        buildings= await _mapperRepository.MapCreator(buildings);
         
         return ApiResponses<BuildingDto>.Success(
-            buildings.Items,
-            buildings.TotalCount,
+            buildings,
+            totalCount,
             queryDto.PageSize,
             queryDto.Skip(),
-            (int)Math.Ceiling(buildings.TotalCount / (double)queryDto.PageSize)
+            (int)Math.Ceiling(totalCount / (double)queryDto.PageSize)
         );
     }
 
-    public async Task<ApiResponse<BuildingDetailDto>> GetBuildings(Guid id)
+    public async Task<ApiResponse<BuildingDetailDto>> GetBuilding(Guid id)
     {
-      var buildings = await MainUnitOfWork.BuildingRepository.FindOneAsync<BuildingDetailDto>(
+      var building = await MainUnitOfWork.BuildingRepository.FindOneAsync<BuildingDetailDto>(
           new Expression<Func<Building, bool>>[]
           {
                     x => !x.DeletedAt.HasValue,
                     x => x.Id == id
           });
 
-      if (buildings == null)
-          throw new ApiException("Not found this buildings", StatusCode.NOT_FOUND);
+      if (building == null)
+          throw new ApiException("Không tìm thấy tòa", StatusCode.NOT_FOUND);
 
+      building.Campus = await MainUnitOfWork.CampusRepository.FindOneAsync<CampusDto>(
+          new Expression<Func<Campus, bool>>[]
+          {
+              x => !x.DeletedAt.HasValue,
+              x => x.Id == building.CampusId
+          });
+      
       // Map CDC for the post
-      buildings = await _mapperRepository.MapCreator(buildings);
+      building = await _mapperRepository.MapCreator(building);
 
-      return ApiResponse<BuildingDetailDto>.Success(buildings);
+      return ApiResponse<BuildingDetailDto>.Success(building);
     }
 
     public async Task<ApiResponse> Insert(BuildingCreateDto buildingDto)

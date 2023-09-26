@@ -13,6 +13,7 @@ public class Token : BaseEntity
     public TokenType Type { get; set; }
     public DateTime AccessExpiredAt { get; set; }
     public DateTime RefreshExpiredAt { get; set; }
+    public int? LimitTimes { get; set; }
     
     //
     public virtual User? User { get; set; }
@@ -43,6 +44,7 @@ public class TokenConfig : IEntityTypeConfiguration<Token>
         builder.Property(a => a.AccessExpiredAt).IsRequired();
         builder.Property(a => a.RefreshExpiredAt).IsRequired();
         builder.Property(a => a.Status).IsRequired();
+        builder.Property(a => a.LimitTimes).IsRequired(false);
 
         builder.HasOne(x => x.User)
             .WithMany(x => x.Tokens)
