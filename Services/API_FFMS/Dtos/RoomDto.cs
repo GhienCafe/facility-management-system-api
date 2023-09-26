@@ -71,7 +71,7 @@ public class RoomQueryDto : BaseQueryDto
     public double? ToArea { get; set; }
     public double? FromCapacity { get; set; }
     public double? ToCapacity { get; set; }
-    public string? Status { get; set; }
+    public Guid? StatusId { get; set; }
     public string? RoomCode { get; set; }
     public Guid? RoomTypeId { get; set; }
     //public RoomTypeEnum? RoomType { get; set; }
