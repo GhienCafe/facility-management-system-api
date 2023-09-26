@@ -46,4 +46,6 @@ jobs:
             -e PRIVATE_KEY_ID="${{ secrets.PRIVATE_KEY_ID }}" \
             -e PRIVATE_KEY="${{ secrets.PRIVATE_KEY }}" \
             -e CLIENT_EMAIL="${{ secrets.CLIENT_EMAIL }}" \
+            -e ACCOUNT_EMAIL_SYSTEM="${{ secrets.ACCOUNT_EMAIL_SYSTEM }}" \
+            -e PASSWORD_EMAIL_PRIVATE="${{ secrets.PASSWORD_EMAIL_PRIVATE }}" \
             ${{ secrets.REGISTRY }}/${{ secrets.DOCKER_IMAGE }}:latest
