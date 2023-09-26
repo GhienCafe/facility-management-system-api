@@ -46,6 +46,21 @@ public class AuthController : BaseController
     {
         return await _authService.RefreshToken(authRefreshDto);
     }
+    [HttpPost("forget-pasword")]
+    [AllowAnonymous]
+    [SwaggerOperation("forget password account")]
+    public async Task<ApiResponse> Forgetpassword(ResetPasswordDto resetPassword)
+    {
+        return await _authService.SendMailConfirmPassword(resetPassword);
+    }
+
+    [HttpPost("reset-password")]
+    [AllowAnonymous]
+    [SwaggerOperation("reset password account")]
+    public async Task<ApiResponse> ResetPassword(UpdatePasswordDto updatePasswordDto)
+    {
+        return await _authService.ResetPassword(updatePasswordDto);
+    }
     [HttpPost("check-token-device")]
     [SwaggerOperation("Check token device")]
     [AllowAnonymous]
