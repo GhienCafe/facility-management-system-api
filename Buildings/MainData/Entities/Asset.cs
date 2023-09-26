@@ -1,4 +1,5 @@
-﻿using AppCore.Data;
+﻿using System.ComponentModel.DataAnnotations;
+using AppCore.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -17,9 +18,11 @@ public class Asset : BaseEntity
     public DateTime? LastMaintenanceTime { get; set; }
     public Guid? TypeId { get; set; }
     public Guid? ModelId { get; set; }
-    
+    public bool? IsRented { get; set; }
+
     //
     public virtual AssetType? Type { get; set; }
+    public virtual IEnumerable<MaintenanceScheduleConfig>? MaintenanceScheduleConfigs { get; set; }
     public virtual Model? Model { get; set; }
     public virtual IEnumerable<RoomAsset>? RoomAssets { get; set; }
     public virtual IEnumerable<Maintenance>? Maintenances { get; set; }
@@ -30,18 +33,40 @@ public class Asset : BaseEntity
 
 public enum AssetStatus
 {
+    [Display(Name = "Hoạt động")]
     Operational = 1,
+
+    [Display(Name = "Ngưng hoạt động")]
     Inactive = 2,
+
+    [Display(Name = "Bảo dưỡng")]
     Maintenance = 3,
+
+    [Display(Name = "Sửa chữa")]
     Repair = 4,
+
+    [Display(Name = "Thanh lý")]
     Disposed = 5,
+
+    [Display(Name = "Hỏng")]
     OutOfOrder = 6,
+
+    [Display(Name = "Chờ duyệt")]
     Pending = 7,
+
+    [Display(Name = "Không khả dụng")]
     NotAvailable = 8,
+
+    [Display(Name = "Cần kiểm tra")]
     NeedInspection = 9,
+
+    [Display(Name = "Nâng cấp")]
     Upgraded = 10,
+
+    [Display(Name = "Thay thế")]
     Replacement = 11
 }
+
 public enum RoomRequestStatus{}
 public class AssetConfig : IEntityTypeConfiguration<Asset>
 {
@@ -59,6 +84,7 @@ public class AssetConfig : IEntityTypeConfiguration<Asset>
         builder.Property(a => a.Quantity).IsRequired();
         builder.Property(a => a.LastMaintenanceTime).IsRequired(false);
         builder.Property(a => a.Description).IsRequired(false);
+        builder.Property(a => a.IsRented).IsRequired(false);
         
         // Attributes
         builder.HasIndex(a => a.AssetCode).IsUnique();
@@ -67,6 +93,10 @@ public class AssetConfig : IEntityTypeConfiguration<Asset>
         builder.HasOne(x => x.Type)
             .WithMany(x => x.Assets)
             .HasForeignKey(x => x.TypeId);
+        
+        builder.HasMany(x => x.MaintenanceScheduleConfigs)
+            .WithOne(x => x.Asset)
+            .HasForeignKey(x => x.AssetId);
         
         builder.HasOne(x => x.Model)
             .WithMany(x => x.Assets)
