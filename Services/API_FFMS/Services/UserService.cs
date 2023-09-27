@@ -53,7 +53,6 @@ public class UserService : BaseService, IUserService
         return ApiResponse.Success();
     }
     
-    
     public async Task<ApiResponse> Create(UserCreateDto createDto)
     {
         var user = createDto.ProjectTo<UserCreateDto, User>();
@@ -69,8 +68,7 @@ public class UserService : BaseService, IUserService
         
         return ApiResponse.Created("Thêm thành công");
     }
-    
-    
+
     public async Task<ApiResponse<UserDetailDto>> GetDetail(Guid id)
     {
         var user = await MainUnitOfWork.UserRepository.GetQuery().Where(x => !x!.DeletedAt.HasValue)
@@ -135,6 +133,11 @@ public class UserService : BaseService, IUserService
             userDataset = userDataset.Where(x => x!.Status == queryDto.Status);
         }
         
+        if (queryDto.TeamId != null)
+        {
+            userDataset = userDataset.Where(x => x!.TeamId == queryDto.TeamId);
+        }
+        
         if (queryDto.CreateAtFrom != null)
         {
             userDataset = userDataset.Where(x => x!.CreatedAt >= queryDto.CreateAtFrom);
@@ -148,14 +151,7 @@ public class UserService : BaseService, IUserService
         // Order
         var isDescending = queryDto.OrderBy.EndsWith("desc", StringComparison.OrdinalIgnoreCase);
         var orderByColumn = queryDto.OrderBy.Split(' ')[0]; // Get the column to order by
-        if (isDescending)
-        {
-            userDataset = userDataset.OrderByDescending(user => EF.Property<object>(user!, orderByColumn));
-        }
-        else
-        {
-            userDataset = userDataset.OrderBy(user => EF.Property<object>(user!, orderByColumn));
-        }
+        userDataset = isDescending ? userDataset.OrderByDescending(user => EF.Property<object>(user!, orderByColumn)) : userDataset.OrderBy(user => EF.Property<object>(user!, orderByColumn));
 
         var joinTables = from user in userDataset
             join team in MainUnitOfWork.TeamRepository.GetQuery() on user.TeamId equals team.Id into teamGroup
@@ -205,7 +201,6 @@ public class UserService : BaseService, IUserService
             (int)Math.Ceiling(totalCount / (double)queryDto.PageSize)
         );
     }
-
 
     public async Task<ApiResponse> Delete(Guid id)
     {

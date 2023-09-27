@@ -84,4 +84,6 @@ public class UserQueryDto : BaseQueryDto
     public UserRole? Role { get; set; }
     public bool? Gender { get; set; }
     public  UserStatus? Status { get; set; }
+    public  Guid? TeamId { get; set; }
+     
 }
