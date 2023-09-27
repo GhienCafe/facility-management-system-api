@@ -87,7 +87,7 @@ public class FloorService : BaseService, IFloorService
         floor.Building = await MainUnitOfWork.BuildingRepository.FindOneAsync<BuildingBaseDto>(
             new Expression<Func<Building, bool>>[]
             {
-                x => x.DeletedAt.HasValue,
+                x => !x.DeletedAt.HasValue,
                 x => x.Id == floor.BuildingId
             });
 
