@@ -81,21 +81,21 @@ namespace API_FFMS.Services
 
         public async Task<ApiResponse<AssetTypeDetailDto>> GetAssetType(Guid id)
         {
-            var assetCategory = await MainUnitOfWork.AssetTypeRepository.FindOneAsync<AssetTypeDetailDto>(
+            var assetType = await MainUnitOfWork.AssetTypeRepository.FindOneAsync<AssetTypeDetailDto>(
             new Expression<Func<AssetType, bool>>[]
             {
                  x => !x.DeletedAt.HasValue,
                  x => x.Id == id
             });
 
-            if (assetCategory == null)
+            if (assetType == null)
             {
-                throw new ApiException("Asset category not found", StatusCode.NOT_FOUND);
+                throw new ApiException("Asset type not found", StatusCode.NOT_FOUND);
             }
 
-            assetCategory = await _mapperRepository.MapCreator(assetCategory);
+            assetType = await _mapperRepository.MapCreator(assetType);
 
-            return ApiResponse<AssetTypeDetailDto>.Success(assetCategory);
+            return ApiResponse<AssetTypeDetailDto>.Success(assetType);
         }
 
         public async Task<ApiResponse> Update(Guid id, AssetTypeUpdateDto updateDto)

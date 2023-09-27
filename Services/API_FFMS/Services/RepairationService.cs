@@ -40,6 +40,11 @@ namespace API_FFMS.Services
                 throw new ApiException("Thiết bị này đang trong một yêu cầu khác", StatusCode.NOT_ACTIVE);
             }
 
+            if(existingAsset.IsRented == true)
+            {
+                throw new ApiException("Thiết bị này không thuộc quyền sở hữu", StatusCode.FORBIDDEN);
+            }
+
             var existingAssignee = await MainUnitOfWork.UserRepository.FindOneAsync(new Expression<Func<User, bool>>[]
             {
                 x => !x.DeletedAt.HasValue && x.Id == createDto.AssignedTo

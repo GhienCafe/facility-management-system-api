@@ -30,6 +30,7 @@ namespace API_FFMS.Dtos
         public string? SerialNumber { get; set; }
         public double Quantity { get; set; }
         public string? Description { get; set; }
+        public bool? IsRented { get; set; }
         public DateTime? LastMaintenanceTime { get; set; }
     }
 
@@ -43,6 +44,7 @@ namespace API_FFMS.Dtos
         public string? SerialNumber { get; set; }
         [Required]public double Quantity { get; set; }
         public string? Description { get; set; }
+        public bool? IsRented { get; set; }
         public DateTime? LastMaintenanceTime { get; set; }
     }
 
@@ -57,6 +59,7 @@ namespace API_FFMS.Dtos
         public string? SerialNumber { get; set; }
         public double? Quantity { get; set; }
         public string? Description { get; set; }
+        public bool? IsRented { get; set; }
         public DateTime? LastMaintenanceTime { get; set; }
     }
 
@@ -68,5 +71,8 @@ namespace API_FFMS.Dtos
         public string? SerialNumber { get; set; }
         public AssetStatus? Status { get; set; }
         public bool? IsMovable { get; set; }
+        public bool? IsRented { get; set; }
     }
 }
+
+

@@ -274,7 +274,7 @@ namespace API_FFMS.Services
         {
             foreach (var asset in assets)
             {
-                if (asset.Status is < 0 or > (AssetStatus)10)
+                if (asset.Status is < 0 or > (AssetStatus)11)
                 {
                     var row = assets.IndexOf(asset) + 2;
                     validationErrors.Add(new ImportError

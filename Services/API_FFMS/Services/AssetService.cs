@@ -70,6 +70,9 @@ public class AssetService : BaseService, IAssetService
         if (queryDto.IsMovable != null)
             assetDataSet = assetDataSet.Where(x => x!.IsMovable == queryDto.IsMovable);
 
+        if (queryDto.IsRented != null)
+            assetDataSet = assetDataSet.Where(x => x!.IsRented == queryDto.IsRented);
+
         var totalCount = assetDataSet.Count();
 
         var assets = (await assetDataSet.Skip(queryDto.Skip())
@@ -102,6 +105,8 @@ public class AssetService : BaseService, IAssetService
 
         existingAsset = await _mapperRepository.MapCreator(existingAsset);
 
+        //existingAsset.ManufacturingYear = DateTime.Parse(existingAsset.ManufacturingYear!.ToString());
+
         return ApiResponse<AssetDetailDto>.Success(existingAsset);
     }
 
@@ -122,6 +127,7 @@ public class AssetService : BaseService, IAssetService
         existingAsset.Description = updateDto.Description ?? existingAsset.Description;
         existingAsset.AssetCode = updateDto.AssetCode ?? existingAsset.AssetCode;
         existingAsset.IsMovable = updateDto.IsMovable ?? existingAsset.IsMovable;
+        existingAsset.IsRented = updateDto.IsRented ?? existingAsset.IsRented;
         existingAsset.LastMaintenanceTime = updateDto.LastMaintenanceTime ?? existingAsset.LastMaintenanceTime;
 
         if (!await MainUnitOfWork.AssetRepository.UpdateAsync(existingAsset, AccountId, CurrentDate))
@@ -197,4 +203,14 @@ public class AssetService : BaseService, IAssetService
                 (int)Math.Ceiling(totalCount / (double)queryDto.PageSize)
             );
      }
+
+    public static string FormatToYYYYMMDD(DateTime inputDateTime)
+    {
+        // Format the DateTime object into 'yyyy-MM-dd' format
+        string outputDateStr = inputDateTime.ToString("yyyy-MM-dd");
+
+        return outputDateStr;
+    }
+
+
 }
