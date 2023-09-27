@@ -32,12 +32,12 @@ namespace API_FFMS.Services
             });
             if (existingAsset == null)
             {
-                throw new ApiException("Not found this asset", StatusCode.NOT_FOUND);
+                throw new ApiException("Không tìm thấy thiết bị này", StatusCode.NOT_FOUND);
             }
 
             if (existingAsset.Status != AssetStatus.Operational)
             {
-                throw new ApiException("This asset is in another request", StatusCode.NOT_ACTIVE);
+                throw new ApiException("Thiết bị này đang trong một yêu cầu khác", StatusCode.NOT_ACTIVE);
             }
 
             var existingAssignee = await MainUnitOfWork.UserRepository.FindOneAsync(new Expression<Func<User, bool>>[]
@@ -46,7 +46,7 @@ namespace API_FFMS.Services
             });
             if (existingAssignee == null)
             {
-                throw new ApiException("Not found this user", StatusCode.NOT_FOUND);
+                throw new ApiException("Không tìm thấy người được chỉ định", StatusCode.NOT_FOUND);
             }
 
             var repairation = createDto.ProjectTo<RepairationCreateDto, Repairation>();
@@ -87,7 +87,7 @@ namespace API_FFMS.Services
 
             if (existingRepairation == null)
             {
-                throw new ApiException("Not found this transportation", StatusCode.NOT_FOUND);
+                throw new ApiException("Không tìm thấy yêu cầu sửa chữa này", StatusCode.NOT_FOUND);
             }
 
             existingRepairation.Status = RepairationStatus.Cancelled;
@@ -95,7 +95,7 @@ namespace API_FFMS.Services
 
             if (!await MainUnitOfWork.RepairationRepository.UpdateAsync(existingRepairation, AccountId, CurrentDate))
             {
-                throw new ApiException("Delete fail", StatusCode.SERVER_ERROR);
+                throw new ApiException("Xóa thất bại", StatusCode.SERVER_ERROR);
             }
 
             return ApiResponse.Success();
@@ -112,7 +112,7 @@ namespace API_FFMS.Services
 
             if (repairation == null)
             {
-                throw new ApiException("Not found this repairation", StatusCode.NOT_FOUND);
+                throw new ApiException("Không tìm thấy yêu cầu sửa chữa này", StatusCode.NOT_FOUND);
             }
 
             repairation.PersonInCharge = await MainUnitOfWork.UserRepository.FindOneAsync<UserDto>(
@@ -223,7 +223,7 @@ namespace API_FFMS.Services
             });
             if (existingRepairation == null)
             {
-                throw new ApiException("Not found this repairation", StatusCode.NOT_FOUND);
+                throw new ApiException("Không tìm thấy yêu cầu sửa chữa này", StatusCode.NOT_FOUND);
             }
 
             existingRepairation.RequestedDate = updateDto.RequestedDate ?? existingRepairation.RequestedDate;
@@ -246,17 +246,17 @@ namespace API_FFMS.Services
             });
             if (existingAssignee == null)
             {
-                throw new ApiException("Not found this user", StatusCode.NOT_FOUND);
+                throw new ApiException("Không tìm thấy người được chỉ định", StatusCode.NOT_FOUND);
             }
 
             if (!existingAssignee.TeamId.Equals(existingAsset!.Type!.Category!.TeamId))
             {
-                throw new ApiException("Assign have wrong major for this asset", StatusCode.BAD_REQUEST);
+                throw new ApiException("Người được chỉ định không có chuyên môn cho thiết bị này", StatusCode.BAD_REQUEST);
             }
 
             if (!await MainUnitOfWork.RepairationRepository.UpdateAsync(existingRepairation, AccountId, CurrentDate))
             {
-                throw new ApiException("Update failed", StatusCode.SERVER_ERROR);
+                throw new ApiException("Cập nhật không thành công", StatusCode.SERVER_ERROR);
             }
 
             return ApiResponse.Success();

@@ -36,12 +36,12 @@ namespace API_FFMS.Services
 
             if (existingAsset == null)
             {
-                throw new ApiException("Not found this asset", StatusCode.NOT_FOUND);
+                throw new ApiException("Không tìm thấy thiết bị này", StatusCode.NOT_FOUND);
             }
 
             if (existingAsset.Status != AssetStatus.Operational)
             {
-                throw new ApiException("This asset is in another request", StatusCode.NOT_ACTIVE);
+                throw new ApiException("Thiết bị này đang trong một yêu cầu khác", StatusCode.NOT_ACTIVE);
             }
 
             var existingAssignee = await MainUnitOfWork.UserRepository.FindOneAsync(new Expression<Func<User, bool>>[]
@@ -50,7 +50,7 @@ namespace API_FFMS.Services
             });
             if (existingAssignee == null)
             {
-                throw new ApiException("Not found this user", StatusCode.NOT_FOUND);
+                throw new ApiException("Không tìm thấy người được chỉ định", StatusCode.NOT_FOUND);
             }
 
             var existingRoom = await MainUnitOfWork.RoomRepository.FindOneAsync(new Expression<Func<Room, bool>>[]
@@ -59,7 +59,7 @@ namespace API_FFMS.Services
             });
             if (existingRoom == null)
             {
-                throw new ApiException("Not found this room", StatusCode.NOT_FOUND);
+                throw new ApiException("Không tìm thấy phòng này", StatusCode.NOT_FOUND);
             }
 
             // if (!existingAssignee.TeamId.Equals(existingAsset.Type!.Category!.TeamId))
@@ -75,7 +75,7 @@ namespace API_FFMS.Services
 
             if (!await MainUnitOfWork.TransportationRepository.InsertAsync(transport, AccountId, CurrentDate))
             {
-                throw new ApiException("Create failed", StatusCode.BAD_REQUEST);
+                throw new ApiException("Tạo yêu cầu thất bại", StatusCode.BAD_REQUEST);
             }
 
             var notification = new Notification
@@ -91,9 +91,9 @@ namespace API_FFMS.Services
             };
 
             if (!await MainUnitOfWork.NotificationRepository.InsertAsync(notification, AccountId, CurrentDate))
-                throw new ApiException("Fail to create notification", StatusCode.SERVER_ERROR);
+                throw new ApiException("Thông báo tới nhân viên không thành công", StatusCode.SERVER_ERROR);
 
-            return ApiResponse.Created("Create successfully");
+            return ApiResponse.Created("Tạo yêu cầu thành công");
         }
 
         public async Task<ApiResponse> Delete(Guid id)
@@ -102,7 +102,7 @@ namespace API_FFMS.Services
 
             if (existingTransport == null)
             {
-                throw new ApiException("Not found this transportation", StatusCode.NOT_FOUND);
+                throw new ApiException("Không tìm thấy yêu cầu vận chuyển này", StatusCode.NOT_FOUND);
             }
 
             existingTransport.Status = TransportationStatus.Cancelled;
@@ -110,7 +110,7 @@ namespace API_FFMS.Services
 
             if (!await MainUnitOfWork.TransportationRepository.UpdateAsync(existingTransport, AccountId, CurrentDate))
             {
-                throw new ApiException("Delete fail", StatusCode.SERVER_ERROR);
+                throw new ApiException("Xóa thất bại", StatusCode.SERVER_ERROR);
             }
 
             return ApiResponse.Success();
@@ -127,7 +127,7 @@ namespace API_FFMS.Services
 
             if (existingTransport == null)
             {
-                throw new ApiException("Transportation not found", StatusCode.NOT_FOUND);
+                throw new ApiException("Không tìm thấy yêu cầu vận chuyển này", StatusCode.NOT_FOUND);
             }
 
             existingTransport = await _mapperRepository.MapCreator(existingTransport);
@@ -234,7 +234,7 @@ namespace API_FFMS.Services
             });
             if (existingTransport == null)
             {
-                throw new ApiException("Not found this transportation", StatusCode.NOT_FOUND);
+                throw new ApiException("Không tìm thấy yêu cầu vận chuyển này", StatusCode.NOT_FOUND);
             }
 
             existingTransport.RequestedDate = updateDto.RequestedDate ?? existingTransport.RequestedDate;
@@ -262,7 +262,7 @@ namespace API_FFMS.Services
             });
             if (existingAssignee == null)
             {
-                throw new ApiException("Not found this user", StatusCode.NOT_FOUND);
+                throw new ApiException("Không tìm thấy người được chỉ định", StatusCode.NOT_FOUND);
             }
 
             var existingRoom = await MainUnitOfWork.RoomRepository.FindOneAsync(new Expression<Func<Room, bool>>[]
@@ -276,12 +276,12 @@ namespace API_FFMS.Services
 
             if (!existingAssignee.TeamId.Equals(existingAsset!.Type!.Category!.TeamId))
             {
-                throw new ApiException("Assign have wrong major for this asset", StatusCode.BAD_REQUEST);
+                throw new ApiException("Người được chỉ định không có chuyên môn cho thiết bị này", StatusCode.BAD_REQUEST);
             }
 
             if (!await MainUnitOfWork.TransportationRepository.UpdateAsync(existingTransport, AccountId, CurrentDate))
             {
-                throw new ApiException("Update failed", StatusCode.SERVER_ERROR);
+                throw new ApiException("Cập nhật không thành công", StatusCode.SERVER_ERROR);
             }
 
             return ApiResponse.Success();
@@ -296,7 +296,7 @@ namespace API_FFMS.Services
             });
             if (existingTransport == null)
             {
-                throw new ApiException("Not found this transportation", StatusCode.NOT_FOUND);
+                throw new ApiException("Không tìm thấy yêu cầu vận chuyển này", StatusCode.NOT_FOUND);
             }
 
             var userAuthen = await MainUnitOfWork.UserRepository.FindOneAsync(new Expression<Func<User, bool>>[]
@@ -305,12 +305,12 @@ namespace API_FFMS.Services
             });
             if (!existingTransport.AssignedTo.Equals(AccountId) || userAuthen!.Role != UserRole.Manager)
             {
-                throw new ApiException("This account doesn't have permission for this", StatusCode.UNAUTHORIZED);
+                throw new ApiException("Người dùng này không được phép làm việc này", StatusCode.UNAUTHORIZED);
             }
 
             if (existingTransport.Status == TransportationStatus.Cancelled)
             {
-                throw new ApiException("Can not update request was cancelled", StatusCode.FORBIDDEN);
+                throw new ApiException("Không thể cập nhật yêu cầu đã hủy", StatusCode.FORBIDDEN);
             }
 
             existingTransport.Status = updateStatusDto.Status;
@@ -328,7 +328,7 @@ namespace API_FFMS.Services
 
             if (!await MainUnitOfWork.TransportationRepository.UpdateAsync(existingTransport, AccountId, CurrentDate))
             {
-                throw new ApiException("Update status failed", StatusCode.SERVER_ERROR);
+                throw new ApiException("Cập nhật trạng thái thất bại", StatusCode.SERVER_ERROR);
             }
 
             return ApiResponse.Success();
