@@ -1,4 +1,5 @@
-﻿using AppCore.Data;
+﻿using System.ComponentModel.DataAnnotations;
+using AppCore.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -15,21 +16,39 @@ public class AssetType : BaseEntity
     //
     public virtual IEnumerable<Asset>? Assets { get; set; }
     public virtual Category? Category { get; set; }
-    public virtual IEnumerable<MaintenanceScheduleConfig>? MaintenanceScheduleConfigs { get; set; }
+    //public virtual IEnumerable<MaintenanceScheduleConfig>? MaintenanceScheduleConfigs { get; set; }
 }
 
 public enum Unit
 {
-    Piece = 1, 
+    [Display(Name = "Cái")]
+    Piece = 1,
+
+    [Display(Name = "Kilogram")]
     Kg = 2,
-    Liter = 3, 
+
+    [Display(Name = "Lít")]
+    Liter = 3,
+
+    [Display(Name = "Mét")]
     Meter = 4,
+
+    [Display(Name = "Mét vuông")]
     SquareMeter = 5,
+
+    [Display(Name = "Giờ")]
     Hour = 6,
-    Bag = 7, 
+
+    [Display(Name = "Bao")]
+    Bag = 7,
+
+    [Display(Name = "Đôi")]
     Pair = 8,
-    Ton = 9, 
+    
+    [Display(Name = "Thùng")]
     Crate = 10,
+
+    [Display(Name = "Hộp")]
     Box = 11
 }
 
@@ -55,8 +74,8 @@ public class AssetCategoryConfig : IEntityTypeConfiguration<AssetType>
             .WithMany(x => x.AssetTypes)
             .HasForeignKey(x => x.CategoryId);
         
-        builder.HasMany(x => x.MaintenanceScheduleConfigs)
-            .WithOne(x => x.AssetType)
-            .HasForeignKey(x => x.AssetTypeId);
+        // builder.HasMany(x => x.MaintenanceScheduleConfigs)
+        //     .WithOne(x => x.AssetType)
+        //     .HasForeignKey(x => x.AssetTypeId);
     }
 }   

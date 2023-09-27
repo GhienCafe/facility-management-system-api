@@ -11,11 +11,11 @@ public class Transportation : BaseEntity
     public DateTime? CompletionDate { get; set; }
     public string? Description { get; set; }
     public string? Note { get; set; }
-    public TransportationStatus Status { get; set; }
+    public ActionStatus Status { get; set; }
     public int? Quantity { get; set; }
     public Guid? AssignedTo { get; set; }
     public Guid? AssetId { get; set; }
-    public Guid? ToRoomId { get; set; } 
+    public Guid? ToRoomId { get; set; }
 
     public virtual Asset? Asset { get; set; }
     public virtual Room? ToRoom { get; set; }
@@ -23,7 +23,7 @@ public class Transportation : BaseEntity
     //public virtual User? Creator { get; set; }
 }
 
-public enum TransportationStatus
+public enum ActionStatus
 {
     [Display(Name = "Chưa bắt đầu")]
     NotStarted = 1,
@@ -53,15 +53,15 @@ public class TransportationConfig : IEntityTypeConfiguration<Transportation>
         // builder.HasOne(x => x.Creator)
         //     .WithMany(x => x.Transportations)
         //     .HasForeignKey(x => x.CreatorId);
-        
+
         builder.HasOne(x => x.PersonInCharge)
             .WithMany(x => x.Transportations)
             .HasForeignKey(x => x.AssignedTo);
-        
+
         builder.HasOne(x => x.Asset)
             .WithMany(x => x.Transportations)
             .HasForeignKey(x => x.AssetId);
-        
+
         builder.HasOne(x => x.ToRoom)
             .WithMany(x => x.Transportations)
             .HasForeignKey(x => x.ToRoomId);
