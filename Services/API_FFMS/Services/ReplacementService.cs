@@ -61,7 +61,7 @@ public class ReplacementService : BaseService, IReplacementService
         }
         var replace = createDto.ProjectTo<CreateReplacementDto, Replacement>();
         replace.Id = Guid.NewGuid();
-        replace.Status = ReplacementStatus.NotStarted;
+        replace.Status = ActionStatus.NotStarted;
         existingAsset.Status = AssetStatus.Replacement;
         if (!await MainUnitOfWork.ReplacementRepository.InsertAsync(replace, AccountId, CurrentDate))
         {
@@ -97,7 +97,7 @@ public class ReplacementService : BaseService, IReplacementService
             {
                 x => !x.DeletedAt.HasValue
                      && x.Id == id
-                     && x.Status == ReplacementStatus.NotStarted
+                     && x.Status == ActionStatus.NotStarted
             });
         if (existingReplacement==null)
         {
@@ -190,7 +190,7 @@ public class ReplacementService : BaseService, IReplacementService
                 Description = x.Description,
                 Reason = x.Reason,
                 Id = x.Id,
-                Status = x.Status,
+                Status = x.Status.GetValue(),
                 AssignedTo = x.AssignedTo,
                 AssetId = x.AssetId,
                 NewAssetId = x.NewAssetId,
@@ -222,7 +222,7 @@ public class ReplacementService : BaseService, IReplacementService
             throw new ApiException("Không tìm thấy thiết bị thay thế này", StatusCode.NOT_FOUND);
         }
 
-        existingReplacement.Status = ReplacementStatus.Cancelled;
+        existingReplacement.Status = ActionStatus.Cancelled;
         existingReplacement.Asset!.Status = AssetStatus.Operational;
         
         Guid? idNewAsset = existingReplacement.NewAssetId;
