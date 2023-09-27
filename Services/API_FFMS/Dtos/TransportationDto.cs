@@ -41,7 +41,7 @@ public class TransportDetailDto : BaseDto
     public string? Description { get; set; }
     public string? Note{ get; set; }
     public int? Quantity{ get; set; }
-    public TransportationStatus Status { get; set; }
+    public EnumValue? Status { get; set; }
     public Guid? AssignedTo { get; set; }
     public Guid? AssetId { get; set; }
     public Guid? ToRoomId { get; set; }
@@ -52,7 +52,7 @@ public class TransportQueryDto : BaseQueryDto
 {
     public DateTime? RequestedDate { get; set; }
     public DateTime? CompletionDate { get; set; }
-    public TransportationStatus? Status { get; set; }
+    public ActionStatus? Status { get; set; }
     public Guid? AssignedTo { get; set; }
     public Guid? AssetId { get; set; }
     public Guid? ToRoomId { get; set; }
@@ -77,7 +77,7 @@ public class TransportDto : BaseDto
 
 public class TransportUpdateStatusDto
 {
-    public TransportationStatus Status { get; set; }
+    public ActionStatus Status { get; set; }
 }
 
 public class FutureDateAttribute : ValidationAttribute

@@ -12,7 +12,7 @@ public class Repairation : BaseEntity
     public string? Description { get; set; }
     public string? Note { get; set; }
     public string? Reason { get; set; }
-    public RepairationStatus Status { get; set; }
+    public ActionStatus Status { get; set; }
     public Guid? AssignedTo { get; set; }
     
     public Guid? AssetId { get; set; }
@@ -21,21 +21,6 @@ public class Repairation : BaseEntity
     public virtual User? PersonInCharge { get; set; }
     //public virtual User? Creator { get; set; }
     public virtual Asset? Asset { get; set; }
-}
-
-public enum RepairationStatus
-{
-    [Display(Name = "Chưa bắt đầu")]
-    NotStarted = 1,
-
-    [Display(Name = "Đang tiến hành")]
-    InProgress = 2,
-
-    [Display(Name = "Đã hoàn thành")]
-    Completed = 3,
-
-    [Display(Name = "Đã hủy")]
-    Cancelled = 4,
 }
 
 public class RepairationConfig : IEntityTypeConfiguration<Repairation>

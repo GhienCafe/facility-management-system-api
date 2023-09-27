@@ -92,7 +92,7 @@ public class NotificationService : BaseService, INotificationService
                         Description = replacement.Description,
                         Note = replacement.Note,
                         Reason = replacement.Reason,
-                        Status = replacement.Status, // Phải chuyển đổi ReplacementStatus sang EnumValue
+                        Status = replacement.Status.GetValue(), 
                         AssignedTo = replacement.AssignedTo,
                         AssetId = replacement.AssetId,
                         CreatorId = replacement.CreatorId??Guid.Empty,
