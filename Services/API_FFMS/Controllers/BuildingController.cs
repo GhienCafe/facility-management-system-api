@@ -32,7 +32,7 @@ public class BuildingController : BaseController
     [SwaggerOperation("Get detail building information")]
     public async Task<ApiResponse<BuildingDetailDto>> Get(Guid id)
     {
-        return await _service.GetBuildings(id);
+        return await _service.GetBuilding(id);
     }
 
     [HttpPut("{id:guid}")]

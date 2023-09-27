@@ -177,7 +177,7 @@ public class MaintenanceService : BaseService, IMaintenanceService
     {
         var maintenance = maintenanceCreateDto.ProjectTo<MaintenanceCreateDto, Maintenance>();
 
-        maintenance.Status = MaintenanceStatus.NotStarted;
+        maintenance.Status = ActionStatus.NotStarted;
         maintenance.Type = MaintenanceType.Unexpected;
 
         //// check asset is rent or not

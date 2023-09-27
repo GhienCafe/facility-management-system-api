@@ -54,7 +54,7 @@ namespace API_FFMS.Services
 
             // check asset is rent or not
 
-            repairation.Status = RepairationStatus.NotStarted;
+            repairation.Status = ActionStatus.NotStarted;
             existingAsset.Status = AssetStatus.Repair;
 
             if (!await MainUnitOfWork.RepairationRepository.InsertAsync(repairation, AccountId, CurrentDate))
@@ -90,7 +90,7 @@ namespace API_FFMS.Services
                 throw new ApiException("Không tìm thấy yêu cầu sửa chữa này", StatusCode.NOT_FOUND);
             }
 
-            existingRepairation.Status = RepairationStatus.Cancelled;
+            existingRepairation.Status = ActionStatus.Cancelled;
             existingRepairation.Asset!.Status = AssetStatus.Operational;
 
             if (!await MainUnitOfWork.RepairationRepository.UpdateAsync(existingRepairation, AccountId, CurrentDate))
@@ -188,7 +188,7 @@ namespace API_FFMS.Services
                 x => new RepairationDto
                 {
                     AssignedTo = x.Repairation.AssignedTo,
-                    Status = x.Repairation.Status,
+                    Status = x.Repairation.Status.GetValue(),
                     Id = x.Repairation.Id,
                     CompletionDate = x.Repairation.CompletionDate,
                     CreatedAt = x.Repairation.CreatedAt,
@@ -219,7 +219,7 @@ namespace API_FFMS.Services
             {
                 x => !x.DeletedAt.HasValue
                 && x.Id == id
-                && x.Status == RepairationStatus.NotStarted
+                && x.Status == ActionStatus.NotStarted
             });
             if (existingRepairation == null)
             {

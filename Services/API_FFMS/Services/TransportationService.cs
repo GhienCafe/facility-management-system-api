@@ -70,7 +70,7 @@ namespace API_FFMS.Services
             var transport = createDto.ProjectTo<TransportCreateDto, Transportation>();
             transport.Id = Guid.NewGuid();
 
-            transport.Status = TransportationStatus.NotStarted;
+            transport.Status = ActionStatus.NotStarted;
             existingAsset.Status = AssetStatus.Pending;
 
             if (!await MainUnitOfWork.TransportationRepository.InsertAsync(transport, AccountId, CurrentDate))
@@ -105,7 +105,7 @@ namespace API_FFMS.Services
                 throw new ApiException("Không tìm thấy yêu cầu vận chuyển này", StatusCode.NOT_FOUND);
             }
 
-            existingTransport.Status = TransportationStatus.Cancelled;
+            existingTransport.Status = ActionStatus.Cancelled;
             existingTransport.Asset!.Status = AssetStatus.Operational;
 
             if (!await MainUnitOfWork.TransportationRepository.UpdateAsync(existingTransport, AccountId, CurrentDate))
@@ -230,7 +230,7 @@ namespace API_FFMS.Services
             {
                 x => !x.DeletedAt.HasValue
                 && x.Id == id
-                && x.Status == TransportationStatus.NotStarted
+                && x.Status == ActionStatus.NotStarted
             });
             if (existingTransport == null)
             {
@@ -308,7 +308,7 @@ namespace API_FFMS.Services
                 throw new ApiException("Người dùng này không được phép làm việc này", StatusCode.UNAUTHORIZED);
             }
 
-            if (existingTransport.Status == TransportationStatus.Cancelled)
+            if (existingTransport.Status == ActionStatus.Cancelled)
             {
                 throw new ApiException("Không thể cập nhật yêu cầu đã hủy", StatusCode.FORBIDDEN);
             }
@@ -317,11 +317,11 @@ namespace API_FFMS.Services
 
             var assetInclude = await MainUnitOfWork.AssetRepository.FindOneAsync((Guid)existingTransport.AssetId!);
 
-            if (updateStatusDto.Status == TransportationStatus.Cancelled || updateStatusDto.Status == TransportationStatus.Completed)
+            if (updateStatusDto.Status == ActionStatus.Cancelled || updateStatusDto.Status == ActionStatus.Completed)
             {
                 assetInclude!.Status = AssetStatus.Operational;
             }
-            else if (updateStatusDto.Status == TransportationStatus.NotStarted || updateStatusDto.Status == TransportationStatus.InProgress)
+            else if (updateStatusDto.Status == ActionStatus.NotStarted || updateStatusDto.Status == ActionStatus.InProgress)
             {
                 assetInclude!.Status = AssetStatus.Pending;
             }
