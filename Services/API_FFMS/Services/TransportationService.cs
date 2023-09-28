@@ -17,6 +17,7 @@ namespace API_FFMS.Services
         public Task<ApiResponse> Update(Guid id, TransportUpdateDto updateDto);
         Task<ApiResponse<TransportDetailDto>> GetTransport(Guid id);
         Task<ApiResponse> Delete(Guid id);
+        public Task<ApiResponse> UpdateStatus(Guid id, TransportUpdateStatusDto updateStatusDto);
     }
     public class TransportationService : BaseService, ITransportationService
     {
@@ -32,13 +33,13 @@ namespace API_FFMS.Services
                 x => !x.DeletedAt.HasValue
                 && x.Id == createDto.AssetId
             });
-            
+
             if (existingAsset == null)
             {
                 throw new ApiException("Not found this asset", StatusCode.NOT_FOUND);
             }
 
-            if(existingAsset.Status != AssetStatus.Operational)
+            if (existingAsset.Status != AssetStatus.Operational)
             {
                 throw new ApiException("This asset is in another request", StatusCode.NOT_ACTIVE);
             }
@@ -69,7 +70,7 @@ namespace API_FFMS.Services
             var transport = createDto.ProjectTo<TransportCreateDto, Transportation>();
             transport.Id = Guid.NewGuid();
 
-            transport.Status = TransportationStatus.NotStarted;
+            transport.Status = ActionStatus.NotStarted;
             existingAsset.Status = AssetStatus.Pending;
 
             if (!await MainUnitOfWork.TransportationRepository.InsertAsync(transport, AccountId, CurrentDate))
@@ -104,10 +105,10 @@ namespace API_FFMS.Services
                 throw new ApiException("Not found this transportation", StatusCode.NOT_FOUND);
             }
 
-            existingTransport.Status = TransportationStatus.Cancelled;
+            existingTransport.Status = ActionStatus.Cancelled;
             existingTransport.Asset!.Status = AssetStatus.Operational;
 
-            if (!await MainUnitOfWork.TransportationRepository.DeleteAsync(existingTransport, AccountId, CurrentDate))
+            if (!await MainUnitOfWork.TransportationRepository.UpdateAsync(existingTransport, AccountId, CurrentDate))
             {
                 throw new ApiException("Delete fail", StatusCode.SERVER_ERROR);
             }
@@ -169,21 +170,21 @@ namespace API_FFMS.Services
             }
 
             var joinTables = from transport in transportQuery
-                join room in MainUnitOfWork.RoomRepository.GetQuery() on transport.ToRoomId equals room.Id into roomGroup
-                from room in roomGroup.DefaultIfEmpty()
-                join asset in MainUnitOfWork.AssetRepository.GetQuery() on transport.AssetId equals asset.Id into assetGroup
-                from asset in assetGroup.DefaultIfEmpty()
-                join personInCharge in MainUnitOfWork.UserRepository.GetQuery() on transport.AssignedTo equals personInCharge.Id into personInChargeGroup
-                from personInCharge in personInChargeGroup.DefaultIfEmpty()
-                select new
-                {
-                    Transport = transport,
-                    Room = room,
-                    Asset = asset,
-                    PersonInCharge = personInCharge
-                };
+                             join room in MainUnitOfWork.RoomRepository.GetQuery() on transport.ToRoomId equals room.Id into roomGroup
+                             from room in roomGroup.DefaultIfEmpty()
+                             join asset in MainUnitOfWork.AssetRepository.GetQuery() on transport.AssetId equals asset.Id into assetGroup
+                             from asset in assetGroup.DefaultIfEmpty()
+                             join personInCharge in MainUnitOfWork.UserRepository.GetQuery() on transport.AssignedTo equals personInCharge.Id into personInChargeGroup
+                             from personInCharge in personInChargeGroup.DefaultIfEmpty()
+                             select new
+                             {
+                                 Transport = transport,
+                                 Room = room,
+                                 Asset = asset,
+                                 PersonInCharge = personInCharge
+                             };
 
-            var totalCount = transportQuery.Count();
+            var totalCount = joinTables.Count();
 
             joinTables = joinTables.Skip(queryDto.Skip()).Take(queryDto.PageSize);
             //transportQuery = transportQuery.Skip(queryDto.Skip()).Take(queryDto.PageSize);
@@ -211,8 +212,8 @@ namespace API_FFMS.Services
                     ToRoom = x.Room.ProjectTo<Room, RoomDto>()
                 }
             ).ToListAsync();
-            
-            
+
+
             transports = await _mapperRepository.MapCreator(transports);
 
             return ApiResponses<TransportDto>.Success(
@@ -229,7 +230,7 @@ namespace API_FFMS.Services
             {
                 x => !x.DeletedAt.HasValue
                 && x.Id == id
-                && x.Status == TransportationStatus.NotStarted
+                && x.Status == ActionStatus.NotStarted
             });
             if (existingTransport == null)
             {
@@ -239,7 +240,7 @@ namespace API_FFMS.Services
             existingTransport.RequestedDate = updateDto.RequestedDate ?? existingTransport.RequestedDate;
             existingTransport.CompletionDate = updateDto.CompletionDate ?? existingTransport.CompletionDate;
             //transportation.Status = updateDto.Status ?? transportation.Status;
-            existingTransport.AssetId = updateDto.AssetId ?? existingTransport.AssetId;
+            //existingTransport.AssetId = updateDto.AssetId ?? existingTransport.AssetId;
             existingTransport.Description = updateDto.Description ?? existingTransport.Description;
             existingTransport.Note = updateDto.Note ?? existingTransport.Note;
             existingTransport.Quantity = updateDto.Quantity ?? existingTransport.Quantity;
@@ -248,13 +249,12 @@ namespace API_FFMS.Services
             var existingAsset = await MainUnitOfWork.AssetRepository.FindOneAsync(new Expression<Func<Asset, bool>>[]
             {
                 x => !x.DeletedAt.HasValue
-                && x.Id == updateDto.AssetId
-                && x.Status == AssetStatus.Operational
+                && x.Id == existingTransport.AssetId
             });
-            if (existingAsset == null)
-            {
-                throw new ApiException("Not found this asset", StatusCode.NOT_FOUND);
-            }
+            //if (existingAsset == null)
+            //{
+            //    throw new ApiException("Not found this asset", StatusCode.NOT_FOUND);
+            //}
 
             var existingAssignee = await MainUnitOfWork.UserRepository.FindOneAsync(new Expression<Func<User, bool>>[]
             {
@@ -274,7 +274,7 @@ namespace API_FFMS.Services
                 throw new ApiException("Not found this room", StatusCode.NOT_FOUND);
             }
 
-            if (!existingAssignee.TeamId.Equals(existingAsset.Type!.Category!.TeamId))
+            if (!existingAssignee.TeamId.Equals(existingAsset!.Type!.Category!.TeamId))
             {
                 throw new ApiException("Assign have wrong major for this asset", StatusCode.BAD_REQUEST);
             }
@@ -282,6 +282,53 @@ namespace API_FFMS.Services
             if (!await MainUnitOfWork.TransportationRepository.UpdateAsync(existingTransport, AccountId, CurrentDate))
             {
                 throw new ApiException("Update failed", StatusCode.SERVER_ERROR);
+            }
+
+            return ApiResponse.Success();
+        }
+
+        public async Task<ApiResponse> UpdateStatus(Guid id, TransportUpdateStatusDto updateStatusDto)
+        {
+            var existingTransport = await MainUnitOfWork.TransportationRepository.FindOneAsync(new Expression<Func<Transportation, bool>>[]
+            {
+                x => !x.DeletedAt.HasValue
+                && x.Id == id
+            });
+            if (existingTransport == null)
+            {
+                throw new ApiException("Not found this transportation", StatusCode.NOT_FOUND);
+            }
+
+            var userAuthen = await MainUnitOfWork.UserRepository.FindOneAsync(new Expression<Func<User, bool>>[]
+            {
+                x => !x.DeletedAt.HasValue && x.Id == AccountId
+            });
+            if (!existingTransport.AssignedTo.Equals(AccountId) || userAuthen!.Role != UserRole.Manager)
+            {
+                throw new ApiException("This account doesn't have permission for this", StatusCode.UNAUTHORIZED);
+            }
+
+            if (existingTransport.Status == ActionStatus.Cancelled)
+            {
+                throw new ApiException("Can not update request was cancelled", StatusCode.FORBIDDEN);
+            }
+
+            existingTransport.Status = updateStatusDto.Status;
+
+            var assetInclude = await MainUnitOfWork.AssetRepository.FindOneAsync((Guid)existingTransport.AssetId!);
+
+            if (updateStatusDto.Status == ActionStatus.Cancelled || updateStatusDto.Status == ActionStatus.Completed)
+            {
+                assetInclude!.Status = AssetStatus.Operational;
+            }
+            else if (updateStatusDto.Status == ActionStatus.NotStarted || updateStatusDto.Status == ActionStatus.InProgress)
+            {
+                assetInclude!.Status = AssetStatus.Pending;
+            }
+
+            if (!await MainUnitOfWork.TransportationRepository.UpdateAsync(existingTransport, AccountId, CurrentDate))
+            {
+                throw new ApiException("Update status failed", StatusCode.SERVER_ERROR);
             }
 
             return ApiResponse.Success();

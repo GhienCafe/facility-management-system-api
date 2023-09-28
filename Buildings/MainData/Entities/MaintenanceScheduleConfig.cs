@@ -6,15 +6,14 @@ namespace MainData.Entities;
 
 public class MaintenanceScheduleConfig : BaseEntity
 {
-    public Guid AssetTypeId { get; set; }
+    public Guid AssetId { get; set; }
     public TimeUnit TimeUnit { get; set; }
     public int Period { get; set; }
     public DateTime SpecificDate { get; set; }
-    
     public Guid? AssignedTo { get; set; }
     
     //
-    public virtual AssetType? AssetType { get; set; }
+    public virtual Asset? Asset { get; set; }
     public virtual User? PersonInCharge { get; set; }
 }
 
@@ -30,15 +29,15 @@ public class MaintenanceScheduleConfigConfig : IEntityTypeConfiguration<Maintena
     public void Configure(EntityTypeBuilder<MaintenanceScheduleConfig> builder)
     {
         builder.ToTable("MaintenanceScheduleConfigs");
-        builder.Property(x => x.AssetTypeId).IsRequired();
+        builder.Property(x => x.AssetId).IsRequired();
         builder.Property(x => x.TimeUnit).IsRequired();
         builder.Property(x => x.Period).IsRequired();
         builder.Property(x => x.SpecificDate).IsRequired();
    
         //Relationship
-        builder.HasOne(x => x.AssetType)
+        builder.HasOne(x => x.Asset)
             .WithMany(x => x.MaintenanceScheduleConfigs)
-            .HasForeignKey(x => x.AssetTypeId);
+            .HasForeignKey(x => x.AssetId);
         
         builder.HasOne(x => x.PersonInCharge)
             .WithMany(x => x.MaintenanceScheduleConfigs)

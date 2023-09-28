@@ -1,4 +1,5 @@
-﻿using AppCore.Data;
+﻿using System.ComponentModel.DataAnnotations;
+using AppCore.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -37,15 +38,21 @@ public class User : BaseEntity
 
 public enum UserRole
 {
+    [Display(Name = "Quản trị viên")]
     Administrator = 1,
+    [Display(Name = "Quản lý")]
     Manager = 2,
+    [Display(Name = "Nhân sự")]
     Staff = 3
 }
 
 
 public enum UserStatus
 {
-    Active = 1, InActive = 2
+    [Display(Name = "Hoạt động")]
+    Active = 1, 
+    [Display(Name = "Không hoạt động")]
+    InActive = 2
 }
 
 public class UserConfig : IEntityTypeConfiguration<User>

@@ -11,7 +11,7 @@ public class Replacement : BaseEntity
     public string? Description { get; set; }
     public string? Note { get; set; }
     public string? Reason { get; set; }
-    public ReplacementStatus Status { get; set; }
+    public ActionStatus Status { get; set; }
     public Guid? AssignedTo { get; set; }
     public Guid? AssetId { get; set; }
     public Guid? NewAssetId { get; set; }
@@ -21,14 +21,6 @@ public class Replacement : BaseEntity
     //public virtual User? Creator { get; set; }
     public virtual Asset? Asset { get; set; }
     public virtual Asset? NewAsset { get; set; }
-}
-
-public enum ReplacementStatus
-{
-    NotStarted = 1,
-    InProgress = 1,
-    Completed = 3,
-    Cancelled = 4,
 }
 
 public class ReplacementConfig : IEntityTypeConfiguration<Replacement>

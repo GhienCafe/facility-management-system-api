@@ -35,7 +35,7 @@ namespace API_FFMS.Controllers
             return await _transportationService.Create(createDto);
         }
 
-        [HttpPut("{id}")]
+        [HttpPut]
         [SwaggerOperation("Update transportation")]
         public async Task<ApiResponse> Update(Guid id, TransportUpdateDto updateDto)
         {
@@ -47,6 +47,13 @@ namespace API_FFMS.Controllers
         public async Task<ApiResponse> Delete(Guid id)
         {
             return await _transportationService.Delete(id);
+        }
+
+        [HttpPut("{id:guid}")]
+        [SwaggerOperation("Update transportation's status")]
+        public async Task<ApiResponse> UpdateStatus(Guid id, TransportUpdateStatusDto updateDto)
+        {
+            return await _transportationService.UpdateStatus(id, updateDto);
         }
 
     }

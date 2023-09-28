@@ -8,6 +8,7 @@ public class BuildingDto  : BaseDto
     public string? BuildingName { get; set; }
     public string? BuildingCode { get; set; }
     public Guid? CampusId { get; set; }
+    public CampusDto? Campus { get; set; }
 }
 
 public class BuildingDetailDto : BaseDto
@@ -15,6 +16,7 @@ public class BuildingDetailDto : BaseDto
     public string? BuildingName { get; set; }
     public string? BuildingCode { get; set; }
     public Guid? CampusId { get; set; }
+    public CampusDto? Campus { get; set; }
 }
 
 public class BuildingCreateDto
