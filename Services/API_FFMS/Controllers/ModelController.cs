@@ -24,21 +24,21 @@ namespace API_FFMS.Controllers
 
         [HttpGet("{id:guid}")]
         [SwaggerOperation("Get details an model")]
-        public async Task<ApiResponse<ModelDetailDto>> GetModel(Guid id)
+        public async Task<ApiResponse<ModelDto>> GetModel(Guid id)
         {
             return await _service.GetModel(id);
         }
 
         [HttpPost]
         [SwaggerOperation("Create new model")]
-        public async Task<ApiResponse> Create([FromBody]ModelCreateDto createDto)
+        public async Task<ApiResponse> Create([FromBody]ModelDto createDto)
         {
             return await _service.Create(createDto);
         }
 
         [HttpPut("{id:guid}")]
         [SwaggerOperation("Update a model")]
-        public async Task<ApiResponse> Update(Guid id, ModelUpdateDto updateDto)
+        public async Task<ApiResponse> Update(Guid id, ModelDto updateDto)
         {
             return await _service.Update(id, updateDto);
         }

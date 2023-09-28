@@ -29,9 +29,9 @@ public class AssetService : BaseService, IAssetService
         var asset = createDto.ProjectTo<AssetCreateDto, Asset>();
 
         if (!await MainUnitOfWork.AssetRepository.InsertAsync(asset, AccountId, CurrentDate))
-            throw new ApiException("Insert fail", StatusCode.SERVER_ERROR);
+            throw new ApiException("Thêm trang thiết bị thất bại", StatusCode.SERVER_ERROR);
         
-        return ApiResponse.Created("Create successfully");
+        return ApiResponse.Created("Thêm trang thiết bị thành công");
     }
 
     public async Task<ApiResponse> Delete(Guid id)
@@ -39,45 +39,95 @@ public class AssetService : BaseService, IAssetService
         var existingAsset = await MainUnitOfWork.AssetRepository.FindOneAsync(id);
 
         if (existingAsset == null)
-            throw new ApiException("Asset not found", StatusCode.NOT_FOUND);
+            throw new ApiException("Không tìm thất trang thiết bị", StatusCode.NOT_FOUND);
 
         if (! await MainUnitOfWork.AssetRepository.DeleteAsync(existingAsset, AccountId, CurrentDate))
-            throw new ApiException("Delete fail", StatusCode.SERVER_ERROR);
+            throw new ApiException("Xóa trang thiết bị thất bại", StatusCode.SERVER_ERROR);
 
-        return ApiResponse.Success();
+        return ApiResponse.Success("Xóa trang thiết bị thành công");
     }
 
     public async Task<ApiResponses<AssetDto>> GetAssets(AssetQueryDto queryDto)
     {
+        var keyword = queryDto.Keyword?.Trim().ToLower();
         var assetDataSet = MainUnitOfWork.AssetRepository.GetQuery()
             .Where(x => !x!.DeletedAt.HasValue);
 
-        if (!string.IsNullOrEmpty(queryDto.AssetCode))
-            assetDataSet = assetDataSet.Where(x => x!.AssetCode!.ToLower().Equals(queryDto.AssetCode));
-        
-        if (!string.IsNullOrEmpty(queryDto.AssetName))
-            assetDataSet = assetDataSet.Where(x => x!.AssetName.ToLower().Contains(queryDto.AssetName!.Trim().ToLower()));
-        
-        if (!string.IsNullOrEmpty(queryDto.Description))
-            assetDataSet = assetDataSet.Where(x => x!.Description!.ToLower().Contains(queryDto.Description!.Trim().ToLower()));
-        
-        if (!string.IsNullOrEmpty(queryDto.SerialNumber))
-            assetDataSet = assetDataSet.Where(x => x!.SerialNumber!.ToLower().Contains(queryDto.SerialNumber!.Trim().ToLower()));
+        if (!string.IsNullOrEmpty(keyword))
+        {
+            assetDataSet = assetDataSet.Where(x => x!.AssetCode!.ToLower().Contains(keyword)
+                || x.AssetName.ToLower().Contains(keyword)
+                || x.Description!.ToLower().Contains(keyword)
+                || x.SerialNumber!.ToLower().Contains(keyword));
+        }
         
         if (queryDto.Status != null)
             assetDataSet = assetDataSet.Where(x => x!.Status == queryDto.Status);
         
         if (queryDto.IsMovable != null)
             assetDataSet = assetDataSet.Where(x => x!.IsMovable == queryDto.IsMovable);
-
+        
         if (queryDto.IsRented != null)
             assetDataSet = assetDataSet.Where(x => x!.IsRented == queryDto.IsRented);
+        
+        if (queryDto.TypeId != null)
+            assetDataSet = assetDataSet.Where(x => x!.TypeId == queryDto.TypeId);
+        
+        if (queryDto.ModelId != null)
+            assetDataSet = assetDataSet.Where(x => x!.ModelId == queryDto.ModelId);
+        
+        if (queryDto.CreateAtFrom != null)
+            assetDataSet = assetDataSet.Where(x => x!.CreatedAt >= queryDto.CreateAtFrom);
+        
+        if (queryDto.CreateAtTo != null)
+            assetDataSet = assetDataSet.Where(x => x!.CreatedAt <= queryDto.CreateAtTo);
+        
+        // Order
+        var isDescending = queryDto.OrderBy.EndsWith("desc", StringComparison.OrdinalIgnoreCase);
+        var orderByColumn = queryDto.OrderBy.Split(' ')[0];
+        assetDataSet = isDescending ? assetDataSet.OrderByDescending(user => EF.Property<object>(user!, orderByColumn)) : assetDataSet.OrderBy(user => EF.Property<object>(user!, orderByColumn));
+        
+        var joinTables = from asset in assetDataSet
+            join type in MainUnitOfWork.AssetTypeRepository.GetQuery() on asset.TypeId equals type.Id
+                into typeGroup
+            from type in typeGroup.DefaultIfEmpty()
+            join model in MainUnitOfWork.ModelRepository.GetQuery() on asset.ModelId equals model.Id
+                into modelGroup
+            from model in modelGroup.DefaultIfEmpty()
+            select new
+            {
+                Asset = asset,
+                Type = type,
+                Model = model
+            };
+            
+        var totalCount = joinTables.Count();
+                 
+        joinTables = joinTables.Skip(queryDto.Skip())
+            .Take(queryDto.PageSize);
 
-        var totalCount = assetDataSet.Count();
-
-        var assets = (await assetDataSet.Skip(queryDto.Skip())
-            .Take(queryDto.PageSize)
-            .ToListAsync())!.ProjectTo<Asset, AssetDto>();
+        var assets = await joinTables.Select(x => new AssetDto
+        {
+            Id = x.Asset.Id,
+            Description = x.Asset.Description,
+            Status = x.Asset.Status.GetValue(),
+            AssetCode = x.Asset.AssetCode,
+            AssetName = x.Asset.AssetName,
+            Quantity = x.Asset.Quantity,
+            IsMovable = x.Asset.IsMovable,
+            IsRented = x.Asset.IsRented,
+            ManufacturingYear = x.Asset.ManufacturingYear,
+            ModelId = x.Asset.ModelId,
+            SerialNumber = x.Asset.SerialNumber,
+            TypeId = x.Asset.TypeId,
+            LastMaintenanceTime = x.Asset.LastMaintenanceTime,
+            CreatedAt = x.Asset.CreatedAt,
+            EditedAt = x.Asset.EditedAt,
+            CreatorId = x.Asset.CreatorId ?? Guid.Empty,
+            EditorId = x.Asset.EditorId ?? Guid.Empty,
+            Type = x.Type.ProjectTo<AssetType, AssetTypeDto>(),
+            Model = x.Model.ProjectTo<Model, ModelDto>()
+        }).ToListAsync();
 
         assets = await _mapperRepository.MapCreator(assets);
 
@@ -92,22 +142,41 @@ public class AssetService : BaseService, IAssetService
 
     public async Task<ApiResponse<AssetDetailDto>> GetAsset(Guid id)
     {
-        var existingAsset = await MainUnitOfWork.AssetRepository.FindOneAsync<AssetDetailDto>(
-            new Expression<Func<Asset, bool>>[]
+        var asset = await MainUnitOfWork.AssetRepository.GetQuery()
+            .Where(x => !x!.DeletedAt.HasValue && x.Id == id)
+            .Select(x => new AssetDetailDto
             {
-                x => !x.DeletedAt.HasValue,
-                x => x.Id == id
-            });
-        if (existingAsset == null)
-        {
-            throw new ApiException("Not found this asset", StatusCode.NOT_FOUND);
-        }
+                Id = x!.Id,
+                Description = x.Description,
+                Status = x.Status.GetValue(),
+                AssetCode = x.AssetCode,
+                AssetName = x.AssetName,
+                Quantity = x.Quantity,
+                IsMovable = x.IsMovable,
+                //IsRented = x.IsRented,
+                ManufacturingYear = x.ManufacturingYear,
+                ModelId = x.ModelId,
+                SerialNumber = x.SerialNumber,
+                TypeId = x.TypeId,
+                LastMaintenanceTime = x.LastMaintenanceTime,
+                CreatedAt = x.CreatedAt,
+                EditedAt = x.EditedAt,
+                CreatorId = x.CreatorId ?? Guid.Empty,
+                EditorId = x.EditorId ?? Guid.Empty,
+            }).FirstOrDefaultAsync();
 
-        existingAsset = await _mapperRepository.MapCreator(existingAsset);
+        if (asset == null)
+            throw new ApiException("Không tìm thất trang thiết bị", StatusCode.NOT_FOUND);
 
-        //existingAsset.ManufacturingYear = DateTime.Parse(existingAsset.ManufacturingYear!.ToString());
+        asset.Model = (await MainUnitOfWork.ModelRepository
+            .FindOneAsync(asset.ModelId ?? Guid.Empty))?.ProjectTo<Model, ModelDto>();
+        
+        asset.Type = (await MainUnitOfWork.AssetTypeRepository
+            .FindOneAsync(asset.TypeId ?? Guid.Empty))?.ProjectTo<AssetType, AssetTypeDto>();
 
-        return ApiResponse<AssetDetailDto>.Success(existingAsset);
+        asset = await _mapperRepository.MapCreator(asset);
+
+        return ApiResponse<AssetDetailDto>.Success(asset);
     }
 
     public async Task<ApiResponse> Update(Guid id, AssetUpdateDto updateDto)
@@ -115,9 +184,12 @@ public class AssetService : BaseService, IAssetService
         var existingAsset = await MainUnitOfWork.AssetRepository.FindOneAsync(id);
         if (existingAsset == null)
         {
-            throw new ApiException("Not found this asset", StatusCode.NOT_FOUND);
+            throw new ApiException("Không tìm thấy trang thiết bị", StatusCode.NOT_FOUND);
         }
         
+        existingAsset.TypeId = updateDto.TypeId ?? existingAsset.TypeId;
+        existingAsset.ModelId = updateDto.ModelId ?? existingAsset.ModelId;
+        existingAsset.IsRented = updateDto.IsRented ?? existingAsset.IsRented;
         existingAsset.TypeId = updateDto.TypeId ?? existingAsset.TypeId;
         existingAsset.AssetName = updateDto.AssetName ?? existingAsset.AssetName;
         existingAsset.Status = updateDto.Status ?? existingAsset.Status;
@@ -127,13 +199,13 @@ public class AssetService : BaseService, IAssetService
         existingAsset.Description = updateDto.Description ?? existingAsset.Description;
         existingAsset.AssetCode = updateDto.AssetCode ?? existingAsset.AssetCode;
         existingAsset.IsMovable = updateDto.IsMovable ?? existingAsset.IsMovable;
-        existingAsset.IsRented = updateDto.IsRented ?? existingAsset.IsRented;
+        //existingAsset.IsRented = updateDto.IsRented ?? existingAsset.IsRented;
         existingAsset.LastMaintenanceTime = updateDto.LastMaintenanceTime ?? existingAsset.LastMaintenanceTime;
 
         if (!await MainUnitOfWork.AssetRepository.UpdateAsync(existingAsset, AccountId, CurrentDate))
-            throw new ApiException("Can't not update", StatusCode.SERVER_ERROR);
+            throw new ApiException("Cập nhật thông tin trang thiết bị thất bại", StatusCode.SERVER_ERROR);
 
-        return ApiResponse.Success();
+        return ApiResponse.Success("Cập nhật thông tin trang thiết bị thành công");
     }
     
      
@@ -146,7 +218,7 @@ public class AssetService : BaseService, IAssetService
             });
             
             if (room == null)
-                throw new ApiException("Not find room", StatusCode.NOT_FOUND);
+                throw new ApiException("Không tìm thất phòng", StatusCode.NOT_FOUND);
 
             var roomAssetDataset = MainUnitOfWork.RoomAssetRepository.GetQuery();
             var assetDataset = MainUnitOfWork.AssetRepository.GetQuery();

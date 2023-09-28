@@ -10,9 +10,9 @@ namespace API_FFMS.Services
 {
     public interface IModelService : IBaseService
     {
-        Task<ApiResponse> Create(ModelCreateDto createDto);
-        Task<ApiResponse<ModelDetailDto>> GetModel(Guid id);
-        public Task<ApiResponse> Update(Guid id, ModelUpdateDto updateDto);
+        Task<ApiResponse> Create(ModelDto createDto);
+        Task<ApiResponse<ModelDto>> GetModel(Guid id);
+        public Task<ApiResponse> Update(Guid id, ModelDto updateDto);
         Task<ApiResponse> Delete(Guid id);
         Task<ApiResponses<ModelDto>> GetModels(ModelQueryDto queryDto);
     }
@@ -22,9 +22,9 @@ namespace API_FFMS.Services
         {
         }
 
-        public async Task<ApiResponse> Create(ModelCreateDto createDto)
+        public async Task<ApiResponse> Create(ModelDto createDto)
         {
-            var model = createDto.ProjectTo<ModelCreateDto, Model>();
+            var model = createDto.ProjectTo<ModelDto, Model>();
             if (!await MainUnitOfWork.ModelRepository.InsertAsync(model, AccountId, CurrentDate))
             {
                 throw new ApiException("Thêm mới thất bại", StatusCode.SERVER_ERROR);
@@ -49,9 +49,9 @@ namespace API_FFMS.Services
             return ApiResponse.Success();
         }
 
-        public async Task<ApiResponse<ModelDetailDto>> GetModel(Guid id)
+        public async Task<ApiResponse<ModelDto>> GetModel(Guid id)
         {
-            var model = await MainUnitOfWork.ModelRepository.FindOneAsync<ModelDetailDto>(
+            var model = await MainUnitOfWork.ModelRepository.FindOneAsync<ModelDto>(
             new Expression<Func<Model, bool>>[]
             {
                 x => !x.DeletedAt.HasValue,
@@ -65,7 +65,7 @@ namespace API_FFMS.Services
                 
             model = await _mapperRepository.MapCreator(model);
 
-            return ApiResponse<ModelDetailDto>.Success(model);
+            return ApiResponse<ModelDto>.Success(model);
         }
 
         public async Task<ApiResponses<ModelDto>> GetModels(ModelQueryDto queryDto)
@@ -89,7 +89,7 @@ namespace API_FFMS.Services
             );
         }
 
-        public async Task<ApiResponse> Update(Guid id, ModelUpdateDto updateDto)
+        public async Task<ApiResponse> Update(Guid id, ModelDto updateDto)
         {
             var existingModel = await MainUnitOfWork.ModelRepository.FindOneAsync(id);
             if (existingModel == null)
