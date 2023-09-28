@@ -52,6 +52,21 @@ public class ApiResponses<T> : ApiResponse
         );
     }
 
+    public static ApiResponses<T> Success2(List<T> data, int? totalCount = null, int? pageSize = null,
+        int? offset = null,
+        int? totalPages = null)
+    {
+        return Create(
+            data,
+            StatusCode.SUCCESS,
+            StatusCode.SUCCESS.ToString(),
+            totalCount,
+            pageSize,
+            offset,
+            totalPages
+        );
+    }
+
     private static ApiResponses<T> Create(IEnumerable<T> data, StatusCode statusCode, string message,
         int? totalCount,
         int? pageSize,

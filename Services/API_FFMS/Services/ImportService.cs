@@ -48,7 +48,10 @@ namespace API_FFMS.Services
                     ManufacturingYear = dto.ManufacturingYear,
                     SerialNumber = dto.SerialNumber,
                     Quantity = dto.Quantity,
-                    Description = dto.Description
+                    Description = dto.Description,
+                    IsRented = IsTrueOrFalse(dto.IsRented),
+                    IsMovable = IsTrueOrFalse(dto.IsMovable),
+                    Model = GetModelByName(dto.Model) 
                 }).ToList();
 
                 // Validation checks
@@ -86,10 +89,35 @@ namespace API_FFMS.Services
         private AssetType? GetAssetTypeByCode(string typeCode)
         {
             var assetCategory = MainUnitOfWork.AssetTypeRepository.GetQuery()
-                                .Where(x => x.TypeCode.Trim().ToLower()
+                                .Where(x => x!.TypeCode.Trim().ToLower()
                                 .Contains(typeCode.Trim().ToLower()))
                                 .FirstOrDefault();
             return assetCategory;
+        }
+
+        private Model? GetModelByName(string modelName)
+        {
+            var model = MainUnitOfWork.ModelRepository.GetQuery()
+                                .Where(x => x!.ModelName.Trim().ToLower()
+                                .Contains(modelName.Trim().ToLower()))
+                                .FirstOrDefault();
+            return model;
+        }
+
+        private bool IsTrueOrFalse(string value)
+        {
+            if (value.Trim().ToLower().Equals("Có"))
+            {
+                return true;
+            }
+            else if (value.Trim().ToLower().Equals("Không"))
+            {
+                return false;
+            }
+            else
+            {
+                throw new ApiException("Input must be 'Có' or 'Không'");
+            }
         }
 
         private async Task CheckExistTypeCode(List<Asset> assets)
@@ -97,7 +125,7 @@ namespace API_FFMS.Services
             foreach (var asset in assets)
             {
                 var existingTypeCode = await MainUnitOfWork.AssetTypeRepository.GetQuery()
-                                       .Where(t => t.TypeCode.Equals(asset.Type.TypeCode))
+                                       .Where(t => t!.TypeCode.Equals(asset.Type!.TypeCode))
                                        .FirstOrDefaultAsync();
                 if (existingTypeCode == null)
                 {
@@ -105,7 +133,7 @@ namespace API_FFMS.Services
                     validationErrors.Add(new ImportError
                     {
                         Row = row,
-                        ErrorMessage = $"Type code '{asset.Type.TypeCode}' in row {row} does not exist"
+                        ErrorMessage = $"Type code '{asset.Type!.TypeCode}' in row {row} does not exist"
                     });
                 }
             }
@@ -117,7 +145,7 @@ namespace API_FFMS.Services
             {
                 if (string.IsNullOrWhiteSpace(assetDto.AssetName) ||
                     string.IsNullOrWhiteSpace(assetDto.AssetCode) ||
-                    string.IsNullOrWhiteSpace(assetDto.TypeCode.ToString()) ||
+                    string.IsNullOrWhiteSpace(assetDto.TypeCode!.ToString()) ||
                     string.IsNullOrWhiteSpace(assetDto.Status.ToString()) ||
                     string.IsNullOrWhiteSpace(assetDto.ManufacturingYear.ToString()) ||
                     string.IsNullOrWhiteSpace(assetDto.Quantity.ToString()))
@@ -157,43 +185,12 @@ namespace API_FFMS.Services
                     ErrorMessage = $"Duplicate AssetCodes: {duplicateError}"
                 });
                 // Set the Row property for each validation error
-                foreach (var error in validationErrors.Where(e => e.ErrorMessage.Contains("Duplicate AssetCodes")))
+                foreach (var error in validationErrors.Where(e => e.ErrorMessage!.Contains("Duplicate AssetCodes")))
                 {
-                    var assetCode = error.ErrorMessage.Split('\'')[1];
+                    var assetCode = error.ErrorMessage!.Split('\'')[1];
                     error.Row = duplicates.First(d => d.AssetCode == assetCode).Row;
                 }
             }
-        }
-
-        private void CheckUniqueAssetCategories(List<Asset> assets)
-        {
-            // var duplicateCategories = assets
-            //     .GroupBy(a => a.AssetCategory?.CategoryCode)
-            //     .Where(g => g.Count() > 1)
-            //     .Select(g => g.Key)
-            //     .ToList();
-            //
-            // if (duplicateCategories.Any())
-            // {
-            //     var duplicates = assets
-            //         .Where(a => duplicateCategories.Contains(a.AssetCategory?.CategoryCode))
-            //         .Select(a => new
-            //         {
-            //             CategoryCode = a.AssetCategory?.CategoryCode,
-            //             Row = assets.IndexOf(a) + 2
-            //         })
-            //         .ToList();
-            //
-            //     var duplicateError = string.Join(", ", duplicates.Select(d => $"AssetCategory '{d.CategoryCode}' in row {d.Row}"));
-            //     throw new ApiException($"Duplicate AssetCategories: {duplicateError}");
-            //
-            //     // Set the Row property for each validation error
-            //     foreach (var error in validationErrors.Where(e => e.ErrorMessage.Contains("Duplicate AssetCategories")))
-            //     {
-            //         var assetCode = error.ErrorMessage.Split('\'')[1];
-            //         error.Row = duplicates.First(d => d.CategoryCode == assetCode).Row;
-            //     }
-            // }
         }
 
         private async Task CheckUniqueAssetCodesInDatabase(List<Asset> assets)
@@ -201,7 +198,7 @@ namespace API_FFMS.Services
             foreach (var asset in assets)
             {
                 var existingAsset = await MainUnitOfWork.AssetRepository.GetQuery()
-                                         .Where(a => a.AssetCode.Equals(asset.AssetCode))
+                                         .Where(a => a!.AssetCode!.Equals(asset.AssetCode))
                                          .FirstOrDefaultAsync();
 
                 if (existingAsset != null)
@@ -221,7 +218,7 @@ namespace API_FFMS.Services
             foreach (var asset in assets)
             {
                 var existingCategory = await MainUnitOfWork.AssetTypeRepository.GetQuery()
-                                             .Where(a => a.TypeCode.Equals(asset.Type.TypeCode))
+                                             .Where(a => a!.TypeCode.Equals(asset.Type!.TypeCode))
                                              .FirstOrDefaultAsync();
 
                 if (existingCategory == null)
