@@ -122,8 +122,10 @@ public class TaskService : BaseService, ITaskService
                 .Concat(replacementDataset)
                 .Concat(transportationDataset);
             
-              var taskQuery = from task in allTasks
-                join room in MainUnitOfWork.RoomRepository.GetQuery() on task.ToRoomId equals room.Id into roomGroup
+              var taskQuery = from task in allTasks 
+                  join notification in MainUnitOfWork.NotificationRepository.GetQuery() on task.Id equals notification.ItemId into notificationGroup
+                  from notification in notificationGroup.DefaultIfEmpty() 
+                  join room in MainUnitOfWork.RoomRepository.GetQuery() on task.ToRoomId equals room.Id into roomGroup
                 from room in roomGroup.DefaultIfEmpty()
                 join personInCharge in MainUnitOfWork.UserRepository.GetQuery() on task.AssignedTo equals personInCharge.Id into personInChargeGroup
                 from personInCharge in personInChargeGroup.DefaultIfEmpty()
@@ -138,6 +140,9 @@ public class TaskService : BaseService, ITaskService
                 select new TaskDto
                 {
                     Id = task.Id,
+                    Title = notification.Title,
+                    Content = notification.Content,
+                    NotificationDate = notification.CreatedAt,
                     RequestedDate = task.RequestedDate,
                     CompletionDate = task.CompletionDate,
                     Description = task.Description,
