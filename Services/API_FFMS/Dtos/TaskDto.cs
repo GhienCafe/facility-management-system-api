@@ -68,6 +68,34 @@ public class TaskDto : BaseDto
     public RoomDto? Location { get; set; }
 }
 
+public class DetailTaskDto : BaseDto
+{
+    public string? Title { get; set; }
+    public string? Content { get; set; }
+    public DateTime? NotificationDate { get; set; }
+    public DateTime RequestedDate { get; set; }
+    public DateTime? CompletionDate { get; set; }
+    public string? Description { get; set; }
+    public string? Note { get; set; }
+    public string? Reason { get; set; }
+    public EnumValue? Status { get; set; }
+    public EnumValue? Type { get; set; }
+    public Guid? AssignedTo { get; set; }
+    public Guid? AssetId { get; set; }
+    //public UserDto? PersonInCharge { get; set; }
+    public AssetDto? Asset { get; set; } 
+    
+    // Replacement
+    public Guid? NewAssetId { get; set; }
+    public AssetDto? NewAsset { get; set; }
+    
+    // Transport
+    public int? Quantity { get; set; }
+    public Guid? ToRoomId { get; set; } 
+    public RoomDto? ToRoom { get; set; }
+    public RoomDto? Location { get; set; }
+}
+
 public class TaskQueryDto : BaseQueryDto
 {
 }
