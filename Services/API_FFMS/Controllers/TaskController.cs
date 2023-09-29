@@ -21,4 +21,11 @@ public class TaskController : BaseController
     {
         return await _taskService.GetTasks(queryDto);
     }
+    
+    [HttpGet("{id}")]
+    [SwaggerOperation("Get detail task")]
+    public async Task<ApiResponse<DetailTaskDto>> GetTask(Guid id)
+    {
+        return await _taskService.GetTask(id);
+    }
 }
