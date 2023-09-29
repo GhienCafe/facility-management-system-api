@@ -17,7 +17,7 @@
       "applicationUrl": "http://localhost:5018",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development",
-        "CONNECTION_STRING": "Server=localhost;uid=sa;pwd=123;database=FFMS;TrustServerCertificate=True",
+        "CONNECTION_STRING": "Server=ffms-server.database.windows.net;uid=ffms-admin;pwd=password123@;database=FFMS;TrustServerCertificate=True",
         "JWT_ACCESS_TOKEN_SECRET": "the-most-strongest-key-ever-czxdcz",
         "JWT_RESET_TOKEN_SECRET": "the-second-strongest-key-ever-cxzcxz",
         "JWT_AUDIENCE": "facility-management-system-fb",
