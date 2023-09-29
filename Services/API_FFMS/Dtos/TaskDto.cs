@@ -42,6 +42,9 @@ public class TaskDataSetDto : BaseDto
 
 public class TaskDto : BaseDto
 {
+    public string? Title { get; set; }
+    public string? Content { get; set; }
+    public DateTime? NotificationDate { get; set; }
     public DateTime RequestedDate { get; set; }
     public DateTime? CompletionDate { get; set; }
     public string? Description { get; set; }
