@@ -16,4 +16,14 @@ namespace API_FFMS.Dtos
         public string? IsRented { get; set; }
         public string? IsMovable { get; set; }
     }
+
+    public class ImportAssetToRoomDto
+    {
+        public string? RoomName { get; set; }
+        public string? AssetCode { get; set; }
+        public string? Description { get; set; }
+        public AssetStatus Status { get; set; }
+        public DateTime? FromDate { get; set; }
+        public double Quantity { get; set; }
+    }
 }

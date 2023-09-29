@@ -31,14 +31,14 @@ namespace API_FFMS.Controllers
 
         [HttpPost]
         [SwaggerOperation("Create new model")]
-        public async Task<ApiResponse> Create([FromBody]ModelDto createDto)
+        public async Task<ApiResponse> Create([FromBody] ModelCreateDto createDto)
         {
             return await _service.Create(createDto);
         }
 
         [HttpPut("{id:guid}")]
         [SwaggerOperation("Update a model")]
-        public async Task<ApiResponse> Update(Guid id, ModelDto updateDto)
+        public async Task<ApiResponse> Update(Guid id, ModelUpdateDto updateDto)
         {
             return await _service.Update(id, updateDto);
         }

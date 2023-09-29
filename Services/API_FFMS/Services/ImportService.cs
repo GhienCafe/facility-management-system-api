@@ -51,7 +51,7 @@ namespace API_FFMS.Services
                     Description = dto.Description,
                     IsRented = IsTrueOrFalse(dto.IsRented),
                     IsMovable = IsTrueOrFalse(dto.IsMovable),
-                    Model = GetModelByName(dto.Model) 
+                    Model = GetModelByName(dto.Model)
                 }).ToList();
 
                 // Validation checks
@@ -67,12 +67,29 @@ namespace API_FFMS.Services
                 // Filter out assets with validation errors
                 var validAssets = assets.Where(a => !validationErrors.Any(e => e.Row == assets.IndexOf(a) + 2)).ToList();
 
-                if (validationErrors.Count > 0 && validAssets.Count > 0)
+                if (validationErrors.Count >= 0 && validAssets.Count >= 0)
                 {
                     if (!await MainUnitOfWork.AssetRepository.InsertAsync(validAssets, AccountId, CurrentDate))
                     {
                         throw new ApiException("Import assets failed", StatusCode.SERVER_ERROR);
                     }
+
+                    var assetIds = validAssets.Select(x => x?.Id);
+                    Guid wareHouseId = GetWareHouse("Kho")!.Id;
+                    if(wareHouseId != Guid.Empty)
+                    {
+                        var roomAssets = assetIds.Select(x => new RoomAsset
+                        {
+                            FromDate = CurrentDate,
+                            AssetId = x.Value,
+                            RoomId = wareHouseId,
+                            Status = AssetStatus.Operational
+                        }).ToList();
+
+                        if (!await MainUnitOfWork.RoomAssetRepository.InsertAsync(roomAssets, AccountId, CurrentDate))
+                            throw new ApiException("Import assets to ware house failed", StatusCode.BAD_REQUEST);
+                    }
+
                     return ApiResponses<ImportError>.Fail(validationErrors, StatusCode.UNPROCESSABLE_ENTITY, "Some Asset imports failed due to validation errors");
                 }
 
@@ -104,13 +121,22 @@ namespace API_FFMS.Services
             return model;
         }
 
+        public Room? GetWareHouse(string roomName)
+        {
+            var wareHouse = MainUnitOfWork.RoomRepository.GetQuery()
+                            .Where(x => x!.RoomName.Trim()
+                            .Equals(roomName.Trim()))
+                            .FirstOrDefault();
+            return wareHouse;
+        }
+
         private bool IsTrueOrFalse(string value)
         {
-            if (value.Trim().ToLower().Equals("Có"))
+            if (value.Trim().Equals("Có"))
             {
                 return true;
             }
-            else if (value.Trim().ToLower().Equals("Không"))
+            else if (value.Trim().Equals("Không"))
             {
                 return false;
             }

@@ -10,9 +10,9 @@ namespace API_FFMS.Services
 {
     public interface IModelService : IBaseService
     {
-        Task<ApiResponse> Create(ModelDto createDto);
+        Task<ApiResponse> Create(ModelCreateDto createDto);
         Task<ApiResponse<ModelDto>> GetModel(Guid id);
-        public Task<ApiResponse> Update(Guid id, ModelDto updateDto);
+        public Task<ApiResponse> Update(Guid id, ModelUpdateDto updateDto);
         Task<ApiResponse> Delete(Guid id);
         Task<ApiResponses<ModelDto>> GetModels(ModelQueryDto queryDto);
     }
@@ -22,9 +22,9 @@ namespace API_FFMS.Services
         {
         }
 
-        public async Task<ApiResponse> Create(ModelDto createDto)
+        public async Task<ApiResponse> Create(ModelCreateDto createDto)
         {
-            var model = createDto.ProjectTo<ModelDto, Model>();
+            var model = createDto.ProjectTo<ModelCreateDto, Model>();
             if (!await MainUnitOfWork.ModelRepository.InsertAsync(model, AccountId, CurrentDate))
             {
                 throw new ApiException("Thêm mới thất bại", StatusCode.SERVER_ERROR);
@@ -89,7 +89,7 @@ namespace API_FFMS.Services
             );
         }
 
-        public async Task<ApiResponse> Update(Guid id, ModelDto updateDto)
+        public async Task<ApiResponse> Update(Guid id, ModelUpdateDto updateDto)
         {
             var existingModel = await MainUnitOfWork.ModelRepository.FindOneAsync(id);
             if (existingModel == null)

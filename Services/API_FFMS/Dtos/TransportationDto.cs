@@ -13,7 +13,7 @@ public class TransportCreateDto
     public string? Description { get; set; }
     public string? Note{ get; set; }
     public int? Quantity{ get; set; }
-    [Required(ErrorMessage = "Assignedee  is required")]
+    [Required(ErrorMessage = "Assignee  is required")]
     public Guid AssignedTo { get; set; }
     [Required(ErrorMessage = "Asset is required")]
     public Guid AssetId { get; set; }
