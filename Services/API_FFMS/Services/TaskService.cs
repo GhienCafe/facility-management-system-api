@@ -177,7 +177,7 @@ public class TaskService : BaseService, ITaskService
             tasks,
             totalCount,
             queryDto.PageSize,
-            queryDto.Skip(),
+            queryDto.Page,
             (int)Math.Ceiling(totalCount / (double)queryDto.PageSize)
         );
     }

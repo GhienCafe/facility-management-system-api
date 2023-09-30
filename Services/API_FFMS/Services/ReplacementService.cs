@@ -209,7 +209,7 @@ public class ReplacementService : BaseService, IReplacementService
             replacements,
             totalCount,
             queryDto.PageSize,
-            queryDto.Skip(),
+            queryDto.Page,
             (int)Math.Ceiling(totalCount / (double)queryDto.PageSize)
         );
     }

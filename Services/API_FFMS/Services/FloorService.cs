@@ -67,7 +67,7 @@ public class FloorService : BaseService, IFloorService
             floors,
             totalCount,
             queryDto.PageSize,
-            queryDto.Skip(),
+            queryDto.Page,
             (int)Math.Ceiling(totalCount / (double)queryDto.PageSize)
         );
     }

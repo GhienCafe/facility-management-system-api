@@ -33,12 +33,12 @@ public class ApiResponses<T> : ApiResponse
 {
     public int? TotalCount { get; set; } = 0;
     public int? PageSize { get; set; } = 0;
-    public int? Offset { get; set; } = 0;
+    public int? Page { get; set; } = 0;
     public int? TotalPages { get; set; } = 0;
     public IEnumerable<T> Data { get; set; }
 
     public static ApiResponses<T> Success(IEnumerable<T> data, int? totalCount = null, int? pageSize = null,
-        int? offset = null,
+        int? page = null,
         int? totalPages = null)
     {
         return Create(
@@ -47,7 +47,7 @@ public class ApiResponses<T> : ApiResponse
             StatusCode.SUCCESS.ToString(),
             totalCount,
             pageSize,
-            offset,
+            page,
             totalPages
         );
     }
@@ -55,7 +55,7 @@ public class ApiResponses<T> : ApiResponse
     private static ApiResponses<T> Create(IEnumerable<T> data, StatusCode statusCode, string message,
         int? totalCount,
         int? pageSize,
-        int? offset,
+        int? page,
         int? totalPages)
     {
         return new ApiResponses<T>
@@ -65,7 +65,7 @@ public class ApiResponses<T> : ApiResponse
             Message = message,
             TotalCount = totalCount,
             PageSize = pageSize,
-            Offset = offset,
+            Page = page,
             TotalPages = totalPages
         };
     }

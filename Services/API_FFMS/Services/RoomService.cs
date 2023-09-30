@@ -121,7 +121,7 @@ public class RoomService : BaseService, IRoomService
             rooms,
             totalCount,
             queryDto.PageSize,
-            queryDto.Skip(),
+            queryDto.Page,
             (int)Math.Ceiling(totalCount / (double)queryDto.PageSize));
     }
 
