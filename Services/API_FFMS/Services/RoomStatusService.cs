@@ -14,6 +14,7 @@ public interface IRoomStatusService : IBaseService
     Task<ApiResponses<RoomStatusDto>> GetRoomStatus(RoomStatusQueryDto queryDto);
     Task<ApiResponse<RoomStatusDetailDto>> GetRoomStatus(Guid id);
     public Task<ApiResponse> Insert(RoomStatusCreateDto addRoomStatusDto);
+    public Task<ApiResponse> Update(Guid id, RoomStatusUpdateDto addRoomStatusDto);
     Task<ApiResponse> Delete(Guid id);
 
 }
@@ -39,7 +40,7 @@ public class RoomStatusService :BaseService,IRoomStatusService
             roomStatuses.Items,
             roomStatuses.TotalCount,
             queryDto.PageSize,
-            queryDto.Skip(),
+            queryDto.Page,
             (int)Math.Ceiling(roomStatuses.TotalCount / (double)queryDto.PageSize)
         );
     }
@@ -54,7 +55,7 @@ public class RoomStatusService :BaseService,IRoomStatusService
           });
 
       if (roomStatus == null)
-        throw new ApiException("Not found this roomStatus", StatusCode.NOT_FOUND);
+        throw new ApiException("Không tìm thấy trạng thái", StatusCode.NOT_FOUND);
 
       // Map CDC for the post
       roomStatus = await _mapperRepository.MapCreator(roomStatus);
@@ -66,9 +67,26 @@ public class RoomStatusService :BaseService,IRoomStatusService
     {
         var roomStatus = roomStatusDto.ProjectTo<RoomStatusCreateDto, RoomStatus>();
         if (!await MainUnitOfWork.RoomStatusRepository.InsertAsync(roomStatus, AccountId, CurrentDate))
-            throw new ApiException("Insert fail", StatusCode.SERVER_ERROR);
+            throw new ApiException("Thêm trạng thái thất bại", StatusCode.SERVER_ERROR);
         
-        return ApiResponse.Created("Create Successfully");
+        return ApiResponse.Created("Thêm trạng thái thành công");
+    }
+
+    public async Task<ApiResponse> Update(Guid id, RoomStatusUpdateDto updateDto)
+    {
+        var existingRoomStatus = await MainUnitOfWork.RoomStatusRepository.FindOneAsync(id);
+        
+        if (existingRoomStatus == null)
+            throw new ApiException("Không tìm thấy trạng thái", StatusCode.NOT_FOUND);
+
+        existingRoomStatus.StatusName = updateDto.StatusName ?? existingRoomStatus.StatusName;
+        existingRoomStatus.Color = updateDto.Color ?? existingRoomStatus.Color;
+        existingRoomStatus.Description = updateDto.Description ?? existingRoomStatus.Description;
+        
+        if (!await MainUnitOfWork.RoomStatusRepository.UpdateAsync(existingRoomStatus, AccountId, CurrentDate))
+            throw new ApiException("Cập nhật trạng thái thất bại", StatusCode.SERVER_ERROR);
+        
+        return ApiResponse.Created("Cập nhật trạng thái thành công");
     }
 
     public async Task<ApiResponse> Delete(Guid id)
@@ -76,10 +94,10 @@ public class RoomStatusService :BaseService,IRoomStatusService
         var existingRoomStatus = await MainUnitOfWork.RoomStatusRepository.FindOneAsync(id);
         
         if (existingRoomStatus == null)
-            throw new ApiException("Not found the status", StatusCode.NOT_FOUND);
+            throw new ApiException("Không tìm thấy trạng thái", StatusCode.NOT_FOUND);
         
         if (!await MainUnitOfWork.RoomStatusRepository.DeleteAsync(existingRoomStatus, AccountId, CurrentDate))
-            throw new ApiException("Delete fail", StatusCode.SERVER_ERROR);
+            throw new ApiException("Xóa thất bại", StatusCode.SERVER_ERROR);
 
         return ApiResponse.Success();
     }

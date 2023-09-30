@@ -39,7 +39,7 @@ public class CampusService :BaseService,ICampusService
             campuses.Items,
             campuses.TotalCount,
             queryDto.PageSize,
-            queryDto.Skip(),
+            queryDto.Page,
             (int)Math.Ceiling(campuses.TotalCount / (double)queryDto.PageSize)
         );
     }
