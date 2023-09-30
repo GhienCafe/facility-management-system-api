@@ -7,6 +7,7 @@ namespace MainData.Entities;
 
 public class Maintenance : BaseEntity
 {
+    public string RequestCode { get; set; } = null!;
     public DateTime RequestedDate { get; set; }
     public DateTime? CompletionDate { get; set; }
     public string? Description { get; set; }
@@ -35,6 +36,7 @@ public class MaintenanceConfig : IEntityTypeConfiguration<Maintenance>
     public void Configure(EntityTypeBuilder<Maintenance> builder)
     {
         builder.ToTable("Maintenances");
+        builder.Property(x => x.RequestCode).IsRequired();
         builder.Property(x => x.RequestedDate).IsRequired();
         builder.Property(x => x.CompletionDate).IsRequired(false);
         builder.Property(x => x.Description).IsRequired(false);

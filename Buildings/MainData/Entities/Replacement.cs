@@ -6,6 +6,7 @@ namespace MainData.Entities;
 
 public class Replacement : BaseEntity
 {
+    public string RequestCode { get; set; } = null!;
     public DateTime RequestedDate { get; set; }
     public DateTime? CompletionDate { get; set; }
     public string? Description { get; set; }
@@ -28,6 +29,7 @@ public class ReplacementConfig : IEntityTypeConfiguration<Replacement>
     public void Configure(EntityTypeBuilder<Replacement> builder)
     {
         builder.ToTable("Replacements");
+        builder.Property(x => x.RequestCode).IsRequired();
         builder.Property(x => x.RequestedDate).IsRequired();
         builder.Property(x => x.CompletionDate).IsRequired(false);
         builder.Property(x => x.Description).IsRequired(false);
