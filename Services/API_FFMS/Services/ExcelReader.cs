@@ -2,6 +2,7 @@
 using AppCore.Models;
 using ClosedXML.Excel;
 using MainData.Entities;
+using Org.BouncyCastle.Utilities;
 
 namespace API_FFMS.Services
 {
@@ -27,7 +28,7 @@ namespace API_FFMS.Services
                             AssetCode = dataRow.Cell(2).Value.ToString()?.Trim(),
                             TypeCode = dataRow.Cell(3).Value.ToString().Trim(),
                             Status = (AssetStatus)Enum.Parse(typeof(AssetStatus), dataRow.Cell(4).Value.ToString().Trim()),
-                            ManufacturingYear = DateTime.Parse(dataRow.Cell(5).Value.ToString().Trim()),
+                            ManufacturingYear = Int32.Parse(dataRow.Cell(5).Value.ToString().Trim()),
                             SerialNumber = dataRow.Cell(6).Value.ToString()?.Trim(),
                             Quantity = double.Parse(dataRow.Cell(7).Value.ToString().Trim()),
                             Description = dataRow.Cell(8).Value.ToString()?.Trim()
