@@ -9,7 +9,7 @@ namespace API_FFMS.Dtos
         public string? TypeCode { get; set; }
         public string? TypeName { get; set; }
         public string? Description { get; set; }
-        public Unit Unit { get; set; }
+        public EnumValue? Unit { get; set; }
     }
 
     public class AssetTypeDetailDto : BaseDto
@@ -17,7 +17,7 @@ namespace API_FFMS.Dtos
         public string TypeCode { get; set; } = null!;
         public string TypeName { get; set; } = null!;
         public string? Description { get; set; }
-        public Unit Unit { get; set; }
+        public EnumValue? Unit { get; set; }
     }
 
     public class AssetTypeCreateDto
@@ -46,7 +46,6 @@ namespace API_FFMS.Dtos
 
     public class AssetTypeQueryDto : BaseQueryDto
     {
-        public string? TypeCode { get; set; }
-        public string? TypeName { get; set; }
+        public string? Keyword { get; set; }
     }
 }
