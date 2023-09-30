@@ -33,6 +33,7 @@ public class MainUnitOfWork : IDisposable
     public BaseRepository<Maintenance> MaintenanceRepository => new(_context);
     public BaseRepository<MaintenanceScheduleConfig> MaintenanceScheduleRepository => new(_context);
     public BaseRepository<Repairation> RepairationRepository => new(_context);
+    public BaseRepository<Model> ModelRepository => new(_context);
 
     public void Dispose()
     {
