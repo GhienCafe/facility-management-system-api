@@ -17,14 +17,14 @@ public class RoomStatusDetailDto : BaseDto
 
 public class RoomStatusCreateDto
 {
-    public string StatusName { get; set; } = null!;
+    public string? StatusName { get; set; }
     public string? Description { get; set; }
     public string? Color { get; set; }
 }
 
 public class RoomStatusUpdateDto
 {
-    public string StatusName { get; set; } = null!;
+    public string? StatusName { get; set; }
     public string? Description { get; set; }
     public string? Color { get; set; }
 }

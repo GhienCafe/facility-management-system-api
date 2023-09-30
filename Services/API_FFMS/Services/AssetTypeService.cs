@@ -90,7 +90,7 @@ namespace API_FFMS.Services
                 assetTypes,
                 totalCount,
                 queryDto.PageSize,
-                queryDto.Skip(),
+                queryDto.Page,
                 (int)Math.Ceiling(totalCount / (double)queryDto.PageSize)
             );
         }

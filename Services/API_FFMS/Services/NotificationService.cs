@@ -113,7 +113,7 @@ public class NotificationService : BaseService, INotificationService
             notificationDtos,
             notifications.TotalCount,
             queryDto.PageSize,
-            queryDto.Skip(),
+            queryDto.Page,
             (int)Math.Ceiling((double)notifications.TotalCount / queryDto.PageSize)
         );
     }

@@ -54,7 +54,7 @@ namespace API_FFMS.Services
             roomTypes.Items,
             roomTypes.TotalCount,
             queryDto.PageSize,
-            queryDto.Skip(),
+            queryDto.Page,
             (int)Math.Ceiling(roomTypes.TotalCount / (double)queryDto.PageSize));
         }
 

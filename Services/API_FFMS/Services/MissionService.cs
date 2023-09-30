@@ -151,7 +151,7 @@ namespace API_FFMS.Services
                 missionDtos,
                 missionDtos.Count(),
                 queryDto.PageSize,
-                queryDto.Skip(),
+                queryDto.Page,
                 (int)Math.Ceiling(missionDtos.Count() / (double)queryDto.PageSize)
             );
         }
