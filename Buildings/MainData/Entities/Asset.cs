@@ -11,7 +11,7 @@ public class Asset : BaseEntity
     public string? AssetCode { get; set; }
     public bool IsMovable { get; set; }
     public AssetStatus Status { get; set; }
-    public DateTime? ManufacturingYear { get; set; }
+    public int? ManufacturingYear { get; set; }
     public string? SerialNumber { get; set; }
     public double Quantity { get; set; }
     public string? Description { get; set; }

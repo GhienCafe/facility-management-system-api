@@ -32,14 +32,14 @@ namespace API_FFMS.Services
                                    .SingleOrDefault();
 
             if (existingCategory != null)
-                throw new ApiException("Asset category name is already exists", StatusCode.ALREADY_EXISTS);
+                throw new ApiException("Đã tồn tại mã loại trang thiết bị", StatusCode.ALREADY_EXISTS);
 
             var assetCategory = createDto.ProjectTo<AssetTypeCreateDto, AssetType>();
 
             if (!await MainUnitOfWork.AssetTypeRepository.InsertAsync(assetCategory, AccountId, CurrentDate))
-                throw new ApiException("Insert fail!", StatusCode.SERVER_ERROR);
+                throw new ApiException("Thêm thất bại", StatusCode.SERVER_ERROR);
             
-            return ApiResponse.Created("Create successfully!");
+            return ApiResponse.Created("Thêm thành công");
         }
 
         public async Task<ApiResponse> Delete(Guid id)
@@ -48,11 +48,11 @@ namespace API_FFMS.Services
 
                 if (existingAssetCategory == null)
                 {
-                    throw new ApiException("Asset category not found", StatusCode.NOT_FOUND);
+                    throw new ApiException("Không tìm thấy loại trang thiết bị", StatusCode.NOT_FOUND);
                 }
 
                 if (await MainUnitOfWork.AssetTypeRepository.DeleteAsync(existingAssetCategory, AccountId, CurrentDate))
-                    throw new ApiException("Delete fail", StatusCode.SERVER_ERROR);
+                    throw new ApiException("Xóa thất bại", StatusCode.SERVER_ERROR);
                 
                 return ApiResponse.Success();
         }
@@ -134,7 +134,7 @@ namespace API_FFMS.Services
 
             if (existingAssetCategory == null)
             {
-                throw new ApiException("Asset category not found", StatusCode.NOT_FOUND);
+                throw new ApiException("Không tìm thấy loại trang thiết bị", StatusCode.NOT_FOUND);
             }
 
             existingAssetCategory.TypeName = updateDto.TypeName ?? existingAssetCategory.TypeName;
@@ -143,7 +143,7 @@ namespace API_FFMS.Services
 
             if (!await MainUnitOfWork.AssetTypeRepository.UpdateAsync(existingAssetCategory, AccountId, CurrentDate))
             {
-                throw new ApiException("Can't not update", StatusCode.SERVER_ERROR);
+                throw new ApiException("Cập nhật thất bại", StatusCode.SERVER_ERROR);
             }
 
             return ApiResponse.Success();

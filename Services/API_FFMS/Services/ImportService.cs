@@ -238,7 +238,7 @@ namespace API_FFMS.Services
 
         private void CheckManufacturingYear(List<Asset> assets)
         {
-            var currentDate = DateTime.UtcNow;
+            var currentDate = DateTime.UtcNow.Year;
 
             foreach (var asset in assets)
             {
