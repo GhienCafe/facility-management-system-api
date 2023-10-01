@@ -19,6 +19,12 @@ public class FloorDto : BaseDto
     public BuildingBaseDto? Building { get; set; }
 }
 
+public class FloorBaseDto : BaseDto
+{
+    public string? FloorName { get; set; }
+    public int? FloorNumber { get; set; }
+}
+
 public class FloorDetailDto : BaseDto
 {
     public string? FloorName { get; set; }
