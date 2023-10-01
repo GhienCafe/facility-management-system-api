@@ -76,7 +76,7 @@ namespace API_FFMS.Services
                 Id = x!.Id,
                 Description = x.Description,
                 TypeCode = x.TypeCode,
-                TypeName = x.TypeCode,
+                TypeName = x.TypeName,
                 Unit = x.Unit.GetValue(),
                 CreatedAt = x.CreatedAt,
                 EditedAt = x.EditedAt,
