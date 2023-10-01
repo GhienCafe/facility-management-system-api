@@ -104,7 +104,7 @@ public class CategoryService : BaseService, ICategoryService
             categories,
             totalCount,
             queryDto.PageSize,
-            queryDto.Skip(),
+            queryDto.Page,
             (int)Math.Ceiling(totalCount / (double)queryDto.PageSize));
     }
 

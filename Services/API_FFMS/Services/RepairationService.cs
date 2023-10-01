@@ -213,7 +213,7 @@ namespace API_FFMS.Services
                    repairations,
                    totalCount,
                    queryDto.PageSize,
-                   queryDto.Skip(),
+                   queryDto.Page,
                    (int)Math.Ceiling(totalCount / (double)queryDto.PageSize));
         }
 

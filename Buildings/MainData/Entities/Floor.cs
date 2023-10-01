@@ -7,6 +7,7 @@ namespace MainData.Entities;
 public class Floor :BaseEntity
 {
     public string? FloorMap { get; set; }
+    public string? FloorName { get; set; }
     public int FloorNumber { get; set; }
     public Guid BuildingId { get; set; }
     
@@ -21,6 +22,7 @@ public class FloorConfig : IEntityTypeConfiguration<Floor>
     {
         builder.ToTable("Floors");
         builder.Property(a => a.FloorMap).IsRequired(false);
+        builder.Property(a => a.FloorName).IsRequired();
         builder.Property(a => a.FloorNumber).IsRequired();
         builder.Property(a => a.BuildingId).IsRequired();
         

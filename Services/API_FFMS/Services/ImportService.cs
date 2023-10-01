@@ -259,23 +259,43 @@ namespace API_FFMS.Services
             }
         }
 
+        //private void CheckManufacturingYear(List<Asset> assets)
+        //{
+        //    var currentDate = DateTime.UtcNow.Year;
+
+        //    foreach (var asset in assets)
+        //    {
+        //        if (asset.ManufacturingYear >= currentDate)
+        //        {
+        //            var row = assets.IndexOf(asset) + 2;
+        //            validationErrors.Add(new ImportError
+        //            {
+        //                Row = row,
+        //                ErrorMessage = $"ManufacturingYear in row {row} is not before the current date"
+        //            });
+        //        }
+        //    }
+        //}
+
         private void CheckManufacturingYear(List<Asset> assets)
         {
-            var currentDate = DateTime.UtcNow;
+            var currentDate = DateTime.UtcNow.Year;
+            var minManufacturingYear = 2000;
 
             foreach (var asset in assets)
             {
-                if (asset.ManufacturingYear >= currentDate)
+                if (!int.TryParse(asset.ManufacturingYear.ToString(), out int manufacturingYear) || manufacturingYear < minManufacturingYear || manufacturingYear > currentDate)
                 {
                     var row = assets.IndexOf(asset) + 2;
                     validationErrors.Add(new ImportError
                     {
                         Row = row,
-                        ErrorMessage = $"ManufacturingYear in row {row} is not before the current date"
+                        ErrorMessage = $"ManufacturingYear in row {row} is not a valid integer or is not within the range {minManufacturingYear}-{currentDate}"
                     });
                 }
             }
         }
+
 
         private void CheckQuantity(List<Asset> assets)
         {

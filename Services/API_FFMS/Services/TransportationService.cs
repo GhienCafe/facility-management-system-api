@@ -220,7 +220,7 @@ namespace API_FFMS.Services
                    transports,
                    totalCount,
                    queryDto.PageSize,
-                   queryDto.Skip(),
+                   queryDto.Page,
                    (int)Math.Ceiling(totalCount / (double)queryDto.PageSize));
         }
 

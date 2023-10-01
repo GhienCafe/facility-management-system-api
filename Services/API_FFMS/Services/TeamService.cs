@@ -77,7 +77,7 @@ namespace API_FFMS.Services
             teams.Items,
             teams.TotalCount,
             queryDto.PageSize,
-            queryDto.Skip(),
+            queryDto.Page,
             (int)Math.Ceiling(teams.TotalCount / (double)queryDto.PageSize));
         }
 

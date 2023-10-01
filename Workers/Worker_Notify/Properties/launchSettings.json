@@ -5,8 +5,7 @@
       "dotnetRunMessages": true,
       "environmentVariables": {
         "DOTNET_ENVIRONMENT": "Development",
-        "ASPNETCORE_ENVIRONMENT": "Development",
-        "CONNECTION_STRING": "YOUR_CONNECTION_STRING",
+        "CONNECTION_STRING":  "Server=localhost;uid=sa;pwd=123;database=FFMS;TrustServerCertificate=True",
         "JWT_ACCESS_TOKEN_SECRET": "the-most-strongest-key-ever-czxdcz",
         "JWT_RESET_TOKEN_SECRET": "the-second-strongest-key-ever-cxzcxz",
         "JWT_AUDIENCE": "facility-management-system-fb",

@@ -113,7 +113,7 @@ public class MaintenanceService : BaseService, IMaintenanceService
             maintenances,
             totalCount,
             queryDto.PageSize,
-            queryDto.Skip(),
+            queryDto.Page,
             (int)Math.Ceiling(totalCount / (double)queryDto.PageSize));
     }
 
