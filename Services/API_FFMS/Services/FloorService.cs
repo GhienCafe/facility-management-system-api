@@ -51,6 +51,7 @@ public class FloorService : BaseService, IFloorService
             x => new FloorDto
             {
                 FloorNumber = x.Floor.FloorNumber,
+                FloorName = x.Floor.FloorName,
                 Id = x.Floor.Id,
                 FloorMap = x.Floor.FloorMap,
                 BuildingId = x.Floor.BuildingId,
@@ -128,6 +129,7 @@ public class FloorService : BaseService, IFloorService
         }
 
         floor.FloorNumber = floorDto.FloorNumber ?? floor.FloorNumber;
+        floor.FloorName = floorDto.FloorName ?? floor.FloorName;
         floor.FloorMap = !string.IsNullOrEmpty(svgString) ? svgString : floor.FloorMap;
         floor.BuildingId = floorDto.BuildingId ?? floor.BuildingId;
         

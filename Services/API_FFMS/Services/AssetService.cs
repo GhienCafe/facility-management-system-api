@@ -125,7 +125,18 @@ public class AssetService : BaseService, IAssetService
             EditedAt = x.Asset.EditedAt,
             CreatorId = x.Asset.CreatorId ?? Guid.Empty,
             EditorId = x.Asset.EditorId ?? Guid.Empty,
-            Type = x.Type.ProjectTo<AssetType, AssetTypeDto>(),
+            Type = x.Type != null ? new AssetTypeDto
+            {
+                Id = x.Type.Id,
+                Description = x.Type.Description,
+                TypeCode = x.Type.TypeCode,
+                TypeName = x.Type.TypeName,
+                Unit = x.Type.Unit.GetValue(),
+                CreatedAt = x.Type.CreatedAt,
+                EditedAt = x.Type.EditedAt,
+                CreatorId = x.Type.CreatorId ?? Guid.Empty,
+                EditorId = x.Type.EditorId ?? Guid.Empty
+            } : null,
             Model = x.Model.ProjectTo<Model, ModelDto>()
         }).ToListAsync();
 
@@ -171,8 +182,8 @@ public class AssetService : BaseService, IAssetService
         asset.Model = (await MainUnitOfWork.ModelRepository
             .FindOneAsync(asset.ModelId ?? Guid.Empty))?.ProjectTo<Model, ModelDto>();
         
-        asset.Type = (await MainUnitOfWork.AssetTypeRepository
-            .FindOneAsync(asset.TypeId ?? Guid.Empty))?.ProjectTo<AssetType, AssetTypeDto>();
+        // asset.Type = (await MainUnitOfWork.AssetTypeRepository
+        //     .FindOneAsync(asset.TypeId ?? Guid.Empty))?.ProjectTo<AssetType, AssetTypeDto>();
 
         asset = await _mapperRepository.MapCreator(asset);
 
