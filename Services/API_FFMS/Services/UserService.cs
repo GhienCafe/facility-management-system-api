@@ -24,33 +24,34 @@ public class UserService : BaseService, IUserService
     }
     public async Task<ApiResponse> Update(Guid id, UserUpdateDto updateDto)
     {
-        var user = await MainUnitOfWork.UserRepository.FindOneAsync(id);
-
-        if (user == null)
-            throw new ApiException("Không tìm thấy người dùng", StatusCode.NOT_FOUND);
-
-        user.UserCode = updateDto.UserCode ?? user.UserCode;
-        user.Fullname = updateDto.Fullname ?? user.Fullname;
-        user.Address = updateDto.Address ?? user.Address;
-        user.Email = updateDto.Email ?? user.Email;
-        user.Gender = updateDto.Gender ?? user.Gender;
-        user.Avatar = updateDto.Avatar ?? user.Avatar;
-        user.Dob = updateDto.Dob ?? user.Dob;
-        user.Role = updateDto.Role ?? user.Role;
-        user.PhoneNumber = updateDto.PhoneNumber ?? user.PhoneNumber;
-        user.PersonalIdentifyNumber = updateDto.PersonalIdentifyNumber ?? user.PersonalIdentifyNumber;
-        user.Status = updateDto.Status ?? user.Status;
-        if (updateDto.TeamId != null)
-        {
-            if (!await MainUnitOfWork.TeamRepository.IsAlreadyExistAsync((Guid)updateDto.TeamId))
-                throw new ApiException($"Không tồn tại team với id: {updateDto.TeamId}", StatusCode.BAD_REQUEST);
-            user.TeamId = updateDto.TeamId ?? user.TeamId;
-        }
-
-        if (!await MainUnitOfWork.UserRepository.UpdateAsync(user, AccountId, CurrentDate))
-            throw new ApiException("Cập nhật thất bại", StatusCode.SERVER_ERROR);
-
-        return ApiResponse.Success();
+        // var user = await MainUnitOfWork.UserRepository.FindOneAsync(id);
+        //
+        // if (user == null)
+        //     throw new ApiException("Không tìm thấy người dùng", StatusCode.NOT_FOUND);
+        //
+        // user.UserCode = updateDto.UserCode ?? user.UserCode;
+        // user.Fullname = updateDto.Fullname ?? user.Fullname;
+        // user.Address = updateDto.Address ?? user.Address;
+        // user.Email = updateDto.Email ?? user.Email;
+        // user.Gender = updateDto.Gender ?? user.Gender;
+        // user.Avatar = updateDto.Avatar ?? user.Avatar;
+        // user.Dob = updateDto.Dob ?? user.Dob;
+        // user.Role = updateDto.Role ?? user.Role;
+        // user.PhoneNumber = updateDto.PhoneNumber ?? user.PhoneNumber;
+        // user.PersonalIdentifyNumber = updateDto.PersonalIdentifyNumber ?? user.PersonalIdentifyNumber;
+        // user.Status = updateDto.Status ?? user.Status;
+        // if (updateDto.TeamId != null)
+        // {
+        //     if (!await MainUnitOfWork.TeamRepository.IsAlreadyExistAsync((Guid)updateDto.TeamId))
+        //         throw new ApiException($"Không tồn tại team với id: {updateDto.TeamId}", StatusCode.BAD_REQUEST);
+        //     user.TeamId = updateDto.TeamId ?? user.TeamId;
+        // }
+        //
+        // if (!await MainUnitOfWork.UserRepository.UpdateAsync(user, AccountId, CurrentDate))
+        //     throw new ApiException("Cập nhật thất bại", StatusCode.SERVER_ERROR);
+        //
+        // return ApiResponse.Success();
+        throw new ApiException("");
     }
     
     public async Task<ApiResponse> Create(UserCreateDto createDto)
@@ -71,135 +72,137 @@ public class UserService : BaseService, IUserService
 
     public async Task<ApiResponse<UserDetailDto>> GetDetail(Guid id)
     {
-        var user = await MainUnitOfWork.UserRepository.GetQuery().Where(x => !x!.DeletedAt.HasValue)
-            .Where(x => x!.Id == id).Select(x => new UserDetailDto
-            {
-                Id = x!.Id,
-                Gender = x.Gender,
-                Role = x.Role.GetValue(),
-                Status = x.Status.GetValue(),
-                Address = x.Address,
-                Avatar = x.Avatar,
-                Dob = x.Dob,
-                Fullname = x.Fullname,
-                PhoneNumber = x.PhoneNumber,
-                Email = x.Email,
-                UserCode = x.UserCode,
-                PersonalIdentifyNumber = x.PersonalIdentifyNumber,
-                FirstLoginAt = x.FirstLoginAt,
-                LastLoginAt = x.LastLoginAt,
-                TeamId = x.TeamId,
-                CreatedAt = x.CreatedAt,
-                EditedAt = x.EditedAt,
-                CreatorId = x.CreatorId ?? Guid.Empty,
-                EditorId = x.EditorId ?? Guid.Empty,
-            }).FirstOrDefaultAsync();
-
-        if (user == null)
-            throw new ApiException("Không tìm thấy người dùng");
-
-        user.Team = (await MainUnitOfWork.TeamRepository.FindOneAsync(user.TeamId ?? Guid.Empty))?.ProjectTo<Team, TeamDto>();
-        user = await _mapperRepository.MapCreator(user);
-        
-        return ApiResponse<UserDetailDto>.Success(user);
+        // var user = await MainUnitOfWork.UserRepository.GetQuery().Where(x => !x!.DeletedAt.HasValue)
+        //     .Where(x => x!.Id == id).Select(x => new UserDetailDto
+        //     {
+        //         Id = x!.Id,
+        //         Gender = x.Gender,
+        //         Role = x.Role.GetValue(),
+        //         Status = x.Status.GetValue(),
+        //         Address = x.Address,
+        //         Avatar = x.Avatar,
+        //         Dob = x.Dob,
+        //         Fullname = x.Fullname,
+        //         PhoneNumber = x.PhoneNumber,
+        //         Email = x.Email,
+        //         UserCode = x.UserCode,
+        //         PersonalIdentifyNumber = x.PersonalIdentifyNumber,
+        //         FirstLoginAt = x.FirstLoginAt,
+        //         LastLoginAt = x.LastLoginAt,
+        //         TeamId = x.TeamId,
+        //         CreatedAt = x.CreatedAt,
+        //         EditedAt = x.EditedAt,
+        //         CreatorId = x.CreatorId ?? Guid.Empty,
+        //         EditorId = x.EditorId ?? Guid.Empty,
+        //     }).FirstOrDefaultAsync();
+        //
+        // if (user == null)
+        //     throw new ApiException("Không tìm thấy người dùng");
+        //
+        // user.Team = (await MainUnitOfWork.TeamRepository.FindOneAsync(user.TeamId ?? Guid.Empty))?.ProjectTo<Team, TeamDto>();
+        // user = await _mapperRepository.MapCreator(user);
+        //
+        // return ApiResponse<UserDetailDto>.Success(user);
+        throw new ApiException("");
     }
 
     public async Task<ApiResponses<UserDto>> GetList(UserQueryDto queryDto)
     {
-        var keyword = queryDto.Keyword?.Trim().ToLower();
-
-        var userDataset = MainUnitOfWork.UserRepository.GetQuery().Where(x => !x!.DeletedAt.HasValue);
-        if (!string.IsNullOrEmpty(keyword))
-        {
-            userDataset = userDataset.Where(x => x!.UserCode.ToLower().Contains(keyword)
-                                                 || x.Email.Contains(keyword)
-                                                 || x.Fullname.Contains(keyword)
-                                                 || x.PhoneNumber.Contains(keyword)
-                                                 || x.PersonalIdentifyNumber!.Contains(keyword));
-        }
-
-        if (queryDto.Role != null)
-        {
-            userDataset = userDataset.Where(x => x!.Role == queryDto.Role);
-        }
-        
-        if (queryDto.Gender != null)
-        {
-            userDataset = userDataset.Where(x => x!.Gender == queryDto.Gender);
-        }
-        
-        if (queryDto.Status != null)
-        {
-            userDataset = userDataset.Where(x => x!.Status == queryDto.Status);
-        }
-        
-        if (queryDto.TeamId != null)
-        {
-            userDataset = userDataset.Where(x => x!.TeamId == queryDto.TeamId);
-        }
-        
-        if (queryDto.CreateAtFrom != null)
-        {
-            userDataset = userDataset.Where(x => x!.CreatedAt >= queryDto.CreateAtFrom);
-        }
-        
-        if (queryDto.CreateAtTo != null)
-        {
-            userDataset = userDataset.Where(x => x!.CreatedAt <= queryDto.CreateAtTo);
-        }
-        
-        // Order
-        var isDescending = queryDto.OrderBy.EndsWith("desc", StringComparison.OrdinalIgnoreCase);
-        var orderByColumn = queryDto.OrderBy.Split(' ')[0]; // Get the column to order by
-        userDataset = isDescending ? userDataset.OrderByDescending(user => EF.Property<object>(user!, orderByColumn)) : userDataset.OrderBy(user => EF.Property<object>(user!, orderByColumn));
-
-        var joinTables = from user in userDataset
-            join team in MainUnitOfWork.TeamRepository.GetQuery() on user.TeamId equals team.Id into teamGroup
-            from team in teamGroup.DefaultIfEmpty()
-            select new
-            {
-                User = user,
-                Team = team
-            };
-
-        var totalCount = joinTables.Count();
-
-        joinTables = joinTables.Skip(queryDto.Skip())
-            .Take(queryDto.PageSize);
-
-        var users = await joinTables.Select(x => new UserDto
-        {
-            Id = x!.User.Id,
-            Gender = x.User.Gender,
-            Role = x.User.Role.GetValue(),
-            Status = x.User.Status.GetValue(),
-            Address = x.User.Address,
-            Avatar = x.User.Avatar,
-            Dob = x.User.Dob,
-            Fullname = x.User.Fullname,
-            PhoneNumber = x.User.PhoneNumber,
-            Email = x.User.Email,
-            UserCode = x.User.UserCode,
-            PersonalIdentifyNumber = x.User.PersonalIdentifyNumber,
-            FirstLoginAt = x.User.FirstLoginAt,
-            LastLoginAt = x.User.LastLoginAt,
-            TeamId = x.User.TeamId,
-            CreatedAt = x.User.CreatedAt,
-            EditedAt = x.User.EditedAt,
-            CreatorId = x.User.CreatorId ?? Guid.Empty,
-            EditorId = x.User.EditorId ?? Guid.Empty,
-            Team = x.Team.ProjectTo<Team, TeamDto>()
-        }).ToListAsync();
-
-        users = await _mapperRepository.MapCreator(users);
-        
-        return ApiResponses<UserDto>.Success(
-            users,
-            totalCount,
-            queryDto.PageSize,
-            queryDto.Page,
-            (int)Math.Ceiling(totalCount / (double)queryDto.PageSize)
-        );
+        // var keyword = queryDto.Keyword?.Trim().ToLower();
+        //
+        // var userDataset = MainUnitOfWork.UserRepository.GetQuery().Where(x => !x!.DeletedAt.HasValue);
+        // if (!string.IsNullOrEmpty(keyword))
+        // {
+        //     userDataset = userDataset.Where(x => x!.UserCode.ToLower().Contains(keyword)
+        //                                          || x.Email.Contains(keyword)
+        //                                          || x.Fullname.Contains(keyword)
+        //                                          || x.PhoneNumber.Contains(keyword)
+        //                                          || x.PersonalIdentifyNumber!.Contains(keyword));
+        // }
+        //
+        // if (queryDto.Role != null)
+        // {
+        //     userDataset = userDataset.Where(x => x!.Role == queryDto.Role);
+        // }
+        //
+        // if (queryDto.Gender != null)
+        // {
+        //     userDataset = userDataset.Where(x => x!.Gender == queryDto.Gender);
+        // }
+        //
+        // if (queryDto.Status != null)
+        // {
+        //     userDataset = userDataset.Where(x => x!.Status == queryDto.Status);
+        // }
+        //
+        // if (queryDto.TeamId != null)
+        // {
+        //     userDataset = userDataset.Where(x => x!.TeamId == queryDto.TeamId);
+        // }
+        //
+        // if (queryDto.CreateAtFrom != null)
+        // {
+        //     userDataset = userDataset.Where(x => x!.CreatedAt >= queryDto.CreateAtFrom);
+        // }
+        //
+        // if (queryDto.CreateAtTo != null)
+        // {
+        //     userDataset = userDataset.Where(x => x!.CreatedAt <= queryDto.CreateAtTo);
+        // }
+        //
+        // // Order
+        // var isDescending = queryDto.OrderBy.EndsWith("desc", StringComparison.OrdinalIgnoreCase);
+        // var orderByColumn = queryDto.OrderBy.Split(' ')[0]; // Get the column to order by
+        // userDataset = isDescending ? userDataset.OrderByDescending(user => EF.Property<object>(user!, orderByColumn)) : userDataset.OrderBy(user => EF.Property<object>(user!, orderByColumn));
+        //
+        // var joinTables = from user in userDataset
+        //     join team in MainUnitOfWork.TeamRepository.GetQuery() on user.TeamId equals team.Id into teamGroup
+        //     from team in teamGroup.DefaultIfEmpty()
+        //     select new
+        //     {
+        //         User = user,
+        //         Team = team
+        //     };
+        //
+        // var totalCount = joinTables.Count();
+        //
+        // joinTables = joinTables.Skip(queryDto.Skip())
+        //     .Take(queryDto.PageSize);
+        //
+        // var users = await joinTables.Select(x => new UserDto
+        // {
+        //     Id = x!.User.Id,
+        //     Gender = x.User.Gender,
+        //     Role = x.User.Role.GetValue(),
+        //     Status = x.User.Status.GetValue(),
+        //     Address = x.User.Address,
+        //     Avatar = x.User.Avatar,
+        //     Dob = x.User.Dob,
+        //     Fullname = x.User.Fullname,
+        //     PhoneNumber = x.User.PhoneNumber,
+        //     Email = x.User.Email,
+        //     UserCode = x.User.UserCode,
+        //     PersonalIdentifyNumber = x.User.PersonalIdentifyNumber,
+        //     FirstLoginAt = x.User.FirstLoginAt,
+        //     LastLoginAt = x.User.LastLoginAt,
+        //     TeamId = x.User.TeamId,
+        //     CreatedAt = x.User.CreatedAt,
+        //     EditedAt = x.User.EditedAt,
+        //     CreatorId = x.User.CreatorId ?? Guid.Empty,
+        //     EditorId = x.User.EditorId ?? Guid.Empty,
+        //     Team = x.Team.ProjectTo<Team, TeamDto>()
+        // }).ToListAsync();
+        //
+        // users = await _mapperRepository.MapCreator(users);
+        //
+        // return ApiResponses<UserDto>.Success(
+        //     users,
+        //     totalCount,
+        //     queryDto.PageSize,
+        //     queryDto.Page,
+        //     (int)Math.Ceiling(totalCount / (double)queryDto.PageSize)
+        // );
+        throw new ApiException("");
     }
 
     public async Task<ApiResponse> Delete(Guid id)

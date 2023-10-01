@@ -23,7 +23,6 @@ public class TaskDataSetDto : BaseDto
     public string? Description { get; set; }
     public string? Note { get; set; }
     public string? Reason { get; set; }
-    public ActionStatus? Status { get; set; }
     public ActionType? Type { get; set; }
     public Guid? AssignedTo { get; set; }
     public Guid? AssetId { get; set; }
@@ -105,7 +104,6 @@ public class TaskCommonQueryDto : BaseDto
     public string? Title { get; set; }
     public string? Content { get; set; }
     public ActionType? Type { get; set; }
-    public ActionStatus? Status { get; set; }
     public Guid? AssetId { get; set; }
     public Guid? RoomId { get; set; }
     public RoomDto? Room { get; set; }

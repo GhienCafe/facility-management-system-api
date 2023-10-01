@@ -26,96 +26,97 @@ public class NotificationService : BaseService, INotificationService
 
     public async Task<ApiResponses<NotifcationDetail>> GetNotification(NotificationQueryDto queryDto)
     {
-        var notifications = await MainUnitOfWork.NotificationRepository.FindResultAsync<MainData.Entities.Notification>(
-            new Expression<Func<MainData.Entities.Notification, bool>>[]
-            {
-                x => !x.DeletedAt.HasValue,
-                x => x.UserId == AccountId
-            }, queryDto.OrderBy, queryDto.Skip(), queryDto.PageSize);
-
-        var notificationDtos = new List<NotifcationDetail>();
-
-        foreach (var notification in notifications.Items)
-        {
-            var notifcationDetail = new NotifcationDetail
-            {
-                Title = notification.Title,
-                Content = notification.Content,
-                IsRead = notification.IsRead,
-                Type = notification.Type.GetValue(),
-                ShortContent = notification.ShortContent,
-                CreatorId = notification.CreatorId ?? Guid.Empty,
-                Id = notification.Id,
-                ItemId = notification.ItemId,
-            };
-            
-
-            if (notification.Type == NotificationType.Maintenance)
-            {
-                var maintenance = await MainUnitOfWork.MaintenanceRepository
-                    .GetQuery().SingleOrDefaultAsync(x => x!.Id == notification.ItemId);
-
-                if (maintenance != null)
-                {
-                    notifcationDetail.Maintenance = new MaintenanceDto
-                    {
-                        Id = maintenance.Id,
-                        RequestedDate = maintenance.RequestedDate,
-                        CompletionDate = maintenance.CompletionDate,
-                        Description = maintenance.Description,
-                        Note = maintenance.Note,
-                        AssignedTo = maintenance.AssignedTo,
-                        AssetId = maintenance.AssetId,
-                        CreatorId = maintenance.CreatorId??Guid.Empty,
-                        CreatedAt = maintenance.CreatedAt,
-                        EditedAt = maintenance.EditedAt,
-                        EditorId = maintenance.EditorId??Guid.Empty
-                        // Thêm các thuộc tính khác của MaintenanceDto
-                    };
-
-                    notifcationDetail.Maintenance = await _mapperRepository.MapCreator(notifcationDetail.Maintenance);
-
-                }
-            }
-            else if (notification.Type == NotificationType.Replacement)
-            {
-                var replacement = await MainUnitOfWork.ReplacementRepository.GetQuery()
-                    .SingleOrDefaultAsync(x => x!.Id == notification.ItemId);
-
-                if (replacement != null)
-                {
-                    notifcationDetail.Replacement = new ReplacementDto
-                    {
-                        Id = replacement.Id,
-                        RequestedDate = replacement.RequestedDate,
-                        CompletionDate = replacement.CompletionDate,
-                        Description = replacement.Description,
-                        Note = replacement.Note,
-                        Reason = replacement.Reason,
-                        Status = replacement.Status.GetValue(), 
-                        AssignedTo = replacement.AssignedTo,
-                        AssetId = replacement.AssetId,
-                        CreatorId = replacement.CreatorId??Guid.Empty,
-                        CreatedAt = replacement.CreatedAt,
-                        NewAssetId = replacement.NewAssetId,
-                        EditedAt = replacement.EditedAt,
-                        EditorId = replacement.EditorId??Guid.Empty
-                        // Thêm các thuộc tính khác của ReplacementDto
-                    };
-                    notifcationDetail.Replacement = await _mapperRepository.MapCreator(notifcationDetail.Replacement);
-                }
-            }
-
-            notificationDtos.Add(notifcationDetail);
-        }
-
-        return ApiResponses<NotifcationDetail>.Success(
-            notificationDtos,
-            notifications.TotalCount,
-            queryDto.PageSize,
-            queryDto.Page,
-            (int)Math.Ceiling((double)notifications.TotalCount / queryDto.PageSize)
-        );
+        // var notifications = await MainUnitOfWork.NotificationRepository.FindResultAsync<MainData.Entities.Notification>(
+        //     new Expression<Func<MainData.Entities.Notification, bool>>[]
+        //     {
+        //         x => !x.DeletedAt.HasValue,
+        //         x => x.UserId == AccountId
+        //     }, queryDto.OrderBy, queryDto.Skip(), queryDto.PageSize);
+        //
+        // var notificationDtos = new List<NotifcationDetail>();
+        //
+        // foreach (var notification in notifications.Items)
+        // {
+        //     var notifcationDetail = new NotifcationDetail
+        //     {
+        //         Title = notification.Title,
+        //         Content = notification.Content,
+        //         IsRead = notification.IsRead,
+        //         Type = notification.Type.GetValue(),
+        //         ShortContent = notification.ShortContent,
+        //         CreatorId = notification.CreatorId ?? Guid.Empty,
+        //         Id = notification.Id,
+        //         ItemId = notification.ItemId,
+        //     };
+        //     
+        //
+        //     if (notification.Type == NotificationType.Maintenance)
+        //     {
+        //         var maintenance = await MainUnitOfWork.MaintenanceRepository
+        //             .GetQuery().SingleOrDefaultAsync(x => x!.Id == notification.ItemId);
+        //
+        //         if (maintenance != null)
+        //         {
+        //             notifcationDetail.Maintenance = new MaintenanceDto
+        //             {
+        //                 Id = maintenance.Id,
+        //                 RequestedDate = maintenance.RequestedDate,
+        //                 CompletionDate = maintenance.CompletionDate,
+        //                 Description = maintenance.Description,
+        //                 Note = maintenance.Note,
+        //                 AssignedTo = maintenance.AssignedTo,
+        //                 AssetId = maintenance.AssetId,
+        //                 CreatorId = maintenance.CreatorId??Guid.Empty,
+        //                 CreatedAt = maintenance.CreatedAt,
+        //                 EditedAt = maintenance.EditedAt,
+        //                 EditorId = maintenance.EditorId??Guid.Empty
+        //                 // Thêm các thuộc tính khác của MaintenanceDto
+        //             };
+        //
+        //             notifcationDetail.Maintenance = await _mapperRepository.MapCreator(notifcationDetail.Maintenance);
+        //
+        //         }
+        //     }
+        //     else if (notification.Type == NotificationType.Replacement)
+        //     {
+        //         var replacement = await MainUnitOfWork.ReplacementRepository.GetQuery()
+        //             .SingleOrDefaultAsync(x => x!.Id == notification.ItemId);
+        //
+        //         if (replacement != null)
+        //         {
+        //             notifcationDetail.Replacement = new ReplacementDto
+        //             {
+        //                 Id = replacement.Id,
+        //                 RequestedDate = replacement.RequestedDate,
+        //                 CompletionDate = replacement.CompletionDate,
+        //                 Description = replacement.Description,
+        //                 Note = replacement.Note,
+        //                 Reason = replacement.Reason,
+        //                 Status = replacement.Status.GetValue(), 
+        //                 AssignedTo = replacement.AssignedTo,
+        //                 AssetId = replacement.AssetId,
+        //                 CreatorId = replacement.CreatorId??Guid.Empty,
+        //                 CreatedAt = replacement.CreatedAt,
+        //                 NewAssetId = replacement.NewAssetId,
+        //                 EditedAt = replacement.EditedAt,
+        //                 EditorId = replacement.EditorId??Guid.Empty
+        //                 // Thêm các thuộc tính khác của ReplacementDto
+        //             };
+        //             notifcationDetail.Replacement = await _mapperRepository.MapCreator(notifcationDetail.Replacement);
+        //         }
+        //     }
+        //
+        //     notificationDtos.Add(notifcationDetail);
+        // }
+        //
+        // return ApiResponses<NotifcationDetail>.Success(
+        //     notificationDtos,
+        //     notifications.TotalCount,
+        //     queryDto.PageSize,
+        //     queryDto.Page,
+        //     (int)Math.Ceiling((double)notifications.TotalCount / queryDto.PageSize)
+        // );
+        throw new ApiException("");
     }
 
     public async Task SendSingleMessage(NotificationDto noti, string token)

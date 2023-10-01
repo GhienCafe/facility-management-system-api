@@ -10,7 +10,6 @@ namespace API_FFMS.Dtos
         public string? Description { get; set; }
         public string? Note { get; set; }
         public string? Reason { get; set; }
-        public ActionStatus Status { get; set; }
         public Guid? AssignedTo { get; set; }
         public Guid? AssetId { get; set; }
     }
@@ -22,7 +21,6 @@ namespace API_FFMS.Dtos
         public string? Description { get; set; }
         public string? Note { get; set; }
         public string? Reason { get; set; }
-        public ActionStatus Status { get; set; }
         public Guid? AssignedTo { get; set; }
         public Guid? AssetId { get; set; }
         public UserDto? PersonInCharge { get; set; }
@@ -62,7 +60,6 @@ namespace API_FFMS.Dtos
         //public string? Description { get; set; }
         public string? Note { get; set; }
         //public string? Reason { get; set; }
-        public ActionStatus? Status { get; set; }
         public Guid? AssignedTo { get; set; }
         public Guid? AssetId { get; set; }
     }

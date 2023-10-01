@@ -52,7 +52,6 @@ public class TransportQueryDto : BaseQueryDto
 {
     public DateTime? RequestedDate { get; set; }
     public DateTime? CompletionDate { get; set; }
-    public ActionStatus? Status { get; set; }
     public Guid? AssignedTo { get; set; }
     public Guid? AssetId { get; set; }
     public Guid? ToRoomId { get; set; }
@@ -77,7 +76,6 @@ public class TransportDto : BaseDto
 
 public class TransportUpdateStatusDto
 {
-    public ActionStatus Status { get; set; }
 }
 
 public class FutureDateAttribute : ValidationAttribute
