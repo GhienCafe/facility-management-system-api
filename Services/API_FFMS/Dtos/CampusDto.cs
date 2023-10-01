@@ -5,11 +5,13 @@ namespace API_FFMS.Dtos;
 
 public class CampusDto : BaseDto
 {
-    [Required] public string CampusName { get; set; } = null!;
-    [Required] public string CampusCode { get; set; } = null!;
+    public string? CampusName { get; set; }
+    public string? CampusCode { get; set; }
     public string? Telephone { get; set; }
     public string? Description { get; set; }
     public string? Address { get; set; }
+    public string? LogoUrl { get; set; }
+    public string? WebsiteUrl { get; set; }
 }
 
 public class CampusDetailDto : BaseDto
@@ -18,6 +20,8 @@ public class CampusDetailDto : BaseDto
     public string? Telephone { get; set; }
     public string? Description { get; set; }
     public string? Address { get; set; }
+    public string? LogoUrl { get; set; }
+    public string? WebsiteUrl { get; set; }
     public int? TotalBuilding { get; set; }
 }
 
@@ -28,6 +32,8 @@ public class CampusCreateDto
     public string? Telephone { get; set; }
     public string? Description { get; set; }
     public string? Address { get; set; }
+    public string? LogoUrl { get; set; }
+    public string? WebsiteUrl { get; set; }
 }
 public class CampusUpdateDto
 {
@@ -36,8 +42,9 @@ public class CampusUpdateDto
     public string? Telephone { get; set; }
     public string? Description { get; set; }
     public string? Address { get; set; }
+    public string? LogoUrl { get; set; }
+    public string? WebsiteUrl { get; set; }
 }
 public class CampusQueryDto : BaseQueryDto
 {
-    public string? CampusName { get; set; }
 }
