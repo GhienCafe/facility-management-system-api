@@ -36,38 +36,33 @@ public class Asset : BaseEntity
 
 public enum AssetStatus
 {
-    [Display(Name = "Hoạt động")]
+    [Display(Name = "Hoạt động bình thường")]
     Operational = 1,
 
-    [Display(Name = "Ngưng hoạt động")]
+    [Display(Name = "Không thể sử dụng")]
     Inactive = 2,
 
-    [Display(Name = "Bảo dưỡng")]
+    [Display(Name = "Đang trong quá trình bảo dưỡng")]
     Maintenance = 3,
 
-    [Display(Name = "Sửa chữa")]
+    [Display(Name = "Đang trong quá trình sửa chữa")]
     Repair = 4,
-
-    [Display(Name = "Thanh lý")]
-    Disposed = 5,
-
-    [Display(Name = "Hỏng")]
-    OutOfOrder = 6,
-
-    [Display(Name = "Chờ duyệt")]
-    Pending = 7,
-
-    [Display(Name = "Không khả dụng")]
-    NotAvailable = 8,
-
-    [Display(Name = "Cần kiểm tra")]
-    NeedInspection = 9,
-
-    [Display(Name = "Nâng cấp")]
-    Upgraded = 10,
-
-    [Display(Name = "Thay thế")]
-    Replacement = 11
+    
+    [Display(Name = "Trang thiết bị đang trong quá trình kiểm tra")]
+    NeedInspection = 5,
+    
+    [Display(Name = "Trang thiết bị đang trong quá trình thay thế")]
+    Replacement = 6,
+    
+    [Display(Name = "Trang thiết bị đang trong quá trình điều chuyển")]
+    Transportation = 7,
+    
+    [Display(Name = "Trang thiết đang bị bi hư hại")]
+    OutOfOrder = 8,
+    
+    [Display(Name = "Khác")]
+    Others = 9,
+   
 }
 
 public enum RoomRequestStatus{}
