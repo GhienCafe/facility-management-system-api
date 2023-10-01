@@ -46,7 +46,6 @@ public class MaintenanceUpdateDto
     public DateTime? RequestedDate { get; set; }
     public DateTime? CompletionDate { get; set; }
     public string? Description { get; set; }
-    public ActionStatus? Status { get; set; }
     public string? Note { get; set; }
     public Guid? AssignedTo { get; set; }
     public Guid? AssetId { get; set; }
@@ -58,8 +57,6 @@ public class MaintenanceQueryDto : BaseQueryDto
     public DateTime? CompletionDate { get; set; }
     public string? Description { get; set; }
     public string? Note { get; set; }
-    public ActionStatus? Status { get; set; }
-    public MaintenanceType? Type { get; set; }
     public Guid? AssignedTo { get; set; }
     public Guid? AssetId { get; set; }
 }

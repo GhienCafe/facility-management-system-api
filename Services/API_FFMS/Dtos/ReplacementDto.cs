@@ -50,7 +50,6 @@ public class UpdateReplacementDto
     public string? Description { get; set; } = string.Empty;
     public string? Note { get; set; } = string.Empty;
     public string? Reason { get; set; }
-    public ActionStatus? Status { get; set; }
     public Guid? AssignedTo { get; set; } = Guid.Empty;
     public Guid? AssetId { get; set; } = Guid.Empty;
     public Guid? NewAssetId { get; set; } = Guid.Empty;
@@ -75,8 +74,6 @@ public class DetailReplacementDto : BaseDto
 public class QueryReplacementDto : BaseQueryDto
 {
     public DateTime RequestedDate { get; set; }
-    public DateTime? CompletionDate { get; set; }
-    public ActionStatus? Status { get; set; }
     public Guid? AssignedTo { get; set; }
     public Guid? AssetId { get; set; }
     public Guid? NewAssetId { get; set; }

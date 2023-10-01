@@ -16,9 +16,11 @@ public class Asset : BaseEntity
     public double Quantity { get; set; }
     public string? Description { get; set; }
     public DateTime? LastMaintenanceTime { get; set; }
+    public DateTime? LastCheckedDate { get; set; }
     public Guid? TypeId { get; set; }
     public Guid? ModelId { get; set; }
     public bool? IsRented { get; set; }
+    public DateTime? StartDateOfUse { get; set; }
 
     //
     public virtual AssetType? Type { get; set; }
@@ -29,6 +31,7 @@ public class Asset : BaseEntity
     public virtual IEnumerable<Replacement>? Replacements { get; set; }
     public virtual IEnumerable<Transportation>? Transportations { get; set; }
     public virtual IEnumerable<Repairation>? Repairations { get; set; }
+    public virtual IEnumerable<AssetCheck>? AssetChecks { get; set; }
 }
 
 public enum AssetStatus
@@ -77,12 +80,14 @@ public class AssetConfig : IEntityTypeConfiguration<Asset>
         builder.Property(a => a.TypeId).IsRequired();
         builder.Property(a => a.AssetName).IsRequired();
         builder.Property(a => a.AssetCode).IsRequired(false);
+        builder.Property(a => a.StartDateOfUse).IsRequired(false);
         builder.Property(a => a.Status).IsRequired();
         builder.Property(a => a.IsMovable).IsRequired();
         builder.Property(a => a.ManufacturingYear).IsRequired(false);
         builder.Property(a => a.SerialNumber).IsRequired(false);
         builder.Property(a => a.Quantity).IsRequired();
         builder.Property(a => a.LastMaintenanceTime).IsRequired(false);
+        builder.Property(a => a.LastCheckedDate).IsRequired(false);
         builder.Property(a => a.Description).IsRequired(false);
         builder.Property(a => a.IsRented).IsRequired(false);
         
@@ -123,6 +128,10 @@ public class AssetConfig : IEntityTypeConfiguration<Asset>
             .HasForeignKey(x => x.AssetId);
         
         builder.HasMany(x => x.Repairations)
+            .WithOne(x => x.Asset)
+            .HasForeignKey(x => x.AssetId);
+        
+        builder.HasMany(x => x.AssetChecks)
             .WithOne(x => x.Asset)
             .HasForeignKey(x => x.AssetId);
     }
