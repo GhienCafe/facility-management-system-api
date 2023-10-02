@@ -90,7 +90,7 @@ namespace API_FFMS.Services
                     AssetId = assetId
                 };
                 transports.Add(transport);
-                existingAsset.Status = AssetStatus.Pending;
+                existingAsset.Status = AssetStatus.Transportation;
             }
             request.Transportations = transports;
 

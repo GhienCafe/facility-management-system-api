@@ -110,7 +110,10 @@ public class AssetService : BaseService, IAssetService
         {
             Id = x.Asset.Id,
             Description = x.Asset.Description,
-            Status = x.Asset.Status.GetValue(),
+            Status = x.Asset.Status,
+            StatusObj = x.Asset.Status.GetValue(),
+            LastCheckedDate = x.Asset.LastCheckedDate,
+            StartDateOfUse = x.Asset.StartDateOfUse,
             AssetCode = x.Asset.AssetCode,
             AssetName = x.Asset.AssetName,
             Quantity = x.Asset.Quantity,
@@ -159,7 +162,8 @@ public class AssetService : BaseService, IAssetService
             {
                 Id = x!.Id,
                 Description = x.Description,
-                Status = x.Status.GetValue(),
+                Status = x.Status,
+                StatusObj = x.Status.GetValue(),
                 AssetCode = x.AssetCode,
                 AssetName = x.AssetName,
                 Quantity = x.Quantity,
@@ -170,6 +174,8 @@ public class AssetService : BaseService, IAssetService
                 SerialNumber = x.SerialNumber,
                 TypeId = x.TypeId,
                 LastMaintenanceTime = x.LastMaintenanceTime,
+                LastCheckedDate = x.LastCheckedDate,
+                StartDateOfUse = x.StartDateOfUse,
                 CreatedAt = x.CreatedAt,
                 EditedAt = x.EditedAt,
                 CreatorId = x.CreatorId ?? Guid.Empty,
@@ -222,6 +228,7 @@ public class AssetService : BaseService, IAssetService
      
      public async Task<ApiResponses<RoomAssetDto>> GetAssetsInRoom(Guid roomId, RoomAssetQueryDto queryDto)
      {
+         var keyword = queryDto.Keyword?.Trim().ToLower();
          var room = await MainUnitOfWork.RoomRepository.FindOneAsync<RoomDto>(new Expression<Func<Room, bool>>[]
             {
                 x => !x.DeletedAt.HasValue,
@@ -229,7 +236,7 @@ public class AssetService : BaseService, IAssetService
             });
             
             if (room == null)
-                throw new ApiException("Không tìm thất phòng", StatusCode.NOT_FOUND);
+                throw new ApiException("Không tìm thấy phòng", StatusCode.NOT_FOUND);
 
             var roomAssetDataset = MainUnitOfWork.RoomAssetRepository.GetQuery();
             var assetDataset = MainUnitOfWork.AssetRepository.GetQuery();
@@ -255,15 +262,15 @@ public class AssetService : BaseService, IAssetService
             if(queryDto.FromDate != null)
                 joinedAssets = joinedAssets.Where(x => x!.RoomAsset.FromDate >= queryDto.FromDate);
 
-            if (!string.IsNullOrEmpty(queryDto.AssetCode))
-                joinedAssets = joinedAssets.Where(x => x!.Asset!.AssetCode!.ToLower().Equals(queryDto.AssetCode.Trim().ToLower()));
+            if (!string.IsNullOrEmpty(keyword))
+            {
+                joinedAssets = joinedAssets.Where(x => x!.Asset!.AssetCode!
+                    .ToLower().Equals(keyword) && x.Asset.AssetName.Contains(keyword));
+            }
             
             if (queryDto.Status != null)
                 joinedAssets = joinedAssets.Where(x => x!.Asset.Status == queryDto.Status);
-            
-            if (!string.IsNullOrEmpty(queryDto.AssetName))
-                joinedAssets = joinedAssets.Where(x => x!.Asset.AssetName!.ToLower().Contains(queryDto.AssetName.Trim().ToLower()));
-            
+         
             var totalCount = joinedAssets.Count();
 
             joinedAssets = joinedAssets.Skip(queryDto.Skip()).Take(queryDto.PageSize);
@@ -272,8 +279,37 @@ public class AssetService : BaseService, IAssetService
             {
                 FromDate = x.RoomAsset.FromDate,
                 ToDate = x.RoomAsset.ToDate,
+                Id = x.RoomAsset.Id,
                 Status = x.RoomAsset.Status,
-                Asset = x.Asset.ProjectTo<Asset, AssetDto>()
+                StatusObj = x.RoomAsset.Status.GetValue(),
+                Quantity = x.RoomAsset.Quantity,
+                CreatedAt = x.RoomAsset.CreatedAt,
+                EditedAt = x.RoomAsset.EditedAt,
+                CreatorId = x.RoomAsset.CreatorId ?? Guid.Empty,
+                EditorId = x.RoomAsset.EditorId ?? Guid.Empty,
+                Asset = new AssetBaseDto
+                {
+                    Id = x.Asset.Id,
+                    Description = x.Asset.Description,
+                    AssetCode = x.Asset.AssetCode,
+                    AssetName = x.Asset.AssetName,
+                    Quantity = x.Asset.Quantity,
+                    IsMovable = x.Asset.IsMovable,
+                    IsRented = x.Asset.IsRented,
+                    ManufacturingYear = x.Asset.ManufacturingYear,
+                    StatusObj = x.Asset.Status.GetValue(),
+                    Status = x.Asset.Status,
+                    StartDateOfUse = x.Asset.StartDateOfUse,
+                    SerialNumber = x.Asset.SerialNumber,
+                    LastCheckedDate = x.Asset.LastCheckedDate,
+                    LastMaintenanceTime = x.Asset.LastMaintenanceTime,
+                    TypeId = x.Asset.TypeId,
+                    ModelId = x.Asset.ModelId,
+                    CreatedAt = x.Asset.CreatedAt,
+                    EditedAt = x.Asset.EditedAt,
+                    CreatorId = x.Asset.CreatorId ?? Guid.Empty,
+                    EditorId = x.Asset.EditorId ?? Guid.Empty
+                }
             }).ToListAsync();
 
             assets = await _mapperRepository.MapCreator(assets);

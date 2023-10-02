@@ -36,7 +36,7 @@ namespace API_FFMS.Services
         public async Task<ApiResponse> Delete(Guid id)
         {
             var existingModel = await MainUnitOfWork.ModelRepository.FindOneAsync(id);
-            if(existingModel == null)
+            if (existingModel == null)
             {
                 throw new ApiException("Không tìm thấy nhãn hiệu", StatusCode.NOT_FOUND);
             }
@@ -62,7 +62,7 @@ namespace API_FFMS.Services
             {
                 throw new ApiException("Không tìm thấy nhãn hiệu", StatusCode.NOT_FOUND);
             }
-                
+
             model = await _mapperRepository.MapCreator(model);
 
             return ApiResponse<ModelDto>.Success(model);

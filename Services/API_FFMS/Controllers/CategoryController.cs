@@ -14,10 +14,10 @@ public class CategoryController : BaseController
     {
         _categoryService = categoryService;
     }
-    
+
     [HttpGet]
     [SwaggerOperation("Get list categories")]
-    public async Task<ApiResponses<CategoryDto>> GetCategories([FromQuery]CategoryQueryDto queryDto)
+    public async Task<ApiResponses<CategoryDto>> GetCategories([FromQuery] CategoryQueryDto queryDto)
     {
         return await _categoryService.GetCategories(queryDto);
     }
