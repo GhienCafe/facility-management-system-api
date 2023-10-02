@@ -11,6 +11,7 @@ public class RoomAsset : BaseEntity
     public AssetStatus Status { get; set; }
     public DateTime? FromDate { get; set; }
     public DateTime? ToDate { get; set; }
+    public double? Quantity { get; set; }
     
     //
     public virtual Room? Room { get; set; }

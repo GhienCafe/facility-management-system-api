@@ -9,6 +9,8 @@ public class Floor :BaseEntity
     public string? FloorMap { get; set; }
     public string? FloorName { get; set; }
     public int FloorNumber { get; set; }
+    public string? Description { get; set; }
+    public double? TotalArea { get; set; }
     public Guid BuildingId { get; set; }
     
     //Relationship
@@ -24,6 +26,8 @@ public class FloorConfig : IEntityTypeConfiguration<Floor>
         builder.Property(a => a.FloorMap).IsRequired(false);
         builder.Property(a => a.FloorName).IsRequired();
         builder.Property(a => a.FloorNumber).IsRequired();
+        builder.Property(a => a.Description).IsRequired(false);
+        builder.Property(a => a.TotalArea).IsRequired(false);
         builder.Property(a => a.BuildingId).IsRequired();
         
         //Relationship

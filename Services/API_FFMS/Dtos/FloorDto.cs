@@ -1,4 +1,5 @@
-﻿using AppCore.Models;
+﻿using System.Text.Json.Serialization;
+using AppCore.Models;
 using MainData.Entities;
 
 namespace API_FFMS.Dtos;
@@ -29,16 +30,28 @@ public class FloorDetailDto : BaseDto
 
 public class FloorCreateDto
 {
+    [JsonPropertyName("floor_name")]
+    public string? FloorName { get; set; }
+    [JsonPropertyName("svg_file")]
     public IFormFile? SvgFile { get; set; }
+    [JsonPropertyName("floor_number")]
     public int FloorNumber { get; set; }
+    [JsonPropertyName("building_id")]
     public Guid BuildingId { get; set; }
 }
 
 public class FloorUpdateDto
 {
+    [JsonPropertyName("floor_name")]
     public string? FloorName { get; set; }
+
+    [JsonPropertyName("floor_number")]
     public int? FloorNumber { get; set; }
+
+    [JsonPropertyName("building_id")]
     public Guid? BuildingId { get; set; }
+
+    [JsonPropertyName("svg_file")]
     public IFormFile? SvgFile { get; set; }
 }
 

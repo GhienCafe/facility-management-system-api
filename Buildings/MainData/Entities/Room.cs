@@ -15,7 +15,8 @@ public class Room : BaseEntity
     public int? Capacity { get; set; }
     public Guid StatusId { get; set; }
     public Guid FloorId { get; set; }
-
+    public string? Description { get; set; }
+    
     //Relationship
     public virtual Floor? Floors { get; set; }
     public virtual RoomType? RoomType { get; set; }
@@ -23,36 +24,6 @@ public class Room : BaseEntity
     public virtual RoomStatus? Status { get; set; }
     public virtual IEnumerable<Transportation>? Transportations { get; set; }
 }
-
-// public enum RoomTypeEnum
-// {
-//     [Display(Name = "Thư viện")]
-//     Library = 1,
-//
-//     [Display(Name = "Phòng nghỉ")]
-//     TeaBreak = 2,
-//
-//     [Display(Name = "Phòng học")]
-//     ClassRoom = 3,
-//
-//     [Display(Name = "Phòng IT")]
-//     ItSupport = 4,
-//
-//     [Display(Name = "Không gian GD")]
-//     GD_WS = 5,
-//
-//     [Display(Name = "Hội trường")]
-//     Hall = 6,
-//
-//     [Display(Name = "Studio")]
-//     Studio = 7,
-//
-//     [Display(Name = "Phòng học nhạc cụ")]
-//     InstrumentClassroom = 8,
-//
-//     [Display(Name = "Kho")]
-//     WareHouse = 9
-// }
 
 public class RoomConfig : IEntityTypeConfiguration<Room>
 {
@@ -67,6 +38,7 @@ public class RoomConfig : IEntityTypeConfiguration<Room>
         builder.Property(x => x.Capacity).IsRequired(false);
         builder.Property(x => x.StatusId).IsRequired();
         builder.Property(x => x.FloorId).IsRequired();
+        builder.Property(x => x.Description).IsRequired(false);
         
         //Attribute
         builder.HasIndex(x => x.RoomCode).IsUnique();
