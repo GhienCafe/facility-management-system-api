@@ -16,6 +16,7 @@ public class CampusDto : BaseDto
 
 public class CampusDetailDto : BaseDto
 {
+    public string? CampusCode { get; set; }
     public string? CampusName { get; set; }
     public string? Telephone { get; set; }
     public string? Description { get; set; }
