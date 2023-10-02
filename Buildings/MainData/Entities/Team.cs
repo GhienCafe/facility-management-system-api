@@ -11,8 +11,8 @@ public class Team : BaseEntity
     public string? Description { get; set; }
     
     //
-    public IEnumerable<User>? Users { get; set; }
     public IEnumerable<Category>? Categories { get; set; }
+    public IEnumerable<TeamMember>? Members { get; set; }
 }
 
 public class TeamConfig : IEntityTypeConfiguration<Team>
@@ -26,12 +26,12 @@ public class TeamConfig : IEntityTypeConfiguration<Team>
 
         //Relationship
 
-        builder.HasMany(x => x.Users)
-            .WithOne(x => x.Team)
-            .HasForeignKey(x => x.TeamId);
-
         builder.HasMany(x => x.Categories)
             .WithOne(x => x.ResponsibleTeam)
+            .HasForeignKey(x => x.TeamId);
+        
+        builder.HasMany(x => x.Members)
+            .WithOne(x => x.Team)
             .HasForeignKey(x => x.TeamId);
     }
 }   

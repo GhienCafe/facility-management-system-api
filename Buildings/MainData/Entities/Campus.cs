@@ -11,6 +11,8 @@ public class Campus: BaseEntity
     public string? Telephone { get; set; }
     public string? Description { get; set; }
     public string? Address { get; set; }
+    public string? LogoUrl { get; set; }
+    public string? WebsiteUrl { get; set; }
     
     //Relationship
     public virtual IEnumerable<Building>? Buildings { get; set; }
@@ -26,6 +28,8 @@ public class CampusConfig : IEntityTypeConfiguration<Campus>
         builder.Property(a => a.Telephone).IsRequired(false);
         builder.Property(a => a.Description).IsRequired(false);
         builder.Property(a => a.Address).IsRequired(false);
+        builder.Property(a => a.LogoUrl).IsRequired(false);
+        builder.Property(a => a.WebsiteUrl).IsRequired(false);
         
         //Relationship
         builder.HasMany(x => x.Buildings)

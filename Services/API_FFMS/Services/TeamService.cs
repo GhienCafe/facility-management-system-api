@@ -40,26 +40,27 @@ namespace API_FFMS.Services
 
         public async Task<ApiResponse<TeamDetailDto>> GetTeam(Guid id)
         {
-            var team = await MainUnitOfWork.TeamRepository.FindOneAsync<TeamDetailDto>(
-                new Expression<Func<Team, bool>>[]
-                {
-                    x => !x.DeletedAt.HasValue,
-                    x => x.Id == id
-                });
-            if (team == null)
-            {
-                throw new ApiException("Not found this team", StatusCode.NOT_FOUND);
-            }
-
-            team.TotalMember = MainUnitOfWork.UserRepository.GetQuery().Count(x => !x!.DeletedAt.HasValue
-                && x.TeamId == team.Id);
-
-            team.Members = (IEnumerable<TeamIncludeDto>?)MainUnitOfWork.UserRepository.GetQuery()
-                            .Where(x => x!.TeamId == team.Id).ToList();
-
-            team = await _mapperRepository.MapCreator(team);
-
-            return ApiResponse<TeamDetailDto>.Success(team);
+            // var team = await MainUnitOfWork.TeamRepository.FindOneAsync<TeamDetailDto>(
+            //     new Expression<Func<Team, bool>>[]
+            //     {
+            //         x => !x.DeletedAt.HasValue,
+            //         x => x.Id == id
+            //     });
+            // if (team == null)
+            // {
+            //     throw new ApiException("Not found this team", StatusCode.NOT_FOUND);
+            // }
+            //
+            // team.TotalMember = MainUnitOfWork.UserRepository.GetQuery().Count(x => !x!.DeletedAt.HasValue
+            //     && x.TeamId == team.Id);
+            //
+            // team.Members = (IEnumerable<TeamIncludeDto>?)MainUnitOfWork.UserRepository.GetQuery()
+            //                 .Where(x => x!.TeamId == team.Id).ToList();
+            //
+            // team = await _mapperRepository.MapCreator(team);
+            //
+            // return ApiResponse<TeamDetailDto>.Success(team);
+            throw new ApiException("");
         }
 
         public async Task<ApiResponses<TeamDto>> GetTeams(TeamQueryDto queryDto)
@@ -77,7 +78,7 @@ namespace API_FFMS.Services
             teams.Items,
             teams.TotalCount,
             queryDto.PageSize,
-            queryDto.Skip(),
+            queryDto.Page,
             (int)Math.Ceiling(teams.TotalCount / (double)queryDto.PageSize));
         }
 

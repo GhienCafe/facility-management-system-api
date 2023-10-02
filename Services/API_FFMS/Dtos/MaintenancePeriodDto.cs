@@ -6,7 +6,6 @@ namespace API_FFMS.Dtos
     public class MaintenancePeriodCreateDto
     {
         public Guid AssetTypeId { get; set; }
-        public TimeUnit TimeUnit { get; set; }
         public int Period { get; set; }
         public DateTime SpecificDate { get; set; }
         public Guid? AssignedTo { get; set; }
@@ -15,7 +14,6 @@ namespace API_FFMS.Dtos
     public class MaintenanceScheduleConfigDetailDto : BaseDto
     {
         public Guid AssetTypeId { get; set; }
-        public TimeUnit TimeUnit { get; set; }
         public int Period { get; set; }
         public DateTime SpecificDate { get; set; }
         public Guid? AssignedTo { get; set; }

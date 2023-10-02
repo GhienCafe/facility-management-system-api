@@ -21,9 +21,16 @@ public class FloorController : BaseController
     {
         return await _service.GetFloor(queryDto);
     }
+    [HttpPost("form")]
+    [SwaggerOperation("Create new floor using form")]
+    public async Task<ApiResponse> Insert([FromForm]FloorCreateFormDto floorDto)
+    {
+        return await _service.Insert(floorDto);
+    }
+    
     [HttpPost]
     [SwaggerOperation("Create new floor")]
-    public async Task<ApiResponse> Insert([FromForm]FloorCreateDto floorDto)
+    public async Task<ApiResponse> Insert([FromBody]FloorCreateDto floorDto)
     {
         return await _service.Insert(floorDto);
     }
@@ -38,7 +45,7 @@ public class FloorController : BaseController
     [HttpPut("{id:guid}")]
         
     [SwaggerOperation("Update floor information")]
-    public async Task<ApiResponse> Update(Guid id, [FromForm]FloorUpdateDto updateDto)
+    public async Task<ApiResponse> Update(Guid id, [FromBody]FloorUpdateDto updateDto)
     {
         return await _service.Update(id, updateDto);
     }

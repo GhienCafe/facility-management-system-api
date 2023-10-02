@@ -11,14 +11,16 @@ public class Asset : BaseEntity
     public string? AssetCode { get; set; }
     public bool IsMovable { get; set; }
     public AssetStatus Status { get; set; }
-    public DateTime? ManufacturingYear { get; set; }
+    public int? ManufacturingYear { get; set; }
     public string? SerialNumber { get; set; }
     public double Quantity { get; set; }
     public string? Description { get; set; }
     public DateTime? LastMaintenanceTime { get; set; }
+    public DateTime? LastCheckedDate { get; set; }
     public Guid? TypeId { get; set; }
     public Guid? ModelId { get; set; }
     public bool? IsRented { get; set; }
+    public DateTime? StartDateOfUse { get; set; }
 
     //
     public virtual AssetType? Type { get; set; }
@@ -29,42 +31,38 @@ public class Asset : BaseEntity
     public virtual IEnumerable<Replacement>? Replacements { get; set; }
     public virtual IEnumerable<Transportation>? Transportations { get; set; }
     public virtual IEnumerable<Repairation>? Repairations { get; set; }
+    public virtual IEnumerable<AssetCheck>? AssetChecks { get; set; }
 }
 
 public enum AssetStatus
 {
-    [Display(Name = "Hoạt động")]
+    [Display(Name = "Hoạt động bình thường")]
     Operational = 1,
 
-    [Display(Name = "Ngưng hoạt động")]
+    [Display(Name = "Không thể sử dụng")]
     Inactive = 2,
 
-    [Display(Name = "Bảo dưỡng")]
+    [Display(Name = "Đang trong quá trình bảo dưỡng")]
     Maintenance = 3,
 
-    [Display(Name = "Sửa chữa")]
+    [Display(Name = "Đang trong quá trình sửa chữa")]
     Repair = 4,
-
-    [Display(Name = "Thanh lý")]
-    Disposed = 5,
-
-    [Display(Name = "Hỏng")]
-    OutOfOrder = 6,
-
-    [Display(Name = "Chờ duyệt")]
-    Pending = 7,
-
-    [Display(Name = "Không khả dụng")]
-    NotAvailable = 8,
-
-    [Display(Name = "Cần kiểm tra")]
-    NeedInspection = 9,
-
-    [Display(Name = "Nâng cấp")]
-    Upgraded = 10,
-
-    [Display(Name = "Thay thế")]
-    Replacement = 11
+    
+    [Display(Name = "Trang thiết bị đang trong quá trình kiểm tra")]
+    NeedInspection = 5,
+    
+    [Display(Name = "Trang thiết bị đang trong quá trình thay thế")]
+    Replacement = 6,
+    
+    [Display(Name = "Trang thiết bị đang trong quá trình điều chuyển")]
+    Transportation = 7,
+    
+    [Display(Name = "Trang thiết đang bị bi hư hại")]
+    OutOfOrder = 8,
+    
+    [Display(Name = "Khác")]
+    Others = 9,
+   
 }
 
 public enum RoomRequestStatus{}
@@ -77,12 +75,14 @@ public class AssetConfig : IEntityTypeConfiguration<Asset>
         builder.Property(a => a.TypeId).IsRequired();
         builder.Property(a => a.AssetName).IsRequired();
         builder.Property(a => a.AssetCode).IsRequired(false);
+        builder.Property(a => a.StartDateOfUse).IsRequired(false);
         builder.Property(a => a.Status).IsRequired();
         builder.Property(a => a.IsMovable).IsRequired();
         builder.Property(a => a.ManufacturingYear).IsRequired(false);
         builder.Property(a => a.SerialNumber).IsRequired(false);
         builder.Property(a => a.Quantity).IsRequired();
         builder.Property(a => a.LastMaintenanceTime).IsRequired(false);
+        builder.Property(a => a.LastCheckedDate).IsRequired(false);
         builder.Property(a => a.Description).IsRequired(false);
         builder.Property(a => a.IsRented).IsRequired(false);
         
@@ -123,6 +123,10 @@ public class AssetConfig : IEntityTypeConfiguration<Asset>
             .HasForeignKey(x => x.AssetId);
         
         builder.HasMany(x => x.Repairations)
+            .WithOne(x => x.Asset)
+            .HasForeignKey(x => x.AssetId);
+        
+        builder.HasMany(x => x.AssetChecks)
             .WithOne(x => x.Asset)
             .HasForeignKey(x => x.AssetId);
     }

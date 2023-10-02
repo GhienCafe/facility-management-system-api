@@ -39,7 +39,7 @@ namespace API_FFMS.Services
                 response.Items,
                 response.TotalCount,
                 queryDto.PageSize,
-                queryDto.Skip(),
+                queryDto.Page,
             (int)Math.Ceiling(response.TotalCount / (double)queryDto.PageSize)
                 );
         }
