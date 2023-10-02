@@ -5,6 +5,7 @@ using MainData;
 using MainData.Entities;
 using MainData.Repositories;
 using Microsoft.EntityFrameworkCore;
+using NuGet.Packaging;
 using System.Linq.Expressions;
 
 namespace API_FFMS.Services
@@ -49,6 +50,7 @@ namespace API_FFMS.Services
 
             var request = new ActionRequest
             {
+                Id = Guid.NewGuid(),
                 RequestCode = createDto.RequestCode,
                 RequestDate = createDto.RequestedDate,
                 CompletionDate = createDto.CompletionDate,
@@ -59,12 +61,8 @@ namespace API_FFMS.Services
                 IsInternal = createDto.IsInternal,
                 AssignedTo = createDto.AssignedTo,
             };
-            //if (!await MainUnitOfWork.RequestRepository.InsertAsync(request, AccountId, CurrentDate))
-            //{
-            //    throw new ApiException("Create failed", StatusCode.BAD_REQUEST);
-            //}
 
-            //var transports = new List<Transportation>();
+            var transports = new List<Transportation>();
             foreach (var assetId in createDto.AssetId)
             {
                 var existingAsset = await MainUnitOfWork.AssetRepository.FindOneAsync(new Expression<Func<Asset, bool>>[]
@@ -82,17 +80,20 @@ namespace API_FFMS.Services
                     throw new ApiException("Some asset is in another request", StatusCode.NOT_ACTIVE);
                 }
 
+                
                 var transport = new Transportation
                 {
+                    Id = Guid.NewGuid(),
                     Quantity = createDto.Quantity,
                     ToRoomId = createDto.ToRoomId,
                     RequestId = request.Id,
                     AssetId = assetId
                 };
-
-                request.Transportations!.Add(transport);
+                transports.Add(transport);
                 existingAsset.Status = AssetStatus.Pending;
             }
+            request.Transportations = transports;
+
             if (!await _transportRepository.InsertTransport(request, AccountId, CurrentDate))
             {
                 throw new ApiException("Create failed", StatusCode.BAD_REQUEST);

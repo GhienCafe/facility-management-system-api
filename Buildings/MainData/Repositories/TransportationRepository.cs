@@ -26,6 +26,7 @@ namespace MainData.Repositories
                 {
                     var newRequest = new ActionRequest
                     {
+                        Id = request.Id,
                         RequestCode = request.RequestCode,
                         RequestDate = request.RequestDate,
                         CompletionDate = request.CompletionDate,
@@ -39,7 +40,7 @@ namespace MainData.Repositories
                         EditedAt = now.Value,
                         CreatorId = creatorId
                     };
-                    await _dbContext.AddAsync(newRequest);
+                    await _dbContext.ActionRequests.AddAsync(newRequest);
                 }
                 if (request!.Transportations != null)
                 {
@@ -52,7 +53,7 @@ namespace MainData.Repositories
                             item.CreatorId = creatorId;
                         }
                     }
-                    await _dbContext.AddRangeAsync(request.Transportations);
+                    await _dbContext.Transportations.AddRangeAsync(request.Transportations);
                 }
                 await _dbContext.SaveChangesAsync();
                 await _dbContext.Database.CommitTransactionAsync();
