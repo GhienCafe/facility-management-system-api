@@ -19,7 +19,7 @@ public class ActionRequest : BaseEntity
     
     // Relationship
     public User? PersonInCharge { get; set; }
-    public ICollection<Transportation>? Transportations { get; set; }
+    public IEnumerable<Transportation>? Transportations { get; set; }
     public IEnumerable<Maintenance>? Maintenances { get; set; }
     public IEnumerable<Replacement>? Replacements { get; set; }
     public IEnumerable<Repairation>? Repairations { get; set; }
