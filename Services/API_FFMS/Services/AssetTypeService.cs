@@ -28,7 +28,7 @@ namespace API_FFMS.Services
         {
 
             var existingCategory = MainUnitOfWork.AssetTypeRepository.GetQuery()
-                                   .Where(x => !x!.DeletedAt.HasValue && x!.TypeCode.Trim().ToLower() == createDto.TypeCode.Trim().ToLower())
+                                   .Where(x => !x!.DeletedAt.HasValue && x.TypeCode.Trim().ToLower() == createDto.TypeCode.Trim().ToLower())
                                    .SingleOrDefault();
 
             if (existingCategory != null)
@@ -54,7 +54,7 @@ namespace API_FFMS.Services
                 if (await MainUnitOfWork.AssetTypeRepository.DeleteAsync(existingAssetCategory, AccountId, CurrentDate))
                     throw new ApiException("Xóa thất bại", StatusCode.SERVER_ERROR);
                 
-                return ApiResponse.Success();
+                return ApiResponse.Success("Xóa thất bại");
         }
 
         public async Task<ApiResponses<AssetTypeDto>> GetAssetTypes(AssetTypeQueryDto queryDto)
@@ -77,7 +77,8 @@ namespace API_FFMS.Services
                 Description = x.Description,
                 TypeCode = x.TypeCode,
                 TypeName = x.TypeCode,
-                Unit = x.Unit.GetValue(),
+                Unit = x.Unit,
+                UnitObj = x.Unit.GetValue(),
                 CreatedAt = x.CreatedAt,
                 EditedAt = x.EditedAt,
                 EditorId = x.EditorId ?? Guid.Empty,
@@ -97,12 +98,6 @@ namespace API_FFMS.Services
 
         public async Task<ApiResponse<AssetTypeDetailDto>> GetAssetType(Guid id)
         {
-            // var assetCategory = await MainUnitOfWork.AssetTypeRepository.FindOneAsync<AssetTypeDetailDto>(
-            // new Expression<Func<AssetType, bool>>[]
-            // {
-            //      x => !x.DeletedAt.HasValue,
-            //      x => x.Id == id
-            // });
             var assetType = MainUnitOfWork.AssetTypeRepository.GetQuery()
                 .Where(x => !x!.DeletedAt.HasValue && x.Id == id)
                 .Select(x => new AssetTypeDetailDto
@@ -111,7 +106,8 @@ namespace API_FFMS.Services
                     Description = x.Description,
                     TypeCode = x.TypeCode,
                     TypeName = x.TypeCode,
-                    Unit = x.Unit.GetValue(),
+                    Unit = x.Unit,
+                    UnitObj = x.Unit.GetValue(),
                     CreatedAt = x.CreatedAt,
                     EditedAt = x.EditedAt,
                     EditorId = x.EditorId ?? Guid.Empty,
@@ -140,13 +136,14 @@ namespace API_FFMS.Services
             existingAssetCategory.TypeName = updateDto.TypeName ?? existingAssetCategory.TypeName;
             existingAssetCategory.Description = updateDto.Description ?? existingAssetCategory.Description;
             existingAssetCategory.Unit = updateDto.Unit ?? existingAssetCategory.Unit;
+            existingAssetCategory.TypeCode = updateDto.TypeCode ?? existingAssetCategory.TypeCode;
 
             if (!await MainUnitOfWork.AssetTypeRepository.UpdateAsync(existingAssetCategory, AccountId, CurrentDate))
             {
                 throw new ApiException("Cập nhật thất bại", StatusCode.SERVER_ERROR);
             }
 
-            return ApiResponse.Success();
+            return ApiResponse.Success("Cập nhật thành công");
 
         }
     }
