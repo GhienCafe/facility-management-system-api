@@ -6,7 +6,6 @@ using MainData;
 using MainData.Entities;
 using MainData.Repositories;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.OpenApi.Extensions;
 
 namespace API_FFMS.Services;
 public interface IRoomService : IBaseService

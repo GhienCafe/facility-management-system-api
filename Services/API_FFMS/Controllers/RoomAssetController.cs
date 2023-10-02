@@ -28,5 +28,11 @@ namespace API_FFMS.Controllers
         {
             return await _service.AssetUsedTracking(queryDto);
         }
+
+        //[HttpGet("internal")]
+        //public async Task<ApiResponse> AddToWareHouse()
+        //{
+        //    return await _service.AddListRoomAsset();
+        //}
     }
 }

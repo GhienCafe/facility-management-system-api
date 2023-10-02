@@ -114,7 +114,7 @@ namespace API_FFMS.Services
 
             if (repairation == null)
             {
-                throw new ApiException("Not found this repairation", StatusCode.NOT_FOUND);
+                throw new ApiException("Không tìm thấy yêu cầu sửa chữa này", StatusCode.NOT_FOUND);
             }
 
             repairation.PersonInCharge = await MainUnitOfWork.UserRepository.FindOneAsync<UserDto>(
