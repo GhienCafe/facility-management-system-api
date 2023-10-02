@@ -39,6 +39,7 @@ namespace API_FFMS.Dtos
         public string? TypeName { get; set; }
         public string? Description { get; set; }
         public Unit? Unit { get; set; }
+        public Guid? CategoryId { get; set; }
     }
 
     public class AssetTypeQueryDto : BaseQueryDto

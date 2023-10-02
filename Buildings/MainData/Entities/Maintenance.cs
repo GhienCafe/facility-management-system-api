@@ -12,7 +12,7 @@ public class Maintenance : BaseEntity
     public string? Notes { get; set; } //Result
     
     public virtual Asset? Asset { get; set; }
-    public virtual Request? Request { get; set; }
+    public virtual ActionRequest? Request { get; set; }
 }
 
 public class MaintenanceConfig : IEntityTypeConfiguration<Maintenance>

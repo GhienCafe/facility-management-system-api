@@ -23,7 +23,7 @@ namespace API_FFMS.Controllers
 
         [HttpGet("{id:guid}")]
         [SwaggerOperation("Get detail transportation")]
-        public async Task<ApiResponse<TransportDetailDto>> GetTransport(Guid id)
+        public async Task<ApiResponse<TransportRequestDto>> GetTransport(Guid id)
         {
             return await _transportationService.GetTransport(id);
         }

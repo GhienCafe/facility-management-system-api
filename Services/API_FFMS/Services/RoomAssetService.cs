@@ -14,6 +14,8 @@ namespace API_FFMS.Services
         Task<ApiResponses<AssetTrackingDto>> AssetUsedTracking(RoomTrackingQueryDto queryDto);
         Task<ApiResponses<RoomTrackingDto>> RoomTracking(RoomTrackingQueryDto queryDto);
         Task<ApiResponse> AddRoomAsset(RoomAssetCreateDto roomAssetCreateDto);
+
+        Task<ApiResponse> AddListRoomAsset();
     }
 
     public class RoomAssetService : BaseService, IRoomAssetService
@@ -75,6 +77,28 @@ namespace API_FFMS.Services
             
             return ApiResponse.Created("Create successfully");
         }
-        
+
+        public async Task<ApiResponse> AddListRoomAsset()
+        {
+            var assets = await MainUnitOfWork.AssetRepository.FindAsync(new Expression<Func<Asset, bool>>[]
+            {
+                x => !x.DeletedAt.HasValue
+            }, null);
+
+            var listIds = assets.Select(x => x?.Id);
+
+            var roomAssets = listIds.Select(x => new RoomAsset
+            {
+                FromDate = CurrentDate,
+                AssetId = x.Value,
+                RoomId = Guid.Parse("ac512c36-7c7c-430d-0cbb-08dbb8db2c89"),
+                Status = AssetStatus.Operational
+            }).ToList();
+
+            if (!await MainUnitOfWork.RoomAssetRepository.InsertAsync(roomAssets, AccountId, CurrentDate))
+                throw new ApiException("fail", StatusCode.BAD_REQUEST);
+
+            return ApiResponse.Success();
+        }
     }
 }
