@@ -12,8 +12,6 @@ namespace API_FFMS.Dtos
 
         [Display(Name = "Diện tích")]
         public double? Area { get; set; }
-
-        [Display(Name = "Đường dẫn phòng")]
         public string? PathRoom { get; set; }
 
         [Display(Name = "Mã phòng")]
@@ -31,12 +29,6 @@ namespace API_FFMS.Dtos
 
         [Display(Name = "Mô tả")]
         public string? Description { get; set; }
-
-        public RoomStatusDto? Status { get; set; }
-
-        public RoomTypeDto? RoomType { get; set; }
-
-        public FloorBaseDto? Floor { get; set; }
         [Display(Name = "Trạng thái phòng")]
         public string? StatusName { get; set; }
     }

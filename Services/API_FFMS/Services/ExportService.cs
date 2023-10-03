@@ -1,4 +1,5 @@
-﻿using API_FFMS.Dtos;
+﻿using System.Diagnostics;
+using API_FFMS.Dtos;
 using AppCore.Models;
 using MainData;
 using MainData.Repositories;
@@ -75,23 +76,27 @@ namespace API_FFMS.Services
 
             var rooms = await roomQuery.ToListAsync();
 
-            var exportTrackingData = rooms.Select(room => new ExportTrackingRoomDto
+            var exportTrackingData = rooms.Select(room =>
             {
-                RoomName = room!.RoomName,
-                Area = room.Area,
-                PathRoom = room.PathRoom,
-                RoomCode = room.RoomCode,
-                Capacity = room.Capacity,
-                Description = room.Description,
+                Debug.Assert(room.Status != null, "room.Status != null");
+                return new ExportTrackingRoomDto
+                {
+                    RoomName = room!.RoomName,
+                    Area = room.Area,
+                    PathRoom = room.PathRoom,
+                    RoomCode = room.RoomCode,
+                    Capacity = room.Capacity,
+                    Description = room.Description,
 
-                TypeName = room.RoomTypeId != null
-                    ? MainUnitOfWork.RoomTypeRepository.GetQuery().SingleOrDefault(x => !x!.DeletedAt.HasValue && x.Id == room.RoomTypeId)!
-                        .TypeName
-                    : null,
-                StatusName = room.Status != null
-                    ? MainUnitOfWork.RoomStatusRepository.GetQuery().SingleOrDefault(x =>  !x!.DeletedAt.HasValue && x.Id == room.StatusId)!
-                        .StatusName
-                    : null,
+                    TypeName = room.RoomTypeId != null
+                        ? MainUnitOfWork.RoomTypeRepository.GetQuery()
+                            .SingleOrDefault(x => !x!.DeletedAt.HasValue && x.Id == room.RoomTypeId)!
+                            .TypeName
+                        : null,
+                    StatusName = MainUnitOfWork.RoomStatusRepository.GetQuery()
+                        .SingleOrDefault(x => !x!.DeletedAt.HasValue && x.Id == room.StatusId)!
+                        .StatusName,
+                };
             }).ToList();
 
             var streamFile = ExportHelperList<ExportTrackingRoomDto>.Export(
@@ -102,7 +107,7 @@ namespace API_FFMS.Services
 
             return new ExportFile
             {
-                FileName = $"RoomTracking",
+                FileName = $"Room",
                 Stream = streamFile
             };
         }
@@ -178,7 +183,7 @@ namespace API_FFMS.Services
 
             return new ExportFile
             {
-                FileName = $"Assetracking",
+                FileName = $"Asset",
                 Stream = streamFile
             };
         }
