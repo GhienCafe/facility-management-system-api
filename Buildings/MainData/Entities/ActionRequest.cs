@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace MainData.Entities;
 
-public class Request : BaseEntity
+public class ActionRequest : BaseEntity
 {
     public string RequestCode { get; set; } = null!;
     public DateTime? RequestDate { get; set; }
@@ -57,9 +57,9 @@ public enum RequestStatus
     Others = 6,
 }
 
-public class RequestConfig : IEntityTypeConfiguration<Request>
+public class RequestConfig : IEntityTypeConfiguration<ActionRequest>
 {
-    public void Configure(EntityTypeBuilder<Request> builder)
+    public void Configure(EntityTypeBuilder<ActionRequest> builder)
     {
         builder.ToTable("Requests");
         builder.Property(a => a.RequestCode).IsRequired();

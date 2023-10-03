@@ -19,7 +19,7 @@ public class Notification : BaseEntity
     
     //
     public virtual User? User { get; set; }
-    public virtual Request? Request { get; set; }
+    public virtual ActionRequest? Request { get; set; }
 }
 
 public enum NotificationType

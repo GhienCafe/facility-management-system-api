@@ -14,7 +14,7 @@ public class Repairation : BaseEntity
 
     //
     public virtual Asset? Asset { get; set; }
-    public virtual Request? Request { get; set; }
+    public virtual ActionRequest? Request { get; set; }
 }
 
 public class RepairationConfig : IEntityTypeConfiguration<Repairation>

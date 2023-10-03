@@ -34,7 +34,8 @@ public class DatabaseContext : DbContext
     public DbSet<Category> Categories { get; set; }
     public DbSet<Team> Teams { get; set; }
     public DbSet<Model> Models { get; set; }
-    
+    public DbSet<ActionRequest> ActionRequests { get; set; }
+
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -64,5 +65,6 @@ public class DatabaseContext : DbContext
         modelBuilder.ApplyConfiguration(new ModelConfig());
         modelBuilder.ApplyConfiguration(new CategoryConfig());
         modelBuilder.ApplyConfiguration(new RoomTypeConfig());
+        modelBuilder.ApplyConfiguration(new RequestConfig());
     }
 }

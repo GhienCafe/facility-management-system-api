@@ -13,7 +13,7 @@ public class Transportation : BaseEntity
     public Guid? ToRoomId { get; set; } // For internal
 
     public virtual Asset? Asset { get; set; }
-    public virtual Request? Request { get; set; }
+    public virtual ActionRequest? Request { get; set; }
     public virtual Room? ToRoom { get; set; }
 }
 

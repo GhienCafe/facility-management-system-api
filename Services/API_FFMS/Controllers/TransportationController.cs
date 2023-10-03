@@ -13,17 +13,17 @@ namespace API_FFMS.Controllers
         {
             _transportationService = transportationService;
         }
-
-        [HttpGet]
-        [SwaggerOperation("Get all transportations")]
-        public async Task<ApiResponses<TransportDto>> GetTransports([FromQuery] TransportQueryDto queryDto)
-        {
-            return await _transportationService.GetTransports(queryDto);
-        }
+        //
+        // [HttpGet]
+        // [SwaggerOperation("Get all transportations")]
+        // public async Task<ApiResponses<TransportDto>> GetTransports([FromQuery] TransportQueryDto queryDto)
+        // {
+        //     return await _transportationService.GetTransports(queryDto);
+        // }
 
         [HttpGet("{id:guid}")]
         [SwaggerOperation("Get detail transportation")]
-        public async Task<ApiResponse<TransportDetailDto>> GetTransport(Guid id)
+        public async Task<ApiResponse<TransportRequestDto>> GetTransport(Guid id)
         {
             return await _transportationService.GetTransport(id);
         }

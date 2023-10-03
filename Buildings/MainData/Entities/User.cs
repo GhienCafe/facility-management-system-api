@@ -26,7 +26,7 @@ public class User : BaseEntity
     //
     public virtual IEnumerable<Token>? Tokens { get; set; }
     public virtual IEnumerable<TeamMember>? Teams { get; set; }
-    public virtual IEnumerable<Request>? Requests { get; set; }
+    public virtual IEnumerable<ActionRequest>? Requests { get; set; }
     public virtual IEnumerable<Notification>? Notifications { get; set; }
 }
 
