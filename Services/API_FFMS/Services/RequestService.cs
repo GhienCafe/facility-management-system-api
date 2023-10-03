@@ -26,7 +26,7 @@ public class RequestService : BaseService, IRequestService
 
     public async Task<ApiResponse> CreateRequest(ActionRequestCreateDto createDto)
     {
-        if (! await _requestRepository.InsertRequest(createDto, AccountId, CurrentDate))
+        if (!await _requestRepository.InsertRequest(createDto, AccountId, CurrentDate))
         {
             throw new ApiException("Thêm thất bại");
         }
@@ -44,7 +44,7 @@ public class RequestService : BaseService, IRequestService
         {
             requestQueryable = requestQueryable.Where(x => x!.IsInternal == queryDto.IsInternal);
         }
-        
+
         if (keyword != null)
         {
             requestQueryable = requestQueryable.Where(x => x!.RequestCode.ToLower().Contains(keyword)
@@ -56,25 +56,25 @@ public class RequestService : BaseService, IRequestService
         {
             requestQueryable = requestQueryable.Where(x => x!.AssignedTo == queryDto.AssignedTo);
         }
-        
+
         if (queryDto.RequestStatus != null)
         {
             requestQueryable = requestQueryable.Where(x => x!.RequestStatus == queryDto.RequestStatus);
         }
-        
+
         if (queryDto.RequestType != null)
         {
             requestQueryable = requestQueryable.Where(x => x!.RequestType == queryDto.RequestType);
         }
 
         var joinTables = from request in requestQueryable
-            join user in MainUnitOfWork.UserRepository.GetQuery() on request.AssignedTo equals user.Id into userGroup
-            from user in userGroup.DefaultIfEmpty()
-            select new
-            {
-                Request = request,
-                User = user
-            };
+                         join user in MainUnitOfWork.UserRepository.GetQuery() on request.AssignedTo equals user.Id into userGroup
+                         from user in userGroup.DefaultIfEmpty()
+                         select new
+                         {
+                             Request = request,
+                             User = user
+                         };
 
         var totalCount = await joinTables.CountAsync();
 
@@ -117,12 +117,12 @@ public class RequestService : BaseService, IRequestService
                 CreatedAt = x.User.CreatedAt,
                 EditedAt = x.User.EditedAt,
                 CreatorId = x.User.CreatorId ?? Guid.Empty,
-                EditorId = x.User.EditorId ?? Guid.Empty, 
+                EditorId = x.User.EditorId ?? Guid.Empty,
             }
         }).ToListAsync();
 
         requests = await _mapperRepository.MapCreator(requests);
-        
+
         return ApiResponses<ActionRequestDto>.Success(
             requests,
             totalCount,

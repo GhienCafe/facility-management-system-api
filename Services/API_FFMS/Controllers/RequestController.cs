@@ -14,17 +14,17 @@ public class RequestController : BaseController
     {
         _requestService = requestService;
     }
-    
+
     [HttpPost]
     [SwaggerOperation("Create new action request")]
     public async Task<ApiResponse> Create([FromBody] ActionRequestCreateDto createDto)
     {
         return await _requestService.CreateRequest(createDto);
     }
-    
+
     [HttpGet]
     [SwaggerOperation("Get action requests")]
-    public async Task<ApiResponses<ActionRequestDto>> GetList([FromQuery]ActionRequestQuery queryDto)
+    public async Task<ApiResponses<ActionRequestDto>> GetList([FromQuery] ActionRequestQuery queryDto)
     {
         return await _requestService.GetRequests(queryDto);
     }
