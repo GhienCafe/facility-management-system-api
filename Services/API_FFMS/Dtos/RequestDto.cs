@@ -16,6 +16,7 @@ public class ActionRequestDto : BaseDto
     public string? Notes { get; set; } // Results
     public bool IsInternal { get; set; }
     public Guid? AssignedTo { get; set; }
+    public UserDto? AssignedPerson { get; set; }
 }
 
 public class ActionRequestQuery : BaseQueryDto

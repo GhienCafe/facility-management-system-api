@@ -20,7 +20,7 @@ public class UserDto : BaseDto
     public DateTime? FirstLoginAt { get; set; }
     public DateTime? LastLoginAt { get; set; }
     public Guid? TeamId { get; set; }
-    public TeamDto? Team { get; set; }
+    //public TeamDto? Team { get; set; }
 }
 
 public class UserUpdateDto
