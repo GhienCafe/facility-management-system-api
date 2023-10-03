@@ -134,7 +134,8 @@ public class AssetService : BaseService, IAssetService
                 Description = x.Type.Description,
                 TypeCode = x.Type.TypeCode,
                 TypeName = x.Type.TypeName,
-                Unit = x.Type.Unit.GetValue(),
+                Unit = x.Type.Unit,
+                UnitObj = x.Type.Unit.GetValue(),
                 CreatedAt = x.Type.CreatedAt,
                 EditedAt = x.Type.EditedAt,
                 CreatorId = x.Type.CreatorId ?? Guid.Empty,
@@ -168,7 +169,7 @@ public class AssetService : BaseService, IAssetService
                 AssetName = x.AssetName,
                 Quantity = x.Quantity,
                 IsMovable = x.IsMovable,
-                IsRented = x.IsRented,
+                //IsRented = x.IsRented,
                 ManufacturingYear = x.ManufacturingYear,
                 ModelId = x.ModelId,
                 SerialNumber = x.SerialNumber,
@@ -216,6 +217,7 @@ public class AssetService : BaseService, IAssetService
         existingAsset.Description = updateDto.Description ?? existingAsset.Description;
         existingAsset.AssetCode = updateDto.AssetCode ?? existingAsset.AssetCode;
         existingAsset.IsMovable = updateDto.IsMovable ?? existingAsset.IsMovable;
+        //existingAsset.IsRented = updateDto.IsRented ?? existingAsset.IsRented;
         existingAsset.LastMaintenanceTime = updateDto.LastMaintenanceTime ?? existingAsset.LastMaintenanceTime;
 
         if (!await MainUnitOfWork.AssetRepository.UpdateAsync(existingAsset, AccountId, CurrentDate))

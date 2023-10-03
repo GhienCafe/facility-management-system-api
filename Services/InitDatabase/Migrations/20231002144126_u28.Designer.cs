@@ -4,6 +4,7 @@ using MainData;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace InitDatabase.Migrations
 {
     [DbContext(typeof(DatabaseContext))]
-    partial class DatabaseContextModelSnapshot : ModelSnapshot
+    [Migration("20231002144126_u28")]
+    partial class u28
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -201,7 +204,7 @@ namespace InitDatabase.Migrations
 
                     b.HasIndex("RequestId");
 
-                    b.ToTable("AssetChecks", (string)null);
+                    b.ToTable("AssetCheck");
                 });
 
             modelBuilder.Entity("MainData.Entities.AssetType", b =>
@@ -685,7 +688,6 @@ namespace InitDatabase.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid?>("AssetId")
-                        .IsRequired()
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime>("CreatedAt")
@@ -713,7 +715,6 @@ namespace InitDatabase.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<Guid?>("RequestId")
-                        .IsRequired()
                         .HasColumnType("uniqueidentifier");
 
                     b.HasKey("Id");
@@ -722,7 +723,7 @@ namespace InitDatabase.Migrations
 
                     b.HasIndex("RequestId");
 
-                    b.ToTable("Repairations", (string)null);
+                    b.ToTable("Repairation");
                 });
 
             modelBuilder.Entity("MainData.Entities.Replacement", b =>
@@ -1021,9 +1022,7 @@ namespace InitDatabase.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<bool>("IsLead")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bit")
-                        .HasDefaultValue(false);
+                        .HasColumnType("bit");
 
                     b.Property<Guid>("MemberId")
                         .HasColumnType("uniqueidentifier");
@@ -1037,7 +1036,7 @@ namespace InitDatabase.Migrations
 
                     b.HasIndex("TeamId");
 
-                    b.ToTable("TeamMembers", (string)null);
+                    b.ToTable("TeamMember");
                 });
 
             modelBuilder.Entity("MainData.Entities.Token", b =>
@@ -1363,15 +1362,11 @@ namespace InitDatabase.Migrations
                 {
                     b.HasOne("MainData.Entities.Asset", "Asset")
                         .WithMany("Repairations")
-                        .HasForeignKey("AssetId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("AssetId");
 
                     b.HasOne("MainData.Entities.ActionRequest", "Request")
                         .WithMany("Repairations")
-                        .HasForeignKey("RequestId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("RequestId");
 
                     b.Navigation("Asset");
 

@@ -2,7 +2,6 @@
 using AppCore.Models;
 using ClosedXML.Excel;
 using MainData.Entities;
-using Org.BouncyCastle.Utilities;
 
 namespace API_FFMS.Services
 {
@@ -27,11 +26,14 @@ namespace API_FFMS.Services
                             AssetName = dataRow.Cell(1).Value.ToString().Trim(),
                             AssetCode = dataRow.Cell(2).Value.ToString()?.Trim(),
                             TypeCode = dataRow.Cell(3).Value.ToString().Trim(),
-                            Status = (AssetStatus)Enum.Parse(typeof(AssetStatus), dataRow.Cell(4).Value.ToString().Trim()),
-                            ManufacturingYear = Int32.Parse(dataRow.Cell(5).Value.ToString().Trim()),
-                            SerialNumber = dataRow.Cell(6).Value.ToString()?.Trim(),
-                            Quantity = double.Parse(dataRow.Cell(7).Value.ToString().Trim()),
-                            Description = dataRow.Cell(8).Value.ToString()?.Trim()
+                            Model = dataRow.Cell(4).Value.ToString().Trim(),
+                            Status = (AssetStatus)Enum.Parse(typeof(AssetStatus), dataRow.Cell(5).Value.ToString().Trim()),
+                            ManufacturingYear = int.Parse(dataRow.Cell(6).Value.ToString().Trim()),
+                            SerialNumber = dataRow.Cell(7).Value.ToString()?.Trim(),
+                            Quantity = double.Parse(dataRow.Cell(8).Value.ToString().Trim()),
+                            Description = dataRow.Cell(9).Value.ToString()?.Trim(),
+                            IsRented = dataRow.Cell(10).Value.ToString().Trim(),
+                            IsMovable = dataRow.Cell(11).Value.ToString().Trim()
                         });
                     }
                 }
@@ -44,5 +46,4 @@ namespace API_FFMS.Services
             }
         }
     }
-
 }

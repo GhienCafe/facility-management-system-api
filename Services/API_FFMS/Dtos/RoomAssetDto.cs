@@ -3,14 +3,13 @@ using MainData.Entities;
 
 namespace API_FFMS.Dtos
 {
-    public class AssetTrackingDto
+    public class AssetTrackingDto : BaseDto
     {
-        public Guid AssetId { get; set; }
         public AssetStatus Status { get; set; }
         public DateTime? FromDate { get; set; }
         public DateTime? ToDate { get; set; }
+        public RoomBaseDto? Room { get; set; }
 
-        public RoomDto? Room { get; set; }
     }
 
     public class RoomTrackingDto
@@ -25,8 +24,8 @@ namespace API_FFMS.Dtos
 
     public class RoomTrackingQueryDto : BaseQueryDto
     {
-        public Guid AssetId { get; set; }
-        public Guid RoomId { get; set; }
+        public DateTime? FromDate { get; set; }
+        public DateTime? ToDate { get; set; }
     }
 
     public class RoomAssetCreateDto

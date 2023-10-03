@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace MainData.Entities;
 
-public class Request : BaseEntity
+public class ActionRequest : BaseEntity
 {
     public string RequestCode { get; set; } = null!;
     public DateTime? RequestDate { get; set; }
@@ -43,7 +43,7 @@ public enum RequestType
 
 public enum RequestStatus
 {
-    [Display(Name = "Chưa bắt đầu")]
+    [Display(Name = "Đã gửi yêu cầu")]
     NotStarted = 1,
     [Display(Name = "Đang trong quá trình thực hiện")]
     InProgress = 2,
@@ -57,9 +57,9 @@ public enum RequestStatus
     Others = 6,
 }
 
-public class RequestConfig : IEntityTypeConfiguration<Request>
+public class RequestConfig : IEntityTypeConfiguration<ActionRequest>
 {
-    public void Configure(EntityTypeBuilder<Request> builder)
+    public void Configure(EntityTypeBuilder<ActionRequest> builder)
     {
         builder.ToTable("Requests");
         builder.Property(a => a.RequestCode).IsRequired();

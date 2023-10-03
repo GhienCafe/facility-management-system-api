@@ -12,7 +12,7 @@ public class Replacement : BaseEntity
     
     //
     public virtual Asset? Asset { get; set; }
-    public virtual Request? Request { get; set; }
+    public virtual ActionRequest? Request { get; set; }
     //public virtual Asset? NewAsset { get; set; }
 }
 

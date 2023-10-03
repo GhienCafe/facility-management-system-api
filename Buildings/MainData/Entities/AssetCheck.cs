@@ -11,7 +11,7 @@ public class AssetCheck : BaseEntity
     public bool IsVerified { get; set; }
     
     // Relationship
-    public virtual Request? Request { get; set; }
+    public virtual ActionRequest? Request { get; set; }
     public virtual Asset? Asset { get; set; }
 }
 
@@ -22,7 +22,7 @@ public class AssetCheckConfig : IEntityTypeConfiguration<AssetCheck>
         builder.ToTable("AssetChecks");
         builder.Property(x => x.RequestId).IsRequired();
         builder.Property(x => x.AssetId).IsRequired();
-        builder.Property(x => x.IsVerified).IsRequired(false);
+        builder.Property(x => x.IsVerified).IsRequired();
 
         //Relationship
 

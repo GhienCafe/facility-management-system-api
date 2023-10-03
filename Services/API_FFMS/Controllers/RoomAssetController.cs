@@ -16,17 +16,23 @@ namespace API_FFMS.Controllers
         }
 
         [HttpGet]
-        [SwaggerOperation("Tracking asset use in room")]
-        public async Task<ApiResponses<AssetTrackingDto>> AssetUsedTracking([FromQuery] RoomTrackingQueryDto queryDto)
+        [SwaggerOperation("Tracking asset used in room")]
+        public async Task<ApiResponses<AssetTrackingDto>> AssetUsedTracking([FromQuery] RoomTrackingQueryDto queryDto, Guid id)
         {
-            return await _service.AssetUsedTracking(queryDto);
+            return await _service.AssetUsedTracking(id, queryDto);
         }
 
-        [HttpGet("track-room")]
-        [SwaggerOperation("Tracking room")]
-        public async Task<ApiResponses<AssetTrackingDto>> RoomTracking([FromQuery] RoomTrackingQueryDto queryDto)
-        {
-            return await _service.AssetUsedTracking(queryDto);
-        }
+        //[HttpGet("track-room")]
+        //[SwaggerOperation("Tracking room")]
+        //public async Task<ApiResponses<AssetTrackingDto>> RoomTracking([FromQuery] RoomTrackingQueryDto queryDto)
+        //{
+        //    return await _service.AssetUsedTracking(queryDto);
+        //}
+
+        //[HttpGet("internal")]
+        //public async Task<ApiResponse> AddToWareHouse()
+        //{
+        //    return await _service.AddListRoomAsset();
+        //}
     }
 }
