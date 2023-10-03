@@ -127,4 +127,49 @@ public class ApiResponse
             Message = message,
         };
     }
+    // public ApiResponse()
+    // {
+    //     StatusCode = StatusCode.SUCCESS;
+    //     Message = "Success";
+    // }
+    //
+    // //
+    // public object Result { get; set; }
+    // public ApiResponse(object result)
+    // {
+    //     StatusCode = StatusCode.SUCCESS;
+    //     Message = "Success";
+    //     Result = result;
+    // }
+
+}
+
+public class ApiExportResponse
+{
+    public ApiExportResponse(string message, object result, int statusCode = 200)
+    {
+        StatusCode = statusCode;
+        Message = message;
+        Result = result;
+    }
+
+    public ApiExportResponse(string message, int statusCode)
+    {
+        StatusCode = statusCode;
+        Message = message;
+    }
+
+    public ApiExportResponse(object result)
+    {
+        Result = result;
+    }
+
+    public ApiExportResponse(string message)
+    {
+        Message = message;
+    }
+
+    public int StatusCode { get; set; } = 200;
+    public string Message { get; set; } = "Thành công";
+    public object Result { get; set; }
 }

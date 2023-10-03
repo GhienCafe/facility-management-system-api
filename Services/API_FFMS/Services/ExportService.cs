@@ -1,16 +1,16 @@
 ﻿using API_FFMS.Dtos;
-using AppCore.Extensions;
 using AppCore.Models;
 using MainData;
-using MainData.Entities;
 using MainData.Repositories;
 using Microsoft.EntityFrameworkCore;
+using AppCore.Extensions;
 
 namespace API_FFMS.Services
 {
     public interface IExportService : IBaseService
     {
-        Task<ApiResponse<Stream>> ExportCombinedData(ExportQueryTrackingDto queryDto);
+        public Task<ExportFile> Export(QueryRoomExportDto queryDto);
+        public Task<ExportFile> Export(QueryAssetExportDto queryDto);
     }
 
     public class ExportService : BaseService, IExportService
@@ -20,91 +20,166 @@ namespace API_FFMS.Services
         {
         }
 
-        public async Task<ApiResponse<Stream>> ExportCombinedData(ExportQueryTrackingDto queryDto)
+        public async Task<ExportFile> Export(QueryRoomExportDto queryDto)
         {
-            // Retrieve data from repositories (RoomAsset, Room, and Asset)
-            var roomAssetData = await MainUnitOfWork.RoomAssetRepository.GetQuery().Where(x => !x.DeletedAt.HasValue)
-                .ToListAsync();
-            var roomData = await MainUnitOfWork.RoomRepository.GetQuery().Where(x => !x.DeletedAt.HasValue)
-                .ToListAsync();
-            var assetData = await MainUnitOfWork.AssetRepository.GetQuery().Where(x => !x.DeletedAt.HasValue)
-                .ToListAsync();
+            var roomQuery = MainUnitOfWork.RoomRepository.GetQuery();
 
-            var combinedData = new List<ExportTrackingDto>();
-            foreach (var roomAsset in roomAssetData)
+            if (queryDto.RoomTypeId != null)
             {
-                if (roomAsset != null)
-                {
-                    var room = roomData.FirstOrDefault(r => r.Id == roomAsset.RoomId);
-                    var asset = assetData.FirstOrDefault(a => a.Id == roomAsset.Asset.Id);
-
-                    if (room != null && asset != null)
-                    {
-                        var roomStatus = await GetRoomStatusFromRoom(room);
-
-                        var roomType = await GetRoomTypeFromRoom(room);
-
-                        var exportTracking = new ExportTrackingDto
-                        {
-                            FromDateTracking = roomAsset.FromDate??DateTime.MinValue,
-                            ToDateTracking = roomAsset.ToDate,
-                            AssetId = asset.Id,
-                            TypeId = asset.TypeId ?? Guid.Empty,
-                            AssetName = asset.AssetName,
-                            AssetCode = asset.AssetCode,
-                            IsMovable = asset.IsMovable,
-                            AssetStatus = asset.Status,
-                            ManufacturingYear = asset.ManufacturingYear,
-                            SerialNumber = asset.SerialNumber,
-                            Quantity = asset.Quantity,
-                            Description = asset.Description,
-                            LastMaintenanceTime = asset.LastMaintenanceTime,
-                            RoomName = room.RoomName,
-                            Area = room.Area,
-                            PathRoom = room.PathRoom,
-                            RoomCode = room.RoomCode,
-                            RoomTypeId = room.RoomTypeId,
-                            Capacity = room.Capacity,
-                            StatusId = room.StatusId,
-                            FloorId = room.FloorId,
-                            RoomStatus = roomStatus,
-                            RoomType = roomType
-                        };
-
-                        combinedData.Add(exportTracking);
-                    }
-                }
+                roomQuery = roomQuery.Where(x => x!.RoomTypeId == queryDto.RoomTypeId);
             }
 
-            var exportStream =
-                ExcelExtension<ExportTrackingDto>.ExportV2(combinedData, "CombinedData", "Danh sách kết hợp", 6);
-
-            return ApiResponse<Stream>.Success(exportStream);
-        }
-        private async Task<RoomStatusDto> GetRoomStatusFromRoom(Room room)
-        {
-            var roomStatus = await MainUnitOfWork.RoomStatusRepository.GetQuery()
-                .Where(x => !x!.DeletedAt.HasValue && x.Id == room.StatusId)
-                .SingleOrDefaultAsync();
-        
-            return new RoomStatusDto
+            if (!string.IsNullOrEmpty(queryDto.Keyword))
             {
-                StatusName = roomStatus!.StatusName,
-                Description = roomStatus.Description,
-                Color = roomStatus.Color
+                var keyword = queryDto.Keyword.ToLower();
+                roomQuery = roomQuery.Where(x => x!.RoomCode.ToLower().Contains(keyword)
+                                                 || x.RoomName!.ToLower().Contains(keyword) ||
+                                                 x.Description!.ToLower().Contains(keyword));
+            }
+
+            if (queryDto.StatusId != null)
+            {
+                roomQuery = roomQuery.Where(x => x!.StatusId == queryDto.StatusId);
+            }
+
+            if (queryDto.FromArea != null)
+            {
+                roomQuery = roomQuery.Where(x => x!.Area >= queryDto.FromArea);
+            }
+
+            if (queryDto.ToArea != null)
+            {
+                roomQuery = roomQuery.Where(x => x!.Area <= queryDto.ToArea);
+            }
+
+            if (queryDto.FromCapacity != null)
+            {
+                roomQuery = roomQuery.Where(x => x!.Capacity >= queryDto.FromCapacity);
+            }
+
+            if (queryDto.ToCapacity != null)
+            {
+                roomQuery = roomQuery.Where(x => x!.Capacity <= queryDto.ToCapacity);
+            }
+
+            if (queryDto.FloorId != null)
+            {
+                roomQuery = roomQuery.Where(x => x!.FloorId == queryDto.FloorId);
+            }
+
+            if (queryDto.AssetStatus != null)
+            {
+                roomQuery = roomQuery.Where(x =>
+                    x!.RoomAssets!.Any(ra => ra.Asset!.Status == queryDto.AssetStatus.Value));
+            }
+
+            var rooms = await roomQuery.ToListAsync();
+
+            var exportTrackingData = rooms.Select(room => new ExportTrackingRoomDto
+            {
+                RoomName = room!.RoomName,
+                Area = room.Area,
+                PathRoom = room.PathRoom,
+                RoomCode = room.RoomCode,
+                Capacity = room.Capacity,
+                Description = room.Description,
+
+                TypeName = room.RoomTypeId != null
+                    ? MainUnitOfWork.RoomTypeRepository.GetQuery().SingleOrDefault(x => !x!.DeletedAt.HasValue && x.Id == room.RoomTypeId)!
+                        .TypeName
+                    : null,
+                StatusName = room.Status != null
+                    ? MainUnitOfWork.RoomStatusRepository.GetQuery().SingleOrDefault(x =>  !x!.DeletedAt.HasValue && x.Id == room.StatusId)!
+                        .StatusName
+                    : null,
+            }).ToList();
+
+            var streamFile = ExportHelperList<ExportTrackingRoomDto>.Export(
+                exportTrackingData,
+                "Room",
+                "Room Export",
+                6);
+
+            return new ExportFile
+            {
+                FileName = $"RoomTracking",
+                Stream = streamFile
             };
         }
 
-        private async Task<RoomTypeDto> GetRoomTypeFromRoom(Room room)
+        public async Task<ExportFile> Export(QueryAssetExportDto queryDto)
         {
-            var roomType = await MainUnitOfWork.RoomTypeRepository.GetQuery()
-                .Where(x => !x!.DeletedAt.HasValue && x.Id == room.RoomTypeId)
-                .SingleOrDefaultAsync();
 
-            return new RoomTypeDto
+            var keyword = queryDto.Keyword?.Trim().ToLower();
+            var assetDataSet = MainUnitOfWork.AssetRepository.GetQuery()
+                .Where(x => !x!.DeletedAt.HasValue);
+
+            if (!string.IsNullOrEmpty(keyword))
             {
-                TypeName = roomType!.TypeName,
-                Description = roomType.Description
+                assetDataSet = assetDataSet.Where(x => x!.AssetCode!.ToLower().Contains(keyword)
+                                                       || x.AssetName.ToLower().Contains(keyword)
+                                                       || x.Description!.ToLower().Contains(keyword)
+                                                       || x.SerialNumber!.ToLower().Contains(keyword));
+            }
+
+            if (queryDto.Status != null)
+                assetDataSet = assetDataSet.Where(x => x!.Status == queryDto.Status);
+
+            if (queryDto.IsMovable != null)
+                assetDataSet = assetDataSet.Where(x => x!.IsMovable == queryDto.IsMovable);
+
+            if (queryDto.IsRented != null)
+                assetDataSet = assetDataSet.Where(x => x!.IsRented == queryDto.IsRented);
+
+            if (queryDto.TypeId != null)
+                assetDataSet = assetDataSet.Where(x => x!.TypeId == queryDto.TypeId);
+
+            if (queryDto.ModelId != null)
+                assetDataSet = assetDataSet.Where(x => x!.ModelId == queryDto.ModelId);
+
+            if (queryDto.CreateAtFrom != null)
+                assetDataSet = assetDataSet.Where(x => x!.CreatedAt >= queryDto.CreateAtFrom);
+
+            if (queryDto.CreateAtTo != null)
+                assetDataSet = assetDataSet.Where(x => x!.CreatedAt <= queryDto.CreateAtTo);
+
+            var assetData = await assetDataSet.ToListAsync();
+            var assets =  assetData.Select(x => new AssetExportDto
+            {
+                Description = x.Description,
+                Status = x.Status,
+                StatusObj = x.Status.GetValue(),
+                LastCheckedDate = x.LastCheckedDate,
+                StartDateOfUse = x.StartDateOfUse,
+                AssetCode = x.AssetCode,
+                AssetName = x.AssetName,
+                Quantity = x.Quantity,
+                IsMovable = x.IsMovable,
+                IsRented = x.IsRented,
+                ManufacturingYear = x.ManufacturingYear,
+                ModelId = x.ModelId,
+                SerialNumber = x.SerialNumber,
+                TypeId = x.TypeId,
+                LastMaintenanceTime = x.LastMaintenanceTime,
+                CreatedAt = x.CreatedAt,
+                EditedAt = x.EditedAt,
+                CreatorId = x.CreatorId ?? Guid.Empty,
+                EditorId = x.EditorId ?? Guid.Empty,
+                TypeName=  x.TypeId != null ? MainUnitOfWork.AssetTypeRepository.GetQuery().SingleOrDefault(type=> !type!.DeletedAt.HasValue && type.Id == x.TypeId )!.TypeName : null,
+                ModelName=  x.ModelId != null ? MainUnitOfWork.ModelRepository.GetQuery().SingleOrDefault(model=> !model!.DeletedAt.HasValue && model.Id == x.ModelId )!.ModelName : null
+            }).ToList();
+
+            assets = await _mapperRepository.MapCreator(assets);
+            var streamFile = ExportHelperList<AssetExportDto>.Export(
+                assets,
+                "Asset",
+                "Asset Export",
+                6);
+
+            return new ExportFile
+            {
+                FileName = $"Assetracking",
+                Stream = streamFile
             };
         }
     }
