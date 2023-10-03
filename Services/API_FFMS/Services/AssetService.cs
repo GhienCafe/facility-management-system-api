@@ -323,14 +323,4 @@ public class AssetService : BaseService, IAssetService
                 (int)Math.Ceiling(totalCount / (double)queryDto.PageSize)
             );
      }
-
-    public static string FormatToYYYYMMDD(DateTime inputDateTime)
-    {
-        // Format the DateTime object into 'yyyy-MM-dd' format
-        string outputDateStr = inputDateTime.ToString("yyyy-MM-dd");
-
-        return outputDateStr;
-    }
-
-
 }

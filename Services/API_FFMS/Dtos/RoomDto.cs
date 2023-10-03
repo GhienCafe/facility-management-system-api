@@ -37,6 +37,19 @@ public class RoomDetailDto : BaseDto
     public RoomTypeDto? RoomType { get; set; }
 }
 
+public class RoomBaseDto : BaseDto
+{
+    public string? RoomName { get; set; }
+    public double? Area { get; set; }
+    public string? PathRoom { get; set; }
+    public string RoomCode { get; set; } = null!;
+    public Guid? RoomTypeId { get; set; }
+    public int? Capacity { get; set; }
+    public Guid StatusId { get; set; }
+    public Guid FloorId { get; set; }
+    public string? Description { get; set; }
+}
+
 public class RoomCreateDto
 {
     public string? RoomName { get; set; }
