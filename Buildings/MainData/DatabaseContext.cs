@@ -30,11 +30,14 @@ public class DatabaseContext : DbContext
     
     public DbSet<Notification> Notifications { get; set; }
     public DbSet<Transportation> Transportations { get; set; }
+    public DbSet<Repairation> Repairations { get; set; }
+    public DbSet<AssetCheck> AssetChecks { get; set; }
     
     public DbSet<Category> Categories { get; set; }
     public DbSet<Team> Teams { get; set; }
     public DbSet<Model> Models { get; set; }
     public DbSet<ActionRequest> ActionRequests { get; set; }
+    public DbSet<TeamMember> TeamMembers { get; set; }
 
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -60,11 +63,14 @@ public class DatabaseContext : DbContext
         modelBuilder.ApplyConfiguration(new ReplacementConfig());
         modelBuilder.ApplyConfiguration(new NotificationConfig());
         modelBuilder.ApplyConfiguration(new TransportationConfig());
+        modelBuilder.ApplyConfiguration(new RepairationConfig());
+        modelBuilder.ApplyConfiguration(new AssetCheckConfig());
         
         modelBuilder.ApplyConfiguration(new TeamConfig());
         modelBuilder.ApplyConfiguration(new ModelConfig());
         modelBuilder.ApplyConfiguration(new CategoryConfig());
         modelBuilder.ApplyConfiguration(new RoomTypeConfig());
         modelBuilder.ApplyConfiguration(new RequestConfig());
+        modelBuilder.ApplyConfiguration(new TeamMemberConfig());
     }
 }

@@ -6,7 +6,6 @@ using MainData;
 using MainData.Entities;
 using MainData.Repositories;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
 
 namespace API_FFMS.Services;
 
@@ -14,6 +13,9 @@ public interface IRequestService : IBaseService
 {
     Task<ApiResponse> CreateRequest(ActionRequestCreateDto createDto);
     Task<ApiResponses<ActionRequestDto>> GetRequests(ActionRequestQuery queryDto);
+    Task<ApiResponse<ActionRequestDetailDto>> GetRequest(Guid id);
+    Task<ApiResponse> DeleteRequest(Guid id);
+    Task<ApiResponse> UpdateRequest(Guid id, ActionRequestUpdateDto updateDto);
 }
 
 public class RequestService : BaseService, IRequestService
@@ -129,5 +131,107 @@ public class RequestService : BaseService, IRequestService
             queryDto.PageSize,
             queryDto.Page,
             (int)Math.Ceiling(totalCount / (double)queryDto.PageSize));
+    }
+
+    public async Task<ApiResponse<ActionRequestDetailDto>> GetRequest(Guid id)
+    {
+        var requestQuery = MainUnitOfWork.RequestRepository.GetQuery()
+            .Where(x => !x!.DeletedAt.HasValue && x.Id == id);
+
+        if (!requestQuery.Any())
+        {
+            throw new ApiException("Không tìm thấy yêu cầu", StatusCode.NOT_FOUND);
+        }
+
+        var req = await (from request in requestQuery
+            join user in MainUnitOfWork.UserRepository.GetQuery() on request.AssignedTo equals user.Id
+            select new ActionRequestDetailDto
+            {
+                Id = request.Id,
+                RequestCode = request.RequestCode,
+                RequestDate = request.RequestDate,
+                CompletionDate = request.CompletionDate,
+                Description = request.Description,
+                Notes = request.Notes,
+                RequestType = request.RequestType,
+                RequestTypeObj = request.RequestType!.GetValue(),
+                RequestStatus = request.RequestStatus,
+                RequestStatusObj = request.RequestStatus!.GetValue(),
+                AssignedTo = request.AssignedTo,
+                IsInternal = request.IsInternal,
+                CreatedAt = request.CreatedAt,
+                EditedAt = request.EditedAt,
+                CreatorId = request.CreatorId ?? Guid.Empty,
+                EditorId = request.EditorId ?? Guid.Empty,
+                AssignedPerson = new UserDto
+                {
+                    Id = user.Id,
+                    Fullname = user.Fullname,
+                    Address = user.Address,
+                    Status = user.Status.GetValue(),
+                    Avatar = user.Avatar,
+                    Dob = user.Dob,
+                    Email = user.Email,
+                    Gender = user.Gender,
+                    Role = user.Role.GetValue(),
+                    PhoneNumber = user.PhoneNumber,
+                    UserCode = user.UserCode,
+                    PersonalIdentifyNumber = user.PersonalIdentifyNumber,
+                    FirstLoginAt = user.FirstLoginAt,
+                    LastLoginAt = user.LastLoginAt,
+                    CreatedAt = user.CreatedAt,
+                    EditedAt = user.EditedAt,
+                    CreatorId = user.CreatorId ?? Guid.Empty,
+                    EditorId = user.EditorId ?? Guid.Empty,
+                }
+            }).FirstOrDefaultAsync();
+
+        req = await _mapperRepository.MapCreator(req);
+
+        return ApiResponse<ActionRequestDetailDto>.Success(req);
+    }
+
+    public async Task<ApiResponse> DeleteRequest(Guid id)
+    {
+        var request = await MainUnitOfWork.RequestRepository.FindOneAsync(id);
+
+        if (request == null)
+        {
+            throw new ApiException("Không tìm thấy yêu cầu", StatusCode.NOT_FOUND);
+        }
+        
+        if (request.RequestStatus != RequestStatus.NotStarted && request.RequestStatus != RequestStatus.InProgress)
+        {
+            throw new ApiException($"Không thể xóa yêu cầu có trạng thái {request.RequestStatus?.GetDisplayName()}", StatusCode.BAD_REQUEST);
+        }
+        
+        if (!await MainUnitOfWork.RequestRepository.DeleteAsync(request, AccountId, CurrentDate))
+            throw new ApiException("Xóa yêu cầu thấy bại", StatusCode.SERVER_ERROR);
+
+        return ApiResponse.Success("Xóa yêu cầu thành công");
+    }
+
+    public async Task<ApiResponse> UpdateRequest(Guid id, ActionRequestUpdateDto updateDto)
+    {
+        var request = await MainUnitOfWork.RequestRepository.FindOneAsync(id);
+
+        if (request == null)
+        {
+            throw new ApiException("Không tìm thấy yêu cầu", StatusCode.NOT_FOUND);
+        }
+
+        request.RequestCode = updateDto.RequestCode ?? request.RequestCode;
+        request.Description = updateDto.Description ?? request.Description;
+        request.RequestStatus = updateDto.RequestStatus ?? request.RequestStatus;
+        request.RequestDate = updateDto.RequestDate ?? request.RequestDate;
+        request.Notes = updateDto.Notes ?? request.Notes;
+        request.AssignedTo = updateDto.AssignedTo ?? request.AssignedTo;
+        request.IsInternal = updateDto.IsInternal ?? request.IsInternal;
+        request.CompletionDate = updateDto.CompletionDate ?? request.CompletionDate;
+
+        if (!await MainUnitOfWork.RequestRepository.UpdateAsync(request, AccountId, CurrentDate))
+            throw new ApiException("Cập nhật thông tin yêu cầu thất bại", StatusCode.SERVER_ERROR);
+        
+        return ApiResponse.Success("Cập nhật yêu cầu thành công");
     }
 }
