@@ -1,4 +1,5 @@
 ﻿using API_FFMS.Dtos;
+using AppCore.Extensions;
 using MainData;
 using MainData.Entities;
 
@@ -34,23 +35,73 @@ namespace API_FFMS.Repositories
                     AssignedTo = createDto.AssignedTo,
                     IsInternal = createDto.IsInternal,
                     RequestCode = createDto.RequestCode,
-                    RequestDate = createDto.RequestDate
+                    RequestDate = createDto.RequestDate,
+                    CreatedAt = now.Value,
+                    CreatorId = creatorId,
                 };
                 
                 _dbContext.ActionRequests.Add(request);
                 await _dbContext.SaveChangesAsync();
 
-                if (createDto.Transportations != null && createDto.Transportations.Any())
+                if (createDto.Transportations != null && createDto.Transportations.Any() && request.RequestType == RequestType.Transportation)
                 {
                     var transports = createDto.Transportations.Select(x => new Transportation
                     {
                         Quantity = x.Quantity,
                         RequestId = requestId,
                         ToRoomId = x.ToRoomId,
-                        AssetId = x.AssetId
+                        AssetId = x.AssetId,
+                        CreatedAt = now.Value,
+                        CreatorId = creatorId
                     });
                 
                     _dbContext.Transportations.AddRange(transports);
+                    await _dbContext.SaveChangesAsync();
+                }
+                
+                if (createDto.Maintenances != null && createDto.Maintenances.Any() && request.RequestType == RequestType.Maintenance)
+                {
+                    var maintenance = createDto.Maintenances.Select(x => new Maintenance
+                    {
+                        RequestId = requestId,
+                        AssetId = x.AssetId,
+                        Notes = x.Note,
+                        CreatedAt = now.Value,
+                        CreatorId = creatorId
+                    });
+                
+                    _dbContext.Maintenances.AddRange(maintenance);
+                    await _dbContext.SaveChangesAsync();
+                }
+                
+                if (createDto.Repairations != null && createDto.Repairations.Any() && request.RequestType == RequestType.Repairation)
+                {
+                    var repairations = createDto.Repairations.Select(x => new Repairation
+                    {
+                        RequestId = requestId,
+                        AssetId = x.AssetId,
+                        Notes = x.Note,
+                        Description = x.Description,
+                        CreatedAt = now.Value,
+                        CreatorId = creatorId
+                    });
+                
+                    _dbContext.Repairations.AddRange(repairations);
+                    await _dbContext.SaveChangesAsync();
+                }
+                
+                if (createDto.Replacements != null && createDto.Replacements.Any() && request.RequestType == RequestType.Replacement)
+                {
+                    var replacements = createDto.Replacements.Select(x => new Replacement
+                    {
+                        RequestId = requestId,
+                        AssetId = x.AssetId,
+                        NewAssetId = x.NewAssetId,
+                        CreatedAt = now.Value,
+                        CreatorId = creatorId
+                    });
+                
+                    _dbContext.Replacements.AddRange(replacements);
                     await _dbContext.SaveChangesAsync();
                 }
 

@@ -43,7 +43,7 @@ public enum RequestType
 
 public enum RequestStatus
 {
-    [Display(Name = "Chưa bắt đầu")]
+    [Display(Name = "Đã gửi yêu cầu")]
     NotStarted = 1,
     [Display(Name = "Đang trong quá trình thực hiện")]
     InProgress = 2,
