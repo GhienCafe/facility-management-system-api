@@ -35,7 +35,7 @@ public class MainUnitOfWork : IDisposable
     public BaseRepository<MaintenanceScheduleConfig> MaintenanceScheduleRepository => new(_context);
     public BaseRepository<Repairation> RepairationRepository => new(_context);
     public BaseRepository<Model> ModelRepository => new(_context);
-    public BaseRepository<ActionRequest> RequestRepository => new(_context);
+   // public BaseRepository<ActionRequest> RequestRepository => new(_context);
     public BaseRepository<AssetCheck> AssetCheckRepository => new(_context);
     public BaseRepository<TeamMember> TeamMemberRepository => new(_context);
 

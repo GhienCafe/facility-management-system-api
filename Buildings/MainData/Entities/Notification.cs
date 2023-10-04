@@ -19,7 +19,6 @@ public class Notification : BaseEntity
     
     //
     public virtual User? User { get; set; }
-    public virtual ActionRequest? Request { get; set; }
 }
 
 public enum NotificationType
@@ -56,9 +55,5 @@ public class NotificationConfig : IEntityTypeConfiguration<Notification>
         builder.HasOne(x => x.User)
             .WithMany(x => x.Notifications)
             .HasForeignKey(x => x.UserId);
-        
-        builder.HasOne(x => x.Request)
-            .WithMany(x => x.Notifications)
-            .HasForeignKey(x => x.ItemId);
     }
 }

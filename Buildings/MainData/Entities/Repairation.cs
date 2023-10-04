@@ -5,16 +5,8 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace MainData.Entities;
 
-public class Repairation : BaseEntity
+public class Repairation : BaseRequest
 {
-    public Guid? AssetId { get; set; }
-    public Guid? RequestId { get; set; }
-    public string? Description { get; set; }
-    public string? Notes { get; set; }
-
-    //
-    public virtual Asset? Asset { get; set; }
-    public virtual ActionRequest? Request { get; set; }
 }
 
 public class RepairationConfig : IEntityTypeConfiguration<Repairation>
@@ -22,20 +14,10 @@ public class RepairationConfig : IEntityTypeConfiguration<Repairation>
     public void Configure(EntityTypeBuilder<Repairation> builder)
     {
         builder.ToTable("Repairations");
-
-        builder.Property(x => x.Description).IsRequired(false);
-        builder.Property(x => x.Notes).IsRequired(false);
-        builder.Property(x => x.RequestId).IsRequired();
-        builder.Property(x => x.AssetId).IsRequired();
-
-        //Relationship
         
-        builder.HasOne(x => x.Asset)
+        // Relationship
+        builder.HasOne(x => x.User)
             .WithMany(x => x.Repairations)
-            .HasForeignKey(x => x.AssetId);
-        
-        builder.HasOne(x => x.Request)
-            .WithMany(x => x.Repairations)
-            .HasForeignKey(x => x.RequestId);
+            .HasForeignKey(x => x.AssignedTo);
     }
 }
