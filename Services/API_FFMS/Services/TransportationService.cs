@@ -1,5 +1,4 @@
 ﻿using API_FFMS.Dtos;
-using AppCore.Data;
 using AppCore.Models;
 using MainData;
 using MainData.Entities;
@@ -7,7 +6,6 @@ using MainData.Repositories;
 using Microsoft.EntityFrameworkCore;
 using NuGet.Packaging;
 using System.Linq.Expressions;
-using API_FFMS.Repositories;
 
 namespace API_FFMS.Services
 {
