@@ -105,6 +105,24 @@ namespace API_FFMS.Repositories
                     await _dbContext.SaveChangesAsync();
                 }
 
+                var notification = new Notification
+                {
+                    Id = Guid.NewGuid(),
+                    Title = request.RequestType?.GetDisplayName(),
+                    Content = request.Description,
+                    IsRead = false,
+                    ShortContent = null,
+                    Type = NotificationType.Task,
+                    CreatedAt = now.Value,
+                    CreatorId = creatorId,
+                    UserId = request.AssignedTo,
+                    ItemId = request.Id,
+                    Status = NotificationStatus.Waiting
+                };
+                
+                _dbContext.Notifications.Add(notification);
+                await _dbContext.SaveChangesAsync();
+
                 await _dbContext.Database.CommitTransactionAsync();
                 return true;
             }
