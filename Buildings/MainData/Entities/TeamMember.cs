@@ -19,7 +19,7 @@ public class TeamMemberConfig : IEntityTypeConfiguration<TeamMember>
 {
     public void Configure(EntityTypeBuilder<TeamMember> builder)
     {
-        builder.ToTable("Teams");
+        builder.ToTable("TeamMembers");
 
         builder.Property(a => a.MemberId).IsRequired();
         builder.Property(a => a.TeamId).IsRequired();

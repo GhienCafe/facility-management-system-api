@@ -22,7 +22,7 @@ public class AssetCheckConfig : IEntityTypeConfiguration<AssetCheck>
         builder.ToTable("AssetChecks");
         builder.Property(x => x.RequestId).IsRequired();
         builder.Property(x => x.AssetId).IsRequired();
-        builder.Property(x => x.IsVerified).IsRequired(false);
+        builder.Property(x => x.IsVerified).IsRequired();
 
         //Relationship
 

@@ -15,37 +15,38 @@ public class ReplacementController : BaseController
     {
         _replacementService = replacementService;
     }
-    [HttpPost]
-    [SwaggerOperation("Create new replacement")]
-    public async Task<ApiResponse> Create([FromBody] CreateReplacementDto createDto)
-    {
-        return await _replacementService.Create(createDto);
-    }
-
-    [HttpPut("{id}")]
-    [SwaggerOperation("Update replacement")]
-    public async Task<ApiResponse> Update(Guid id, UpdateReplacementDto updateDto)
-    {
-        return await _replacementService.Update(id, updateDto);
-    }
-
-    [HttpGet("{id:guid}")]
-    [SwaggerOperation("Replace detail information")]
-    public async Task<ApiResponse<DetailReplacementDto>> GetDetail(Guid id)
-    {
-        return await _replacementService.GetDetail(id);
-    }
-
-    [HttpGet]
-    [SwaggerOperation("Get all replacement")]
-    public async Task<ApiResponses<ReplacementDto>> GetList([FromQuery] QueryReplacementDto queryDto)
-    {
-        return await _replacementService.GetList(queryDto);
-    }
-    [HttpDelete("{id}")]
-    [SwaggerOperation("Delete replacement")]
-    public async Task<ApiResponse> Delete(Guid id)
-    {
-        return await _replacementService.Delete(id);
-    }
+    
+    // [HttpPost]
+    // [SwaggerOperation("Create new replacement")]
+    // public async Task<ApiResponse> Create([FromBody] CreateReplacementDto createDto)
+    // {
+    //     return await _replacementService.Create(createDto);
+    // }
+    //
+    // [HttpPut("{id}")]
+    // [SwaggerOperation("Update replacement")]
+    // public async Task<ApiResponse> Update(Guid id, UpdateReplacementDto updateDto)
+    // {
+    //     return await _replacementService.Update(id, updateDto);
+    // }
+    //
+    // [HttpGet("{id:guid}")]
+    // [SwaggerOperation("Replace detail information")]
+    // public async Task<ApiResponse<DetailReplacementDto>> GetDetail(Guid id)
+    // {
+    //     return await _replacementService.GetDetail(id);
+    // }
+    //
+    // [HttpGet]
+    // [SwaggerOperation("Get all replacement")]
+    // public async Task<ApiResponses<ReplacementDto>> GetList([FromQuery] QueryReplacementDto queryDto)
+    // {
+    //     return await _replacementService.GetList(queryDto);
+    // }
+    // [HttpDelete("{id}")]
+    // [SwaggerOperation("Delete replacement")]
+    // public async Task<ApiResponse> Delete(Guid id)
+    // {
+    //     return await _replacementService.Delete(id);
+    // }
 }
