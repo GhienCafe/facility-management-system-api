@@ -38,6 +38,20 @@ public enum RequestStatus
     Others = 6,
 }
 
+public enum RequestType
+{
+    [Display(Name = "Kiểm trang trình trạng trang thiết bị")]
+    StatusCheck = 1,
+    [Display(Name = "Bảo trì, nâng cấp trang thiết bị")]
+    Maintenance = 2,
+    [Display(Name = "Sửa chữa trang thiết bị")]
+    Repairation = 3,
+    [Display(Name = "Thay thế trang thiết bị")]
+    Replacement = 4,
+    [Display(Name = "Điều chuyển trang thiết bị")]
+    Transportation = 5
+}
+
 public class BaseRequestConfig : IEntityTypeConfiguration<BaseRequest>
 {
     public void Configure(EntityTypeBuilder<BaseRequest> builder)
