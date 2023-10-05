@@ -8,3 +8,11 @@ public class MaintenanceDto : BaseRequestDto {
     public AssetBaseDto? Asset { get; set; }
     public UserDto? User { get; set; }
 }
+
+public class MaintenanceQueryDto : BaseRequestQueryDto
+{
+}
+
+public class MaintenanceCreateDto : BaseRequestCreateDto
+{
+}
