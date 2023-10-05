@@ -26,8 +26,13 @@ public class User : BaseEntity
     //
     public virtual IEnumerable<Token>? Tokens { get; set; }
     public virtual IEnumerable<TeamMember>? Teams { get; set; }
-    public virtual IEnumerable<ActionRequest>? Requests { get; set; }
     public virtual IEnumerable<Notification>? Notifications { get; set; }
+    
+    public virtual IEnumerable<AssetCheck>? AssetChecks { get; set; }
+    public virtual IEnumerable<Replacement>? Replacements { get; set; }
+    public virtual IEnumerable<Repairation>? Repairations { get; set; }
+    public virtual IEnumerable<Maintenance>? Maintenances { get; set; }
+    public virtual IEnumerable<Transportation>? Transportations { get; set; }
 }
 
 public enum UserRole
@@ -81,13 +86,32 @@ public class UserConfig : IEntityTypeConfiguration<User>
             .WithOne(x => x.Member)
             .HasForeignKey(x => x.MemberId);
         
-        builder.HasMany(x => x.Requests)
-            .WithOne(x => x.PersonInCharge)
-            .HasForeignKey(x => x.AssignedTo);
+        // builder.HasMany(x => x.Requests)
+        //     .WithOne(x => x.PersonInCharge)
+        //     .HasForeignKey(x => x.AssignedTo);
         
         builder.HasMany(x => x.Notifications)
             .WithOne(x => x.User)
             .HasForeignKey(x => x.UserId);
 
+        builder.HasMany(x => x.AssetChecks)
+            .WithOne(x => x.User)
+            .HasForeignKey(x => x.AssignedTo);
+        
+        builder.HasMany(x => x.Maintenances)
+            .WithOne(x => x.User)
+            .HasForeignKey(x => x.AssignedTo);
+        
+        builder.HasMany(x => x.Replacements)
+            .WithOne(x => x.User)
+            .HasForeignKey(x => x.AssignedTo);
+        
+        builder.HasMany(x => x.Repairations)
+            .WithOne(x => x.User)
+            .HasForeignKey(x => x.AssignedTo);
+        
+        builder.HasMany(x => x.Transportations)
+            .WithOne(x => x.User)
+            .HasForeignKey(x => x.AssignedTo);
     }
 }

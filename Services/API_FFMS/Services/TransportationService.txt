@@ -6,15 +6,21 @@ using MainData.Repositories;
 using Microsoft.EntityFrameworkCore;
 using NuGet.Packaging;
 using System.Linq.Expressions;
+<<<<<<< HEAD:Services/API_FFMS/Services/TransportationService.cs
+=======
+using API_FFMS.Repositories;
+using AppCore.Extensions;
+>>>>>>> a4da4ae4a9185fa1be2f8142ced48161c04800a8:Services/API_FFMS/Services/TransportationService.txt
 
 namespace API_FFMS.Services
 {
     public interface ITransportationService : IBaseService
     {
-      //  Task<ApiResponses<TransportDto>> GetTransports(TransportQueryDto queryDto);
+       // Task<ApiResponses<TransportDto>> GetTransports(TransportQueryDto queryDto);
         public Task<ApiResponse> Create(TransportCreateDto createDto);
         public Task<ApiResponse> Update(Guid id, TransportUpdateDto updateDto);
         Task<ApiResponse<TransportRequestDto>> GetTransport(Guid id);
+        Task<ApiResponses<TransportDto>> GetTransportOfStaff(TransportOfStaffQueryDto queryDto);
         Task<ApiResponse> Delete(Guid id);
         public Task<ApiResponse> UpdateStatus(Guid id, TransportUpdateStatusDto updateStatusDto);
     }
@@ -25,7 +31,7 @@ namespace API_FFMS.Services
             IMapperRepository mapperRepository) : base(mainUnitOfWork, httpContextAccessor, mapperRepository)
         {
         }
-
+        
         public async Task<ApiResponse> Create(TransportCreateDto createDto)
         {
             // var existingAssignee = await MainUnitOfWork.UserRepository.FindOneAsync(new Expression<Func<User, bool>>[]
@@ -121,6 +127,91 @@ namespace API_FFMS.Services
             // if (!await MainUnitOfWork.NotificationRepository.InsertAsync(notification, AccountId, CurrentDate))
             //     throw new ApiException("Fail to create notification", StatusCode.SERVER_ERROR);
             return ApiResponse.Created("Create successfully");
+        }
+
+        public async Task<ApiResponses<TransportDto>> GetTransportOfStaff(TransportOfStaffQueryDto queryDto)
+        {
+            var request = await MainUnitOfWork.RequestRepository.FindOneAsync(queryDto.RequestId);
+
+            if (request == null)
+                throw new ApiException("Không tìm thấy yêu cầu");
+            
+            if (request.AssignedTo != AccountId)
+                throw new ApiException("Không có quyền truy cập nội dung này");
+
+            var transportQueryable = MainUnitOfWork.TransportationRepository
+                .GetQuery().Where(x => !x!.DeletedAt.HasValue
+                && x.RequestId == queryDto.RequestId);
+
+            var roomQueryable = MainUnitOfWork.RoomRepository.GetQuery().Where(x => !x!.DeletedAt.HasValue);
+            var assetQueryable = MainUnitOfWork.AssetRepository.GetQuery().Where(x => !x!.DeletedAt.HasValue);
+            var roomAssetQueryable = MainUnitOfWork.RoomAssetRepository.GetQuery().Where(x => !x!.DeletedAt.HasValue);
+
+            var joinTables = from transport in transportQueryable
+                join asset in assetQueryable on transport.AssetId equals asset.Id into assetGroup
+                from asset in assetGroup.DefaultIfEmpty()
+                join roomAsset in roomAssetQueryable on transport.AssetId equals roomAsset.AssetId into roomAssetGroup
+                from roomAsset in roomAssetGroup.DefaultIfEmpty()
+                where roomAsset.ToDate == null
+                join fromRoom in roomQueryable on roomAsset.RoomId equals fromRoom.Id into fromRoomGroup
+                from fromRoom in fromRoomGroup.DefaultIfEmpty()
+                join toRoom in roomQueryable on transport.ToRoomId equals toRoom.Id into toRoomGroup
+                from toRoom in toRoomGroup.DefaultIfEmpty()
+                select new
+                {
+                    Transport = transport,
+                    Asset = asset,
+                    FromRoom = fromRoom,
+                    ToRoom = toRoom
+                };
+
+            var totalCount = await joinTables.CountAsync();
+
+            joinTables = joinTables.Skip(queryDto.Skip()).Take(queryDto.PageSize);
+
+            var transports = await joinTables.Select(x => new TransportDto
+            {
+                Id = x.Transport.Id,
+                RequestId = x.Transport.RequestId,
+                AssetId = x.Transport.AssetId,
+                Quantity = x.Transport.Quantity,
+                ToRoomId = x.Transport.ToRoomId,
+                Asset = new AssetBaseDto
+                {
+                    Id = x.Asset.Id,
+                    Description = x.Asset.Description,
+                    Quantity = x.Asset.Quantity,
+                    AssetCode = x.Asset.AssetCode,
+                    Status = x.Asset.Status,
+                    StatusObj = x.Asset.Status.GetValue(),
+                    ManufacturingYear = x.Asset.ManufacturingYear,
+                    SerialNumber = x.Asset.SerialNumber,
+                    AssetName = x.Asset.AssetName,
+                    IsMovable = x.Asset.IsMovable,
+                    IsRented = x.Asset.IsRented,
+                    ModelId = x.Asset.ModelId,
+                    TypeId = x.Asset.TypeId,
+                    LastCheckedDate = x.Asset.LastCheckedDate,
+                    LastMaintenanceTime = x.Asset.LastMaintenanceTime,
+                    StartDateOfUse = x.Asset.StartDateOfUse,
+                    CreatedAt = x.Asset.CreatedAt,
+                    EditedAt = x.Asset.EditedAt,
+                    CreatorId = x.Asset.CreatorId ?? Guid.Empty,
+                    EditorId = x.Asset.EditorId ?? Guid.Empty
+                },
+                FromRoom = x.FromRoom.ProjectTo<Room, RoomBaseDto>(),
+                ToRoom = x.ToRoom.ProjectTo<Room, RoomBaseDto>(),
+            }).ToListAsync();
+
+            transports = await _mapperRepository.MapCreator(transports);
+            
+            // Return data
+            return ApiResponses<TransportDto>.Success(
+                transports,
+                totalCount,
+                queryDto.PageSize,
+                queryDto.Page,
+                (int)Math.Ceiling(totalCount / (double)queryDto.PageSize));
         }
 
         public async Task<ApiResponse> Delete(Guid id)

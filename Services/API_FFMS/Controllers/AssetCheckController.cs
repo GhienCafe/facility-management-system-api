@@ -15,10 +15,10 @@
 //         _assetCheckService = assetCheckService;
 //     }
 //     
-//     // [HttpGet]
-//     // [SwaggerOperation("Get list asset check")]
-//     // public async Task<ApiResponses<AssetCheckDto>> GetAssetChecks([FromQuery] AssetCheckQueryDto queryDto)
-//     // {
-//     //     return await _assetCheckService.GetAssetChecks(queryDto);
-//     // }
+//     [HttpGet]
+//     [SwaggerOperation("Get list asset check")]
+//     public async Task<ApiResponses<AssetCheckDto>> GetAssetChecks([FromQuery] AssetCheckQueryDto queryDto)
+//     {
+//         return await _assetCheckService.GetAssetChecks(queryDto);
+//     }
 // }

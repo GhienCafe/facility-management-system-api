@@ -21,21 +21,21 @@ public class MaintenanceController : BaseController
     // {
     //     return await _maintenanceService.GetMaintenances(queryDto);
     // }
-    //
+    
     // [HttpGet("{id:guid}")]
     // [SwaggerOperation("Get detail maintenance")]
     // public async Task<ApiResponse<MaintenanceDetailDto>> GetMaintenance(Guid id)
     // {
     //     return await _maintenanceService.GetMaintenance(id);
     // }
-    //
-    // [HttpPost]
-    // [SwaggerOperation("Create new maintenance")]
-    // public async Task<ApiResponse> Create([FromBody] MaintenanceCreateDto createDto)
-    // {
-    //     return await _maintenanceService.CreateMaintenance(createDto);
-    // }
-    //
+    
+    [HttpPost]
+    [SwaggerOperation("Create new maintenance")]
+    public async Task<ApiResponse> Create([FromBody] MaintenanceCreateDto createDto)
+    {
+        return await _maintenanceService.CreateItem(createDto);
+    }
+    
     // [HttpPut("{id}")]
     // [SwaggerOperation("Update maintenance")]
     // public async Task<ApiResponse> Update(Guid id, MaintenanceUpdateDto updateDto)
