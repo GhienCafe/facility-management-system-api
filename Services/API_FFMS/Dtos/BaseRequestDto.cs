@@ -32,8 +32,8 @@ public class BaseRequestCreateDto
 
 public class BaseRequestQueryDto : BaseQueryDto
 {
-    public Guid AssetId { get; set; }
+    public Guid? AssetId { get; set; }
     public RequestStatus? Status { get; set; }
-    public bool IsInternal { get; set; }
+    public bool? IsInternal { get; set; }
     public Guid? AssignedTo { get; set; }    
 }

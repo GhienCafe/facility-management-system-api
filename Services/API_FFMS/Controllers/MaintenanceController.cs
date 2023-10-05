@@ -15,19 +15,19 @@ public class MaintenanceController : BaseController
         _maintenanceService = maintenanceService;
     }
     
-    // [HttpGet]
-    // [SwaggerOperation("Get list maintenances")]
-    // public async Task<ApiResponses<MaintenanceDto>> GetMaintenances([FromQuery]MaintenanceQueryDto queryDto)
-    // {
-    //     return await _maintenanceService.GetMaintenances(queryDto);
-    // }
+    [HttpGet]
+    [SwaggerOperation("Get list maintenances")]
+    public async Task<ApiResponses<MaintenanceDto>> GetMaintenances([FromQuery]MaintenanceQueryDto queryDto)
+    {
+        return await _maintenanceService.GetItems(queryDto);
+    }
     
-    // [HttpGet("{id:guid}")]
-    // [SwaggerOperation("Get detail maintenance")]
-    // public async Task<ApiResponse<MaintenanceDetailDto>> GetMaintenance(Guid id)
-    // {
-    //     return await _maintenanceService.GetMaintenance(id);
-    // }
+    [HttpGet("{id:guid}")]
+    [SwaggerOperation("Get detail maintenance")]
+    public async Task<ApiResponse<MaintenanceDto>> GetMaintenance(Guid id)
+    {
+        return await _maintenanceService.GetItem(id);
+    }
     
     [HttpPost]
     [SwaggerOperation("Create new maintenance")]
