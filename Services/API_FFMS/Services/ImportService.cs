@@ -51,7 +51,10 @@ namespace API_FFMS.Services
                     Description = dto.Description,
                     IsRented = IsTrueOrFalse(dto.IsRented),
                     IsMovable = IsTrueOrFalse(dto.IsMovable),
-                    Model = GetModelByName(dto.Model)
+                    Model = GetModelByName(dto.Model),
+                    StartDateOfUse = DateTime.Now,
+                    LastCheckedDate = DateTime.Now,
+                    LastMaintenanceTime = DateTime.Now
                 }).ToList();
 
                 // Validation checks

@@ -3,7 +3,6 @@ using AppCore.Models;
 using ClosedXML.Excel;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
-using static API_FFMS.Services.ImportService;
 
 namespace API_FFMS.Controllers
 {

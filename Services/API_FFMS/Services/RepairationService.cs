@@ -21,7 +21,9 @@ namespace API_FFMS.Services
     public class RepairationService : BaseService, IRepairationService
     {
         private readonly IRepairationRepository _repairationRepository;
-        public RepairationService(MainUnitOfWork mainUnitOfWork, IHttpContextAccessor httpContextAccessor, IMapperRepository mapperRepository, IRepairationRepository repairationRepository) : base(mainUnitOfWork, httpContextAccessor, mapperRepository)
+        public RepairationService(MainUnitOfWork mainUnitOfWork, IHttpContextAccessor httpContextAccessor,
+                                 IMapperRepository mapperRepository, IRepairationRepository repairationRepository)
+                                 : base(mainUnitOfWork, httpContextAccessor, mapperRepository)
         {
             _repairationRepository = repairationRepository;
         }
@@ -113,7 +115,7 @@ namespace API_FFMS.Services
             var keyword = queryDto.Keyword?.Trim().ToLower();
 
             var repairQuery = MainUnitOfWork.RepairationRepository.GetQuery()
-                              .Where(x => !x.DeletedAt.HasValue);
+                              .Where(x => !x!.DeletedAt.HasValue);
 
             //if (queryDto.IsInternal != null)
             //{
@@ -128,6 +130,11 @@ namespace API_FFMS.Services
             if (queryDto.AssignedTo != null)
             {
                 repairQuery = repairQuery.Where(x => x!.AssignedTo == queryDto.AssignedTo);
+            }
+
+            if(queryDto.AssetId != null)
+            {
+                repairQuery = repairQuery.Where(x => x!.AssetId == queryDto.AssetId);
             }
 
             if (queryDto.Status != null)

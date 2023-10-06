@@ -15,5 +15,4 @@ public class RepairationQueryDto : BaseRequestQueryDto
     public string? RequestCode { get; set; }
     public DateTime? RequestDate { get; set; }
     public DateTime? CompletionDate { get; set; }
-    public RequestStatus? Status { get; set; }
 }
