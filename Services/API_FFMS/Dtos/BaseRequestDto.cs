@@ -37,3 +37,13 @@ public class BaseRequestQueryDto : BaseQueryDto
     public bool? IsInternal { get; set; }
     public Guid? AssignedTo { get; set; }    
 }
+
+public class BaseRequestUpdateDto
+{
+    public DateTime? RequestDate { get; set; }
+    public DateTime? CompletionDate { get; set; }
+    public RequestStatus? Status { get; set; }
+    public string? Description { get; set; }
+    public string? Notes { get; set; } // Results
+    public Guid? AssignedTo { get; set; }    
+}

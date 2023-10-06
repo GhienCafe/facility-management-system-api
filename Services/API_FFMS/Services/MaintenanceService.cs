@@ -15,6 +15,7 @@ public interface IMaintenanceService : IBaseService
     Task<ApiResponses<MaintenanceDto>> GetItems(MaintenanceQueryDto queryDto);
     Task<ApiResponse<MaintenanceDto>> GetItem(Guid id);
     Task<ApiResponse> CreateItem(MaintenanceCreateDto createDto);
+    Task<ApiResponse> UpdateItem(Guid id, MaintenanceUpdateDto updateDto);
 }
 
 public class MaintenanceService : BaseService, IMaintenanceService
@@ -139,8 +140,10 @@ public class MaintenanceService : BaseService, IMaintenanceService
         {
             maintenanceDto.Asset.StatusObj = maintenance.Asset?.Status.GetValue();
         }
+
+        maintenanceDto.StatusObj = maintenance.Status?.GetValue();
         
-        maintenanceDto.User = await MainUnitOfWork.AssetRepository.FindOneAsync<UserBaseDto>(new Expression<Func<Asset, bool>>[]
+        maintenanceDto.User = await MainUnitOfWork.UserRepository.FindOneAsync<UserBaseDto>(new Expression<Func<User, bool>>[]
         {
             x => !x.DeletedAt.HasValue,
             x => x.Id == maintenance.AssignedTo
@@ -173,5 +176,28 @@ public class MaintenanceService : BaseService, IMaintenanceService
             throw new ApiException("Tạo yêu cầu thất bại", StatusCode.SERVER_ERROR);
 
         return ApiResponse.Created("Gửi yêu cầu thành công");
+    }
+
+    public async Task<ApiResponse> UpdateItem(Guid id, MaintenanceUpdateDto updateDto)
+    {
+        var maintenance = await MainUnitOfWork.MaintenanceRepository.FindOneAsync(id);
+
+        if (maintenance == null)
+            throw new ApiException("Không tìm thấy nội dung", StatusCode.NOT_FOUND);
+
+        if(maintenance.Status != RequestStatus.NotStarted)
+            throw new ApiException($"Không thế cập nhật với quy trình có trạng thái: {maintenance.Status?.GetDisplayName()}", StatusCode.BAD_REQUEST);
+        
+        maintenance.Description = updateDto.Description ?? maintenance.Description;
+        maintenance.Status = updateDto.Status ?? maintenance.Status;
+        maintenance.Notes = updateDto.Notes ?? maintenance.Notes;
+        maintenance.AssignedTo = updateDto.AssignedTo ?? maintenance.AssignedTo;
+        maintenance.CompletionDate = updateDto.CompletionDate ?? maintenance.CompletionDate;
+        maintenance.RequestDate = updateDto.RequestDate ?? maintenance.RequestDate;
+        
+        if(!await MainUnitOfWork.MaintenanceRepository.UpdateAsync(maintenance, AccountId, CurrentDate))
+            throw new ApiException("Cập nhật thất bại", StatusCode.SERVER_ERROR);
+
+        return ApiResponse.Success("Cập nhật thành công");
     }
 }

@@ -36,13 +36,13 @@ public class MaintenanceController : BaseController
         return await _maintenanceService.CreateItem(createDto);
     }
     
-    // [HttpPut("{id}")]
-    // [SwaggerOperation("Update maintenance")]
-    // public async Task<ApiResponse> Update(Guid id, MaintenanceUpdateDto updateDto)
-    // {
-    //     return await _maintenanceService.UpdateMaintenance(id, updateDto);
-    // }
-    //
+    [HttpPut("{id}")]
+    [SwaggerOperation("Update maintenance")]
+    public async Task<ApiResponse> Update(Guid id, MaintenanceUpdateDto updateDto)
+    {
+        return await _maintenanceService.UpdateItem(id, updateDto);
+    }
+    
     // [HttpDelete("{id}")]
     // [SwaggerOperation("Delete maintenance")]
     // public async Task<ApiResponse> Delete(Guid id)

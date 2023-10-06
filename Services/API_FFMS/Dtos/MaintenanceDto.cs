@@ -16,3 +16,7 @@ public class MaintenanceQueryDto : BaseRequestQueryDto
 public class MaintenanceCreateDto : BaseRequestCreateDto
 {
 }
+
+public class MaintenanceUpdateDto : BaseRequestUpdateDto
+{
+}
