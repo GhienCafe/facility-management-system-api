@@ -1,0 +1,53 @@
+﻿using API_FFMS.Dtos;
+using API_FFMS.Services;
+using AppCore.Models;
+using Microsoft.AspNetCore.Mvc;
+using Swashbuckle.AspNetCore.Annotations;
+
+namespace API_FFMS.Controllers
+{
+    public class RepairationController : BaseController
+    {
+        private readonly IRepairationService _service;
+
+        public RepairationController(IRepairationService service)
+        {
+            _service = service;
+        }
+
+        [HttpGet]
+        [SwaggerOperation("Get list repairations")]
+        public async Task<ApiResponses<RepairationDto>> GetRepairations([FromQuery] RepairationQueryDto queryDto)
+        {
+            return await _service.GetRepairations(queryDto);
+        }
+
+        [HttpPost]
+        [SwaggerOperation("Create new repairation")]
+        public async Task<ApiResponse> Create([FromBody] RepairationCreateDto createDto)
+        {
+            return await _service.CreateRepairation(createDto);
+        }
+
+        [HttpGet("{id:guid}")]
+        [SwaggerOperation("Get a repairation")]
+        public async Task<ApiResponse<RepairationDto>> GetRepairation(Guid id)
+        {
+            return await _service.GetRepairation(id);
+        }
+
+        [HttpDelete]
+        [SwaggerOperation("Delete a repairation")]
+        public async Task<ApiResponse> Delete(Guid id)
+        {
+            return await _service.Delete(id);
+        }
+
+        [HttpPut]
+        [SwaggerOperation("Update a repairation")]
+        public async Task<ApiResponse> Update(Guid id, BaseRequestUpdateDto updateDto)
+        {
+            return await _service.Update(id, updateDto);
+        }
+    }
+}
