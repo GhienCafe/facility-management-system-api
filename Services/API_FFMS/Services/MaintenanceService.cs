@@ -1,5 +1,6 @@
 ﻿using System.Linq.Expressions;
 using API_FFMS.Dtos;
+using API_FFMS.Repositories;
 using AppCore.Extensions;
 using AppCore.Models;
 using MainData;
@@ -11,220 +12,192 @@ namespace API_FFMS.Services;
 
 public interface IMaintenanceService : IBaseService
 {
-    Task<ApiResponses<MaintenanceDto>> GetMaintenances(MaintenanceQueryDto queryDto);
-    Task<ApiResponse<MaintenanceDetailDto>> GetMaintenance(Guid id);
-    Task<ApiResponse> DeleteMaintenance(Guid id);
-    Task<ApiResponse> CreateMaintenance(MaintenanceCreateDto maintenanceCreateDto);
-    Task<ApiResponse> UpdateMaintenance(Guid id, MaintenanceUpdateDto maintenanceUpdateDto);
-    
+    Task<ApiResponses<MaintenanceDto>> GetItems(MaintenanceQueryDto queryDto);
+    Task<ApiResponse<MaintenanceDto>> GetItem(Guid id);
+    Task<ApiResponse> CreateItem(MaintenanceCreateDto createDto);
+    Task<ApiResponse> UpdateItem(Guid id, MaintenanceUpdateDto updateDto);
 }
 
 public class MaintenanceService : BaseService, IMaintenanceService
 {
-    public MaintenanceService(MainUnitOfWork mainUnitOfWork, IHttpContextAccessor httpContextAccessor, IMapperRepository mapperRepository) : base(mainUnitOfWork, httpContextAccessor, mapperRepository)
+    private readonly IMaintenanceRepository _maintenanceRepository;
+    public MaintenanceService(MainUnitOfWork mainUnitOfWork, IHttpContextAccessor httpContextAccessor, IMapperRepository mapperRepository, IMaintenanceRepository maintenanceRepository) : base(mainUnitOfWork, httpContextAccessor, mapperRepository)
     {
-    }
-    
-    public async Task<ApiResponses<MaintenanceDto>> GetMaintenances(MaintenanceQueryDto queryDto)
-    {
-        // var maintenanceDataset = MainUnitOfWork.MaintenanceRepository.GetQuery();
-        //
-        // if (queryDto.AssetId != null)
-        // {
-        //     maintenanceDataset = maintenanceDataset.Where(x => x!.AssetId == queryDto.AssetId);
-        // }
-        //
-        // if (!string.IsNullOrEmpty(queryDto.Description))
-        // {
-        //     maintenanceDataset = maintenanceDataset.Where(x => x!.Description!.ToLower().Contains(x.Description.Trim().ToLower()));
-        // }
-        //
-        // if (!string.IsNullOrEmpty(queryDto.Note))
-        // {
-        //     maintenanceDataset = maintenanceDataset.Where(x => x!.Note!.ToLower().Contains(x.Note.Trim().ToLower()));
-        // }
-        //
-        // if (queryDto.Status != null)
-        // {
-        //     maintenanceDataset = maintenanceDataset.Where(x => x!.Status == queryDto.Status);
-        // }
-        //
-        // if (queryDto.Type != null)
-        // {
-        //     maintenanceDataset = maintenanceDataset.Where(x => x!.Type == queryDto.Type);
-        // }
-        //
-        // if (queryDto.AssignedTo != null)
-        // {
-        //     maintenanceDataset = maintenanceDataset.Where(x => x!.AssignedTo == queryDto.AssignedTo);
-        // }
-        //
-        // if (queryDto.CompletionDate != null)
-        // {
-        //     maintenanceDataset = maintenanceDataset.Where(x => x!.CompletionDate == queryDto.CompletionDate);
-        // }
-        //
-        // if (queryDto.RequestedDate != null)
-        // {
-        //     maintenanceDataset = maintenanceDataset.Where(x => x!.RequestedDate == queryDto.RequestedDate);
-        // }
-        //
-        // var joinTables = from maintenance in maintenanceDataset
-        //     join asset in MainUnitOfWork.AssetRepository.GetQuery() on maintenance.AssetId equals asset.Id
-        //         into assetGroup
-        //     from asset in assetGroup.DefaultIfEmpty()
-        //     join personInCharge in MainUnitOfWork.UserRepository.GetQuery() on maintenance.AssignedTo equals personInCharge.Id
-        //         into personInChargeGroup
-        //     from personInCharge in personInChargeGroup.DefaultIfEmpty()
-        //     select new
-        //     {
-        //         Maintenance = maintenance,
-        //         Asset = asset,
-        //         PersonInCharge = personInCharge
-        //     };
-        //
-        // var totalCount = joinTables.Count();
-        //
-        // joinTables = joinTables.Skip(queryDto.Skip()).Take(queryDto.PageSize);
-        //
-        // var maintenances = await joinTables.Select(
-        //     x => new MaintenanceDto
-        //     {
-        //         AssetId = x.Maintenance.AssetId,
-        //         Id = x.Maintenance.Id,
-        //         AssignedTo = x.Maintenance.AssignedTo,
-        //         CompletionDate = x.Maintenance.CompletionDate,
-        //         Description = x.Maintenance.Description,
-        //         Type = x.Maintenance.Type.GetValue(),
-        //         Note = x.Maintenance.Note,
-        //         RequestedDate = x.Maintenance.RequestedDate,
-        //         Status = x.Maintenance.Status.GetValue(),
-        //         CreatedAt = x.Maintenance.CreatedAt,
-        //         EditedAt = x.Maintenance.EditedAt,
-        //         CreatorId = x.Maintenance.CreatorId ?? Guid.Empty,
-        //         EditorId = x.Maintenance.EditorId ?? Guid.Empty,
-        //         Asset = x.Asset.ProjectTo<Asset, AssetDto>(),
-        //         PersonInCharge = x.PersonInCharge.ProjectTo<User, UserDto>()
-        //     }).ToListAsync();
-        //
-        // maintenances = await _mapperRepository.MapCreator(maintenances);
-        //
-        // return ApiResponses<MaintenanceDto>.Success(
-        //     maintenances,
-        //     totalCount,
-        //     queryDto.PageSize,
-        //     queryDto.Page,
-        //     (int)Math.Ceiling(totalCount / (double)queryDto.PageSize));
-        throw new ApiException("");
+        _maintenanceRepository = maintenanceRepository;
     }
 
-    public async Task<ApiResponse<MaintenanceDetailDto>> GetMaintenance(Guid id)
+
+    public async Task<ApiResponses<MaintenanceDto>> GetItems(MaintenanceQueryDto queryDto)
     {
-        // var maintenance = MainUnitOfWork.MaintenanceRepository.GetQuery()
-        //     .Where(x => !x!.DeletedAt.HasValue && x.Id == id)
-        //     .Select(x => new MaintenanceDetailDto
-        //     {
-        //         AssetId = x.AssetId,
-        //         Id = x.Id,
-        //         AssignedTo = x.AssignedTo,
-        //         CompletionDate = x.CompletionDate,
-        //         Description = x.Description,
-        //         Type = x.Type.GetValue(),
-        //         Note = x.Note,
-        //         RequestedDate = x.RequestedDate,
-        //         Status = x.Status.GetValue(),
-        //         CreatedAt = x.CreatedAt,
-        //         EditedAt = x.EditedAt,
-        //         CreatorId = x.CreatorId ?? Guid.Empty,
-        //         EditorId = x.EditorId ?? Guid.Empty
-        //     }).FirstOrDefault();
-        //
-        // if (maintenance == null)
-        //     throw new ApiException("Không tìm thấy yêu cầu");
-        //
-        // maintenance.PersonInCharge = await MainUnitOfWork.UserRepository.FindOneAsync<UserDto>(
-        //     new Expression<Func<User, bool>>[]
-        //     {
-        //         x => !x.DeletedAt.HasValue,
-        //         x => x.Id == maintenance.AssignedTo
-        //     });
-        //
-        // maintenance.Asset = await MainUnitOfWork.AssetRepository.FindOneAsync<AssetDto>(
-        //     new Expression<Func<Asset, bool>>[]
-        //     {
-        //         x => !x.DeletedAt.HasValue,
-        //         x => x.Id == maintenance.AssetId
-        //     });
-        //
-        // maintenance = await _mapperRepository.MapCreator(maintenance);
-        //
-        // return ApiResponse<MaintenanceDetailDto>.Success(maintenance);
-        throw new ApiException("");
+        var keyword = queryDto.Keyword?.Trim().ToLower();
+        var maintenanceQueryable = MainUnitOfWork.MaintenanceRepository.GetQuery()
+            .Where(x => !x!.DeletedAt.HasValue);
+
+        if (queryDto.AssetId != null)
+        {
+            maintenanceQueryable = maintenanceQueryable.Where(x => x!.AssetId == queryDto.AssetId);
+        }
+        
+        if (queryDto.IsInternal != null)
+        {
+            maintenanceQueryable = maintenanceQueryable.Where(x => x!.IsInternal == queryDto.IsInternal);
+        }
+        
+        if (queryDto.Status != null)
+        {
+            maintenanceQueryable = maintenanceQueryable.Where(x => x!.Status == queryDto.Status);
+        }
+
+        if (!string.IsNullOrEmpty(keyword))
+        {
+            maintenanceQueryable = maintenanceQueryable.Where(x => x!.Description!.ToLower().Contains(keyword)
+                                                               || x.Notes!.ToLower().Contains(keyword) ||
+                                                               x.RequestCode.ToLower().Contains(keyword));
+        }
+
+        var assetQueryable = MainUnitOfWork.AssetRepository.GetQuery()
+            .Where(x => !x!.DeletedAt.HasValue);
+        
+        var userQueryable = MainUnitOfWork.UserRepository.GetQuery()
+            .Where(x => !x!.DeletedAt.HasValue);
+
+        var joinTables = from maintenance in maintenanceQueryable
+            join user in userQueryable on maintenance.AssignedTo equals user.Id into userGroup
+            from user in userGroup.DefaultIfEmpty()
+            join asset in assetQueryable on maintenance.AssetId equals asset.Id into assetGroup
+            from asset in assetGroup.DefaultIfEmpty()
+            select new
+            {
+                Maintenance = maintenance,
+                User = user,
+                Asset = asset
+            };
+
+        var totalCount = await joinTables.CountAsync();
+
+        joinTables = joinTables.Skip(queryDto.Skip()).Take(queryDto.PageSize);
+
+        var items = await joinTables.Select(x => new MaintenanceDto
+        {
+            Id = x.Maintenance.Id,
+            Status = x.Maintenance.Status,
+            AssetId = x.Maintenance.AssetId,
+            Notes = x.Maintenance.Notes,
+            Description = x.Maintenance.Description,
+            IsInternal = x.Maintenance.IsInternal,
+            AssignedTo = x.Maintenance.AssignedTo,
+            RequestCode = x.Maintenance.RequestCode,
+            CompletionDate = x.Maintenance.CompletionDate,
+            RequestDate = x.Maintenance.RequestDate,
+            StatusObj = x.Maintenance.Status!.GetValue(),
+            CreatedAt = x.Maintenance.CreatedAt,
+            EditedAt = x.Maintenance.EditedAt,
+            CreatorId = x.Maintenance.CreatorId ?? Guid.Empty,
+            EditorId = x.Maintenance.EditorId ?? Guid.Empty,
+            User = x.User.ProjectTo<User, UserBaseDto>(),
+            Asset = x.Asset.ProjectTo<Asset, AssetBaseDto>()
+        }).ToListAsync();
+
+        foreach (var item in items)
+        {
+            if (item.User != null)
+            {
+                item.User.StatusObj = item.User.Status?.GetValue();
+                item.User.RoleObj = item.User.Role?.GetValue();
+            }
+
+            if (item.Asset != null)
+            {
+                item.Asset.StatusObj = item.Asset.Status?.GetValue();
+            }
+        }
+
+        items = await _mapperRepository.MapCreator(items);
+        
+        return ApiResponses<MaintenanceDto>.Success(
+            items,
+            totalCount,
+            queryDto.PageSize,
+            queryDto.Page,
+            (int)Math.Ceiling(totalCount / (double)queryDto.PageSize));
     }
 
-    public async Task<ApiResponse> DeleteMaintenance(Guid id)
+    public async Task<ApiResponse<MaintenanceDto>> GetItem(Guid id)
     {
         var maintenance = await MainUnitOfWork.MaintenanceRepository.FindOneAsync(id);
 
         if (maintenance == null)
-            throw new ApiException("Không tìm thấy yêu cầu");
-
-        if (!await MainUnitOfWork.MaintenanceRepository.DeleteAsync(maintenance, AccountId, CurrentDate))
-            throw new ApiException("Xóa yêu cầu thất bại", StatusCode.SERVER_ERROR);
+            throw new ApiException("Không tìm thấy nội dung", StatusCode.NOT_FOUND);
         
-        return ApiResponse.Success("Xóa yêu cầu thành công");
+        var maintenanceDto = maintenance.ProjectTo<Maintenance, MaintenanceDto>();
+        maintenanceDto.Asset = await MainUnitOfWork.AssetRepository.FindOneAsync<AssetBaseDto>(new Expression<Func<Asset, bool>>[]
+        {
+            x => !x.DeletedAt.HasValue,
+            x => x.Id == maintenance.AssetId
+        });
+
+        if (maintenanceDto.Asset != null)
+        {
+            maintenanceDto.Asset.StatusObj = maintenance.Asset?.Status.GetValue();
+        }
+
+        maintenanceDto.StatusObj = maintenance.Status?.GetValue();
+        
+        maintenanceDto.User = await MainUnitOfWork.UserRepository.FindOneAsync<UserBaseDto>(new Expression<Func<User, bool>>[]
+        {
+            x => !x.DeletedAt.HasValue,
+            x => x.Id == maintenance.AssignedTo
+        });
+
+        if (maintenanceDto.User != null)
+        {
+            maintenanceDto.User.StatusObj = maintenanceDto.User.Status?.GetValue();
+            maintenanceDto.User.RoleObj = maintenanceDto.User.Role?.GetValue();
+        }
+
+        maintenanceDto = await _mapperRepository.MapCreator(maintenanceDto);
+
+        return ApiResponse<MaintenanceDto>.Success(maintenanceDto);
     }
 
-    public async Task<ApiResponse> CreateMaintenance(MaintenanceCreateDto maintenanceCreateDto)
+    public async Task<ApiResponse> CreateItem(MaintenanceCreateDto createDto)
     {
-        // var maintenance = maintenanceCreateDto.ProjectTo<MaintenanceCreateDto, Maintenance>();
-        //
-        // maintenance.Status = ActionStatus.NotStarted;
-        // maintenance.Type = MaintenanceType.Unexpected;
-        //
-        // //// check asset is rent or not
-        //
-        // if (!await MainUnitOfWork.MaintenanceRepository.InsertAsync(maintenance, AccountId, CurrentDate))
-        //     throw new ApiException("Tạo yêu cầu thất bại", StatusCode.SERVER_ERROR);
-        //
-        // var notification = new Notification
-        // {
-        //     UserId = maintenance.AssignedTo,
-        //     Status = NotificationStatus.Waiting,
-        //     Content = "Bảo trì trang thiết bị ...",
-        //     Title = "Bảo trì trang thiết bị",
-        //     Type = NotificationType.Task,
-        //     IsRead = false,
-        //     ItemId = maintenance.Id,
-        //     ShortContent = "Bảo trì trang thiết bị"
-        // };
-        //
-        // if (!await MainUnitOfWork.NotificationRepository.InsertAsync(notification, AccountId, CurrentDate))
-        //     throw new ApiException("Thông báo tới nhân viên không thành công", StatusCode.SERVER_ERROR);
-        //
-        // return ApiResponse.Created("Tạo yêu cầu thành công");
-        throw new ApiException("");
+        var asset = await MainUnitOfWork.AssetRepository.FindOneAsync(createDto.AssetId);
+
+        if (asset == null)
+            throw new ApiException("Không cần tồn tại trang thiết bị", StatusCode.NOT_FOUND);
+        
+        if (asset.Status != AssetStatus.Operational)
+            throw new ApiException("Trang thiết bị đang trong một yêu cầu khác", StatusCode.BAD_REQUEST);
+
+        var maintenance = createDto.ProjectTo<MaintenanceCreateDto, Maintenance>();
+
+        if (!await _maintenanceRepository.InsertMaintenance(maintenance, AccountId, CurrentDate))
+            throw new ApiException("Tạo yêu cầu thất bại", StatusCode.SERVER_ERROR);
+
+        return ApiResponse.Created("Gửi yêu cầu thành công");
     }
 
-    public async Task<ApiResponse> UpdateMaintenance(Guid id, MaintenanceUpdateDto maintenanceUpdateDto)
+    public async Task<ApiResponse> UpdateItem(Guid id, MaintenanceUpdateDto updateDto)
     {
-        // var maintenance = await MainUnitOfWork.MaintenanceRepository.FindOneAsync(id);
-        //
-        // if (maintenance == null)
-        //     throw new ApiException("Không tìm thấy yêu cầu");
-        //
-        // maintenance.Status = maintenanceUpdateDto.Status ?? maintenance.Status;
-        // maintenance.Description = maintenanceUpdateDto.Description ?? maintenance.Description;
-        // maintenance.AssetId = maintenanceUpdateDto.AssetId ?? maintenance.AssetId;
-        // maintenance.AssignedTo = maintenanceUpdateDto.AssignedTo ?? maintenance.AssignedTo;
-        // maintenance.Note = maintenanceUpdateDto.Note ?? maintenance.Note;
-        // maintenance.CompletionDate = maintenanceUpdateDto.CompletionDate ?? maintenance.CompletionDate;
-        // maintenance.RequestedDate = maintenanceUpdateDto.RequestedDate ?? maintenance.RequestedDate;
-        //
-        // if (!await MainUnitOfWork.MaintenanceRepository.UpdateAsync(maintenance, AccountId, CurrentDate))
-        //     throw new ApiException("Cập nhật yêu cầu thất bại", StatusCode.SERVER_ERROR);
-        //
-        // return ApiResponse.Success("Cập nhật thành công");
-        throw new ApiException("");
+        var maintenance = await MainUnitOfWork.MaintenanceRepository.FindOneAsync(id);
+
+        if (maintenance == null)
+            throw new ApiException("Không tìm thấy nội dung", StatusCode.NOT_FOUND);
+
+        if(maintenance.Status != RequestStatus.NotStarted)
+            throw new ApiException($"Không thế cập nhật với quy trình có trạng thái: {maintenance.Status?.GetDisplayName()}", StatusCode.BAD_REQUEST);
+        
+        maintenance.Description = updateDto.Description ?? maintenance.Description;
+        maintenance.Status = updateDto.Status ?? maintenance.Status;
+        maintenance.Notes = updateDto.Notes ?? maintenance.Notes;
+        maintenance.AssignedTo = updateDto.AssignedTo ?? maintenance.AssignedTo;
+        maintenance.CompletionDate = updateDto.CompletionDate ?? maintenance.CompletionDate;
+        maintenance.RequestDate = updateDto.RequestDate ?? maintenance.RequestDate;
+        
+        if(!await MainUnitOfWork.MaintenanceRepository.UpdateAsync(maintenance, AccountId, CurrentDate))
+            throw new ApiException("Cập nhật thất bại", StatusCode.SERVER_ERROR);
+
+        return ApiResponse.Success("Cập nhật thành công");
     }
 }
