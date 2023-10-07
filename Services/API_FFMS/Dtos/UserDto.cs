@@ -8,9 +8,11 @@ public class UserDto : BaseDto
 {
     public string UserCode { get; set; } = null!;
     public string Fullname { get; set; } = null!;
-    public EnumValue? Role { get; set; }
+    public UserRole Role { get; set; }
+    public EnumValue? RoleObj { get; set; }
     public string? Avatar { get; set; }
-    public EnumValue? Status { get; set; }
+    public UserStatus Status { get; set; }
+    public EnumValue? StatusObj { get; set; }
     public string Email { get; set; } = null!;
     public string PhoneNumber { get; set; } = null!;
     public string Address { get; set; } = null!;
@@ -18,8 +20,7 @@ public class UserDto : BaseDto
     public string? PersonalIdentifyNumber { get; set; }
     public DateTime? Dob { get; set; }
     public DateTime? FirstLoginAt { get; set; }
-    public DateTime? LastLoginAt { get; set; }
-    public Guid? TeamId { get; set; }
+    public DateTime? LastLoginAt { get; set; } 
     //public TeamDto? Team { get; set; }
 }
 
@@ -46,14 +47,13 @@ public class UserUpdateDto
     public string? Fullname { get; set; }
     public UserRole? Role { get; set; }
     public string? Avatar { get; set; }
-    public  UserStatus? Status { get; set; }
+    public UserStatus? Status { get; set; }
     public string? Email { get; set; }
     public string? PhoneNumber { get; set; }
     public string? Address { get; set; }
     public bool? Gender { get; set; }
-    public DateTime? Dob { get; set; }
     public string? PersonalIdentifyNumber { get; set; }
-    public Guid? TeamId { get; set; }
+    public DateTime? Dob { get; set; }
 }
 
 public class UserCreateDto
@@ -81,9 +81,11 @@ public class UserCreateDto
 public class UserDetailDto :BaseDto{
     public string UserCode { get; set; } = null!;
     public string Fullname { get; set; } = null!;
-    public EnumValue? Role { get; set; }
+    public UserRole Role { get; set; }
+    public EnumValue? RoleObj { get; set; }
     public string? Avatar { get; set; }
-    public EnumValue? Status { get; set; }
+    public UserStatus Status { get; set; }
+    public EnumValue? StatusObj { get; set; }
     public string Email { get; set; } = null!;
     public string PhoneNumber { get; set; } = null!;
     public string Address { get; set; } = null!;
@@ -91,9 +93,7 @@ public class UserDetailDto :BaseDto{
     public string? PersonalIdentifyNumber { get; set; }
     public DateTime? Dob { get; set; }
     public DateTime? FirstLoginAt { get; set; }
-    public DateTime? LastLoginAt { get; set; }
-    public Guid? TeamId { get; set; }
-    public TeamDto? Team { get; set; }
+    public DateTime? LastLoginAt { get; set; } 
 }
 
 public class UserQueryDto : BaseQueryDto
