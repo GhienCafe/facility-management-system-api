@@ -238,6 +238,11 @@ namespace API_FFMS.Services
                 throw new ApiException("Không tìm thấy yêu cầu", StatusCode.NOT_FOUND);
             }
 
+            if (existingRepair.Status != RequestStatus.NotStarted)
+            {
+                throw new ApiException("Chỉ được cập nhật các yêu cầu chưa hoàn thành", StatusCode.NOT_FOUND);
+            }
+
             existingRepair.RequestCode = updateDto.RequestCode ?? existingRepair.RequestCode;
             existingRepair.RequestDate = updateDto.RequestDate ?? existingRepair.RequestDate;
             existingRepair.CompletionDate = updateDto.CompletionDate ?? existingRepair.CompletionDate;
