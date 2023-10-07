@@ -32,7 +32,6 @@ public class UserService : BaseService, IUserService
         user.UserCode = updateDto.UserCode ?? user.UserCode;
         user.Fullname = updateDto.Fullname ?? user.Fullname;
         user.Address = updateDto.Address ?? user.Address;
-        user.Email = updateDto.Email ?? user.Email;
         user.Gender = updateDto.Gender ?? user.Gender;
         user.Avatar = updateDto.Avatar ?? user.Avatar;
         user.Dob = updateDto.Dob ?? user.Dob;

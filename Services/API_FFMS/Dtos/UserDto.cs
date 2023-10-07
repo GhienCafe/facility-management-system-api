@@ -21,7 +21,6 @@ public class UserDto : BaseDto
     public DateTime? Dob { get; set; }
     public DateTime? FirstLoginAt { get; set; }
     public DateTime? LastLoginAt { get; set; } 
-    //public TeamDto? Team { get; set; }
 }
 
 public class UserBaseDto : BaseDto
@@ -48,7 +47,6 @@ public class UserUpdateDto
     public UserRole? Role { get; set; }
     public string? Avatar { get; set; }
     public UserStatus? Status { get; set; }
-    public string? Email { get; set; }
     public string? PhoneNumber { get; set; }
     public string? Address { get; set; }
     public bool? Gender { get; set; }
@@ -74,8 +72,6 @@ public class UserCreateDto
     public bool Gender { get; set; }
     public string? PersonalIdentifyNumber { get; set; }
     public DateTime? Dob { get; set; }
-    //public string Password { get; set; } = null!;
-    public Guid? TeamId { get; set; }
 }
 
 public class UserDetailDto :BaseDto{
@@ -101,6 +97,5 @@ public class UserQueryDto : BaseQueryDto
     public UserRole? Role { get; set; }
     public bool? Gender { get; set; }
     public  UserStatus? Status { get; set; }
-    public  Guid? TeamId { get; set; }
      
 }
