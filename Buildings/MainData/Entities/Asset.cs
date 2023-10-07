@@ -42,10 +42,10 @@ public enum AssetStatus
     [Display(Name = "Không thể sử dụng")]
     Inactive = 2,
 
-    [Display(Name = "Đang trong quá trình bảo dưỡng")]
+    [Display(Name = "Trang thiết bị đang trong quá trình bảo dưỡng")]
     Maintenance = 3,
 
-    [Display(Name = "Đang trong quá trình sửa chữa")]
+    [Display(Name = "Trang thiết bị đang trong quá trình sửa chữa")]
     Repair = 4,
     
     [Display(Name = "Trang thiết bị đang trong quá trình kiểm tra")]
