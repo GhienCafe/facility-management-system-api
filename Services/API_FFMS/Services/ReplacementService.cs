@@ -38,6 +38,11 @@ namespace API_FFMS.Services
 
             var replacement = createDto.ProjectTo<ReplaceCreateDto, Replacement>();
 
+            if (!await _repository.InsertReplacement(replacement, AccountId, CurrentDate))
+            {
+                throw new ApiException("Tạo yêu cầu thất bại", StatusCode.SERVER_ERROR);
+            }
+
             return ApiResponse.Created("Gửi yêu cầu thành công");
         }
     }

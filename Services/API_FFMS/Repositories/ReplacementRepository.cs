@@ -1,4 +1,5 @@
-﻿using MainData;
+﻿using AppCore.Extensions;
+using MainData;
 using MainData.Entities;
 using Microsoft.EntityFrameworkCore;
 
@@ -41,7 +42,37 @@ namespace API_FFMS.Repositories
 
                 if (replacement.IsInternal)
                 {
+                    var roomAsset = await _context.RoomAssets
+                                    .FirstOrDefaultAsync(x => x.AssetId == replacement.AssetId && x.ToDate == null);
+                    var roomAssetNew = await _context.RoomAssets
+                                    .FirstOrDefaultAsync(x => x.AssetId == replacement.NewAssetId && x.ToDate == null);
+                    if (roomAsset != null)
+                    {
+                        roomAsset!.Status = AssetStatus.Replacement;
+                        roomAsset.EditedAt = now.Value;
+                        _context.Entry(roomAsset).State = EntityState.Modified;
+                    }
 
+                    if (roomAssetNew != null)
+                    {
+                        roomAssetNew!.Status = AssetStatus.Replacement;
+                        roomAssetNew.EditedAt = now.Value;
+                        _context.Entry(roomAssetNew).State = EntityState.Modified;
+                    }
+                    var notification = new Notification
+                    {
+                        CreatedAt = now.Value,
+                        EditedAt = now.Value,
+                        Status = NotificationStatus.Waiting,
+                        Content = replacement.Description,
+                        Title = RequestType.Replacement.GetDisplayName(),
+                        Type = NotificationType.Task,
+                        CreatorId = creatorId,
+                        IsRead = false,
+                        ItemId = replacement.Id,
+                        UserId = replacement.AssignedTo
+                    };
+                    await _context.Notifications.AddAsync(notification);
                 }
 
                 await _context.SaveChangesAsync();

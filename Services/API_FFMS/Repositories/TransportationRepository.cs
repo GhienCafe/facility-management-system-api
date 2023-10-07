@@ -93,7 +93,7 @@ namespace API_FFMS.Repositories
                 transportation.CreatedAt = now.Value;
                 transportation.EditedAt = now.Value;
                 transportation.CreatorId = creatorId;
-                transportation.Status = RequestStatus.InProgress;
+                transportation.Status = RequestStatus.NotStarted;
                 ;
                 await _context.Transportations.AddAsync(transportation);
 
