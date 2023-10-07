@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using MainData.Entities;
+using System.ComponentModel.DataAnnotations;
 
 namespace API_FFMS.Dtos;
 
@@ -25,14 +26,7 @@ public class TransportationQueryDto : BaseRequestQueryDto
     public DateTime? CompletionDate { get; set; }
 }
 
-public class FutureDateAttribute : ValidationAttribute
+public class TransportUpdateStatusDto
 {
-    public override bool IsValid(object value)
-    {
-        if (value is DateTime date)
-        {
-            return date > DateTime.Now;
-        }
-        return false;
-    }
+    public RequestStatus? Status { get; set; }
 }

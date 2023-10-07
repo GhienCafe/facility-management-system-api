@@ -6,7 +6,6 @@ using MainData;
 using MainData.Entities;
 using MainData.Repositories;
 using Microsoft.EntityFrameworkCore;
-using System.Linq;
 using System.Linq.Expressions;
 
 namespace API_FFMS.Services
@@ -19,7 +18,7 @@ namespace API_FFMS.Services
         Task<ApiResponse<TransportDto>> GetTransportation(Guid id);
         //Task<ApiResponses<TransportDto>> GetTransportOfStaff(TransportOfStaffQueryDto queryDto);
         Task<ApiResponse> Delete(Guid id);
-        //public Task<ApiResponse> UpdateStatus(Guid id, TransportUpdateStatusDto updateStatusDto);
+        public Task<ApiResponse> UpdateStatus(Guid id, TransportUpdateStatusDto updateStatusDto);
     }
     public class TransportationService : BaseService, ITransportationService
     {
@@ -34,16 +33,28 @@ namespace API_FFMS.Services
         public async Task<ApiResponse> Create(TransportCreateDto createDto)
         {
             var asset = await MainUnitOfWork.AssetRepository.FindOneAsync(createDto.AssetId);
-
             if (asset == null)
             {
-                throw new ApiException("Không cần tồn tại trang thiết bị", StatusCode.NOT_FOUND);
+                throw new ApiException("Không tìm thấy trang thiết bị", StatusCode.NOT_FOUND);
             }
 
             if (asset.Status != AssetStatus.Operational)
             {
                 throw new ApiException("Trang thiết bị đang trong một yêu cầu khác", StatusCode.BAD_REQUEST);
             }
+
+            //var teams = MainUnitOfWork.TeamMemberRepository.GetQuery();
+            //var assignee = await MainUnitOfWork.TeamMemberRepository.FindOneAsync(
+            //    new Expression<Func<TeamMember, bool>>[]
+            //    {
+            //        x => !x.DeletedAt.HasValue,
+            //        x => x.MemberId == createDto.AssignedTo,
+            //        x => x.TeamId == createDto.AssignedTo
+            //    });
+            //if (assignee == null)
+            //{
+            //    throw new ApiException("Trang thiết bị đang trong một yêu cầu khác", StatusCode.BAD_REQUEST);
+            //}
 
             var transportation = createDto.ProjectTo<TransportCreateDto, Transportation>();
 
@@ -276,6 +287,29 @@ namespace API_FFMS.Services
             if (!await MainUnitOfWork.TransportationRepository.UpdateAsync(existingTransport, AccountId, CurrentDate))
             {
                 throw new ApiException("Cập nhật thông tin yêu cầu thất bại", StatusCode.SERVER_ERROR);
+            }
+
+            return ApiResponse.Success("Cập nhật yêu cầu thành công");
+        }
+
+        public async Task<ApiResponse> UpdateStatus(Guid id, TransportUpdateStatusDto requestStatus)
+        {
+            var existingTransport = await MainUnitOfWork.TransportationRepository.FindOneAsync(
+                new Expression<Func<Transportation, bool>>[]
+                {
+                    x => !x.DeletedAt.HasValue,
+                    x => x.Id == id
+                });
+            if (existingTransport == null)
+            {
+                throw new ApiException("Không tìm thấy yêu cầu vận chuyển này", StatusCode.NOT_FOUND);
+            }
+
+            existingTransport.Status = requestStatus.Status ?? existingTransport.Status;
+
+            if (!await _transportationRepository.UpdateStatus(existingTransport, requestStatus.Status, AccountId, CurrentDate))
+            {
+                throw new ApiException("Cập nhật trạng thái yêu cầu thất bại", StatusCode.SERVER_ERROR);
             }
 
             return ApiResponse.Success("Cập nhật yêu cầu thành công");
