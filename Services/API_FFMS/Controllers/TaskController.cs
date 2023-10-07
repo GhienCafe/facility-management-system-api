@@ -17,15 +17,15 @@ public class TaskController : BaseController
 
     [HttpGet]
     [SwaggerOperation("Get list tasks")]
-    public async Task<ApiResponses<TaskDto>> GetTasks([FromQuery] TaskQueryDto queryDto)
+    public async Task<ApiResponses<TaskBaseDto>> GetTasks([FromQuery] TaskQueryDto queryDto)
     {
         return await _taskService.GetTasks(queryDto);
     }
     
-    [HttpGet("{id}")]
-    [SwaggerOperation("Get detail task")]
-    public async Task<ApiResponse<DetailTaskDto>> GetTask(Guid id)
-    {
-        return await _taskService.GetTask(id);
-    }
+    // [HttpGet("{id}")]
+    // [SwaggerOperation("Get detail task")]
+    // public async Task<ApiResponse<DetailTaskDto>> GetTask(Guid id)
+    // {
+    //     return await _taskService.GetTask(id);
+    // }
 }
