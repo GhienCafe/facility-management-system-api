@@ -124,7 +124,7 @@ public class UserService : BaseService, IUserService
         var keyword = queryDto.Keyword?.Trim().ToLower();
         
         var userDataset = MainUnitOfWork.UserRepository.GetQuery()
-            .Where(x => !x!.DeletedAt.HasValue && x.Role != UserRole.Administrator);
+            .Where(x => !x!.DeletedAt.HasValue);
         if (!string.IsNullOrEmpty(keyword))
         {
             userDataset = userDataset.Where(x => x!.UserCode.ToLower().Contains(keyword)

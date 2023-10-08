@@ -7,7 +7,6 @@ namespace MainData.Entities;
 
 public class BaseRequest : BaseEntity
 {
-    public Guid AssetId { get; set; }
     public string RequestCode { get; set; } = null!;
     public DateTime? RequestDate { get; set; }
     public DateTime? CompletionDate { get; set; }
@@ -16,6 +15,8 @@ public class BaseRequest : BaseEntity
     public string? Notes { get; set; } // Results
     public bool IsInternal { get; set; }
     public Guid? AssignedTo { get; set; }    
+    public Guid? AssetTypeId { get; set; }
+    public Guid? CategoryId { get; set; }
     
     //Relationship
     public virtual Asset? Asset { get; set; }
@@ -64,6 +65,8 @@ public class BaseRequestConfig : IEntityTypeConfiguration<BaseRequest>
         builder.Property(a => a.Notes).IsRequired(false);
         builder.Property(a => a.IsInternal).IsRequired();
         builder.Property(a => a.AssignedTo).IsRequired(false);
+        builder.Property(a => a.CategoryId).IsRequired(false);
+        builder.Property(a => a.AssetTypeId).IsRequired(false);
         
         builder.HasIndex(a => a.RequestCode).IsUnique();
     }
