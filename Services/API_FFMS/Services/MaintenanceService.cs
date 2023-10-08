@@ -103,7 +103,7 @@ public class MaintenanceService : BaseService, IMaintenanceService
             CompletionDate = x.Maintenance.CompletionDate,
             RequestDate = x.Maintenance.RequestDate,
             CategoryId = x.Maintenance.CategoryId,
-            TypeId = x.Maintenance.AssetTypeId,
+            AssetTypeId = x.Maintenance.AssetTypeId,
             StatusObj = x.Maintenance.Status!.GetValue(),
             CreatedAt = x.Maintenance.CreatedAt,
             EditedAt = x.Maintenance.EditedAt,
@@ -235,7 +235,7 @@ public class MaintenanceService : BaseService, IMaintenanceService
             CompletionDate = x.Maintenance.CompletionDate,
             RequestDate = x.Maintenance.RequestDate,
             CategoryId = x.Maintenance.CategoryId,
-            TypeId = x.Maintenance.AssetTypeId,
+            AssetTypeId = x.Maintenance.AssetTypeId,
             StatusObj = x.Maintenance.Status!.GetValue(),
             CreatedAt = x.Maintenance.CreatedAt,
             EditedAt = x.Maintenance.EditedAt,
@@ -281,6 +281,9 @@ public class MaintenanceService : BaseService, IMaintenanceService
         maintenance.Description = updateDto.Description ?? maintenance.Description;
         maintenance.Status = updateDto.Status ?? maintenance.Status;
         maintenance.Notes = updateDto.Notes ?? maintenance.Notes;
+        maintenance.CategoryId = updateDto.CategoryId ?? maintenance.CategoryId;
+        maintenance.IsInternal = updateDto.IsInternal ?? maintenance.IsInternal;
+        maintenance.AssetTypeId = updateDto.AssetTypeId ?? maintenance.AssetTypeId;
         maintenance.AssignedTo = updateDto.AssignedTo ?? maintenance.AssignedTo;
         maintenance.CompletionDate = updateDto.CompletionDate ?? maintenance.CompletionDate;
         maintenance.RequestDate = updateDto.RequestDate ?? maintenance.RequestDate;
