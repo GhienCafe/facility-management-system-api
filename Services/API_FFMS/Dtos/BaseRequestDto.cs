@@ -15,7 +15,7 @@ public class BaseRequestDto : BaseDto
     public string? Notes { get; set; } // Results
     public bool IsInternal { get; set; }
     public Guid? AssignedTo { get; set; }    
-    public Guid? TypeId { get; set; }
+    public Guid? AssetTypeId { get; set; }
     public Guid? CategoryId { get; set; }
 }
 
@@ -48,6 +48,9 @@ public class BaseRequestUpdateDto
     public DateTime? CompletionDate { get; set; }
     public RequestStatus? Status { get; set; }
     public string? Description { get; set; }
+    public bool? IsInternal { get; set; }
     public string? Notes { get; set; } // Results
     public Guid? AssignedTo { get; set; }    
+    public Guid? AssetTypeId { get; set; }
+    public Guid? CategoryId { get; set; }
 }
