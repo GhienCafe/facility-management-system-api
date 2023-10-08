@@ -7,6 +7,7 @@ namespace MainData.Entities;
 
 public class Maintenance : BaseRequest
 {
+    public Guid AssetId { get; set; }
 }
 
 public class MaintenanceConfig : IEntityTypeConfiguration<Maintenance>
@@ -14,8 +15,8 @@ public class MaintenanceConfig : IEntityTypeConfiguration<Maintenance>
     public void Configure(EntityTypeBuilder<Maintenance> builder)
     {
         builder.ToTable("Maintenances");
-        builder.Property(x => x.AssetId).IsRequired();
         builder.Property(x => x.Notes).IsRequired(false);
+        builder.Property(x => x.AssetId).IsRequired();
 
         //Relationship
         builder.HasOne(x => x.User)

@@ -15,6 +15,8 @@ public class BaseRequestDto : BaseDto
     public string? Notes { get; set; } // Results
     public bool IsInternal { get; set; }
     public Guid? AssignedTo { get; set; }    
+    public Guid? TypeId { get; set; }
+    public Guid? CategoryId { get; set; }
 }
 
 public class BaseRequestCreateDto
@@ -28,6 +30,8 @@ public class BaseRequestCreateDto
     public string? Notes { get; set; } // Results
     public bool IsInternal { get; set; }
     public Guid? AssignedTo { get; set; }    
+    public Guid? AssetTypeId { get; set; }
+    public Guid? CategoryId { get; set; }
 }
 
 public class BaseRequestQueryDto : BaseQueryDto

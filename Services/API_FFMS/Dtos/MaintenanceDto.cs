@@ -7,6 +7,8 @@ namespace API_FFMS.Dtos;
 public class MaintenanceDto : BaseRequestDto {
     public AssetBaseDto? Asset { get; set; }
     public UserBaseDto? User { get; set; }
+    public AssetTypeDto? AssetType { get; set; }
+    public CategoryDto? Category { get; set; }
 }
 
 public class MaintenanceQueryDto : BaseRequestQueryDto

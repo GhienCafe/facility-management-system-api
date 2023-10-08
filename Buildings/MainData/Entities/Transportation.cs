@@ -7,6 +7,7 @@ namespace MainData.Entities;
 
 public class Transportation : BaseRequest
 {
+    public Guid AssetId { get; set; }
     public int? Quantity { get; set; }
     public Guid? ToRoomId { get; set; } // For internal
     
