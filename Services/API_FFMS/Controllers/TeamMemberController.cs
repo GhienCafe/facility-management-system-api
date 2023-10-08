@@ -21,4 +21,33 @@ public class TeamMemberController : BaseController
     {
         return await _teamMemberService.GetTeamsMember(queryDto);
     }
+    
+    [HttpGet("{id}")]
+    [SwaggerOperation("Get team member")]
+    public async Task<ApiResponse<TeamMemberDetailDto>> GetListTeamMember(Guid id)
+    {
+        return await _teamMemberService.GetTeamMember(id);
+    }
+    
+    [HttpPost]
+    [SwaggerOperation("Create new team member")]
+    public async Task<ApiResponse> GetListTeamMember([FromBody]TeamMemberCreateDto createDto)
+    {
+        return await _teamMemberService.CreateTeamMember(createDto);
+    }
+    
+    [HttpPut("{id}")]
+    [SwaggerOperation("Update team member")]
+    public async Task<ApiResponse> GetListTeamMember(Guid id, [FromBody]TeamMemberUpdateDto updateDto)
+    {
+        return await _teamMemberService.UpdateTeamMember(id, updateDto);
+    }
+    
+    [HttpDelete("{id}")]
+    [SwaggerOperation("Delete team member")]
+    public async Task<ApiResponse> DeleteTeamMember(Guid id)
+    {
+        return await _teamMemberService.DeleteTeamMember(id);
+    }
+    
 }
