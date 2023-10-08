@@ -1,4 +1,5 @@
-﻿using API_FFMS.Dtos;
+﻿using System.Linq.Expressions;
+using API_FFMS.Dtos;
 using AppCore.Extensions;
 using AppCore.Models;
 using MainData;
@@ -46,7 +47,7 @@ public class TeamMemberService : BaseService, ITeamMemberService
         var joinTables = from teamMember in teamMemberQueryable
             join team in MainUnitOfWork.TeamRepository.GetQuery() on teamMember.TeamId equals team.Id into teamGroup
             from team in teamGroup.DefaultIfEmpty()
-            join user in MainUnitOfWork.UserRepository.GetQuery() on teamMember.TeamId equals user.Id into userGroup
+            join user in MainUnitOfWork.UserRepository.GetQuery() on teamMember.MemberId equals user.Id into userGroup
             from user in userGroup.DefaultIfEmpty()
             select new
             {
@@ -75,8 +76,11 @@ public class TeamMemberService : BaseService, ITeamMemberService
         
         items.ForEach(x =>
         {
-            x.Member!.StatusObj = x.Member.Status?.GetValue();
-            x.Member!.RoleObj = x.Member.Role?.GetValue();
+            if (x.Member != null)
+            {
+                x.Member.StatusObj = x.Member.Status?.GetValue();
+                x.Member.RoleObj = x.Member.Role?.GetValue();
+            }
         });
 
         items = await _mapperRepository.MapCreator(items);
@@ -129,6 +133,16 @@ public class TeamMemberService : BaseService, ITeamMemberService
     public async Task<ApiResponse> CreateTeamMember(TeamMemberCreateDto createDto)
     {
         var teamMember = createDto.ProjectTo<TeamMemberCreateDto, TeamMember>();
+
+        var checkExist = await MainUnitOfWork.TeamMemberRepository.FindAsync(new Expression<Func<TeamMember, bool>>[]
+        {
+            x => !x.DeletedAt.HasValue,
+            x => x.TeamId == createDto.TeamId,
+            x => x.MemberId == createDto.MemberId,
+        }, null);
+
+        if (checkExist.Any())
+            throw new ApiException("Thành viên đã tồn tại trong đội nhóm", StatusCode.ALREADY_EXISTS);
 
         if (!await MainUnitOfWork.TeamMemberRepository.InsertAsync(teamMember, AccountId, CurrentDate))
             throw new ApiException("Thêm thất bại", StatusCode.SERVER_ERROR);
