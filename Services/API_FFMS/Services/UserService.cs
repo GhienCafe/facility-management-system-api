@@ -15,6 +15,7 @@ public interface IUserService : IBaseService
     Task<ApiResponse> Create(UserCreateDto createDto);
     Task<ApiResponse> Delete(Guid id);
     Task<ApiResponses<UserDto>> GetList(UserQueryDto queryDto);
+    Task<ApiResponse<IEnumerable<UserDto>>> GetListBasedOnCategory(Guid categoryId);
     Task<ApiResponse<UserDetailDto>> GetDetail(Guid id);
 }
 public class UserService : BaseService, IUserService
@@ -60,6 +61,27 @@ public class UserService : BaseService, IUserService
             throw new ApiException("Thêm thất bại", StatusCode.SERVER_ERROR);
         
         return ApiResponse.Created("Thêm thành công");
+    }
+
+    public async Task<ApiResponse<IEnumerable<UserDto>>> GetListBasedOnCategory(Guid categoryId)
+    {
+        var category = await MainUnitOfWork.CategoryRepository.FindOneAsync(categoryId);
+
+        if (category == null)
+            throw new ApiException("Không tồn tại nhóm trang thiết bị", StatusCode.BAD_REQUEST);
+
+        var teamMemberIds = await MainUnitOfWork.TeamMemberRepository.GetQuery()
+            .Where(x => !x!.DeletedAt.HasValue && x.TeamId == category.TeamId).Select(x => x!.MemberId)
+            .ToListAsync();
+
+        var member = await MainUnitOfWork.UserRepository.GetQuery()
+            .Where(x => !x!.DeletedAt.HasValue && teamMemberIds.Contains(x.Id)).ToListAsync();
+
+        var memberDto = member!.ProjectTo<User, UserDto>();
+
+        memberDto = await _mapperRepository.MapCreator(memberDto);
+        
+        return ApiResponse<IEnumerable<UserDto>>.Success(memberDto);
     }
 
     public async Task<ApiResponse<UserDetailDto>> GetDetail(Guid id)
