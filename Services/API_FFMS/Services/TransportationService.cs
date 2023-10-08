@@ -281,13 +281,13 @@ namespace API_FFMS.Services
                 throw new ApiException("Chỉ được cập nhật các yêu cầu chưa hoàn thành", StatusCode.NOT_FOUND);
             }
 
-            existingTransport.RequestCode = updateDto.RequestCode ?? existingTransport.RequestCode;
+            //existingTransport.RequestCode = updateDto.RequestCode ?? existingTransport.RequestCode;
             existingTransport.RequestDate = updateDto.RequestDate ?? existingTransport.RequestDate;
             existingTransport.CompletionDate = updateDto.CompletionDate ?? existingTransport.CompletionDate;
             existingTransport.Status = updateDto.Status ?? existingTransport.Status;
             existingTransport.Description = updateDto.Description ?? existingTransport.Description;
             existingTransport.Notes = updateDto.Notes ?? existingTransport.Notes;
-            existingTransport.IsInternal = updateDto.IsInternal;
+            //existingTransport.IsInternal = updateDto.IsInternal;
 
             if (!await MainUnitOfWork.TransportationRepository.UpdateAsync(existingTransport, AccountId, CurrentDate))
             {

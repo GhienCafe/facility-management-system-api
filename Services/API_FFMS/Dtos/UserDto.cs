@@ -23,22 +23,22 @@ public class UserDto : BaseDto
     public DateTime? LastLoginAt { get; set; } 
 }
 
-public class UserBaseDto : BaseDto
-{
-    public string UserCode { get; set; } = null!;
-    public string Fullname { get; set; } = null!;
-    public UserRole? Role { get; set; }
-    public EnumValue? RoleObj { get; set; }
-    public string? Avatar { get; set; }
-    public UserStatus? Status { get; set; }
-    public EnumValue? StatusObj { get; set; }
-    public string Email { get; set; } = null!;
-    public string PhoneNumber { get; set; } = null!;
-    public string Address { get; set; } = null!;
-    public bool Gender { get; set; }
-    public string? PersonalIdentifyNumber { get; set; }
-    public DateTime? Dob { get; set; }
-}
+//public class UserBaseDto : BaseDto
+//{
+//    public string UserCode { get; set; } = null!;
+//    public string Fullname { get; set; } = null!;
+//    public UserRole? Role { get; set; }
+//    public EnumValue? RoleObj { get; set; }
+//    public string? Avatar { get; set; }
+//    public UserStatus? Status { get; set; }
+//    public EnumValue? StatusObj { get; set; }
+//    public string Email { get; set; } = null!;
+//    public string PhoneNumber { get; set; } = null!;
+//    public string Address { get; set; } = null!;
+//    public bool Gender { get; set; }
+//    public string? PersonalIdentifyNumber { get; set; }
+//    public DateTime? Dob { get; set; }
+//}
 
 public class UserBaseDto : BaseDto
 {

@@ -243,13 +243,13 @@ namespace API_FFMS.Services
                 throw new ApiException("Chỉ được cập nhật các yêu cầu chưa hoàn thành", StatusCode.NOT_FOUND);
             }
 
-            existingRepair.RequestCode = updateDto.RequestCode ?? existingRepair.RequestCode;
+            //existingRepair.RequestCode = updateDto.RequestCode ?? existingRepair.RequestCode;
             existingRepair.RequestDate = updateDto.RequestDate ?? existingRepair.RequestDate;
             existingRepair.CompletionDate = updateDto.CompletionDate ?? existingRepair.CompletionDate;
             existingRepair.Status = updateDto.Status ?? existingRepair.Status;
             existingRepair.Description = updateDto.Description ?? existingRepair.Description;
             existingRepair.Notes = updateDto.Notes ?? existingRepair.Notes;
-            existingRepair.IsInternal = updateDto.IsInternal;
+            //existingRepair.IsInternal = updateDto.IsInternal;
 
             if(!await MainUnitOfWork.RepairationRepository.UpdateAsync(existingRepair, AccountId, CurrentDate))
             {
