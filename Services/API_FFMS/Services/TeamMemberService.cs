@@ -11,6 +11,10 @@ namespace API_FFMS.Services;
 public interface ITeamMemberService : IBaseService
 {
     Task<ApiResponses<TeamMemberDto>> GetTeamsMember(TeamMemberQueryDto queryDto);
+    Task<ApiResponse<TeamMemberDetailDto>> GetTeamMember(Guid id);
+    Task<ApiResponse> DeleteTeamMember(Guid id);
+    Task<ApiResponse> CreateTeamMember(TeamMemberCreateDto createDto);
+    Task<ApiResponse> UpdateTeamMember(Guid id, TeamMemberUpdateDto updateDto);
 }
 
 public class TeamMemberService : BaseService, ITeamMemberService
@@ -65,7 +69,7 @@ public class TeamMemberService : BaseService, ITeamMemberService
             EditedAt = x.TeamMember.EditedAt,
             CreatorId = x.TeamMember.CreatorId ?? Guid.Empty,
             EditorId = x.TeamMember.EditorId ?? Guid.Empty,
-            TeamDto = x.Team.ProjectTo<Team, TeamDto>(),
+            Team = x.Team.ProjectTo<Team, TeamDto>(),
             Member = x.User.ProjectTo<User, UserBaseDto>()
         }).ToListAsync();
         
@@ -83,5 +87,69 @@ public class TeamMemberService : BaseService, ITeamMemberService
             queryDto.PageSize,
             queryDto.Page,
             (int)Math.Ceiling(totalCount / (double)queryDto.PageSize));
+    }
+
+    public async Task<ApiResponse<TeamMemberDetailDto>> GetTeamMember(Guid id)
+    {
+        var teamMember = await MainUnitOfWork.TeamMemberRepository.FindOneAsync(id);
+
+        if (teamMember == null)
+            throw new ApiException("Không tìm thấy thông tin", StatusCode.NOT_FOUND);
+        
+        var teamMemberDto = teamMember.ProjectTo<TeamMember, TeamMemberDetailDto>();
+        
+        teamMemberDto.Member = (await MainUnitOfWork.UserRepository.FindOneAsync(teamMemberDto.MemberId))?
+            .ProjectTo<User, UserBaseDto>();
+        
+        teamMemberDto.Team = (await MainUnitOfWork.TeamRepository.FindOneAsync(teamMemberDto.TeamId))?
+            .ProjectTo<Team, TeamDto>();
+
+        if (teamMemberDto.Member != null)
+        {
+            teamMemberDto.Member.StatusObj = teamMemberDto.Member.Status?.GetValue();
+            teamMemberDto.Member.RoleObj = teamMemberDto.Member.Role?.GetValue();
+        }
+
+        return ApiResponse<TeamMemberDetailDto>.Success(teamMemberDto);
+    }
+
+    public async Task<ApiResponse> DeleteTeamMember(Guid id)
+    {
+        var teamMember = await MainUnitOfWork.TeamMemberRepository.FindOneAsync(id);
+
+        if (teamMember == null)
+            throw new ApiException("Không tìm thấy thông tin", StatusCode.NOT_FOUND);
+        
+        if (!await MainUnitOfWork.TeamMemberRepository.DeleteAsync(teamMember, AccountId, CurrentDate))
+            throw new ApiException("Xóa thất bại", StatusCode.SERVER_ERROR);
+        
+        return ApiResponse.Created("Xóa thành viên thành công");
+    }
+
+    public async Task<ApiResponse> CreateTeamMember(TeamMemberCreateDto createDto)
+    {
+        var teamMember = createDto.ProjectTo<TeamMemberCreateDto, TeamMember>();
+
+        if (!await MainUnitOfWork.TeamMemberRepository.InsertAsync(teamMember, AccountId, CurrentDate))
+            throw new ApiException("Thêm thất bại", StatusCode.SERVER_ERROR);
+        
+        return ApiResponse.Created("Thêm thành viên thành công");
+    }
+
+    public async Task<ApiResponse> UpdateTeamMember(Guid id, TeamMemberUpdateDto updateDto)
+    {
+        var teamMember = await MainUnitOfWork.TeamMemberRepository.FindOneAsync(id);
+
+        if (teamMember == null)
+            throw new ApiException("Không tìm thấy thông tin", StatusCode.NOT_FOUND);
+
+        teamMember.TeamId = updateDto.TeamId ?? teamMember.TeamId;
+        teamMember.MemberId = updateDto.MemberId ?? teamMember.MemberId;
+        teamMember.IsLead = updateDto.IsLead ?? teamMember.IsLead;
+
+        if (!await MainUnitOfWork.TeamMemberRepository.UpdateAsync(teamMember, AccountId, CurrentDate))
+            throw new ApiException("Cập nhật thông tin thất bại", StatusCode.SERVER_ERROR);
+        
+        return ApiResponse.Success("Cập nhật thông tin thành công");
     }
 }
