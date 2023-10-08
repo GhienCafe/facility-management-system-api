@@ -3,6 +3,51 @@ using MainData.Entities;
 
 namespace API_FFMS.Dtos
 {
+
+    public class RoomAssetBaseDto : BaseDto
+    {
+        public Guid RoomId { get; set; }
+        public Guid AssetId { get; set; }
+        public AssetStatus Status { get; set; }
+        public DateTime? FromDate { get; set; }
+        public DateTime? ToDate { get; set; }
+        public double? Quantity { get; set; }
+        public RoomBaseDto? Room { get; set; }
+        public AssetBaseDto? Asset { get; set; }
+    }
+    
+    public class RoomAssetCreateBaseDto 
+    {
+        public Guid RoomId { get; set; }
+        public Guid AssetId { get; set; }
+        public AssetStatus Status { get; set; }
+        public DateTime? FromDate { get; set; }
+        public DateTime? ToDate { get; set; }
+        public double? Quantity { get; set; }
+    }
+    
+    public class RoomAssetUpdateBaseDto
+    {
+        public Guid? RoomId { get; set; }
+        public Guid? AssetId { get; set; }
+        public AssetStatus? Status { get; set; }
+        public DateTime? FromDate { get; set; }
+        public DateTime? ToDate { get; set; }
+        public double? Quantity { get; set; }
+    }
+    
+    public class RoomAssetDetailDto : BaseDto
+    {
+        public Guid RoomId { get; set; }
+        public Guid AssetId { get; set; }
+        public AssetStatus Status { get; set; }
+        public DateTime? FromDate { get; set; }
+        public DateTime? ToDate { get; set; }
+        public double? Quantity { get; set; }
+        public RoomBaseDto? Room { get; set; }
+        public AssetBaseDto? Asset { get; set; }
+    }
+    
     public class AssetTrackingDto : BaseDto
     {
         public AssetStatus Status { get; set; }
