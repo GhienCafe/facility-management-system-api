@@ -29,7 +29,8 @@ public class Asset : BaseEntity
     public virtual IEnumerable<RoomAsset>? RoomAssets { get; set; }
     public virtual IEnumerable<Maintenance>? Maintenances { get; set; }
     public virtual IEnumerable<Replacement>? Replacements { get; set; }
-    public virtual IEnumerable<Transportation>? Transportations { get; set; }
+    //public virtual IEnumerable<Transportation>? Transportations { get; set; }
+    public virtual ICollection<TransportationDetail>? TransportationDetails { get; set; }
     public virtual IEnumerable<Repairation>? Repairations { get; set; }
     public virtual IEnumerable<AssetCheck>? AssetChecks { get; set; }
 }
@@ -118,7 +119,7 @@ public class AssetConfig : IEntityTypeConfiguration<Asset>
             .WithOne(x => x.Asset)
             .HasForeignKey(x => x.NewAssetId);
 
-        builder.HasMany(x => x.Transportations)
+        builder.HasMany(x => x.TransportationDetails)
             .WithOne(x => x.Asset)
             .HasForeignKey(x => x.AssetId);
         

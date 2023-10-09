@@ -1,5 +1,4 @@
 ﻿using API_FFMS.Dtos;
-using AppCore.Data;
 using AppCore.Models;
 using MainData;
 using MainData.Entities;
@@ -7,8 +6,11 @@ using MainData.Repositories;
 using Microsoft.EntityFrameworkCore;
 using NuGet.Packaging;
 using System.Linq.Expressions;
+<<<<<<< HEAD:Services/API_FFMS/Services/TransportationService.cs
+=======
 using API_FFMS.Repositories;
 using AppCore.Extensions;
+>>>>>>> a4da4ae4a9185fa1be2f8142ced48161c04800a8:Services/API_FFMS/Services/TransportationService.txt
 
 namespace API_FFMS.Services
 {

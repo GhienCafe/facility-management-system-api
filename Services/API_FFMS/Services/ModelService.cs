@@ -14,6 +14,7 @@ namespace API_FFMS.Services
         Task<ApiResponse<ModelDto>> GetModel(Guid id);
         public Task<ApiResponse> Update(Guid id, ModelUpdateDto updateDto);
         Task<ApiResponse> Delete(Guid id);
+        Task<ApiResponse> DeleteModels(List<Guid> ids);
         Task<ApiResponses<ModelDto>> GetModels(ModelQueryDto queryDto);
     }
     public class ModelService : BaseService, IModelService
@@ -42,6 +43,27 @@ namespace API_FFMS.Services
             }
 
             if (!await MainUnitOfWork.ModelRepository.DeleteAsync(existingModel, AccountId, CurrentDate))
+            {
+                throw new ApiException("Xóa thất bại", StatusCode.SERVER_ERROR);
+            }
+
+            return ApiResponse.Success();
+        }
+
+        public async Task<ApiResponse> DeleteModels(List<Guid> ids)
+        {
+            var modelDeleteds = new List<Model>();
+            foreach (var id in ids)
+            {
+                var existingModel = await MainUnitOfWork.ModelRepository.FindOneAsync(id);
+                if (existingModel == null)
+                {
+                    throw new ApiException("Không tìm thấy nhãn hiệu", StatusCode.NOT_FOUND);
+                }
+                modelDeleteds.Add(existingModel);
+            }
+
+            if (!await MainUnitOfWork.ModelRepository.DeleteAsync(modelDeleteds, AccountId, CurrentDate))
             {
                 throw new ApiException("Xóa thất bại", StatusCode.SERVER_ERROR);
             }

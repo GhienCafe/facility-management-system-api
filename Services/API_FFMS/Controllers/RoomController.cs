@@ -49,4 +49,11 @@ public class RoomController : BaseController
     {
         return await _service.Delete(id);
     }
+
+    [HttpDelete]
+    [SwaggerOperation("Delete list room")]
+    public async Task<ApiResponse> DeleteRooms(List<Guid> ids)
+    {
+        return await _service.DeleteRooms(ids);
+    }
 }

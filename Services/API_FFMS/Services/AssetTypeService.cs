@@ -16,6 +16,7 @@ namespace API_FFMS.Services
         Task<ApiResponse> Create(AssetTypeCreateDto createDto);
         public Task<ApiResponse> Update(Guid id, AssetTypeUpdateDto updateDto);
         Task<ApiResponse> Delete(Guid id);
+        Task<ApiResponse> DeleteAssetTypes(List<Guid> ids);
     }
 
     public class AssetTypeService : BaseService, IAssetTypeService
@@ -54,7 +55,7 @@ namespace API_FFMS.Services
             if (await MainUnitOfWork.AssetTypeRepository.DeleteAsync(existingType, AccountId, CurrentDate))
                 throw new ApiException("Xóa thất bại", StatusCode.SERVER_ERROR);
 
-            return ApiResponse.Success("Xóa thất bại");
+            return ApiResponse.Success("Xóa thành công");
         }
 
         public async Task<ApiResponses<AssetTypeDto>> GetAssetTypes(AssetTypeQueryDto queryDto)
@@ -148,6 +149,27 @@ namespace API_FFMS.Services
 
             return ApiResponse.Success("Cập nhật thành công");
 
+        }
+
+        public async Task<ApiResponse> DeleteAssetTypes(List<Guid> ids)
+        {
+            var assetTypeDeleteds = new List<AssetType>();
+            foreach (var id in ids)
+            {
+                var existingType = await MainUnitOfWork.AssetTypeRepository.FindOneAsync(id);
+
+                if (existingType == null)
+                {
+                    throw new ApiException("Không tìm thấy loại trang thiết bị", StatusCode.NOT_FOUND);
+                }
+                assetTypeDeleteds.Add(existingType);
+            }
+            if (await MainUnitOfWork.AssetTypeRepository.DeleteAsync(assetTypeDeleteds, AccountId, CurrentDate))
+            {
+                throw new ApiException("Xóa thất bại", StatusCode.SERVER_ERROR);
+            }
+
+            return ApiResponse.Success();
         }
     }
 }

@@ -1,6 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
-using AppCore.Data;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace MainData.Entities;

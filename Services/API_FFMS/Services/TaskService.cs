@@ -36,7 +36,7 @@ public class TaskService : BaseService, ITaskService
                 EditorId = t.EditorId ?? Guid.Empty,
                 CreatedAt = t.CreatedAt,
                 EditedAt = t.EditedAt,
-                AssetId = t.AssetId,
+                //AssetId = t.AssetId,
                 ToRoomId = t.ToRoomId,
                 Quantity = t.Quantity,
                 AssignedTo = t.AssignedTo,

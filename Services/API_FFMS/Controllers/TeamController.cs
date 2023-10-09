@@ -43,11 +43,18 @@ namespace API_FFMS.Controllers
             return await _service.Update(id, updateDto);
         }
 
-        [HttpDelete]
+        [HttpDelete("{id:guid}")]
         [SwaggerOperation("Delete team")]
         public async Task<ApiResponse> Delete(Guid id)
         {
             return await _service.Delete(id);
+        }
+
+        [HttpDelete]
+        [SwaggerOperation("Delete list team")]
+        public async Task<ApiResponse> DeleteTeams(List<Guid> ids)
+        {
+            return await _service.DeleteTeams(ids);
         }
     }
 }
