@@ -94,7 +94,7 @@ namespace API_FFMS.Repositories
                 transportation.EditedAt = now.Value;
                 transportation.CreatorId = creatorId;
                 transportation.Status = RequestStatus.NotStarted;
-                ;
+                
                 await _context.Transportations.AddAsync(transportation);
 
                 var asset = await _context.Assets.FindAsync(transportation.AssetId);

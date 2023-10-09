@@ -14,6 +14,7 @@ namespace API_FFMS.Services
         Task<ApiResponse<TeamDetailDto>> GetTeam(Guid id);
         public Task<ApiResponse> Insert(TeamCreateDto createDto);
         Task<ApiResponse> Delete(Guid id);
+        Task<ApiResponse> DeleteTeams(List<Guid> ids);
         Task<ApiResponse> Update(Guid id, TeamUpdateDto updateDto);
     }
     public class TeamService : BaseService, ITeamService
@@ -35,6 +36,32 @@ namespace API_FFMS.Services
                 throw new ApiException("Can't not delete", StatusCode.SERVER_ERROR);
             }
 
+            return ApiResponse.Success();
+        }
+
+        public async Task<ApiResponse> DeleteTeams(List<Guid> ids)
+        {
+            var teamDeleteds = new List<Team>();
+            foreach(var id in ids)
+            {
+                var existingTeam = await MainUnitOfWork.TeamRepository.FindOneAsync(
+                new Expression<Func<Team, bool>>[]
+                {
+                    x => !x.DeletedAt.HasValue,
+                    x => x.Id == id
+                });
+                if (existingTeam == null)
+                {
+                    throw new ApiException("Không tìm thấy đội phụ trách này", StatusCode.NOT_FOUND);
+                }
+
+                teamDeleteds.Add(existingTeam);
+            }
+
+            if (!await MainUnitOfWork.TeamRepository.DeleteAsync(teamDeleteds, AccountId, CurrentDate))
+            {
+                throw new ApiException("Xóa thất bại", StatusCode.SERVER_ERROR);
+            }
             return ApiResponse.Success();
         }
 

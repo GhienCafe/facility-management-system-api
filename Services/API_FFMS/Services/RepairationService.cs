@@ -17,6 +17,7 @@ namespace API_FFMS.Services
         Task<ApiResponse<RepairationDto>> GetRepairation(Guid id);
         Task<ApiResponse> Update(Guid id, BaseRequestUpdateDto updateDto);
         Task<ApiResponse> Delete(Guid id);
+        Task<ApiResponse> DeleteReplairations(List<Guid> ids);
     }
     public class RepairationService : BaseService, IRepairationService
     {
@@ -62,6 +63,36 @@ namespace API_FFMS.Services
             existingRepair.Status = RequestStatus.Cancelled;
 
             if (!await MainUnitOfWork.RepairationRepository.DeleteAsync(existingRepair, AccountId, CurrentDate))
+            {
+                throw new ApiException("Xóa thất bại", StatusCode.SERVER_ERROR);
+            }
+            return ApiResponse.Success();
+        }
+
+        public async Task<ApiResponse> DeleteReplairations(List<Guid> ids)
+        {
+            var replairDeleteds = new List<Repairation>();
+            foreach(var id in ids)
+            {
+                var existingRepair = await MainUnitOfWork.RepairationRepository.FindOneAsync(
+                new Expression<Func<Repairation, bool>>[]
+                {
+                    x => !x.DeletedAt.HasValue,
+                    x => x.Id == id
+                });
+                if (existingRepair == null)
+                {
+                    throw new ApiException("Không tìm thấy yêu cầu sửa chữa này", StatusCode.NOT_FOUND);
+                }
+
+                if (existingRepair.Status == RequestStatus.NotStarted)
+                {
+                    throw new ApiException("Không thể xóa yêu cầu đang trong quá trình thực hiện", StatusCode.NOT_FOUND);
+                }
+
+                replairDeleteds.Add(existingRepair);
+            }
+            if (!await MainUnitOfWork.RepairationRepository.DeleteAsync(replairDeleteds, AccountId, CurrentDate))
             {
                 throw new ApiException("Xóa thất bại", StatusCode.SERVER_ERROR);
             }

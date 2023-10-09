@@ -8,6 +8,7 @@ namespace API_FFMS.Repositories
     public interface IReplacementRepository
     {
         Task<bool> InsertReplacement(Replacement replacement, Guid? creatorId, DateTime? now = null);
+        Task<bool> UpdateStatus(Replacement replacement, RequestStatus? statusUpdate, Guid? editorId, DateTime? now = null);
     }
     public class ReplacementRepository : IReplacementRepository
     {
@@ -74,6 +75,31 @@ namespace API_FFMS.Repositories
                     };
                     await _context.Notifications.AddAsync(notification);
                 }
+
+                await _context.SaveChangesAsync();
+                await _context.Database.CommitTransactionAsync();
+                return true;
+            }
+            catch
+            {
+                await _context.Database.RollbackTransactionAsync();
+                return false;
+            }
+        }
+
+        public async Task<bool> UpdateStatus(Replacement replacement, RequestStatus? statusUpdate, Guid? editorId, DateTime? now = null)
+        {
+            await _context.Database.BeginTransactionAsync();
+            now ??= DateTime.UtcNow;
+            try
+            {
+                replacement.EditedAt = now.Value;
+                replacement.EditorId = editorId;
+                replacement.Status = statusUpdate;
+                _context.Entry(replacement).State = EntityState.Modified;
+
+
+
 
                 await _context.SaveChangesAsync();
                 await _context.Database.CommitTransactionAsync();

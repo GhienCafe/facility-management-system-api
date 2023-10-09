@@ -15,6 +15,7 @@ public interface IRoomService : IBaseService
     public Task<ApiResponse> Insert(RoomCreateDto addRoomDto);
     public Task<ApiResponse> Update(Guid id, RoomUpdateDto floorUpdate);
     Task<ApiResponse> Delete(Guid id);
+    Task<ApiResponse> DeleteRooms(List<Guid> ids);
 
 }
 public class RoomService : BaseService, IRoomService
@@ -64,27 +65,27 @@ public class RoomService : BaseService, IRoomService
         {
             roomQuerySet = roomQuerySet.Where(x => x!.Capacity <= queryDto.ToCapacity);
         }
-        
+
         if (queryDto.FloorId != null)
         {
             roomQuerySet = roomQuerySet.Where(x => x!.FloorId == queryDto.FloorId);
         }
 
         var response = from room in roomQuerySet
-            join status in MainUnitOfWork.RoomStatusRepository.GetQuery() on room.StatusId equals status.Id
-                into statusGroup
-            from status in statusGroup.DefaultIfEmpty()
-            join type in MainUnitOfWork.RoomTypeRepository.GetQuery() on room.RoomTypeId equals type.Id
-                into typeGroup
-            from type in typeGroup.DefaultIfEmpty()
-            join floor in MainUnitOfWork.FloorRepository.GetQuery() on room.FloorId equals floor.Id
-            select new
-            {
-                Room = room,
-                Status = status,
-                Type = type,
-                Floor = floor
-            };
+                       join status in MainUnitOfWork.RoomStatusRepository.GetQuery() on room.StatusId equals status.Id
+                           into statusGroup
+                       from status in statusGroup.DefaultIfEmpty()
+                       join type in MainUnitOfWork.RoomTypeRepository.GetQuery() on room.RoomTypeId equals type.Id
+                           into typeGroup
+                       from type in typeGroup.DefaultIfEmpty()
+                       join floor in MainUnitOfWork.FloorRepository.GetQuery() on room.FloorId equals floor.Id
+                       select new
+                       {
+                           Room = room,
+                           Status = status,
+                           Type = type,
+                           Floor = floor
+                       };
 
         var totalCount = response.Count();
 
@@ -197,5 +198,28 @@ public class RoomService : BaseService, IRoomService
             throw new ApiException("Xóa thất bại", StatusCode.SERVER_ERROR);
 
         return ApiResponse.Success("Xóa thành công");
+    }
+
+    public async Task<ApiResponse> DeleteRooms(List<Guid> ids)
+    {
+        var roomDeleteds = new List<Room>();
+        foreach (var id in ids)
+        {
+            var existingRoom = await MainUnitOfWork.RoomRepository.FindOneAsync(id);
+
+            if (existingRoom == null)
+            {
+                throw new ApiException("Không tìm thấy phòng", StatusCode.NOT_FOUND);
+            }
+
+            roomDeleteds.Add(existingRoom);
+        }
+
+        if (!await MainUnitOfWork.RoomRepository.DeleteAsync(roomDeleteds, AccountId, CurrentDate))
+        {
+            throw new ApiException("Xóa thất bại", StatusCode.SERVER_ERROR);
+        }
+        return ApiResponse.Success("Xóa thành công");
+
     }
 }

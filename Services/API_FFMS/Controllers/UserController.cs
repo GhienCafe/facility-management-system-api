@@ -29,7 +29,7 @@ public class UserController : BaseController
     }
     [HttpPost]
     [SwaggerOperation("Create new user")]
-    public async Task<ApiResponse> InsertEvent([FromBody]UserCreateDto userDto)
+    public async Task<ApiResponse> Insert([FromBody]UserCreateDto userDto)
     {
         return await _service.Create(userDto);
     }
@@ -42,9 +42,16 @@ public class UserController : BaseController
     }
 
     [HttpDelete("{id:guid}")]
-    [SwaggerOperation("Delete event")]
+    [SwaggerOperation("Delete user")]
     public async Task<ApiResponse> Delete(Guid id)
     {
         return await _service.Delete(id);
+    }
+
+    [HttpDelete]
+    [SwaggerOperation("Delete list users")]
+    public async Task<ApiResponse> DeleteUsers(List<Guid> ids)
+    {
+        return await _service.DeleteUsers(ids);
     }
 }

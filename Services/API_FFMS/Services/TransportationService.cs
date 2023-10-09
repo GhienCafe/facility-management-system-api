@@ -18,6 +18,7 @@ namespace API_FFMS.Services
         Task<ApiResponse<TransportDto>> GetTransportation(Guid id);
         //Task<ApiResponses<TransportDto>> GetTransportOfStaff(TransportOfStaffQueryDto queryDto);
         Task<ApiResponse> Delete(Guid id);
+        Task<ApiResponse> DeleteTransports(List<Guid> ids);
         public Task<ApiResponse> UpdateStatus(Guid id, TransportUpdateStatusDto updateStatusDto);
     }
     public class TransportationService : BaseService, ITransportationService
@@ -87,6 +88,38 @@ namespace API_FFMS.Services
             }
             return ApiResponse.Success();
         }
+
+        public async Task<ApiResponse> DeleteTransports(List<Guid> ids)
+        {
+            var transportDeleteds = new List<Transportation>();
+            foreach (var id in ids)
+            {
+                var existingTransport = await MainUnitOfWork.TransportationRepository.FindOneAsync(
+                new Expression<Func<Transportation, bool>>[]
+                {
+                    x => !x.DeletedAt.HasValue,
+                    x => x.Id == id
+                });
+                if (existingTransport == null)
+                {
+                    throw new ApiException("Không tìm thấy yêu cầu vận chuyển này", StatusCode.NOT_FOUND);
+                }
+
+                if(existingTransport.Status == RequestStatus.NotStarted)
+                {
+                    throw new ApiException("Không thể xóa yêu cầu đang trong quá trình thực hiện", StatusCode.NOT_FOUND);
+                }
+
+                transportDeleteds.Add(existingTransport);
+            }
+
+            if (!await MainUnitOfWork.TransportationRepository.DeleteAsync(transportDeleteds, AccountId, CurrentDate))
+            {
+                throw new ApiException("Xóa thất bại", StatusCode.SERVER_ERROR);
+            }
+            return ApiResponse.Success();
+        }
+
         public async Task<ApiResponse<TransportDto>> GetTransportation(Guid id)
         {
             var transportation = await MainUnitOfWork.TransportationRepository.FindOneAsync<TransportDto>(

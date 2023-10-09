@@ -28,7 +28,7 @@ namespace API_FFMS.Controllers
             return await _service.GetReplacement(id);
         }
 
-        [HttpDelete]
+        [HttpDelete("{id:guid}")]
         [SwaggerOperation("Delete a replacement")]
         public async Task<ApiResponse> Delete(Guid id)
         {
@@ -47,6 +47,13 @@ namespace API_FFMS.Controllers
         public async Task<ApiResponse> Update(Guid id, BaseRequestUpdateDto updateDto)
         {
             return await _service.Update(id, updateDto);
+        }
+
+        [HttpDelete]
+        [SwaggerOperation("Delete list replacement")]
+        public async Task<ApiResponse> DeleteReplacements(List<Guid> ids)
+        {
+            return await _service.DeleteReplacements(ids);
         }
     }
 }

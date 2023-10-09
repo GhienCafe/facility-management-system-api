@@ -17,6 +17,7 @@ namespace API_FFMS.Services
         Task<ApiResponse> Update(Guid id, BaseRequestUpdateDto updateDto);
         Task<ApiResponse> Delete(Guid id);
         Task<ApiResponses<ReplaceDto>> GetReplaces(ReplacementQueryDto queryDto);
+        Task<ApiResponse> DeleteReplacements(List<Guid> ids);
     }
     public class ReplacementService : BaseService, IReplacementService
     {
@@ -73,6 +74,37 @@ namespace API_FFMS.Services
             existingReplace.Status = RequestStatus.Cancelled;
 
             if (!await MainUnitOfWork.ReplacementRepository.DeleteAsync(existingReplace, AccountId, CurrentDate))
+            {
+                throw new ApiException("Xóa thất bại", StatusCode.SERVER_ERROR);
+            }
+            return ApiResponse.Success();
+        }
+
+        public async Task<ApiResponse> DeleteReplacements(List<Guid> ids)
+        {
+            var replaceDeleteds = new List<Replacement>();
+            foreach (var id in ids)
+            {
+                var existingReplace = await MainUnitOfWork.ReplacementRepository.FindOneAsync(
+                new Expression<Func<Replacement, bool>>[]
+                {
+                    x => !x.DeletedAt.HasValue,
+                    x => x.Id == id
+                });
+                if (existingReplace == null)
+                {
+                    throw new ApiException("Không tìm thấy yêu cầu thay thế này", StatusCode.NOT_FOUND);
+                }
+
+                if (existingReplace.Status == RequestStatus.NotStarted)
+                {
+                    throw new ApiException("Không thể xóa yêu cầu đang trong quá trình thực hiện", StatusCode.NOT_FOUND);
+                }
+
+                replaceDeleteds.Add(existingReplace);
+            }
+
+            if (!await MainUnitOfWork.ReplacementRepository.DeleteAsync(replaceDeleteds, AccountId, CurrentDate))
             {
                 throw new ApiException("Xóa thất bại", StatusCode.SERVER_ERROR);
             }

@@ -29,11 +29,18 @@ namespace API_FFMS.Controllers
             return await _service.Create(createDto);
         }
 
-        [HttpDelete]
+        [HttpDelete("{id:guid}")]
         [SwaggerOperation("Delete a transportation")]
         public async Task<ApiResponse> Delete(Guid id)
         {
             return await _service.Delete(id);
+        }
+
+        [HttpDelete]
+        [SwaggerOperation("Delete list transportation")]
+        public async Task<ApiResponse> DeleteTransports(List<Guid> ids)
+        {
+            return await _service.DeleteTransports(ids);
         }
 
         [HttpGet("{id:guid}")]
