@@ -1,29 +1,32 @@
-﻿
-using AppCore.Models;
-using MainData.Entities;
+﻿using MainData.Entities;
 using System.ComponentModel.DataAnnotations;
 
 namespace API_FFMS.Dtos;
 
-public class TransportDto : BaseDto
+public class TransportDto : BaseRequestDto
 {
     public int? Quantity { get; set; }
-    public Guid? AssetId { get; set; }
-    public Guid? RequestId { get; set; }
+    public Guid? FromRoomId { get; set; }
     public Guid? ToRoomId { get; set; } // For internal
     public AssetBaseDto? Asset { get; set; }
     public RoomBaseDto? ToRoom { get; set; }
     public RoomBaseDto? FromRoom { get; set; } 
 }
 
-public class FutureDateAttribute : ValidationAttribute
+public class TransportCreateDto : BaseRequestCreateDto
 {
-    public override bool IsValid(object value)
-    {
-        if (value is DateTime date)
-        {
-            return date > DateTime.Now;
-        }
-        return false;
-    }
+    public int? Quantity { get; set; }
+    public Guid? ToRoomId { get; set; }
+}
+
+public class TransportationQueryDto : BaseRequestQueryDto
+{
+    public string? RequestCode { get; set; }
+    public DateTime? RequestDate { get; set; }
+    public DateTime? CompletionDate { get; set; }
+}
+
+public class TransportUpdateStatusDto
+{
+    public RequestStatus? Status { get; set; }
 }

@@ -17,6 +17,7 @@ public interface IUserService : IBaseService
     Task<ApiResponses<UserDto>> GetList(UserQueryDto queryDto);
     Task<ApiResponse<IEnumerable<UserDto>>> GetListBasedOnCategory(Guid categoryId);
     Task<ApiResponse<UserDetailDto>> GetDetail(Guid id);
+    Task<ApiResponse> DeleteUsers(List<Guid> ids);
 }
 public class UserService : BaseService, IUserService
 {
@@ -211,14 +212,34 @@ public class UserService : BaseService, IUserService
 
     public async Task<ApiResponse> Delete(Guid id)
     {
-        var existingUsers = await MainUnitOfWork.UserRepository.FindOneAsync(id);
+        var existingUser = await MainUnitOfWork.UserRepository.FindOneAsync(id);
         
-        if (existingUsers == null)
+        if (existingUser == null)
             throw new ApiException("Không tìm thấy người dùng", StatusCode.NOT_FOUND);
         
-        if (!await MainUnitOfWork.UserRepository.DeleteAsync(existingUsers, AccountId, CurrentDate))
+        if (!await MainUnitOfWork.UserRepository.DeleteAsync(existingUser, AccountId, CurrentDate))
             throw new ApiException("Xóa người dùng thất bại", StatusCode.SERVER_ERROR);
 
+        return ApiResponse.Success();
+    }
+
+    public async Task<ApiResponse> DeleteUsers(List<Guid> ids)
+    {
+        var userDeleteds = new List<User>();
+        foreach (var id in ids)
+        {
+            var existingUser = await MainUnitOfWork.UserRepository.FindOneAsync(id);
+            if (existingUser == null)
+            {
+                throw new ApiException("Không tìm thấy người dùng", StatusCode.NOT_FOUND);
+            }
+            userDeleteds.Add(existingUser);
+        }
+
+        if (!await MainUnitOfWork.UserRepository.DeleteAsync(userDeleteds, AccountId, CurrentDate))
+        {
+            throw new ApiException("Xóa danh sách người dùng thất bại", StatusCode.SERVER_ERROR);
+        }
         return ApiResponse.Success();
     }
 }

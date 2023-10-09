@@ -21,35 +21,38 @@ public class AssetType : BaseEntity
 
 public enum Unit
 {
-    [Display(Name = "Cái")]
-    Piece = 1,
+    [Display(Name = "Định danh")]
+    Identifier = 1,
 
-    [Display(Name = "Kilogram")]
-    Kg = 2,
+    [Display(Name = "Không định danh")]
+    Unidentified = 2
 
-    [Display(Name = "Lít")]
-    Liter = 3,
+    //[Display(Name = "Kilogram")]
+    //Kg = 2,
 
-    [Display(Name = "Mét")]
-    Meter = 4,
+    //[Display(Name = "Lít")]
+    //Liter = 3,
 
-    [Display(Name = "Mét vuông")]
-    SquareMeter = 5,
+    //[Display(Name = "Mét")]
+    //Meter = 4,
 
-    [Display(Name = "Giờ")]
-    Hour = 6,
+    //[Display(Name = "Mét vuông")]
+    //SquareMeter = 5,
 
-    [Display(Name = "Bao")]
-    Bag = 7,
+    //[Display(Name = "Giờ")]
+    //Hour = 6,
 
-    [Display(Name = "Đôi")]
-    Pair = 8,
-    
-    [Display(Name = "Thùng")]
-    Crate = 10,
+    //[Display(Name = "Bao")]
+    //Bag = 7,
 
-    [Display(Name = "Hộp")]
-    Box = 11
+    //[Display(Name = "Đôi")]
+    //Pair = 8,
+
+    //[Display(Name = "Thùng")]
+    //Crate = 10,
+
+    //[Display(Name = "Hộp")]
+    //Box = 11
 }
 
 public class AssetCategoryConfig : IEntityTypeConfiguration<AssetType>
