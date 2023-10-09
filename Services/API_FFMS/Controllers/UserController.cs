@@ -21,13 +21,6 @@ public class UserController : BaseController
         return await _service.GetList(queryDto);
     }
     
-    [HttpGet("category/{id}")]
-    [SwaggerOperation("Get list user based on category id")]
-    public async Task<ApiResponse<IEnumerable<UserDto>>> GetUsers(Guid id)
-    {
-        return await _service.GetListBasedOnCategory(id);
-    }
-    
     [HttpGet("{id:guid}")]
     [SwaggerOperation("Get detail information")]
     public async Task<ApiResponse<UserDetailDto>> GetDetailUser(Guid id)

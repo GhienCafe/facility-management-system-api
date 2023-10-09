@@ -11,7 +11,6 @@ public class RoomAsset : BaseEntity
     public AssetStatus Status { get; set; }
     public DateTime? FromDate { get; set; }
     public DateTime? ToDate { get; set; }
-    public double? Quantity { get; set; }
     
     //
     public virtual Room? Room { get; set; }
@@ -25,7 +24,6 @@ public class RoomAssetConfig : IEntityTypeConfiguration<RoomAsset>
         builder.ToTable("RoomAssets");
         builder.Property(a => a.RoomId).IsRequired();
         builder.Property(a => a.AssetId).IsRequired();
-        builder.Property(a => a.Quantity).IsRequired(false);
         builder.Property(a => a.Status).IsRequired();
         builder.Property(a => a.FromDate).IsRequired(false);
         builder.Property(a => a.ToDate).IsRequired(false);

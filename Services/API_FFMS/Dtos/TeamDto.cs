@@ -9,12 +9,14 @@ public class TeamDto : BaseDto
     public string TeamName { get; set; } = null!;
     public string? Description { get; set; }
     public int? TotalMember { get; set; }
+    //public IEnumerable<Cate>
 }
 public class TeamDetailDto : BaseDto
 {
     public string TeamName { get; set; } = null!;
     public string? Description { get; set; }
     public int? TotalMember { get; set; }
+    public IEnumerable<TeamIncludeDto>? Members { get; set; }
 }
 
 public class TeamCreateDto
@@ -42,4 +44,6 @@ public class TeamIncludeDto
 
 public class TeamQueryDto : BaseQueryDto
 {
+    public string? TeamName { get; set; }
+    public string? Description { get; set; }
 }

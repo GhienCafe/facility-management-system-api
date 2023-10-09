@@ -74,7 +74,7 @@ public class BuildingsService : BaseService, IBuildingsService
             buildings,
             totalCount,
             queryDto.PageSize,
-            queryDto.Page,
+            queryDto.Skip(),
             (int)Math.Ceiling(totalCount / (double)queryDto.PageSize)
         );
     }

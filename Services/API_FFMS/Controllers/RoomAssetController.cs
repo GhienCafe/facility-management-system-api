@@ -15,46 +15,18 @@ namespace API_FFMS.Controllers
             _service = service;
         }
 
-        // [HttpGet]
-        // [SwaggerOperation("Tracking asset used in room")]
-        // public async Task<ApiResponses<AssetTrackingDto>> AssetUsedTracking([FromQuery] RoomTrackingQueryDto queryDto, Guid id)
-        // {
-        //     return await _service.AssetUsedTracking(id, queryDto);
-        // }
-
         [HttpGet]
-        [SwaggerOperation("Get room assets")]
-        public async Task<ApiResponses<RoomAssetBaseDto>> GetItems([FromQuery] RoomAssetQueryDto queryDto)
+        [SwaggerOperation("Tracking asset use in room")]
+        public async Task<ApiResponses<AssetTrackingDto>> AssetUsedTracking([FromQuery] RoomTrackingQueryDto queryDto)
         {
-            return await _service.GetItems(queryDto);
+            return await _service.AssetUsedTracking(queryDto);
         }
-        
-        [HttpGet("{id}")]
-        [SwaggerOperation("Get room asset")]
-        public async Task<ApiResponse<RoomAssetDetailDto>> GetItem(Guid id)
+
+        [HttpGet("track-room")]
+        [SwaggerOperation("Tracking room")]
+        public async Task<ApiResponses<AssetTrackingDto>> RoomTracking([FromQuery] RoomTrackingQueryDto queryDto)
         {
-            return await _service.GetItem(id);
-        }
-        
-        [HttpPost]
-        [SwaggerOperation("Create new room asset")]
-        public async Task<ApiResponse> CreateItem([FromBody]RoomAssetCreateBaseDto createBaseDto)
-        {
-            return await _service.CreateRoomAsset(createBaseDto);
-        }
-        
-        [HttpPut("{id}")]
-        [SwaggerOperation("Update room asset")]
-        public async Task<ApiResponse> UpdateItem(Guid id, [FromBody]RoomAssetUpdateBaseDto update)
-        {
-            return await _service.UpdateItem(id, update);
-        }
-        
-        [HttpDelete("{id}")]
-        [SwaggerOperation("Delete room asset")]
-        public async Task<ApiResponse> DeleteItem(Guid id)
-        {
-            return await _service.DeleteItem(id);
+            return await _service.AssetUsedTracking(queryDto);
         }
     }
 }

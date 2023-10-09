@@ -48,10 +48,7 @@ namespace API_FFMS.Services
                     ManufacturingYear = dto.ManufacturingYear,
                     SerialNumber = dto.SerialNumber,
                     Quantity = dto.Quantity,
-                    Description = dto.Description,
-                    IsRented = IsTrueOrFalse(dto.IsRented),
-                    IsMovable = IsTrueOrFalse(dto.IsMovable),
-                    Model = GetModelByName(dto.Model)
+                    Description = dto.Description
                 }).ToList();
 
                 // Validation checks
@@ -67,29 +64,12 @@ namespace API_FFMS.Services
                 // Filter out assets with validation errors
                 var validAssets = assets.Where(a => !validationErrors.Any(e => e.Row == assets.IndexOf(a) + 2)).ToList();
 
-                if (validationErrors.Count >= 0 && validAssets.Count >= 0)
+                if (validationErrors.Count > 0 && validAssets.Count > 0)
                 {
                     if (!await MainUnitOfWork.AssetRepository.InsertAsync(validAssets, AccountId, CurrentDate))
                     {
                         throw new ApiException("Import assets failed", StatusCode.SERVER_ERROR);
                     }
-
-                    var assetIds = validAssets.Select(x => x?.Id);
-                    Guid wareHouseId = GetWareHouse("Kho")!.Id;
-                    if(wareHouseId != Guid.Empty)
-                    {
-                        var roomAssets = assetIds.Select(x => new RoomAsset
-                        {
-                            FromDate = CurrentDate,
-                            AssetId = x.Value,
-                            RoomId = wareHouseId,
-                            Status = AssetStatus.Operational
-                        }).ToList();
-
-                        if (!await MainUnitOfWork.RoomAssetRepository.InsertAsync(roomAssets, AccountId, CurrentDate))
-                            throw new ApiException("Import assets to ware house failed", StatusCode.BAD_REQUEST);
-                    }
-
                     return ApiResponses<ImportError>.Fail(validationErrors, StatusCode.UNPROCESSABLE_ENTITY, "Some Asset imports failed due to validation errors");
                 }
 
@@ -106,44 +86,10 @@ namespace API_FFMS.Services
         private AssetType? GetAssetTypeByCode(string typeCode)
         {
             var assetCategory = MainUnitOfWork.AssetTypeRepository.GetQuery()
-                                .Where(x => x!.TypeCode.Trim().ToLower()
+                                .Where(x => x.TypeCode.Trim().ToLower()
                                 .Contains(typeCode.Trim().ToLower()))
                                 .FirstOrDefault();
             return assetCategory;
-        }
-
-        private Model? GetModelByName(string modelName)
-        {
-            var model = MainUnitOfWork.ModelRepository.GetQuery()
-                                .Where(x => x!.ModelName.Trim().ToLower()
-                                .Contains(modelName.Trim().ToLower()))
-                                .FirstOrDefault();
-            return model;
-        }
-
-        public Room? GetWareHouse(string roomName)
-        {
-            var wareHouse = MainUnitOfWork.RoomRepository.GetQuery()
-                            .Where(x => x!.RoomName.Trim()
-                            .Equals(roomName.Trim()))
-                            .FirstOrDefault();
-            return wareHouse;
-        }
-
-        private bool IsTrueOrFalse(string value)
-        {
-            if (value.Trim().Equals("Có"))
-            {
-                return true;
-            }
-            else if (value.Trim().Equals("Không"))
-            {
-                return false;
-            }
-            else
-            {
-                throw new ApiException("Input must be 'Có' or 'Không'");
-            }
         }
 
         private async Task CheckExistTypeCode(List<Asset> assets)
@@ -151,7 +97,7 @@ namespace API_FFMS.Services
             foreach (var asset in assets)
             {
                 var existingTypeCode = await MainUnitOfWork.AssetTypeRepository.GetQuery()
-                                       .Where(t => t!.TypeCode.Equals(asset.Type!.TypeCode))
+                                       .Where(t => t.TypeCode.Equals(asset.Type.TypeCode))
                                        .FirstOrDefaultAsync();
                 if (existingTypeCode == null)
                 {
@@ -159,7 +105,7 @@ namespace API_FFMS.Services
                     validationErrors.Add(new ImportError
                     {
                         Row = row,
-                        ErrorMessage = $"Type code '{asset.Type!.TypeCode}' in row {row} does not exist"
+                        ErrorMessage = $"Type code '{asset.Type.TypeCode}' in row {row} does not exist"
                     });
                 }
             }
@@ -171,7 +117,7 @@ namespace API_FFMS.Services
             {
                 if (string.IsNullOrWhiteSpace(assetDto.AssetName) ||
                     string.IsNullOrWhiteSpace(assetDto.AssetCode) ||
-                    string.IsNullOrWhiteSpace(assetDto.TypeCode!.ToString()) ||
+                    string.IsNullOrWhiteSpace(assetDto.TypeCode.ToString()) ||
                     string.IsNullOrWhiteSpace(assetDto.Status.ToString()) ||
                     string.IsNullOrWhiteSpace(assetDto.ManufacturingYear.ToString()) ||
                     string.IsNullOrWhiteSpace(assetDto.Quantity.ToString()))
@@ -211,12 +157,43 @@ namespace API_FFMS.Services
                     ErrorMessage = $"Duplicate AssetCodes: {duplicateError}"
                 });
                 // Set the Row property for each validation error
-                foreach (var error in validationErrors.Where(e => e.ErrorMessage!.Contains("Duplicate AssetCodes")))
+                foreach (var error in validationErrors.Where(e => e.ErrorMessage.Contains("Duplicate AssetCodes")))
                 {
-                    var assetCode = error.ErrorMessage!.Split('\'')[1];
+                    var assetCode = error.ErrorMessage.Split('\'')[1];
                     error.Row = duplicates.First(d => d.AssetCode == assetCode).Row;
                 }
             }
+        }
+
+        private void CheckUniqueAssetCategories(List<Asset> assets)
+        {
+            // var duplicateCategories = assets
+            //     .GroupBy(a => a.AssetCategory?.CategoryCode)
+            //     .Where(g => g.Count() > 1)
+            //     .Select(g => g.Key)
+            //     .ToList();
+            //
+            // if (duplicateCategories.Any())
+            // {
+            //     var duplicates = assets
+            //         .Where(a => duplicateCategories.Contains(a.AssetCategory?.CategoryCode))
+            //         .Select(a => new
+            //         {
+            //             CategoryCode = a.AssetCategory?.CategoryCode,
+            //             Row = assets.IndexOf(a) + 2
+            //         })
+            //         .ToList();
+            //
+            //     var duplicateError = string.Join(", ", duplicates.Select(d => $"AssetCategory '{d.CategoryCode}' in row {d.Row}"));
+            //     throw new ApiException($"Duplicate AssetCategories: {duplicateError}");
+            //
+            //     // Set the Row property for each validation error
+            //     foreach (var error in validationErrors.Where(e => e.ErrorMessage.Contains("Duplicate AssetCategories")))
+            //     {
+            //         var assetCode = error.ErrorMessage.Split('\'')[1];
+            //         error.Row = duplicates.First(d => d.CategoryCode == assetCode).Row;
+            //     }
+            // }
         }
 
         private async Task CheckUniqueAssetCodesInDatabase(List<Asset> assets)
@@ -224,7 +201,7 @@ namespace API_FFMS.Services
             foreach (var asset in assets)
             {
                 var existingAsset = await MainUnitOfWork.AssetRepository.GetQuery()
-                                         .Where(a => a!.AssetCode!.Equals(asset.AssetCode))
+                                         .Where(a => a.AssetCode.Equals(asset.AssetCode))
                                          .FirstOrDefaultAsync();
 
                 if (existingAsset != null)
@@ -244,7 +221,7 @@ namespace API_FFMS.Services
             foreach (var asset in assets)
             {
                 var existingCategory = await MainUnitOfWork.AssetTypeRepository.GetQuery()
-                                             .Where(a => a!.TypeCode.Equals(asset.Type!.TypeCode))
+                                             .Where(a => a.TypeCode.Equals(asset.Type.TypeCode))
                                              .FirstOrDefaultAsync();
 
                 if (existingCategory == null)
@@ -259,43 +236,23 @@ namespace API_FFMS.Services
             }
         }
 
-        //private void CheckManufacturingYear(List<Asset> assets)
-        //{
-        //    var currentDate = DateTime.UtcNow.Year;
-
-        //    foreach (var asset in assets)
-        //    {
-        //        if (asset.ManufacturingYear >= currentDate)
-        //        {
-        //            var row = assets.IndexOf(asset) + 2;
-        //            validationErrors.Add(new ImportError
-        //            {
-        //                Row = row,
-        //                ErrorMessage = $"ManufacturingYear in row {row} is not before the current date"
-        //            });
-        //        }
-        //    }
-        //}
-
         private void CheckManufacturingYear(List<Asset> assets)
         {
-            var currentDate = DateTime.UtcNow.Year;
-            var minManufacturingYear = 2000;
+            var currentDate = DateTime.UtcNow;
 
             foreach (var asset in assets)
             {
-                if (!int.TryParse(asset.ManufacturingYear.ToString(), out int manufacturingYear) || manufacturingYear < minManufacturingYear || manufacturingYear > currentDate)
+                if (asset.ManufacturingYear >= currentDate)
                 {
                     var row = assets.IndexOf(asset) + 2;
                     validationErrors.Add(new ImportError
                     {
                         Row = row,
-                        ErrorMessage = $"ManufacturingYear in row {row} is not a valid integer or is not within the range {minManufacturingYear}-{currentDate}"
+                        ErrorMessage = $"ManufacturingYear in row {row} is not before the current date"
                     });
                 }
             }
         }
-
 
         private void CheckQuantity(List<Asset> assets)
         {
@@ -317,7 +274,7 @@ namespace API_FFMS.Services
         {
             foreach (var asset in assets)
             {
-                if (asset.Status is < 0 or > (AssetStatus)11)
+                if (asset.Status is < 0 or > (AssetStatus)10)
                 {
                     var row = assets.IndexOf(asset) + 2;
                     validationErrors.Add(new ImportError

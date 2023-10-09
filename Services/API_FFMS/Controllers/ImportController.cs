@@ -3,7 +3,6 @@ using AppCore.Models;
 using ClosedXML.Excel;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
-using static API_FFMS.Services.ImportService;
 
 namespace API_FFMS.Controllers
 {
@@ -26,20 +25,17 @@ namespace API_FFMS.Controllers
                 var currentRow = 1;
 
                 // Define the column headers
-                worksheet.Cell(currentRow, 1).Value = "Tên thiết bị";
-                worksheet.Cell(currentRow, 2).Value = "Mã thiết bị";
-                worksheet.Cell(currentRow, 3).Value = "Nhóm thiết bị";
-                worksheet.Cell(currentRow, 4).Value = "Nhãn hiệu";
-                worksheet.Cell(currentRow, 5).Value = "Trạng thái";
-                worksheet.Cell(currentRow, 6).Value = "Năm sản xuất";
-                worksheet.Cell(currentRow, 7).Value = "Số định danh";
-                worksheet.Cell(currentRow, 8).Value = "Số lượng";
-                worksheet.Cell(currentRow, 9).Value = "Mô tả";
-                worksheet.Cell(currentRow, 10).Value = "Thuộc sở hữu";
-                worksheet.Cell(currentRow, 11).Value = "Có thể di chuyển";
+                worksheet.Cell(currentRow, 1).Value = "Asset Name";
+                worksheet.Cell(currentRow, 2).Value = "Asset Code";
+                worksheet.Cell(currentRow, 3).Value = "Type Code";
+                worksheet.Cell(currentRow, 4).Value = "Status";
+                worksheet.Cell(currentRow, 5).Value = "Manufacturing Year";
+                worksheet.Cell(currentRow, 6).Value = "SerialNumber";
+                worksheet.Cell(currentRow, 7).Value = "Quantity";
+                worksheet.Cell(currentRow, 8).Value = "Description";
 
                 // Apply styles to the header row
-                var headerRange = worksheet.Range(worksheet.Cell(currentRow, 1), worksheet.Cell(currentRow, 11));
+                var headerRange = worksheet.Range(worksheet.Cell(currentRow, 1), worksheet.Cell(currentRow, 8));
                 headerRange.Style.Font.Bold = true;
                 headerRange.Style.Fill.BackgroundColor = XLColor.LightGray;
 

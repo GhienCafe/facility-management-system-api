@@ -14,7 +14,7 @@ public class RoomTypeDetailDto : BaseDto
     public string TypeName { get; set; } = null!;
     public string? Description { get; set; }
     public int? TotalRooms { get; set; }
-    //public IEnumerable<RoomIncludeDto>? Rooms { get; set; }
+    public IEnumerable<RoomIncludeDto>? Rooms { get; set; }
 }
 
 public class RoomIncludeDto
@@ -25,6 +25,7 @@ public class RoomIncludeDto
 
 public class RoomTypeQueryDto : BaseQueryDto
 {
+    public string? TypeName { get; set; }
 }
 
 public class RoomTypeCreateDto
@@ -36,6 +37,6 @@ public class RoomTypeCreateDto
 
 public class RoomTypeUpdateDto
 {
-    public string? TypeName { get; set; }
+    public string TypeName { get; set; } = null!;
     public string? Description { get; set; }
 }

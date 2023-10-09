@@ -28,12 +28,12 @@ namespace API_FFMS.Services
             var existingRoomType = await MainUnitOfWork.RoomTypeRepository.FindOneAsync(id);
             if (existingRoomType == null)
             {
-                throw new ApiException("Không tìm thấy loại phòng", StatusCode.NOT_FOUND);
+                throw new ApiException("Not found this room type", StatusCode.NOT_FOUND);
             }
 
             if (!await MainUnitOfWork.RoomTypeRepository.DeleteAsync(existingRoomType, AccountId, CurrentDate))
             {
-                throw new ApiException("Xóa thất bại", StatusCode.SERVER_ERROR);
+                throw new ApiException("Can't not delete", StatusCode.SERVER_ERROR);
             }
 
             return ApiResponse.Success();
@@ -41,13 +41,11 @@ namespace API_FFMS.Services
 
         public async Task<ApiResponses<RoomTypeDto>> GetRoomTypes(RoomTypeQueryDto queryDto)
         {
-            var keyword = queryDto.Keyword?.Trim().ToLower(); 
             var roomTypes = await MainUnitOfWork.RoomTypeRepository.FindResultAsync<RoomTypeDto>(
                 new Expression<Func<RoomType, bool>>[]
                 {
                     x => !x.DeletedAt.HasValue,
-                    x => keyword == null || (x.TypeName.ToLower().Contains(keyword)
-                        || x.Description!.ToLower().Contains(keyword))
+                    x => queryDto.TypeName == null || x.TypeName.ToLower().Contains(queryDto.TypeName.ToLower())
                 }, queryDto.OrderBy, queryDto.Skip(), queryDto.PageSize);
 
             roomTypes.Items = await _mapperRepository.MapCreator(roomTypes.Items.ToList());
@@ -56,7 +54,7 @@ namespace API_FFMS.Services
             roomTypes.Items,
             roomTypes.TotalCount,
             queryDto.PageSize,
-            queryDto.Page,
+            queryDto.Skip(),
             (int)Math.Ceiling(roomTypes.TotalCount / (double)queryDto.PageSize));
         }
 
@@ -71,11 +69,14 @@ namespace API_FFMS.Services
 
             if (roomType == null)
             {
-                throw new ApiException("Không tìm thấy loại phòng", StatusCode.NOT_FOUND);
+                throw new ApiException("Not found this room type", StatusCode.NOT_FOUND);
             }
 
             roomType.TotalRooms = MainUnitOfWork.RoomRepository.GetQuery().Count(x => !x!.DeletedAt.HasValue
                     && x.RoomTypeId == roomType.Id);
+
+            roomType.Rooms = (IEnumerable<RoomIncludeDto>?)MainUnitOfWork.RoomRepository.GetQuery()
+                            .Where(x => x!.RoomTypeId == roomType.Id).ToList();
 
             roomType = await _mapperRepository.MapCreator(roomType);
             return ApiResponse<RoomTypeDetailDto>.Success(roomType);
@@ -87,10 +88,10 @@ namespace API_FFMS.Services
 
             if (!await MainUnitOfWork.RoomTypeRepository.InsertAsync(roomType, AccountId, CurrentDate))
             {
-                throw new ApiException("Thêm thất bại", StatusCode.SERVER_ERROR);
+                throw new ApiException("Insert fail", StatusCode.SERVER_ERROR);
             }
 
-            return ApiResponse.Created("Thêm thành công");
+            return ApiResponse.Created("Create successfully");
         }
 
         public async Task<ApiResponse> Update(Guid id, RoomTypeUpdateDto updateDto)
@@ -99,7 +100,7 @@ namespace API_FFMS.Services
 
             if (roomType == null)
             {
-                throw new ApiException("Không tìm thấy loại phòng", StatusCode.NOT_FOUND);
+                throw new ApiException("Not found this room type", StatusCode.NOT_FOUND);
             }
 
             roomType.TypeName = updateDto.TypeName ?? roomType.TypeName;
@@ -107,10 +108,10 @@ namespace API_FFMS.Services
 
             if (!await MainUnitOfWork.RoomTypeRepository.UpdateAsync(roomType, AccountId, CurrentDate))
             {
-                throw new ApiException("Cập nhật thất bại", StatusCode.SERVER_ERROR);
+                throw new ApiException("Insert fail", StatusCode.SERVER_ERROR);
             }
 
-            return ApiResponse.Success("Cập nhật thành công");
+            return ApiResponse.Success();
         }
     }
 }

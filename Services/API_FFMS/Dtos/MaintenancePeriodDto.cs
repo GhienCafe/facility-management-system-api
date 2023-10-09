@@ -1,23 +1,21 @@
 ﻿using AppCore.Models;
+using MainData.Entities;
 
 namespace API_FFMS.Dtos
 {
     public class MaintenancePeriodCreateDto
     {
-        public List<Guid>? AssetId { get; set; }
-        public int Period { get; set; } //Month
-    }
-    public class MaintenancePeriodUpdateDto
-    {
-        public List<Guid>? AssetId { get; set; }
-        public int Period { get; set; } //Month
-        public DateTime? LastMaintenanceTime { get; set; }
-        public DateTime NextMaintenance { get; set; } //NextMaintenance = LastMaintenance + Period -> LastMaintenance
+        public Guid AssetTypeId { get; set; }
+        public TimeUnit TimeUnit { get; set; }
+        public int Period { get; set; }
+        public DateTime SpecificDate { get; set; }
+        public Guid? AssignedTo { get; set; }
     }
 
     public class MaintenanceScheduleConfigDetailDto : BaseDto
     {
         public Guid AssetTypeId { get; set; }
+        public TimeUnit TimeUnit { get; set; }
         public int Period { get; set; }
         public DateTime SpecificDate { get; set; }
         public Guid? AssignedTo { get; set; }

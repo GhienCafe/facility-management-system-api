@@ -27,13 +27,6 @@ public class RoomStatusController : BaseController
     {
         return await _service.Insert(roomStatusDto);
     }
-    
-    [HttpPut("{id}")]
-    [SwaggerOperation("Update room status")]
-    public async Task<ApiResponse> UpdateStatus(Guid id, [FromBody]RoomStatusUpdateDto roomStatusDto)
-    {
-        return await _service.Update(id, roomStatusDto);
-    }
 
     [HttpGet("{id:guid}")]
     [SwaggerOperation("Get detail roomStatus information")]

@@ -68,8 +68,8 @@ public interface IBaseRepository<TEntity> where TEntity : BaseEntity
 
 public class BaseRepository<TEntity> : IBaseRepository<TEntity> where TEntity : BaseEntity
 {
-    protected readonly DbSet<TEntity> _dbSet;
-    protected readonly IUnitOfWork _unitOfWork;
+    private readonly DbSet<TEntity> _dbSet;
+    private readonly IUnitOfWork _unitOfWork;
 
     public BaseRepository(DbContext dbContext)
     {

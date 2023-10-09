@@ -9,18 +9,17 @@ namespace API_FFMS.Dtos
         public string? Body { get; set; }= null!;
     }
 
-    public class NotifcationBaseDto : BaseDto
+    public class NotifcationDetail : BaseDto
     {
         public Guid? UserId { get; set; }
         public string? Title { get; set; }
         public string? ShortContent { get; set; }
         public string? Content { get; set; }
         public bool? IsRead { get; set; } 
-        public NotificationType Type { get; set; }
-        public EnumValue? TypeObj { get; set; }
-        public NotificationStatus Status { get; set; }
-        public EnumValue? StatusObj { get; set; }
+        public EnumValue? Type { get; set; }
         public Guid? ItemId { get; set; }
+        public ReplacementDto? Replacement { get; set; }
+        public MaintenanceDto? Maintenance { get; set; }
     }
 
     public class RegistrationDto
@@ -46,8 +45,6 @@ namespace API_FFMS.Dtos
 
     public class NotificationQueryDto : BaseQueryDto
     {
-        public bool? IsRead { get; set; } 
-        public NotificationType? Type { get; set; }
-        public NotificationStatus? Status { get; set; }
+        
     }
 }

@@ -33,26 +33,11 @@ public class ApiResponses<T> : ApiResponse
 {
     public int? TotalCount { get; set; } = 0;
     public int? PageSize { get; set; } = 0;
-    public int? Page { get; set; } = 0;
+    public int? Offset { get; set; } = 0;
     public int? TotalPages { get; set; } = 0;
     public IEnumerable<T> Data { get; set; }
 
     public static ApiResponses<T> Success(IEnumerable<T> data, int? totalCount = null, int? pageSize = null,
-        int? page = null,
-        int? totalPages = null)
-    {
-        return Create(
-            data,
-            StatusCode.SUCCESS,
-            StatusCode.SUCCESS.ToString(),
-            totalCount,
-            pageSize,
-            page,
-            totalPages
-        );
-    }
-
-    public static ApiResponses<T> Success2(List<T> data, int? totalCount = null, int? pageSize = null,
         int? offset = null,
         int? totalPages = null)
     {
@@ -70,7 +55,7 @@ public class ApiResponses<T> : ApiResponse
     private static ApiResponses<T> Create(IEnumerable<T> data, StatusCode statusCode, string message,
         int? totalCount,
         int? pageSize,
-        int? page,
+        int? offset,
         int? totalPages)
     {
         return new ApiResponses<T>
@@ -80,7 +65,7 @@ public class ApiResponses<T> : ApiResponse
             Message = message,
             TotalCount = totalCount,
             PageSize = pageSize,
-            Page = page,
+            Offset = offset,
             TotalPages = totalPages
         };
     }
@@ -142,49 +127,4 @@ public class ApiResponse
             Message = message,
         };
     }
-    // public ApiResponse()
-    // {
-    //     StatusCode = StatusCode.SUCCESS;
-    //     Message = "Success";
-    // }
-    //
-    // //
-    // public object Result { get; set; }
-    // public ApiResponse(object result)
-    // {
-    //     StatusCode = StatusCode.SUCCESS;
-    //     Message = "Success";
-    //     Result = result;
-    // }
-
-}
-
-public class ApiExportResponse
-{
-    public ApiExportResponse(string message, object result, int statusCode = 200)
-    {
-        StatusCode = statusCode;
-        Message = message;
-        Result = result;
-    }
-
-    public ApiExportResponse(string message, int statusCode)
-    {
-        StatusCode = statusCode;
-        Message = message;
-    }
-
-    public ApiExportResponse(object result)
-    {
-        Result = result;
-    }
-
-    public ApiExportResponse(string message)
-    {
-        Message = message;
-    }
-
-    public int StatusCode { get; set; } = 200;
-    public string Message { get; set; } = "Thành công";
-    public object Result { get; set; }
 }

@@ -6,7 +6,7 @@ namespace MainData.Repositories;
 public interface IMapperRepository
 {
     Task<List<TDto>> MapCreator<TDto>(List<TDto> dtos) where TDto : BaseDto;
-    Task<TDto> MapCreator<TDto>(TDto dto) where TDto : BaseDto?;
+    Task<TDto> MapCreator<TDto>(TDto dto) where TDto : BaseDto;
 }
 
 public class MapperRepository : IMapperRepository

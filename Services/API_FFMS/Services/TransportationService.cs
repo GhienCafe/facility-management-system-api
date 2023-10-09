@@ -98,20 +98,20 @@ namespace API_FFMS.Services
 
         public async Task<ApiResponse> Delete(Guid id)
         {
-            //var existingTransport = await MainUnitOfWork.TransportationRepository.FindOneAsync(id);
+            var existingTransport = await MainUnitOfWork.TransportationRepository.FindOneAsync(id);
 
-            //if (existingTransport == null)
-            //{
-            //    throw new ApiException("Not found this transportation", StatusCode.NOT_FOUND);
-            //}
+            if (existingTransport == null)
+            {
+                throw new ApiException("Not found this transportation", StatusCode.NOT_FOUND);
+            }
 
-            //existingTransport.Status = TransportationStatus.Cancelled;
-            //existingTransport.Asset!.Status = AssetStatus.Operational;
+            existingTransport.Status = TransportationStatus.Cancelled;
+            existingTransport.Asset!.Status = AssetStatus.Operational;
 
-            //if (!await MainUnitOfWork.TransportationRepository.UpdateAsync(existingTransport, AccountId, CurrentDate))
-            //{
-            //    throw new ApiException("Delete fail", StatusCode.SERVER_ERROR);
-            //}
+            if (!await MainUnitOfWork.TransportationRepository.UpdateAsync(existingTransport, AccountId, CurrentDate))
+            {
+                throw new ApiException("Delete fail", StatusCode.SERVER_ERROR);
+            }
 
             return ApiResponse.Success();
         }
@@ -136,201 +136,200 @@ namespace API_FFMS.Services
 
         public async Task<ApiResponses<TransportDto>> GetTransports(TransportQueryDto queryDto)
         {
-            //var transportQuery = MainUnitOfWork.TransportationRepository.GetQuery()
-            //                     .Where(x => !x!.DeletedAt.HasValue);
+            var transportQuery = MainUnitOfWork.TransportationRepository.GetQuery()
+                                 .Where(x => !x!.DeletedAt.HasValue);
 
-            //if (queryDto.RequestedDate != null)
-            //{
-            //    transportQuery = transportQuery.Where(x => x!.RequestedDate == queryDto.RequestedDate);
-            //}
+            if (queryDto.RequestedDate != null)
+            {
+                transportQuery = transportQuery.Where(x => x!.RequestedDate == queryDto.RequestedDate);
+            }
 
-            //if (queryDto.CompletionDate != null)
-            //{
-            //    transportQuery = transportQuery.Where(x => x!.CompletionDate == queryDto.CompletionDate);
-            //}
+            if (queryDto.CompletionDate != null)
+            {
+                transportQuery = transportQuery.Where(x => x!.CompletionDate == queryDto.CompletionDate);
+            }
 
-            //if (queryDto.Status != null)
-            //{
-            //    transportQuery = transportQuery.Where(x => x!.Status == queryDto.Status);
-            //}
+            if (queryDto.Status != null)
+            {
+                transportQuery = transportQuery.Where(x => x!.Status == queryDto.Status);
+            }
 
-            //if (queryDto.AssignedTo != null)
-            //{
-            //    transportQuery = transportQuery.Where(x => x!.AssignedTo == queryDto.AssignedTo);
-            //}
+            if (queryDto.AssignedTo != null)
+            {
+                transportQuery = transportQuery.Where(x => x!.AssignedTo == queryDto.AssignedTo);
+            }
 
-            //if (queryDto.AssetId != null)
-            //{
-            //    transportQuery = transportQuery.Where(x => x!.AssetId == queryDto.AssetId);
-            //}
+            if (queryDto.AssetId != null)
+            {
+                transportQuery = transportQuery.Where(x => x!.AssetId == queryDto.AssetId);
+            }
 
-            //if (queryDto.ToRoomId != null)
-            //{
-            //    transportQuery = transportQuery.Where(x => x!.ToRoomId == queryDto.ToRoomId);
-            //}
+            if (queryDto.ToRoomId != null)
+            {
+                transportQuery = transportQuery.Where(x => x!.ToRoomId == queryDto.ToRoomId);
+            }
 
-            //var joinTables = from transport in transportQuery
-            //                 join room in MainUnitOfWork.RoomRepository.GetQuery() on transport.ToRoomId equals room.Id into roomGroup
-            //                 from room in roomGroup.DefaultIfEmpty()
-            //                 join asset in MainUnitOfWork.AssetRepository.GetQuery() on transport.AssetId equals asset.Id into assetGroup
-            //                 from asset in assetGroup.DefaultIfEmpty()
-            //                 join personInCharge in MainUnitOfWork.UserRepository.GetQuery() on transport.AssignedTo equals personInCharge.Id into personInChargeGroup
-            //                 from personInCharge in personInChargeGroup.DefaultIfEmpty()
-            //                 select new
-            //                 {
-            //                     Transport = transport,
-            //                     Room = room,
-            //                     Asset = asset,
-            //                     PersonInCharge = personInCharge
-            //                 };
+            var joinTables = from transport in transportQuery
+                             join room in MainUnitOfWork.RoomRepository.GetQuery() on transport.ToRoomId equals room.Id into roomGroup
+                             from room in roomGroup.DefaultIfEmpty()
+                             join asset in MainUnitOfWork.AssetRepository.GetQuery() on transport.AssetId equals asset.Id into assetGroup
+                             from asset in assetGroup.DefaultIfEmpty()
+                             join personInCharge in MainUnitOfWork.UserRepository.GetQuery() on transport.AssignedTo equals personInCharge.Id into personInChargeGroup
+                             from personInCharge in personInChargeGroup.DefaultIfEmpty()
+                             select new
+                             {
+                                 Transport = transport,
+                                 Room = room,
+                                 Asset = asset,
+                                 PersonInCharge = personInCharge
+                             };
 
-            //var totalCount = joinTables.Count();
+            var totalCount = joinTables.Count();
 
-            //joinTables = joinTables.Skip(queryDto.Skip()).Take(queryDto.PageSize);
-            ////transportQuery = transportQuery.Skip(queryDto.Skip()).Take(queryDto.PageSize);
+            joinTables = joinTables.Skip(queryDto.Skip()).Take(queryDto.PageSize);
+            //transportQuery = transportQuery.Skip(queryDto.Skip()).Take(queryDto.PageSize);
 
-            ////var transports = (await transportQuery.ToListAsync())!.ProjectTo<Transportation, TransportDto>();
-            //var transports = await joinTables.Select(
-            //    x => new TransportDto
-            //    {
-            //        AssignedTo = x.Transport.AssignedTo,
-            //        ToRoomId = x.Transport.ToRoomId,
-            //        Status = x.Transport.Status.GetValue(),
-            //        Id = x.Transport.Id,
-            //        CompletionDate = x.Transport.CompletionDate,
-            //        CreatedAt = x.Transport.CreatedAt,
-            //        EditedAt = x.Transport.EditedAt,
-            //        CreatorId = x.Transport.CreatorId ?? Guid.Empty,
-            //        EditorId = x.Transport.EditorId ?? Guid.Empty,
-            //        AssetId = x.Transport.AssetId,
-            //        RequestedDate = x.Transport.RequestedDate,
-            //        Description = x.Transport.Description,
-            //        Note = x.Transport.Note,
-            //        Quantity = x.Transport.Quantity,
-            //        Asset = x.Asset.ProjectTo<Asset, AssetDto>(),
-            //        PersonInCharge = x.PersonInCharge.ProjectTo<User, UserDto>(),
-            //        ToRoom = x.Room.ProjectTo<Room, RoomDto>()
-            //    }
-            //).ToListAsync();
+            //var transports = (await transportQuery.ToListAsync())!.ProjectTo<Transportation, TransportDto>();
+            var transports = await joinTables.Select(
+                x => new TransportDto
+                {
+                    AssignedTo = x.Transport.AssignedTo,
+                    ToRoomId = x.Transport.ToRoomId,
+                    Status = x.Transport.Status.GetValue(),
+                    Id = x.Transport.Id,
+                    CompletionDate = x.Transport.CompletionDate,
+                    CreatedAt = x.Transport.CreatedAt,
+                    EditedAt = x.Transport.EditedAt,
+                    CreatorId = x.Transport.CreatorId ?? Guid.Empty,
+                    EditorId = x.Transport.EditorId ?? Guid.Empty,
+                    AssetId = x.Transport.AssetId,
+                    RequestedDate = x.Transport.RequestedDate,
+                    Description = x.Transport.Description,
+                    Note = x.Transport.Note,
+                    Quantity = x.Transport.Quantity,
+                    Asset = x.Asset.ProjectTo<Asset, AssetDto>(),
+                    PersonInCharge = x.PersonInCharge.ProjectTo<User, UserDto>(),
+                    ToRoom = x.Room.ProjectTo<Room, RoomDto>()
+                }
+            ).ToListAsync();
 
 
-            //transports = await _mapperRepository.MapCreator(transports);
+            transports = await _mapperRepository.MapCreator(transports);
 
-            //return ApiResponses<TransportDto>.Success(
-            //       transports,
-            //       totalCount,
-            //       queryDto.PageSize,
-            //       queryDto.Skip(),
-            //       (int)Math.Ceiling(totalCount / (double)queryDto.PageSize));
-            return (ApiResponses<TransportDto>)ApiResponses<TransportDto>.Success();
+            return ApiResponses<TransportDto>.Success(
+                   transports,
+                   totalCount,
+                   queryDto.PageSize,
+                   queryDto.Skip(),
+                   (int)Math.Ceiling(totalCount / (double)queryDto.PageSize));
         }
 
         public async Task<ApiResponse> Update(Guid id, TransportUpdateDto updateDto)
         {
-            //var existingTransport = await MainUnitOfWork.TransportationRepository.FindOneAsync(new Expression<Func<Transportation, bool>>[]
+            var existingTransport = await MainUnitOfWork.TransportationRepository.FindOneAsync(new Expression<Func<Transportation, bool>>[]
+            {
+                x => !x.DeletedAt.HasValue
+                && x.Id == id
+                && x.Status == TransportationStatus.NotStarted
+            });
+            if (existingTransport == null)
+            {
+                throw new ApiException("Not found this transportation", StatusCode.NOT_FOUND);
+            }
+
+            existingTransport.RequestedDate = updateDto.RequestedDate ?? existingTransport.RequestedDate;
+            existingTransport.CompletionDate = updateDto.CompletionDate ?? existingTransport.CompletionDate;
+            //transportation.Status = updateDto.Status ?? transportation.Status;
+            //existingTransport.AssetId = updateDto.AssetId ?? existingTransport.AssetId;
+            existingTransport.Description = updateDto.Description ?? existingTransport.Description;
+            existingTransport.Note = updateDto.Note ?? existingTransport.Note;
+            existingTransport.Quantity = updateDto.Quantity ?? existingTransport.Quantity;
+            existingTransport.AssignedTo = updateDto.AssignedTo ?? existingTransport.AssignedTo;
+
+            var existingAsset = await MainUnitOfWork.AssetRepository.FindOneAsync(new Expression<Func<Asset, bool>>[]
+            {
+                x => !x.DeletedAt.HasValue
+                && x.Id == existingTransport.AssetId
+            });
+            //if (existingAsset == null)
             //{
-            //    x => !x.DeletedAt.HasValue
-            //    && x.Id == id
-            //    && x.Status == TransportationStatus.NotStarted
-            //});
-            //if (existingTransport == null)
-            //{
-            //    throw new ApiException("Not found this transportation", StatusCode.NOT_FOUND);
+            //    throw new ApiException("Not found this asset", StatusCode.NOT_FOUND);
             //}
 
-            //existingTransport.RequestedDate = updateDto.RequestedDate ?? existingTransport.RequestedDate;
-            //existingTransport.CompletionDate = updateDto.CompletionDate ?? existingTransport.CompletionDate;
-            ////transportation.Status = updateDto.Status ?? transportation.Status;
-            ////existingTransport.AssetId = updateDto.AssetId ?? existingTransport.AssetId;
-            //existingTransport.Description = updateDto.Description ?? existingTransport.Description;
-            //existingTransport.Note = updateDto.Note ?? existingTransport.Note;
-            //existingTransport.Quantity = updateDto.Quantity ?? existingTransport.Quantity;
-            //existingTransport.AssignedTo = updateDto.AssignedTo ?? existingTransport.AssignedTo;
+            var existingAssignee = await MainUnitOfWork.UserRepository.FindOneAsync(new Expression<Func<User, bool>>[]
+            {
+                x => !x.DeletedAt.HasValue && x.Id == updateDto.AssignedTo
+            });
+            if (existingAssignee == null)
+            {
+                throw new ApiException("Not found this user", StatusCode.NOT_FOUND);
+            }
 
-            //var existingAsset = await MainUnitOfWork.AssetRepository.FindOneAsync(new Expression<Func<Asset, bool>>[]
-            //{
-            //    x => !x.DeletedAt.HasValue
-            //    && x.Id == existingTransport.AssetId
-            //});
-            ////if (existingAsset == null)
-            ////{
-            ////    throw new ApiException("Not found this asset", StatusCode.NOT_FOUND);
-            ////}
+            var existingRoom = await MainUnitOfWork.RoomRepository.FindOneAsync(new Expression<Func<Room, bool>>[]
+            {
+                x => !x.DeletedAt.HasValue && x.Id == updateDto.ToRoomId
+            });
+            if (existingRoom == null)
+            {
+                throw new ApiException("Not found this room", StatusCode.NOT_FOUND);
+            }
 
-            //var existingAssignee = await MainUnitOfWork.UserRepository.FindOneAsync(new Expression<Func<User, bool>>[]
-            //{
-            //    x => !x.DeletedAt.HasValue && x.Id == updateDto.AssignedTo
-            //});
-            //if (existingAssignee == null)
-            //{
-            //    throw new ApiException("Not found this user", StatusCode.NOT_FOUND);
-            //}
+            if (!existingAssignee.TeamId.Equals(existingAsset!.Type!.Category!.TeamId))
+            {
+                throw new ApiException("Assign have wrong major for this asset", StatusCode.BAD_REQUEST);
+            }
 
-            //var existingRoom = await MainUnitOfWork.RoomRepository.FindOneAsync(new Expression<Func<Room, bool>>[]
-            //{
-            //    x => !x.DeletedAt.HasValue && x.Id == updateDto.ToRoomId
-            //});
-            //if (existingRoom == null)
-            //{
-            //    throw new ApiException("Not found this room", StatusCode.NOT_FOUND);
-            //}
-
-            //if (!existingAssignee.TeamId.Equals(existingAsset!.Type!.Category!.TeamId))
-            //{
-            //    throw new ApiException("Assign have wrong major for this asset", StatusCode.BAD_REQUEST);
-            //}
-
-            //if (!await MainUnitOfWork.TransportationRepository.UpdateAsync(existingTransport, AccountId, CurrentDate))
-            //{
-            //    throw new ApiException("Update failed", StatusCode.SERVER_ERROR);
-            //}
+            if (!await MainUnitOfWork.TransportationRepository.UpdateAsync(existingTransport, AccountId, CurrentDate))
+            {
+                throw new ApiException("Update failed", StatusCode.SERVER_ERROR);
+            }
 
             return ApiResponse.Success();
         }
 
         public async Task<ApiResponse> UpdateStatus(Guid id, TransportUpdateStatusDto updateStatusDto)
         {
-            //var existingTransport = await MainUnitOfWork.TransportationRepository.FindOneAsync(new Expression<Func<Transportation, bool>>[]
-            //{
-            //    x => !x.DeletedAt.HasValue
-            //    && x.Id == id
-            //});
-            //if (existingTransport == null)
-            //{
-            //    throw new ApiException("Not found this transportation", StatusCode.NOT_FOUND);
-            //}
+            var existingTransport = await MainUnitOfWork.TransportationRepository.FindOneAsync(new Expression<Func<Transportation, bool>>[]
+            {
+                x => !x.DeletedAt.HasValue
+                && x.Id == id
+            });
+            if (existingTransport == null)
+            {
+                throw new ApiException("Not found this transportation", StatusCode.NOT_FOUND);
+            }
 
-            //var userAuthen = await MainUnitOfWork.UserRepository.FindOneAsync(new Expression<Func<User, bool>>[]
-            //{
-            //    x => !x.DeletedAt.HasValue && x.Id == AccountId
-            //});
-            //if (!existingTransport.AssignedTo.Equals(AccountId) || userAuthen!.Role != UserRole.Manager)
-            //{
-            //    throw new ApiException("This account doesn't have permission for this", StatusCode.UNAUTHORIZED);
-            //}
+            var userAuthen = await MainUnitOfWork.UserRepository.FindOneAsync(new Expression<Func<User, bool>>[]
+            {
+                x => !x.DeletedAt.HasValue && x.Id == AccountId
+            });
+            if (!existingTransport.AssignedTo.Equals(AccountId) || userAuthen!.Role != UserRole.Manager)
+            {
+                throw new ApiException("This account doesn't have permission for this", StatusCode.UNAUTHORIZED);
+            }
 
-            //if (existingTransport.Status == TransportationStatus.Cancelled)
-            //{
-            //    throw new ApiException("Can not update request was cancelled", StatusCode.FORBIDDEN);
-            //}
+            if (existingTransport.Status == TransportationStatus.Cancelled)
+            {
+                throw new ApiException("Can not update request was cancelled", StatusCode.FORBIDDEN);
+            }
 
-            //existingTransport.Status = updateStatusDto.Status;
+            existingTransport.Status = updateStatusDto.Status;
 
-            //var assetInclude = await MainUnitOfWork.AssetRepository.FindOneAsync((Guid)existingTransport.AssetId!);
+            var assetInclude = await MainUnitOfWork.AssetRepository.FindOneAsync((Guid)existingTransport.AssetId!);
 
-            //if (updateStatusDto.Status == TransportationStatus.Cancelled || updateStatusDto.Status == TransportationStatus.Completed)
-            //{
-            //    assetInclude!.Status = AssetStatus.Operational;
-            //}
-            //else if (updateStatusDto.Status == TransportationStatus.NotStarted || updateStatusDto.Status == TransportationStatus.InProgress)
-            //{
-            //    assetInclude!.Status = AssetStatus.Pending;
-            //}
+            if (updateStatusDto.Status == TransportationStatus.Cancelled || updateStatusDto.Status == TransportationStatus.Completed)
+            {
+                assetInclude!.Status = AssetStatus.Operational;
+            }
+            else if (updateStatusDto.Status == TransportationStatus.NotStarted || updateStatusDto.Status == TransportationStatus.InProgress)
+            {
+                assetInclude!.Status = AssetStatus.Pending;
+            }
 
-            //if (!await MainUnitOfWork.TransportationRepository.UpdateAsync(existingTransport, AccountId, CurrentDate))
-            //{
-            //    throw new ApiException("Update status failed", StatusCode.SERVER_ERROR);
-            //}
+            if (!await MainUnitOfWork.TransportationRepository.UpdateAsync(existingTransport, AccountId, CurrentDate))
+            {
+                throw new ApiException("Update status failed", StatusCode.SERVER_ERROR);
+            }
 
             return ApiResponse.Success();
         }

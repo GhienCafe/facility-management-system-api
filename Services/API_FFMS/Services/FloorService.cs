@@ -14,7 +14,6 @@ public interface IFloorService : IBaseService
 {
     Task<ApiResponses<FloorDto>> GetFloor(FloorQueryDto queryDto);
     Task<ApiResponse<FloorDetailDto>> GetFloor(Guid id);
-    public Task<ApiResponse> Insert(FloorCreateFormDto addFloorDto);
     public Task<ApiResponse> Insert(FloorCreateDto addFloorDto);
     public Task<ApiResponse> Update(Guid id, FloorUpdateDto floorUpdate);
     Task<ApiResponse> Delete(Guid id);
@@ -29,23 +28,11 @@ public class FloorService : BaseService, IFloorService
 
     public async Task<ApiResponses<FloorDto>> GetFloor(FloorQueryDto queryDto)
     {
-        var keyword = queryDto.Keyword?.Trim().ToLower();
         var floorDataset = MainUnitOfWork.FloorRepository.GetQuery().Where(x => !x!.DeletedAt.HasValue);
 
         if (queryDto.FloorNumber != null)
         {
             floorDataset = floorDataset.Where(x => queryDto.FloorNumber == x!.FloorNumber);
-        }
-
-        if (queryDto.BuildingId != null)
-        {
-            floorDataset = floorDataset.Where(x => queryDto.BuildingId == x!.BuildingId);
-        }
-        
-        if (!string.IsNullOrEmpty(keyword))
-        {
-            floorDataset = floorDataset.Where(x => x!.FloorName!.ToLower().Contains(keyword)
-                || x.Description!.ToLower().Contains(keyword));
         }
 
         var joinTables = from floor in floorDataset
@@ -64,11 +51,8 @@ public class FloorService : BaseService, IFloorService
             x => new FloorDto
             {
                 FloorNumber = x.Floor.FloorNumber,
-                FloorName = x.Floor.FloorName,
                 Id = x.Floor.Id,
                 FloorMap = x.Floor.FloorMap,
-                Description = x.Floor.Description,
-                TotalArea = x.Floor.TotalArea,
                 BuildingId = x.Floor.BuildingId,
                 CreatedAt = x.Floor.CreatedAt,
                 EditedAt = x.Floor.EditedAt,
@@ -83,7 +67,7 @@ public class FloorService : BaseService, IFloorService
             floors,
             totalCount,
             queryDto.PageSize,
-            queryDto.Page,
+            queryDto.Skip(),
             (int)Math.Ceiling(totalCount / (double)queryDto.PageSize)
         );
     }
@@ -103,7 +87,7 @@ public class FloorService : BaseService, IFloorService
         floor.Building = await MainUnitOfWork.BuildingRepository.FindOneAsync<BuildingBaseDto>(
             new Expression<Func<Building, bool>>[]
             {
-                x => !x.DeletedAt.HasValue,
+                x => x.DeletedAt.HasValue,
                 x => x.Id == floor.BuildingId
             });
 
@@ -113,19 +97,9 @@ public class FloorService : BaseService, IFloorService
         return ApiResponse<FloorDetailDto>.Success(floor);
     }
 
-    public async Task<ApiResponse> Insert(FloorCreateDto addFloorDto)
+    public async Task<ApiResponse> Insert(FloorCreateDto floorDto)
     {
-        var floor = addFloorDto.ProjectTo<FloorCreateDto, Floor>();
-
-        if (!await MainUnitOfWork.FloorRepository.InsertAsync(floor, AccountId, CurrentDate))
-            throw new ApiException("Tạo mới thất bại", StatusCode.SERVER_ERROR);
-        
-        return ApiResponse.Created("Tạo mới thành công");
-    }
-
-    public async Task<ApiResponse> Insert(FloorCreateFormDto floorDto)
-    {
-        var floor = floorDto.ProjectTo<FloorCreateFormDto, Floor>();
+        var floor = floorDto.ProjectTo<FloorCreateDto, Floor>();
         
         if (floorDto.SvgFile != null)
         {
@@ -138,19 +112,23 @@ public class FloorService : BaseService, IFloorService
         
         return ApiResponse.Created("Tạo mới thành công");
     }
-
-
+    
     public async Task<ApiResponse> Update(Guid id, FloorUpdateDto floorDto)
     {
         var floor = await MainUnitOfWork.FloorRepository.FindOneAsync(id);
         if (floor == null )
             throw new ApiException("Không tìm thấy tầng", StatusCode.NOT_FOUND);
 
+        var svgString = string.Empty;
+        
+        if (floorDto.SvgFile != null)
+        {
+            var streamReader = new StreamReader(floorDto.SvgFile.OpenReadStream(), Encoding.UTF8);
+            svgString = await streamReader.ReadToEndAsync();
+        }
+
         floor.FloorNumber = floorDto.FloorNumber ?? floor.FloorNumber;
-        floor.FloorName = floorDto.FloorName ?? floor.FloorName;
-        floor.FloorMap = floorDto.FloorMap ?? floor.FloorMap;
-        floor.Description = floorDto.Description ?? floor.Description;
-        floor.TotalArea = floorDto.TotalArea ?? floor.TotalArea;
+        floor.FloorMap = !string.IsNullOrEmpty(svgString) ? svgString : floor.FloorMap;
         floor.BuildingId = floorDto.BuildingId ?? floor.BuildingId;
         
         if (!await MainUnitOfWork.FloorRepository.UpdateAsync(floor, AccountId, CurrentDate))

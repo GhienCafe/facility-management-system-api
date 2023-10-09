@@ -16,24 +16,3 @@ public class CategoryQueryDto : BaseQueryDto
     public string? Description { get; set; }
     public Guid? TeamId { get; set; }
 }
-
-public class CategoryCreateDto
-{
-    public string CategoryName { get; set; } = null!;
-    public string? Description { get; set; }
-    public Guid? TeamId { get; set; }
-}
-
-public class CategoryDetailDto : BaseDto
-{
-    public string CategoryName { get; set; } = null!;
-    public string? Description { get; set; }
-    public Guid? TeamId { get; set; }
-}
-
-public class CategoryUpdateDto
-{
-    public string CategoryName { get; set; } = null!;
-    public string? Description { get; set; }
-    public Guid? TeamId { get; set; }
-}

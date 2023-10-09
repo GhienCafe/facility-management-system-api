@@ -14,19 +14,10 @@ public class VirtualizeController : BaseController
     {
         _service = service;
     }
-    
-    [HttpGet("{id}")]
-    [SwaggerOperation("Get virtualization of floor")]
-    public async Task<ApiResponse<VirtualizeFloorDto>> GetVirtualizeFloor(Guid id)
+    [HttpGet]
+    [SwaggerOperation("Get virtualize")]
+    public async Task<ApiResponses<VirtualizeDto>> GetVirtualize([FromQuery]VirtualizeQueryDto queryDto)
     {
-        return await _service.GetVirtualizeFloor(id);
+        return await _service.GetVirtualize(queryDto);
     }
-    
-    [HttpGet("rooms")]
-    [SwaggerOperation("Get rooms in virtualization of floor")]
-    public async Task<ApiResponse<IEnumerable<VirtualizeRoomDto>>> GetVirtualizeFloor([FromQuery]VirtualizeRoomQueryDto queryDto)
-    {
-        return await _service.GetVirtualizeRoom(queryDto);
-    }
-    
 }

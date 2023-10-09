@@ -17,10 +17,11 @@ namespace API_FFMS.Controllers
         }
 
         [HttpGet]
+        [AllowAnonymous]
         [SwaggerOperation("Get list notification")]
-        public async Task<ApiResponses<NotifcationBaseDto>> GetListNotification([FromQuery] NotificationQueryDto queryDto)
+        public async Task<ApiResponses<NotifcationDetail>> GetListNotification([FromQuery] NotificationQueryDto queryDto)
         {
-            return await _notificationService.GetNotificationOfAPerson(queryDto);
+            return await _notificationService.GetNotification(queryDto);
         }
 
         [HttpPost("{token}")]

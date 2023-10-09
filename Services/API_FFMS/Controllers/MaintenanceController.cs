@@ -19,34 +19,34 @@ public class MaintenanceController : BaseController
     [SwaggerOperation("Get list maintenances")]
     public async Task<ApiResponses<MaintenanceDto>> GetMaintenances([FromQuery]MaintenanceQueryDto queryDto)
     {
-        return await _maintenanceService.GetItems(queryDto);
+        return await _maintenanceService.GetMaintenances(queryDto);
     }
     
     [HttpGet("{id:guid}")]
     [SwaggerOperation("Get detail maintenance")]
-    public async Task<ApiResponse<MaintenanceDto>> GetMaintenance(Guid id)
+    public async Task<ApiResponse<MaintenanceDetailDto>> GetMaintenance(Guid id)
     {
-        return await _maintenanceService.GetItem(id);
+        return await _maintenanceService.GetMaintenance(id);
     }
     
     [HttpPost]
     [SwaggerOperation("Create new maintenance")]
     public async Task<ApiResponse> Create([FromBody] MaintenanceCreateDto createDto)
     {
-        return await _maintenanceService.CreateItem(createDto);
+        return await _maintenanceService.CreateMaintenance(createDto);
     }
     
     [HttpPut("{id}")]
     [SwaggerOperation("Update maintenance")]
     public async Task<ApiResponse> Update(Guid id, MaintenanceUpdateDto updateDto)
     {
-        return await _maintenanceService.UpdateItem(id, updateDto);
+        return await _maintenanceService.UpdateMaintenance(id, updateDto);
     }
     
-    // [HttpDelete("{id}")]
-    // [SwaggerOperation("Delete maintenance")]
-    // public async Task<ApiResponse> Delete(Guid id)
-    // {
-    //     return await _maintenanceService.DeleteMaintenance(id);
-    // }
+    [HttpDelete("{id}")]
+    [SwaggerOperation("Delete maintenance")]
+    public async Task<ApiResponse> Delete(Guid id)
+    {
+        return await _maintenanceService.DeleteMaintenance(id);
+    }
 }

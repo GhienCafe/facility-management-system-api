@@ -3,58 +3,14 @@ using MainData.Entities;
 
 namespace API_FFMS.Dtos
 {
+    public class AssetTrackingDto
+    {
+        public Guid AssetId { get; set; }
+        public AssetStatus Status { get; set; }
+        public DateTime? FromDate { get; set; }
+        public DateTime? ToDate { get; set; }
 
-    public class RoomAssetBaseDto : BaseDto
-    {
-        public Guid RoomId { get; set; }
-        public Guid AssetId { get; set; }
-        public AssetStatus Status { get; set; }
-        public DateTime? FromDate { get; set; }
-        public DateTime? ToDate { get; set; }
-        public double? Quantity { get; set; }
-        public RoomBaseDto? Room { get; set; }
-        public AssetBaseDto? Asset { get; set; }
-    }
-    
-    public class RoomAssetCreateBaseDto 
-    {
-        public Guid RoomId { get; set; }
-        public Guid AssetId { get; set; }
-        public AssetStatus Status { get; set; }
-        public DateTime? FromDate { get; set; }
-        public DateTime? ToDate { get; set; }
-        public double? Quantity { get; set; }
-    }
-    
-    public class RoomAssetUpdateBaseDto
-    {
-        public Guid? RoomId { get; set; }
-        public Guid? AssetId { get; set; }
-        public AssetStatus? Status { get; set; }
-        public DateTime? FromDate { get; set; }
-        public DateTime? ToDate { get; set; }
-        public double? Quantity { get; set; }
-    }
-    
-    public class RoomAssetDetailDto : BaseDto
-    {
-        public Guid RoomId { get; set; }
-        public Guid AssetId { get; set; }
-        public AssetStatus Status { get; set; }
-        public DateTime? FromDate { get; set; }
-        public DateTime? ToDate { get; set; }
-        public double? Quantity { get; set; }
-        public RoomBaseDto? Room { get; set; }
-        public AssetBaseDto? Asset { get; set; }
-    }
-    
-    public class AssetTrackingDto : BaseDto
-    {
-        public AssetStatus Status { get; set; }
-        public DateTime? FromDate { get; set; }
-        public DateTime? ToDate { get; set; }
-        public RoomBaseDto? Room { get; set; }
-
+        public RoomDto? Room { get; set; }
     }
 
     public class RoomTrackingDto
@@ -69,8 +25,8 @@ namespace API_FFMS.Dtos
 
     public class RoomTrackingQueryDto : BaseQueryDto
     {
-        public DateTime? FromDate { get; set; }
-        public DateTime? ToDate { get; set; }
+        public Guid AssetId { get; set; }
+        public Guid RoomId { get; set; }
     }
 
     public class RoomAssetCreateDto
@@ -85,12 +41,10 @@ namespace API_FFMS.Dtos
     
     public class RoomAssetDto : BaseDto
     {
-        public AssetStatus? Status { get; set; }
-        public EnumValue? StatusObj { get; set; }
-        public double? Quantity { get; set; }
+        public AssetStatus Status { get; set; }
         public DateTime? FromDate { get; set; }
         public DateTime? ToDate { get; set; }
-        public AssetBaseDto? Asset { get; set; }
+        public AssetDto? Asset { get; set; }
     }
 
     public class RoomAssetQueryDto : BaseQueryDto
@@ -99,6 +53,8 @@ namespace API_FFMS.Dtos
         public DateTime? ToDate { get; set; }
         public bool? IsInCurrent { get; set; }
         public AssetStatus? Status { get; set; }
+        public string? AssetCode { get; set; }
+        public string? AssetName { get; set; }
     }
 
 }

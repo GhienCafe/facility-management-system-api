@@ -1,23 +1,11 @@
-﻿using System.ComponentModel.DataAnnotations;
-using AppCore.Models;
-using MainData.Entities;
+﻿using AppCore.Models;
 
 namespace API_FFMS.Dtos;
 
-public class TaskBaseDto : BaseRequestDto
+public class TaskDto : BaseDto
 {
-    public RequestType Type { get; set; }
-    public EnumValue? TypeObj { get; set; }
-    
-    // Transport
-    public int? Quantity { get; set; }
-    public Guid? ToRoomId { get; set; } // For internal
-    
-    // Replace
-    public string? NewAssetId { get; set; }
-}
-
-public class TaskQueryDto : BaseRequestQueryDto
-{
-    public RequestType Type { get; set; }
+    public DateTime RequestedDate { get; set; }
+    public DateTime? CompletionDate { get; set; }
+    public string? Description { get; set; }
+    public string? Note { get; set; }
 }

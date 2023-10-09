@@ -6,6 +6,7 @@ using MainData;
 using MainData.Entities;
 using MainData.Repositories;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.OpenApi.Extensions;
 
 namespace API_FFMS.Services;
 public interface IRoomService : IBaseService
@@ -26,7 +27,6 @@ public class RoomService : BaseService, IRoomService
 
     public async Task<ApiResponses<RoomDto>> GetRoom(RoomQueryDto queryDto)
     {
-        var keyword = queryDto.Keyword?.Trim().ToLower();
         var roomQuerySet = MainUnitOfWork.RoomRepository.GetQuery().Where(x => !x!.DeletedAt.HasValue);
 
         if (queryDto.RoomTypeId != null)
@@ -34,10 +34,9 @@ public class RoomService : BaseService, IRoomService
             roomQuerySet = roomQuerySet.Where(x => x!.RoomTypeId == queryDto.RoomTypeId);
         }
 
-        if (!string.IsNullOrEmpty(keyword))
+        if (!string.IsNullOrEmpty(queryDto.RoomCode))
         {
-            roomQuerySet = roomQuerySet.Where(x => x!.RoomCode.ToLower().Contains(keyword)
-                || x.RoomName!.ToLower().Contains(keyword) || x.Description!.ToLower().Contains(keyword));
+            roomQuerySet = roomQuerySet.Where(x => x!.RoomCode.Equals(queryDto.RoomCode));
         }
 
         if (queryDto.StatusId != null)
@@ -64,7 +63,12 @@ public class RoomService : BaseService, IRoomService
         {
             roomQuerySet = roomQuerySet.Where(x => x!.Capacity <= queryDto.ToCapacity);
         }
-        
+
+        if (!string.IsNullOrEmpty(queryDto.RoomName))
+        {
+            roomQuerySet = roomQuerySet.Where(x => x!.RoomName!.ToLower().Contains(queryDto.RoomName.Trim().ToLower()));
+        }
+
         if (queryDto.FloorId != null)
         {
             roomQuerySet = roomQuerySet.Where(x => x!.FloorId == queryDto.FloorId);
@@ -77,13 +81,11 @@ public class RoomService : BaseService, IRoomService
             join type in MainUnitOfWork.RoomTypeRepository.GetQuery() on room.RoomTypeId equals type.Id
                 into typeGroup
             from type in typeGroup.DefaultIfEmpty()
-            join floor in MainUnitOfWork.FloorRepository.GetQuery() on room.FloorId equals floor.Id
             select new
             {
                 Room = room,
                 Status = status,
-                Type = type,
-                Floor = floor
+                Type = type
             };
 
         var totalCount = response.Count();
@@ -100,7 +102,6 @@ public class RoomService : BaseService, IRoomService
                 FloorId = x.Room.FloorId,
                 PathRoom = x.Room.PathRoom,
                 RoomName = x.Room.RoomName,
-                Description = x.Room.Description,
                 RoomTypeId = x.Room.RoomTypeId,
                 CreatedAt = x.Room.CreatedAt,
                 EditedAt = x.Room.EditedAt,
@@ -109,8 +110,7 @@ public class RoomService : BaseService, IRoomService
                 CreatorId = x.Room.CreatorId ?? Guid.Empty,
                 EditorId = x.Room.EditorId ?? Guid.Empty,
                 Status = x.Status.ProjectTo<RoomStatus, RoomStatusDto>(),
-                RoomType = x.Type.ProjectTo<RoomType, RoomTypeDto>(),
-                Floor = x.Floor.ProjectTo<Floor, FloorBaseDto>()
+                RoomType = x.Type.ProjectTo<RoomType, RoomTypeDto>()
             }
             ).ToListAsync();
 
@@ -121,7 +121,7 @@ public class RoomService : BaseService, IRoomService
             rooms,
             totalCount,
             queryDto.PageSize,
-            queryDto.Page,
+            queryDto.Skip(),
             (int)Math.Ceiling(totalCount / (double)queryDto.PageSize));
     }
 
@@ -179,12 +179,11 @@ public class RoomService : BaseService, IRoomService
         room.FloorId = roomDto.FloorId ?? room.FloorId;
         room.PathRoom = roomDto.PathRoom ?? room.PathRoom;
         room.StatusId = roomDto.StatusId ?? room.StatusId;
-        room.Description = roomDto.Description ?? room.Description;
 
         if (!await MainUnitOfWork.RoomRepository.UpdateAsync(room, AccountId, CurrentDate))
             throw new ApiException("Cập nhật thất bại", StatusCode.SERVER_ERROR);
 
-        return ApiResponse.Success("Cập nhật thành công");
+        return ApiResponse.Success();
     }
     public async Task<ApiResponse> Delete(Guid id)
     {
@@ -196,6 +195,6 @@ public class RoomService : BaseService, IRoomService
         if (!await MainUnitOfWork.RoomRepository.DeleteAsync(existingRoom, AccountId, CurrentDate))
             throw new ApiException("Xóa thất bại", StatusCode.SERVER_ERROR);
 
-        return ApiResponse.Success("Xóa thành công");
+        return ApiResponse.Success();
     }
 }
