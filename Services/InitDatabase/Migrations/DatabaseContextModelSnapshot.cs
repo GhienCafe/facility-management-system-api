@@ -62,11 +62,14 @@ namespace InitDatabase.Migrations
                     b.Property<bool?>("IsRented")
                         .HasColumnType("bit");
 
+                    b.Property<DateTime?>("LastCheckedDate")
+                        .HasColumnType("datetime2");
+
                     b.Property<DateTime?>("LastMaintenanceTime")
                         .HasColumnType("datetime2");
 
-                    b.Property<DateTime?>("ManufacturingYear")
-                        .HasColumnType("datetime2");
+                    b.Property<int?>("ManufacturingYear")
+                        .HasColumnType("int");
 
                     b.Property<Guid?>("ModelId")
                         .HasColumnType("uniqueidentifier");
@@ -76,6 +79,9 @@ namespace InitDatabase.Migrations
 
                     b.Property<string>("SerialNumber")
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("StartDateOfUse")
+                        .HasColumnType("datetime2");
 
                     b.Property<int>("Status")
                         .HasColumnType("int");
@@ -95,6 +101,78 @@ namespace InitDatabase.Migrations
                     b.HasIndex("TypeId");
 
                     b.ToTable("Assets", (string)null);
+                });
+
+            modelBuilder.Entity("MainData.Entities.AssetCheck", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("AssetId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("AssetTypeId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("AssignedTo")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("CategoryId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("CompletionDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("CreatorId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("DeleterId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("EditedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("EditorId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("IsInternal")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsVerified")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
+
+                    b.Property<string>("Notes")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("RequestCode")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("RequestDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("Status")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AssetId");
+
+                    b.HasIndex("AssignedTo");
+
+                    b.ToTable("AssetChecks", (string)null);
                 });
 
             modelBuilder.Entity("MainData.Entities.AssetType", b =>
@@ -176,11 +254,17 @@ namespace InitDatabase.Migrations
                     b.Property<Guid?>("DeleterId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<string>("Description")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<DateTime>("EditedAt")
                         .HasColumnType("datetime2");
 
                     b.Property<Guid?>("EditorId")
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<double?>("TotalArea")
+                        .HasColumnType("float");
 
                     b.HasKey("Id");
 
@@ -226,7 +310,13 @@ namespace InitDatabase.Migrations
                     b.Property<Guid?>("EditorId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<string>("LogoUrl")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("Telephone")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("WebsiteUrl")
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
@@ -296,6 +386,9 @@ namespace InitDatabase.Migrations
                     b.Property<Guid?>("DeleterId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<string>("Description")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<DateTime>("EditedAt")
                         .HasColumnType("datetime2");
 
@@ -305,8 +398,15 @@ namespace InitDatabase.Migrations
                     b.Property<string>("FloorMap")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("FloorName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<int>("FloorNumber")
                         .HasColumnType("int");
+
+                    b.Property<double?>("TotalArea")
+                        .HasColumnType("float");
 
                     b.HasKey("Id");
 
@@ -321,10 +421,16 @@ namespace InitDatabase.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid?>("AssetId")
+                    b.Property<Guid>("AssetId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("AssetTypeId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid?>("AssignedTo")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("CategoryId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime?>("CompletionDate")
@@ -351,16 +457,20 @@ namespace InitDatabase.Migrations
                     b.Property<Guid?>("EditorId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<string>("Note")
+                    b.Property<bool>("IsInternal")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Notes")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<DateTime>("RequestedDate")
+                    b.Property<string>("RequestCode")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("RequestDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<int>("Status")
-                        .HasColumnType("int");
-
-                    b.Property<int>("Type")
+                    b.Property<int?>("Status")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
@@ -379,9 +489,6 @@ namespace InitDatabase.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid>("AssetId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid?>("AssignedTo")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime>("CreatedAt")
@@ -405,17 +512,9 @@ namespace InitDatabase.Migrations
                     b.Property<int>("Period")
                         .HasColumnType("int");
 
-                    b.Property<DateTime>("SpecificDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int>("TimeUnit")
-                        .HasColumnType("int");
-
                     b.HasKey("Id");
 
                     b.HasIndex("AssetId");
-
-                    b.HasIndex("AssignedTo");
 
                     b.ToTable("MaintenanceScheduleConfigs", (string)null);
                 });
@@ -577,10 +676,16 @@ namespace InitDatabase.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid?>("AssetId")
+                    b.Property<Guid>("AssetId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("AssetTypeId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid?>("AssignedTo")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("CategoryId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime?>("CompletionDate")
@@ -607,16 +712,20 @@ namespace InitDatabase.Migrations
                     b.Property<Guid?>("EditorId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<string>("Note")
+                    b.Property<bool>("IsInternal")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Notes")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("Reason")
+                    b.Property<string>("RequestCode")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<DateTime>("RequestedDate")
+                    b.Property<DateTime?>("RequestDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<int>("Status")
+                    b.Property<int?>("Status")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
@@ -625,7 +734,7 @@ namespace InitDatabase.Migrations
 
                     b.HasIndex("AssignedTo");
 
-                    b.ToTable("Repairation");
+                    b.ToTable("Repairations", (string)null);
                 });
 
             modelBuilder.Entity("MainData.Entities.Replacement", b =>
@@ -634,10 +743,16 @@ namespace InitDatabase.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid?>("AssetId")
+                    b.Property<Guid>("AssetId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("AssetTypeId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid?>("AssignedTo")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("CategoryId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime?>("CompletionDate")
@@ -664,26 +779,30 @@ namespace InitDatabase.Migrations
                     b.Property<Guid?>("EditorId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid?>("NewAssetId")
+                    b.Property<bool>("IsInternal")
+                        .HasColumnType("bit");
+
+                    b.Property<Guid>("NewAssetId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<string>("Note")
+                    b.Property<string>("Notes")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("Reason")
+                    b.Property<string>("RequestCode")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<DateTime>("RequestedDate")
+                    b.Property<DateTime?>("RequestDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<int>("Status")
+                    b.Property<int?>("Status")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("AssetId");
-
                     b.HasIndex("AssignedTo");
+
+                    b.HasIndex("NewAssetId");
 
                     b.ToTable("Replacements", (string)null);
                 });
@@ -711,6 +830,9 @@ namespace InitDatabase.Migrations
 
                     b.Property<Guid?>("DeleterId")
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("EditedAt")
                         .HasColumnType("datetime2");
@@ -780,6 +902,9 @@ namespace InitDatabase.Migrations
 
                     b.Property<DateTime?>("FromDate")
                         .HasColumnType("datetime2");
+
+                    b.Property<double?>("Quantity")
+                        .HasColumnType("float");
 
                     b.Property<Guid>("RoomId")
                         .HasColumnType("uniqueidentifier");
@@ -911,6 +1036,50 @@ namespace InitDatabase.Migrations
                     b.ToTable("Teams", (string)null);
                 });
 
+            modelBuilder.Entity("MainData.Entities.TeamMember", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("CreatorId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("DeleterId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("EditedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("EditorId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("IsLead")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
+
+                    b.Property<Guid>("MemberId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("TeamId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("MemberId");
+
+                    b.HasIndex("TeamId");
+
+                    b.ToTable("TeamMembers", (string)null);
+                });
+
             modelBuilder.Entity("MainData.Entities.Token", b =>
                 {
                     b.Property<Guid>("Id")
@@ -974,10 +1143,16 @@ namespace InitDatabase.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid?>("AssetId")
+                    b.Property<Guid>("AssetId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("AssetTypeId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid?>("AssignedTo")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("CategoryId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime?>("CompletionDate")
@@ -1004,16 +1179,23 @@ namespace InitDatabase.Migrations
                     b.Property<Guid?>("EditorId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<string>("Note")
+                    b.Property<bool>("IsInternal")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Notes")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<int?>("Quantity")
                         .HasColumnType("int");
 
-                    b.Property<DateTime>("RequestedDate")
+                    b.Property<string>("RequestCode")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("RequestDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<int>("Status")
+                    b.Property<int?>("Status")
                         .HasColumnType("int");
 
                     b.Property<Guid?>("ToRoomId")
@@ -1101,16 +1283,11 @@ namespace InitDatabase.Migrations
                     b.Property<int>("Status")
                         .HasColumnType("int");
 
-                    b.Property<Guid?>("TeamId")
-                        .HasColumnType("uniqueidentifier");
-
                     b.Property<string>("UserCode")
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("TeamId");
 
                     b.HasIndex("UserCode")
                         .IsUnique();
@@ -1133,6 +1310,23 @@ namespace InitDatabase.Migrations
                     b.Navigation("Model");
 
                     b.Navigation("Type");
+                });
+
+            modelBuilder.Entity("MainData.Entities.AssetCheck", b =>
+                {
+                    b.HasOne("MainData.Entities.Asset", "Asset")
+                        .WithMany("AssetChecks")
+                        .HasForeignKey("AssetId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("MainData.Entities.User", "User")
+                        .WithMany("AssetChecks")
+                        .HasForeignKey("AssignedTo");
+
+                    b.Navigation("Asset");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("MainData.Entities.AssetType", b =>
@@ -1179,15 +1373,17 @@ namespace InitDatabase.Migrations
                 {
                     b.HasOne("MainData.Entities.Asset", "Asset")
                         .WithMany("Maintenances")
-                        .HasForeignKey("AssetId");
+                        .HasForeignKey("AssetId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
-                    b.HasOne("MainData.Entities.User", "PersonInCharge")
+                    b.HasOne("MainData.Entities.User", "User")
                         .WithMany("Maintenances")
                         .HasForeignKey("AssignedTo");
 
                     b.Navigation("Asset");
 
-                    b.Navigation("PersonInCharge");
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("MainData.Entities.MaintenanceScheduleConfig", b =>
@@ -1198,13 +1394,7 @@ namespace InitDatabase.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("MainData.Entities.User", "PersonInCharge")
-                        .WithMany("MaintenanceScheduleConfigs")
-                        .HasForeignKey("AssignedTo");
-
                     b.Navigation("Asset");
-
-                    b.Navigation("PersonInCharge");
                 });
 
             modelBuilder.Entity("MainData.Entities.Notification", b =>
@@ -1220,30 +1410,34 @@ namespace InitDatabase.Migrations
                 {
                     b.HasOne("MainData.Entities.Asset", "Asset")
                         .WithMany("Repairations")
-                        .HasForeignKey("AssetId");
+                        .HasForeignKey("AssetId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
-                    b.HasOne("MainData.Entities.User", "PersonInCharge")
+                    b.HasOne("MainData.Entities.User", "User")
                         .WithMany("Repairations")
                         .HasForeignKey("AssignedTo");
 
                     b.Navigation("Asset");
 
-                    b.Navigation("PersonInCharge");
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("MainData.Entities.Replacement", b =>
                 {
-                    b.HasOne("MainData.Entities.Asset", "Asset")
-                        .WithMany("Replacements")
-                        .HasForeignKey("AssetId");
-
-                    b.HasOne("MainData.Entities.User", "PersonInCharge")
+                    b.HasOne("MainData.Entities.User", "User")
                         .WithMany("Replacements")
                         .HasForeignKey("AssignedTo");
 
+                    b.HasOne("MainData.Entities.Asset", "Asset")
+                        .WithMany("Replacements")
+                        .HasForeignKey("NewAssetId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.Navigation("Asset");
 
-                    b.Navigation("PersonInCharge");
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("MainData.Entities.Room", b =>
@@ -1290,6 +1484,25 @@ namespace InitDatabase.Migrations
                     b.Navigation("Room");
                 });
 
+            modelBuilder.Entity("MainData.Entities.TeamMember", b =>
+                {
+                    b.HasOne("MainData.Entities.User", "Member")
+                        .WithMany("Teams")
+                        .HasForeignKey("MemberId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("MainData.Entities.Team", "Team")
+                        .WithMany("Members")
+                        .HasForeignKey("TeamId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Member");
+
+                    b.Navigation("Team");
+                });
+
             modelBuilder.Entity("MainData.Entities.Token", b =>
                 {
                     b.HasOne("MainData.Entities.User", "User")
@@ -1305,9 +1518,11 @@ namespace InitDatabase.Migrations
                 {
                     b.HasOne("MainData.Entities.Asset", "Asset")
                         .WithMany("Transportations")
-                        .HasForeignKey("AssetId");
+                        .HasForeignKey("AssetId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
-                    b.HasOne("MainData.Entities.User", "PersonInCharge")
+                    b.HasOne("MainData.Entities.User", "User")
                         .WithMany("Transportations")
                         .HasForeignKey("AssignedTo");
 
@@ -1317,22 +1532,15 @@ namespace InitDatabase.Migrations
 
                     b.Navigation("Asset");
 
-                    b.Navigation("PersonInCharge");
-
                     b.Navigation("ToRoom");
-                });
 
-            modelBuilder.Entity("MainData.Entities.User", b =>
-                {
-                    b.HasOne("MainData.Entities.Team", "Team")
-                        .WithMany("Users")
-                        .HasForeignKey("TeamId");
-
-                    b.Navigation("Team");
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("MainData.Entities.Asset", b =>
                 {
+                    b.Navigation("AssetChecks");
+
                     b.Navigation("MaintenanceScheduleConfigs");
 
                     b.Navigation("Maintenances");
@@ -1397,12 +1605,12 @@ namespace InitDatabase.Migrations
                 {
                     b.Navigation("Categories");
 
-                    b.Navigation("Users");
+                    b.Navigation("Members");
                 });
 
             modelBuilder.Entity("MainData.Entities.User", b =>
                 {
-                    b.Navigation("MaintenanceScheduleConfigs");
+                    b.Navigation("AssetChecks");
 
                     b.Navigation("Maintenances");
 
@@ -1411,6 +1619,8 @@ namespace InitDatabase.Migrations
                     b.Navigation("Repairations");
 
                     b.Navigation("Replacements");
+
+                    b.Navigation("Teams");
 
                     b.Navigation("Tokens");
 

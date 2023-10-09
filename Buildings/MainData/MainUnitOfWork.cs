@@ -12,6 +12,7 @@ public class MainUnitOfWork : IDisposable
         _context = context;
     }
 
+   // public DatabaseContext Context => new(_context);
     public BaseRepository<User> UserRepository => new(_context);
     public BaseRepository<Token> TokenRepository => new(_context);
     public BaseRepository<Campus> CampusRepository => new(_context);
@@ -33,6 +34,10 @@ public class MainUnitOfWork : IDisposable
     public BaseRepository<Maintenance> MaintenanceRepository => new(_context);
     public BaseRepository<MaintenanceScheduleConfig> MaintenanceScheduleRepository => new(_context);
     public BaseRepository<Repairation> RepairationRepository => new(_context);
+    public BaseRepository<Model> ModelRepository => new(_context);
+   // public BaseRepository<ActionRequest> RequestRepository => new(_context);
+    public BaseRepository<AssetCheck> AssetCheckRepository => new(_context);
+    public BaseRepository<TeamMember> TeamMemberRepository => new(_context);
 
     public void Dispose()
     {

@@ -6,14 +6,18 @@ using MainData.Repositories;
 using System.Linq.Expressions;
 using AppCore.Extensions;
 using Microsoft.EntityFrameworkCore;
+using DocumentFormat.OpenXml.Drawing.Spreadsheet;
 
 namespace API_FFMS.Services
 {
     public interface IRoomAssetService : IBaseService
     {
-        Task<ApiResponses<AssetTrackingDto>> AssetUsedTracking(RoomTrackingQueryDto queryDto);
-        Task<ApiResponses<RoomTrackingDto>> RoomTracking(RoomTrackingQueryDto queryDto);
-        Task<ApiResponse> AddRoomAsset(RoomAssetCreateDto roomAssetCreateDto);
+        Task<ApiResponses<AssetTrackingDto>> AssetUsedTracking(Guid id, RoomTrackingQueryDto queryDto);
+        Task<ApiResponse> CreateRoomAsset(RoomAssetCreateBaseDto createBaseDto);
+        Task<ApiResponses<RoomAssetBaseDto>> GetItems(RoomAssetQueryDto queryDto);
+        Task<ApiResponse<RoomAssetDetailDto>> GetItem(Guid id);
+        Task<ApiResponse> DeleteItem(Guid id);
+        Task<ApiResponse> UpdateItem(Guid id, RoomAssetUpdateBaseDto updateBaseDto);
     }
 
     public class RoomAssetService : BaseService, IRoomAssetService
@@ -22,59 +26,309 @@ namespace API_FFMS.Services
         {
         }
 
-        public async Task<ApiResponses<AssetTrackingDto>> AssetUsedTracking(RoomTrackingQueryDto queryDto)
+        public async Task<ApiResponses<AssetTrackingDto>> AssetUsedTracking(Guid id, RoomTrackingQueryDto queryDto)
         {
-            Expression<Func<RoomAsset, bool>>[] conditions = new Expression<Func<RoomAsset, bool>>[]
+            var keyword = queryDto.Keyword?.Trim().ToLower();
+            var asset = await MainUnitOfWork.AssetRepository.FindOneAsync<AssetDto>(new Expression<Func<Asset, bool>>[]
             {
-                x => !x.DeletedAt.HasValue
-            };
-
-            if (string.IsNullOrEmpty(queryDto.AssetId.ToString()) == false)
+                x => !x.DeletedAt.HasValue,
+                x => x.Id == id
+            });
+            if(asset == null)
             {
-                conditions = conditions.Append(x => x.AssetId.Equals(queryDto.AssetId)).ToArray();
+                throw new ApiException("Không tìm thấy thiết bị", StatusCode.NOT_FOUND);
             }
 
-            var response = await MainUnitOfWork.RoomAssetRepository.FindResultAsync<AssetTrackingDto>(conditions, queryDto.OrderBy, queryDto.Skip(), queryDto.PageSize);
-            return ApiResponses<AssetTrackingDto>.Success(
-                response.Items,
-                response.TotalCount,
-                queryDto.PageSize,
-                queryDto.Skip(),
-            (int)Math.Ceiling(response.TotalCount / (double)queryDto.PageSize)
-                );
-        }
+            var roomAssetDataset = MainUnitOfWork.RoomAssetRepository.GetQuery();
+            var roomDataset = MainUnitOfWork.RoomRepository.GetQuery();
 
-        public async Task<ApiResponses<RoomTrackingDto>> RoomTracking(RoomTrackingQueryDto queryDto)
-        {
-            Expression<Func<RoomAsset, bool>>[] conditions = new Expression<Func<RoomAsset, bool>>[]
-            {
-                x => !x.DeletedAt.HasValue
-            };
+            var joinedRooms = from roomAsset in roomAssetDataset
+                              where roomAsset.AssetId == id
+                              join room in roomDataset on roomAsset.RoomId equals room.Id
+                              select new
+                              {
+                                  RoomAsset = roomAsset,
+                                  Room = room,
+                              };
 
-            if (string.IsNullOrEmpty(queryDto.RoomId.ToString()) == false)
+            if(queryDto.ToDate != null)
             {
-                conditions = conditions.Append(x => x.RoomId.Equals(queryDto.RoomId)).ToArray();
+                joinedRooms = joinedRooms.Where(x => x!.RoomAsset.ToDate <= queryDto.ToDate);
             }
 
-            var response = await MainUnitOfWork.RoomAssetRepository.FindResultAsync<RoomTrackingDto>(conditions, queryDto.OrderBy, queryDto.Skip(), queryDto.PageSize);
-            return ApiResponses<RoomTrackingDto>.Success(
-                response.Items,
-                response.TotalCount,
-                queryDto.PageSize,
-                queryDto.Skip(),
-            (int)Math.Ceiling(response.TotalCount / (double)queryDto.PageSize)
-                );
-        }
+            if(queryDto.FromDate != null)
+            {
+                joinedRooms = joinedRooms.Where(x => x!.RoomAsset.FromDate >= queryDto.FromDate);
+            }
 
-        public async Task<ApiResponse> AddRoomAsset(RoomAssetCreateDto roomAssetCreateDto)
-        {
-            var roomAsset = roomAssetCreateDto.ProjectTo<RoomAssetCreateDto, RoomAsset>();
-
-            if (!await MainUnitOfWork.RoomAssetRepository.InsertAsync(roomAsset, AccountId, CurrentDate))
-                throw new ApiException("Insert fail", StatusCode.SERVER_ERROR);
+            if (!string.IsNullOrEmpty(keyword))
+            {
+                joinedRooms = joinedRooms.Where(x => x!.Room!.RoomCode!
+                    .ToLower().Equals(keyword) && x.Room.RoomName!.Contains(keyword));
+            }
             
-            return ApiResponse.Created("Create successfully");
+            var totalCount = joinedRooms.Count();
+
+            joinedRooms = joinedRooms.Skip(queryDto.Skip()).Take(queryDto.PageSize);
+
+            var rooms = await joinedRooms.Select(x => new AssetTrackingDto
+            {
+                FromDate = x.RoomAsset.FromDate,
+                ToDate = x.RoomAsset.ToDate,
+                Id = x.RoomAsset.Id,
+                Status = x.RoomAsset.Status,
+                CreatedAt = x.RoomAsset.CreatedAt,
+                EditedAt = x.RoomAsset.EditedAt,
+                CreatorId = x.RoomAsset.CreatorId ?? Guid.Empty,
+                EditorId = x.RoomAsset.EditorId ?? Guid.Empty,
+                Room = new RoomBaseDto
+                {
+                    Id = x.Room.Id,
+                    RoomName = x.Room.RoomName,
+                    RoomCode = x.Room.RoomCode,
+                    Area = x.Room.Area,
+                    Description = x.Room.Description,
+                    RoomTypeId = x.Room.RoomTypeId,
+                    Capacity = x.Room.Capacity,
+                    StatusId = x.Room.StatusId,
+                    FloorId = x.Room.FloorId,
+                    CreatedAt = x.Room.CreatedAt,
+                    EditedAt = x.Room.EditedAt,
+                    CreatorId = x.Room.CreatorId ?? Guid.Empty,
+                    EditorId = x.Room.EditorId ?? Guid.Empty
+                }
+            }).ToListAsync();
+
+            rooms = await _mapperRepository.MapCreator(rooms);
+
+            return ApiResponses<AssetTrackingDto>.Success(
+                rooms,
+                totalCount,
+                queryDto.PageSize,
+                queryDto.Page,
+            (int)Math.Ceiling(totalCount / (double)queryDto.PageSize)
+                );
         }
-        
+
+        //public async Task<ApiResponses<RoomTrackingDto>> RoomTracking(RoomTrackingQueryDto queryDto)
+        //{
+        //    Expression<Func<RoomAsset, bool>>[] conditions = new Expression<Func<RoomAsset, bool>>[]
+        //    {
+        //        x => !x.DeletedAt.HasValue
+        //    };
+
+        //    if (string.IsNullOrEmpty(queryDto.RoomId.ToString()) == false)
+        //    {
+        //        conditions = conditions.Append(x => x.RoomId.Equals(queryDto.RoomId)).ToArray();
+        //    }
+
+        //    var response = await MainUnitOfWork.RoomAssetRepository.FindResultAsync<RoomTrackingDto>(conditions, queryDto.OrderBy, queryDto.Skip(), queryDto.PageSize);
+        //    return ApiResponses<RoomTrackingDto>.Success(
+        //        response.Items,
+        //        response.TotalCount,
+        //        queryDto.PageSize,
+        //        queryDto.Skip(),
+        //    (int)Math.Ceiling(response.TotalCount / (double)queryDto.PageSize)
+        //        );
+        //}
+
+        // public async Task<ApiResponse> AddRoomAsset(RoomAssetCreateDto roomAssetCreateDto)
+        // {
+        //     var roomAsset = roomAssetCreateDto.ProjectTo<RoomAssetCreateDto, RoomAsset>();
+        //
+        //     if (!await MainUnitOfWork.RoomAssetRepository.InsertAsync(roomAsset, AccountId, CurrentDate))
+        //         throw new ApiException("Insert fail", StatusCode.SERVER_ERROR);
+        //     
+        //     return ApiResponse.Created("Create successfully");
+        // }
+
+        // public async Task<ApiResponse> AddListRoomAsset()
+        // {
+        //     var assets = await MainUnitOfWork.AssetRepository.FindAsync(new Expression<Func<Asset, bool>>[]
+        //     {
+        //         x => !x.DeletedAt.HasValue
+        //     }, null);
+        //
+        //     var listIds = assets.Select(x => x?.Id);
+        //
+        //     var roomAssets = listIds.Select(x => new RoomAsset
+        //     {
+        //         FromDate = CurrentDate,
+        //         AssetId = x.Value,
+        //         RoomId = Guid.Parse("ac512c36-7c7c-430d-0cbb-08dbb8db2c89"),
+        //         Status = AssetStatus.Operational
+        //     }).ToList();
+        //
+        //     if (!await MainUnitOfWork.RoomAssetRepository.InsertAsync(roomAssets, AccountId, CurrentDate))
+        //         throw new ApiException("fail", StatusCode.BAD_REQUEST);
+        //
+        //     return ApiResponse.Success();
+        // }
+
+        public async Task<ApiResponse> CreateRoomAsset(RoomAssetCreateBaseDto createBaseDto)
+        {
+            var roomAsset = createBaseDto.ProjectTo<RoomAssetCreateBaseDto, RoomAsset>();
+
+            var checkExist = await MainUnitOfWork.RoomAssetRepository.FindAsync(new Expression<Func<RoomAsset, bool>>[]
+            {
+                x => !x.DeletedAt.HasValue,
+                x => x.AssetId == createBaseDto.AssetId,
+                x => x.RoomId == createBaseDto.RoomId
+            }, null);
+
+            if (checkExist.Any())
+                throw new ApiException("Đã tồn tại trang thiết bị trong phòng", StatusCode.ALREADY_EXISTS);
+            
+            if (!await MainUnitOfWork.RoomAssetRepository.InsertAsync(roomAsset, AccountId, CurrentDate))
+                throw new ApiException("Thêm mới trang thiết bị vào phòng thất bại", StatusCode.SERVER_ERROR);
+            
+            return ApiResponse.Created("Thêm mới trang thiết bị vào phòng thành công");
+        }
+
+        public async Task<ApiResponses<RoomAssetBaseDto>> GetItems(RoomAssetQueryDto queryDto)
+        {
+            var keyword = queryDto.Keyword?.Trim().ToLower();
+            // var asset = await MainUnitOfWork.AssetRepository.FindOneAsync<AssetDto>(new Expression<Func<Asset, bool>>[]
+            // {
+            //     x => !x.DeletedAt.HasValue
+            // });
+            // if(asset == null)
+            // {
+            //     throw new ApiException("Không tìm thấy thiết bị", StatusCode.NOT_FOUND);
+            // }
+
+            var roomAssetDataset = MainUnitOfWork.RoomAssetRepository.GetQuery()
+                .Where(x => !x!.DeletedAt.HasValue);
+            var roomDataset = MainUnitOfWork.RoomRepository.GetQuery()
+                .Where(x => !x!.DeletedAt.HasValue);;
+            var assetDataset = MainUnitOfWork.AssetRepository.GetQuery()
+                .Where(x => !x!.DeletedAt.HasValue);;
+
+            var joinedRooms = from roomAsset in roomAssetDataset
+                join room in roomDataset on roomAsset.RoomId equals room.Id into roomGroup
+                from room in roomGroup.DefaultIfEmpty() 
+                join assets in assetDataset on roomAsset.AssetId equals assets.Id into assetGroup
+                from assets in assetGroup.DefaultIfEmpty() 
+                select new
+                {
+                    RoomAsset = roomAsset,
+                    Room = room,
+                    Asset = assets
+                };
+
+            if (queryDto.IsInCurrent != null)
+            {
+                joinedRooms = joinedRooms.Where(x => x!.RoomAsset.ToDate == null);
+            } else if(queryDto.ToDate != null)
+            {
+                joinedRooms = joinedRooms.Where(x => x!.RoomAsset.ToDate <= queryDto.ToDate);
+            }
+
+            if(queryDto.FromDate != null)
+            {
+                joinedRooms = joinedRooms.Where(x => x!.RoomAsset.FromDate >= queryDto.FromDate);
+            }
+
+            if (queryDto.Status != null)
+            {
+                joinedRooms = joinedRooms.Where(x => x.RoomAsset.Status == queryDto.Status);
+            }
+
+            var totalCount = await joinedRooms.CountAsync();
+
+            joinedRooms = joinedRooms.Skip(queryDto.Skip()).Take(queryDto.PageSize);
+
+            var items = await joinedRooms.Select(x => new RoomAssetBaseDto
+            {
+                RoomId = x.RoomAsset.RoomId,
+                AssetId = x.RoomAsset.AssetId,
+                FromDate = x.RoomAsset.FromDate,
+                ToDate = x.RoomAsset.ToDate,
+                Id = x.RoomAsset.Id,
+                Status = x.RoomAsset.Status,
+                CreatedAt = x.RoomAsset.CreatedAt,
+                EditedAt = x.RoomAsset.EditedAt,
+                CreatorId = x.RoomAsset.CreatorId ?? Guid.Empty,
+                EditorId = x.RoomAsset.EditorId ?? Guid.Empty,
+                Room = x.Room.ProjectTo<Room, RoomBaseDto>(),
+                Asset = x.Asset.ProjectTo<Asset, AssetBaseDto>()
+            }).ToListAsync();
+            
+            items.ForEach(x =>
+            {
+                if (x.Asset != null)
+                {
+                    x.Asset.StatusObj = x.Asset.Status?.GetValue();
+                }
+            });
+
+            items = await _mapperRepository.MapCreator(items);
+            
+            // Return data
+            return ApiResponses<RoomAssetBaseDto>.Success(
+                items,
+                totalCount,
+                queryDto.PageSize,
+                queryDto.Page,
+                (int)Math.Ceiling(totalCount / (double)queryDto.PageSize));
+        }
+
+        public async Task<ApiResponse<RoomAssetDetailDto>> GetItem(Guid id)
+        {
+            var roomAsset = await MainUnitOfWork.RoomAssetRepository.FindOneAsync(id);
+
+            if (roomAsset == null)
+                throw new ApiException("Không tìm thấy thông tin", StatusCode.NOT_FOUND);
+
+            var roomAssetDto = roomAsset.ProjectTo<RoomAsset, RoomAssetDetailDto>();
+
+            roomAssetDto.Asset = (await MainUnitOfWork.AssetRepository.FindOneAsync(roomAsset.AssetId))?
+                .ProjectTo<Asset, AssetBaseDto>();
+            
+            roomAssetDto.Room = (await MainUnitOfWork.RoomRepository.FindOneAsync(roomAsset.RoomId))?
+                .ProjectTo<Room, RoomBaseDto>();
+
+            if (roomAssetDto.Asset != null)
+            {
+                roomAssetDto.Asset.StatusObj = roomAsset.Asset?.Status.GetValue();
+            }
+
+            roomAssetDto = await _mapperRepository.MapCreator(roomAssetDto);
+
+            return ApiResponse<RoomAssetDetailDto>.Success(roomAssetDto);
+        }
+
+        public async Task<ApiResponse> DeleteItem(Guid id)
+        {
+            var roomAsset = await MainUnitOfWork.RoomAssetRepository.FindOneAsync(id);
+
+            if (roomAsset == null)
+                throw new ApiException("Không tìm thấy thông tin", StatusCode.NOT_FOUND);
+
+            if (!await MainUnitOfWork.RoomAssetRepository.DeleteAsync(roomAsset, AccountId, CurrentDate))
+                throw new ApiException("Xóa nội dung thất bại", StatusCode.SERVER_ERROR);
+            
+            return ApiResponse.Success("Xóa nội dung thành công");
+        }
+
+        public async Task<ApiResponse> UpdateItem(Guid id, RoomAssetUpdateBaseDto updateBaseDto)
+        {
+            var roomAsset = await MainUnitOfWork.RoomAssetRepository.FindOneAsync(id);
+
+            if (roomAsset == null)
+                throw new ApiException("Không tìm thấy thông tin", StatusCode.NOT_FOUND);
+
+            roomAsset.AssetId = updateBaseDto.AssetId ?? roomAsset.AssetId;
+            roomAsset.RoomId = updateBaseDto.RoomId ?? roomAsset.RoomId;
+            roomAsset.Status = updateBaseDto.Status ?? roomAsset.Status;
+            roomAsset.Quantity = updateBaseDto.Quantity ?? roomAsset.Quantity;
+            roomAsset.FromDate = updateBaseDto.FromDate ?? roomAsset.FromDate;
+            roomAsset.ToDate = updateBaseDto.ToDate ?? roomAsset.ToDate;
+
+            if (!await MainUnitOfWork.RoomAssetRepository.UpdateAsync(roomAsset, AccountId, CurrentDate))
+                throw new ApiException("Cập nhật thông tin thất bại", StatusCode.SERVER_ERROR);
+            
+            return ApiResponse.Success("Cập nhật thông tin thành công");
+        }
     }
 }

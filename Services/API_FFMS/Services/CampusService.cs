@@ -26,21 +26,45 @@ public class CampusService :BaseService,ICampusService
 
     public async Task<ApiResponses<CampusDto>> GetCampus(CampusQueryDto queryDto)
     {
-        var campuses = await MainUnitOfWork.CampusRepository.FindResultAsync<CampusDto>(
-            new Expression<Func<Campus, bool>>[]
-            {
-                x => !x.DeletedAt.HasValue,
-                x => queryDto.CampusName == null || x.CampusName!.ToLower().Contains(queryDto.CampusName.Trim().ToLower())
-            }, queryDto.OrderBy, queryDto.Skip(), queryDto.PageSize);
+        var keyword = queryDto.Keyword?.Trim().ToLower();
+        var campusesQueryable = MainUnitOfWork.CampusRepository.GetQuery()
+            .Where(x => !x!.DeletedAt.HasValue);
 
-        campuses.Items = await _mapperRepository.MapCreator(campuses.Items.ToList());
+        if (!string.IsNullOrEmpty(keyword))
+        {
+            campusesQueryable = campusesQueryable.Where(x => x!.CampusName!.ToLower().Contains(keyword)
+                                                             || x.CampusCode!.ToLower().Contains(keyword)
+                                                             || x.Address!.ToLower().Contains(keyword)
+                                                             || x.Description!.ToLower().Contains(keyword)
+                                                             || x.Telephone!.Contains(keyword));
+        }
+
+        var totalCount = campusesQueryable.Count();
+
+        var campuses = await campusesQueryable.Select(x => new CampusDto
+        {
+            Id = x!.Id,
+            Address = x.Address,
+            CampusName = x.CampusName,
+            Description = x.Description,
+            CampusCode = x.CampusCode,
+            Telephone = x.Telephone,
+            LogoUrl = x.LogoUrl,
+            WebsiteUrl = x.WebsiteUrl,
+            CreatedAt = x.CreatedAt,
+            EditedAt = x.EditedAt,
+            CreatorId = x.CreatorId ?? Guid.Empty,
+            EditorId = x.EditorId ?? Guid.Empty
+        }).ToListAsync();
+
+        campuses = await _mapperRepository.MapCreator(campuses);
         
         return ApiResponses<CampusDto>.Success(
-            campuses.Items,
-            campuses.TotalCount,
+            campuses,
+            totalCount,
             queryDto.PageSize,
-            queryDto.Skip(),
-            (int)Math.Ceiling(campuses.TotalCount / (double)queryDto.PageSize)
+            queryDto.Page,
+            (int)Math.Ceiling(totalCount / (double)queryDto.PageSize)
         );
     }
 
@@ -54,7 +78,7 @@ public class CampusService :BaseService,ICampusService
           });
 
       if (campus == null)
-        throw new ApiException("Not found this campus", StatusCode.NOT_FOUND);
+        throw new ApiException("Không tìm thấy campus", StatusCode.NOT_FOUND);
 
       campus.TotalBuilding = MainUnitOfWork.BuildingRepository.GetQuery().Count(x => !x!.DeletedAt.HasValue
           && x.CampusId == campus.Id);
@@ -70,9 +94,9 @@ public class CampusService :BaseService,ICampusService
         var campus = campusDto.ProjectTo<CampusCreateDto, Campus>();
 
         if (!await MainUnitOfWork.CampusRepository.InsertAsync(campus, AccountId, CurrentDate))
-            throw new ApiException("Insert fail", StatusCode.SERVER_ERROR);
+            throw new ApiException("Thêm thất bại", StatusCode.SERVER_ERROR);
         
-        return ApiResponse.Created("Create successfully");
+        return ApiResponse.Created("Thêm thành công");
     }
 
     public async Task<ApiResponse> Update(Guid id, CampusUpdateDto campusDto)
@@ -80,7 +104,7 @@ public class CampusService :BaseService,ICampusService
         var campus = await MainUnitOfWork.CampusRepository.FindOneAsync(id);
 
         if (campus == null)
-            throw new ApiException("Not found", StatusCode.NOT_FOUND);
+            throw new ApiException("Không tìm thấy campus", StatusCode.NOT_FOUND);
         
         campus.CampusName = campusDto.CampusName ?? campus.CampusName;
         campus.CampusCode = campusDto.CampusCode ?? campus.CampusCode;
@@ -89,18 +113,18 @@ public class CampusService :BaseService,ICampusService
         campus.Description = campusDto.Description ?? campus.Description;
 
         if (!await MainUnitOfWork.CampusRepository.UpdateAsync(campus, AccountId, CurrentDate))
-            throw new ApiException("Insert fail", StatusCode.SERVER_ERROR);
+            throw new ApiException("Thêm thất bại", StatusCode.SERVER_ERROR);
         
-        return ApiResponse.Success();
+        return ApiResponse.Success("Cập nhật thất bại");
     }
     public async Task<ApiResponse> Delete(Guid id)
     {
         var existingCampus = await MainUnitOfWork.CampusRepository.FindOneAsync(id);
         if (existingCampus == null)
-            throw new ApiException("Not found this campus", StatusCode.NOT_FOUND);
+            throw new ApiException("Không tìm thấy campus", StatusCode.NOT_FOUND);
         if (!await MainUnitOfWork.CampusRepository.DeleteAsync(existingCampus, AccountId, CurrentDate))
-            throw new ApiException("Can't not delete", StatusCode.SERVER_ERROR);
+            throw new ApiException("Xóa thất bại", StatusCode.SERVER_ERROR);
 
-        return ApiResponse.Success();
+        return ApiResponse.Success("Xóa thành công");
     }
 }
