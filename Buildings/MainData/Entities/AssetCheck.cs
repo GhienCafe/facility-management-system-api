@@ -6,6 +6,7 @@ namespace MainData.Entities;
 
 public class AssetCheck : BaseRequest
 {
+    public Guid AssetId { get; set; }
     public bool IsVerified { get; set; } 
 }
 
@@ -14,6 +15,7 @@ public class AssetCheckConfig : IEntityTypeConfiguration<AssetCheck>
     public void Configure(EntityTypeBuilder<AssetCheck> builder)
     {
         builder.ToTable("AssetChecks");
+        builder.Property(x => x.AssetId).IsRequired();
         builder.Property(x => x.IsVerified).IsRequired().HasDefaultValue(false);
 
         //Relationship

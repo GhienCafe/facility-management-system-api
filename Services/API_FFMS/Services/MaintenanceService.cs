@@ -2,6 +2,7 @@
 using API_FFMS.Repositories;
 using AppCore.Extensions;
 using AppCore.Models;
+using DocumentFormat.OpenXml.Presentation;
 using MainData;
 using MainData.Entities;
 using MainData.Repositories;
@@ -60,17 +61,29 @@ public class MaintenanceService : BaseService, IMaintenanceService
         
         var userQueryable = MainUnitOfWork.UserRepository.GetQuery()
             .Where(x => !x!.DeletedAt.HasValue);
+        
+        var assetTypeQueryable = MainUnitOfWork.AssetTypeRepository.GetQuery()
+            .Where(x => !x!.DeletedAt.HasValue);
+        
+        var categoryQueryable = MainUnitOfWork.CategoryRepository.GetQuery()
+            .Where(x => !x!.DeletedAt.HasValue);
 
         var joinTables = from maintenance in maintenanceQueryable
             join user in userQueryable on maintenance.AssignedTo equals user.Id into userGroup
             from user in userGroup.DefaultIfEmpty()
             join asset in assetQueryable on maintenance.AssetId equals asset.Id into assetGroup
             from asset in assetGroup.DefaultIfEmpty()
+            join assetType in assetTypeQueryable on asset.TypeId equals assetType.Id into assetTypeGroup
+            from assetType in assetTypeGroup.DefaultIfEmpty()
+            join category in categoryQueryable on assetType.CategoryId equals category.Id into categoryGroup
+            from category in categoryGroup.DefaultIfEmpty()
             select new
             {
                 Maintenance = maintenance,
                 User = user,
-                Asset = asset
+                Asset = asset,
+                AssetType = assetType,
+                Category = category
             };
 
         var totalCount = await joinTables.CountAsync();
@@ -89,13 +102,17 @@ public class MaintenanceService : BaseService, IMaintenanceService
             RequestCode = x.Maintenance.RequestCode,
             CompletionDate = x.Maintenance.CompletionDate,
             RequestDate = x.Maintenance.RequestDate,
+            CategoryId = x.Maintenance.CategoryId,
+            AssetTypeId = x.Maintenance.AssetTypeId,
             StatusObj = x.Maintenance.Status!.GetValue(),
             CreatedAt = x.Maintenance.CreatedAt,
             EditedAt = x.Maintenance.EditedAt,
             CreatorId = x.Maintenance.CreatorId ?? Guid.Empty,
             EditorId = x.Maintenance.EditorId ?? Guid.Empty,
             User = x.User.ProjectTo<User, UserBaseDto>(),
-            Asset = x.Asset.ProjectTo<Asset, AssetBaseDto>()
+            Asset = x.Asset.ProjectTo<Asset, AssetBaseDto>(),
+            AssetType = x.AssetType.ProjectTo<AssetType, AssetTypeDto>(),
+            Category = x.Category.ProjectTo<Category, CategoryDto>()
         }).ToListAsync();
 
         foreach (var item in items)
@@ -124,40 +141,113 @@ public class MaintenanceService : BaseService, IMaintenanceService
 
     public async Task<ApiResponse<MaintenanceDto>> GetItem(Guid id)
     {
-        var maintenance = await MainUnitOfWork.MaintenanceRepository.FindOneAsync(id);
+        // var maintenance = await MainUnitOfWork.MaintenanceRepository.FindOneAsync(id);
+        //
+        // if (maintenance == null)
+        //     throw new ApiException("Không tìm thấy nội dung", StatusCode.NOT_FOUND);
+        //
+        // var maintenanceDto = maintenance.ProjectTo<Maintenance, MaintenanceDto>();
+        // maintenanceDto.Asset = await MainUnitOfWork.AssetRepository.FindOneAsync<AssetBaseDto>(new Expression<Func<Asset, bool>>[]
+        // {
+        //     x => !x.DeletedAt.HasValue,
+        //     x => x.Id == maintenance.AssetId
+        // });
+        //
+        // if (maintenanceDto.Asset != null)
+        // {
+        //     maintenanceDto.Asset.StatusObj = maintenance.Asset?.Status.GetValue();
+        //     
+        //     maintenanceDto.AssetType = await MainUnitOfWork.AssetTypeRepository.FindOneAsync<AssetTypeDto>(new Expression<Func<AssetType, bool>>[]
+        //     {
+        //         x => !x.DeletedAt.HasValue,
+        //         x => x.Id == maintenanceDto.Asset.TypeId
+        //     });
+        // }
+        //
+        // maintenanceDto.StatusObj = maintenance.Status?.GetValue();
+        //
+        // maintenanceDto.User = await MainUnitOfWork.UserRepository.FindOneAsync<UserBaseDto>(new Expression<Func<User, bool>>[]
+        // {
+        //     x => !x.DeletedAt.HasValue,
+        //     x => x.Id == maintenance.AssignedTo
+        // });
+        //
+        // if (maintenanceDto.User != null)
+        // {
+        //     maintenanceDto.User.StatusObj = maintenanceDto.User.Status?.GetValue();
+        //     maintenanceDto.User.RoleObj = maintenanceDto.User.Role?.GetValue();
+        // }
+        //
+        // if (maintenanceDto.AssetType != null)
+        // {
+        //     maintenanceDto.Category = (await MainUnitOfWork.CategoryRepository.FindOneAsync(maintenanceDto.AssetType.CategoryId ?? Guid.Empty))?
+        //         .ProjectTo<Category, CategoryDto>();
+        // }
+        //
+        // maintenanceDto = await _mapperRepository.MapCreator(maintenanceDto);
 
-        if (maintenance == null)
+        var maintenanceDto = MainUnitOfWork.MaintenanceRepository.GetQuery()
+            .Where(x => !x!.DeletedAt.HasValue && x.Id == id);
+
+        if (maintenanceDto == null)
             throw new ApiException("Không tìm thấy nội dung", StatusCode.NOT_FOUND);
         
-        var maintenanceDto = maintenance.ProjectTo<Maintenance, MaintenanceDto>();
-        maintenanceDto.Asset = await MainUnitOfWork.AssetRepository.FindOneAsync<AssetBaseDto>(new Expression<Func<Asset, bool>>[]
-        {
-            x => !x.DeletedAt.HasValue,
-            x => x.Id == maintenance.AssetId
-        });
-
-        if (maintenanceDto.Asset != null)
-        {
-            maintenanceDto.Asset.StatusObj = maintenance.Asset?.Status.GetValue();
-        }
-
-        maintenanceDto.StatusObj = maintenance.Status?.GetValue();
+        var assetQueryable = MainUnitOfWork.AssetRepository.GetQuery()
+            .Where(x => !x!.DeletedAt.HasValue);
         
-        maintenanceDto.User = await MainUnitOfWork.UserRepository.FindOneAsync<UserBaseDto>(new Expression<Func<User, bool>>[]
+        var userQueryable = MainUnitOfWork.UserRepository.GetQuery()
+            .Where(x => !x!.DeletedAt.HasValue);
+        
+        var assetTypeQueryable = MainUnitOfWork.AssetTypeRepository.GetQuery()
+            .Where(x => !x!.DeletedAt.HasValue);
+        
+        var categoryQueryable = MainUnitOfWork.CategoryRepository.GetQuery()
+            .Where(x => !x!.DeletedAt.HasValue);
+
+        var joinTables = from maintenance in maintenanceDto
+            join user in userQueryable on maintenance.AssignedTo equals user.Id into userGroup
+            from user in userGroup.DefaultIfEmpty()
+            join asset in assetQueryable on maintenance.AssetId equals asset.Id into assetGroup
+            from asset in assetGroup.DefaultIfEmpty()
+            join assetType in assetTypeQueryable on asset.TypeId equals assetType.Id into assetTypeGroup
+            from assetType in assetTypeGroup.DefaultIfEmpty()
+            join category in categoryQueryable on assetType.CategoryId equals category.Id into categoryGroup
+            from category in categoryGroup.DefaultIfEmpty()
+            select new
+            {
+                Maintenance = maintenance,
+                User = user,
+                Asset = asset,
+                AssetType = assetType,
+                Category = category
+            };
+
+        var item = await joinTables.Select(x => new MaintenanceDto
         {
-            x => !x.DeletedAt.HasValue,
-            x => x.Id == maintenance.AssignedTo
-        });
-
-        if (maintenanceDto.User != null)
-        {
-            maintenanceDto.User.StatusObj = maintenanceDto.User.Status?.GetValue();
-            maintenanceDto.User.RoleObj = maintenanceDto.User.Role?.GetValue();
-        }
-
-        maintenanceDto = await _mapperRepository.MapCreator(maintenanceDto);
-
-        return ApiResponse<MaintenanceDto>.Success(maintenanceDto);
+            Id = x.Maintenance.Id,
+            Status = x.Maintenance.Status,
+            AssetId = x.Maintenance.AssetId,
+            Notes = x.Maintenance.Notes,
+            Description = x.Maintenance.Description,
+            IsInternal = x.Maintenance.IsInternal,
+            AssignedTo = x.Maintenance.AssignedTo,
+            RequestCode = x.Maintenance.RequestCode,
+            CompletionDate = x.Maintenance.CompletionDate,
+            RequestDate = x.Maintenance.RequestDate,
+            CategoryId = x.Maintenance.CategoryId,
+            AssetTypeId = x.Maintenance.AssetTypeId,
+            StatusObj = x.Maintenance.Status!.GetValue(),
+            CreatedAt = x.Maintenance.CreatedAt,
+            EditedAt = x.Maintenance.EditedAt,
+            CreatorId = x.Maintenance.CreatorId ?? Guid.Empty,
+            EditorId = x.Maintenance.EditorId ?? Guid.Empty,
+            User = x.User.ProjectTo<User, UserBaseDto>(),
+            Asset = x.Asset.ProjectTo<Asset, AssetBaseDto>(),
+            AssetType = x.AssetType.ProjectTo<AssetType, AssetTypeDto>(),
+            Category = x.Category.ProjectTo<Category, CategoryDto>()
+        }).FirstOrDefaultAsync();
+        
+        return ApiResponse<MaintenanceDto>.Success(item);
     }
 
     public async Task<ApiResponse> CreateItem(MaintenanceCreateDto createDto)
@@ -191,6 +281,9 @@ public class MaintenanceService : BaseService, IMaintenanceService
         maintenance.Description = updateDto.Description ?? maintenance.Description;
         maintenance.Status = updateDto.Status ?? maintenance.Status;
         maintenance.Notes = updateDto.Notes ?? maintenance.Notes;
+        maintenance.CategoryId = updateDto.CategoryId ?? maintenance.CategoryId;
+        maintenance.IsInternal = updateDto.IsInternal ?? maintenance.IsInternal;
+        maintenance.AssetTypeId = updateDto.AssetTypeId ?? maintenance.AssetTypeId;
         maintenance.AssignedTo = updateDto.AssignedTo ?? maintenance.AssignedTo;
         maintenance.CompletionDate = updateDto.CompletionDate ?? maintenance.CompletionDate;
         maintenance.RequestDate = updateDto.RequestDate ?? maintenance.RequestDate;
