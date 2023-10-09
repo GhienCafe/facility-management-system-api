@@ -856,6 +856,9 @@ namespace InitDatabase.Migrations
                     b.Property<Guid?>("RoomTypeId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<int?>("State")
+                        .HasColumnType("int");
+
                     b.Property<Guid>("StatusId")
                         .HasColumnType("uniqueidentifier");
 
@@ -954,9 +957,6 @@ namespace InitDatabase.Migrations
 
                     b.Property<Guid?>("EditorId")
                         .HasColumnType("uniqueidentifier");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("int");
 
                     b.Property<string>("StatusName")
                         .IsRequired()
