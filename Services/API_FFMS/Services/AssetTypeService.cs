@@ -5,6 +5,7 @@ using MainData;
 using MainData.Entities;
 using MainData.Repositories;
 using System.Linq.Expressions;
+using Microsoft.EntityFrameworkCore;
 
 namespace API_FFMS.Services
 {
@@ -26,97 +27,126 @@ namespace API_FFMS.Services
         public async Task<ApiResponse> Create(AssetTypeCreateDto createDto)
         {
 
-            var existingCategory = MainUnitOfWork.AssetTypeRepository.GetQuery()
+            var existingType = MainUnitOfWork.AssetTypeRepository.GetQuery()
                                    .Where(x => !x!.DeletedAt.HasValue && x!.TypeCode.Trim().ToLower() == createDto.TypeCode.Trim().ToLower())
                                    .SingleOrDefault();
 
-            if (existingCategory != null)
-                throw new ApiException("Asset category name is already exists", StatusCode.ALREADY_EXISTS);
+            if (existingType != null)
+                throw new ApiException("Đã tồn tại mã loại trang thiết bị", StatusCode.ALREADY_EXISTS);
 
             var assetCategory = createDto.ProjectTo<AssetTypeCreateDto, AssetType>();
 
             if (!await MainUnitOfWork.AssetTypeRepository.InsertAsync(assetCategory, AccountId, CurrentDate))
-                throw new ApiException("Insert fail!", StatusCode.SERVER_ERROR);
-            
-            return ApiResponse.Created("Create successfully!");
+                throw new ApiException("Thêm thất bại", StatusCode.SERVER_ERROR);
+
+            return ApiResponse.Created("Thêm thành công");
         }
 
         public async Task<ApiResponse> Delete(Guid id)
         {
-                var existingAssetCategory = await MainUnitOfWork.AssetTypeRepository.FindOneAsync(id);
+            var existingType = await MainUnitOfWork.AssetTypeRepository.FindOneAsync(id);
 
-                if (existingAssetCategory == null)
-                {
-                    throw new ApiException("Asset category not found", StatusCode.NOT_FOUND);
-                }
+            if (existingType == null)
+            {
+                throw new ApiException("Không tìm thấy loại trang thiết bị", StatusCode.NOT_FOUND);
+            }
 
-                if (await MainUnitOfWork.AssetTypeRepository.DeleteAsync(existingAssetCategory, AccountId, CurrentDate))
-                    throw new ApiException("Delete fail", StatusCode.SERVER_ERROR);
-                
-                return ApiResponse.Success();
+            if (await MainUnitOfWork.AssetTypeRepository.DeleteAsync(existingType, AccountId, CurrentDate))
+                throw new ApiException("Xóa thất bại", StatusCode.SERVER_ERROR);
+
+            return ApiResponse.Success("Xóa thất bại");
         }
 
         public async Task<ApiResponses<AssetTypeDto>> GetAssetTypes(AssetTypeQueryDto queryDto)
         {
-            var response = await MainUnitOfWork.AssetTypeRepository.FindResultAsync<AssetTypeDto>(
-                new Expression<Func<AssetType, bool>>[]
-                {
-                    x => !x.DeletedAt.HasValue,
-                    x => string.IsNullOrEmpty(queryDto.TypeName) ||
-                         x.TypeName.ToLower().Contains(queryDto.TypeName.Trim().ToLower()),
-                    x => string.IsNullOrEmpty(queryDto.TypeCode) ||
-                         x.TypeCode.ToLower().Equals(queryDto.TypeCode.Trim().ToLower())
-                }, queryDto.OrderBy, queryDto.Skip(), queryDto.PageSize);
+            var keyword = queryDto.Keyword?.Trim().ToLower();
+            var response = MainUnitOfWork.AssetTypeRepository.GetQuery()
+                .Where(x => !x!.DeletedAt.HasValue);
 
-            response.Items = await _mapperRepository.MapCreator(response.Items.ToList());
+            if (!string.IsNullOrEmpty(keyword))
+            {
+                response = response.Where(x => x!.TypeCode.ToLower().Contains(keyword)
+                    || x.TypeName.ToLower().Contains(keyword)
+                    || x.Description!.ToLower().Contains(keyword));
+            }
+
+            var totalCount = await response.CountAsync();
+            var assetTypes = await response.Select(x => new AssetTypeDto
+            {
+                Id = x!.Id,
+                Description = x.Description,
+                TypeCode = x.TypeCode,
+                TypeName = x.TypeName,
+                Unit = x.Unit,
+                UnitObj = x.Unit.GetValue(),
+                CategoryId = x.CategoryId,
+                CreatedAt = x.CreatedAt,
+                EditedAt = x.EditedAt,
+                EditorId = x.EditorId ?? Guid.Empty,
+                CreatorId = x.CreatorId ?? Guid.Empty
+            }).ToListAsync();
+
+            assetTypes = await _mapperRepository.MapCreator(assetTypes);
 
             return ApiResponses<AssetTypeDto>.Success(
-                response.Items,
-                response.TotalCount,
+                assetTypes,
+                totalCount,
                 queryDto.PageSize,
-                queryDto.Skip(),
-                (int)Math.Ceiling(response.TotalCount / (double)queryDto.PageSize)
+                queryDto.Page,
+                (int)Math.Ceiling(totalCount / (double)queryDto.PageSize)
             );
         }
 
         public async Task<ApiResponse<AssetTypeDetailDto>> GetAssetType(Guid id)
         {
-            var assetCategory = await MainUnitOfWork.AssetTypeRepository.FindOneAsync<AssetTypeDetailDto>(
-            new Expression<Func<AssetType, bool>>[]
-            {
-                 x => !x.DeletedAt.HasValue,
-                 x => x.Id == id
-            });
+            var assetType = MainUnitOfWork.AssetTypeRepository.GetQuery()
+                .Where(x => !x!.DeletedAt.HasValue && x.Id == id)
+                .Select(x => new AssetTypeDetailDto
+                {
+                    Id = x!.Id,
+                    Description = x.Description,
+                    TypeCode = x.TypeCode,
+                    TypeName = x.TypeName,
+                    Unit = x.Unit,
+                    UnitObj = x.Unit.GetValue(),
+                    CategoryId = x.CategoryId,
+                    CreatedAt = x.CreatedAt,
+                    EditedAt = x.EditedAt,
+                    EditorId = x.EditorId ?? Guid.Empty,
+                    CreatorId = x.CreatorId ?? Guid.Empty
+                }).FirstOrDefault();
 
-            if (assetCategory == null)
+            if (assetType == null)
             {
-                throw new ApiException("Asset category not found", StatusCode.NOT_FOUND);
+                throw new ApiException("Không tìm thấy loại trang thiết bị", StatusCode.NOT_FOUND);
             }
 
-            assetCategory = await _mapperRepository.MapCreator(assetCategory);
+            assetType = await _mapperRepository.MapCreator(assetType);
 
-            return ApiResponse<AssetTypeDetailDto>.Success(assetCategory);
+            return ApiResponse<AssetTypeDetailDto>.Success(assetType);
         }
 
         public async Task<ApiResponse> Update(Guid id, AssetTypeUpdateDto updateDto)
         {
-            var existingAssetCategory = await MainUnitOfWork.AssetTypeRepository.FindOneAsync(id);
+            var existingTpye = await MainUnitOfWork.AssetTypeRepository.FindOneAsync(id);
 
-            if (existingAssetCategory == null)
+            if (existingTpye == null)
             {
-                throw new ApiException("Asset category not found", StatusCode.NOT_FOUND);
+                throw new ApiException("Không tìm thấy loại trang thiết bị", StatusCode.NOT_FOUND);
             }
 
-            existingAssetCategory.TypeName = updateDto.TypeName ?? existingAssetCategory.TypeName;
-            existingAssetCategory.Description = updateDto.Description ?? existingAssetCategory.Description;
-            existingAssetCategory.Unit = updateDto.Unit ?? existingAssetCategory.Unit;
+            existingTpye.TypeName = updateDto.TypeName ?? existingTpye.TypeName;
+            existingTpye.Description = updateDto.Description ?? existingTpye.Description;
+            existingTpye.Unit = updateDto.Unit ?? existingTpye.Unit;
+            existingTpye.CategoryId = updateDto.CategoryId ?? existingTpye.CategoryId;
+            existingTpye.TypeCode = updateDto.TypeCode ?? existingTpye.TypeCode;
 
-            if (!await MainUnitOfWork.AssetTypeRepository.UpdateAsync(existingAssetCategory, AccountId, CurrentDate))
+            if (!await MainUnitOfWork.AssetTypeRepository.UpdateAsync(existingTpye, AccountId, CurrentDate))
             {
-                throw new ApiException("Can't not update", StatusCode.SERVER_ERROR);
+                throw new ApiException("Cập nhật thất bại", StatusCode.SERVER_ERROR);
             }
 
-            return ApiResponse.Success();
+            return ApiResponse.Success("Cập nhật thành công");
 
         }
     }

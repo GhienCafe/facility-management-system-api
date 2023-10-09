@@ -15,8 +15,22 @@ public class RoomDto : BaseDto
     public int? Capacity { get; set; }
     public Guid StatusId { get; set; }
     public Guid FloorId { get; set; }
+    public string? Description { get; set; }
     public RoomStatusDto? Status { get; set; }
     public RoomTypeDto? RoomType { get; set; }
+    public FloorBaseDto? Floor { get; set; }
+}
+
+public class RoomBaseDto : BaseDto
+{
+    public string? RoomName { get; set; }
+    public double? Area { get; set; }
+    public string RoomCode { get; set; } = null!;
+    public Guid? RoomTypeId { get; set; }
+    public int? Capacity { get; set; }
+    public Guid StatusId { get; set; }
+    public Guid FloorId { get; set; }
+    public string? Description { get; set; }
 }
 
 public class RoomDetailDto : BaseDto
@@ -25,6 +39,7 @@ public class RoomDetailDto : BaseDto
     public double? Area { get; set; }
     public string? PathRoom { get; set; }
     public string RoomCode { get; set; } = null!;
+    public string? Description { get; set; }
     //public RoomTypeEnum RoomType { get; set; }
     public Guid? RoomTypeId { get; set; }
     public int? Capacity { get; set; }
@@ -34,11 +49,25 @@ public class RoomDetailDto : BaseDto
     public RoomTypeDto? RoomType { get; set; }
 }
 
+// public class RoomBaseDto : BaseDto
+// {
+//     public string? RoomName { get; set; }
+//     public double? Area { get; set; }
+//     public string? PathRoom { get; set; }
+//     public string RoomCode { get; set; } = null!;
+//     public Guid? RoomTypeId { get; set; }
+//     public int? Capacity { get; set; }
+//     public Guid StatusId { get; set; }
+//     public Guid FloorId { get; set; }
+//     public string? Description { get; set; }
+// }
+
 public class RoomCreateDto
 {
     public string? RoomName { get; set; }
     public double? Area { get; set; }
     public string? PathRoom { get; set; }
+    public string? Description { get; set; }
     [Required]
     public string RoomCode { get; set; } = null!;
     // [Required]
@@ -57,6 +86,7 @@ public class RoomUpdateDto
     public double? Area { get; set; }
     public string? PathRoom { get; set; }
     public string? RoomCode { get; set; }
+    public string? Description { get; set; }
     public Guid? RoomTypeId { get; set; }
     //public RoomTypeEnum? RoomType { get; set; }
     public int? Capacity { get; set; }
@@ -66,13 +96,11 @@ public class RoomUpdateDto
 
 public class RoomQueryDto : BaseQueryDto
 {
-    public string? RoomName { get; set; }
     public double? FromArea { get; set; }
     public double? ToArea { get; set; }
     public double? FromCapacity { get; set; }
     public double? ToCapacity { get; set; }
     public Guid? StatusId { get; set; }
-    public string? RoomCode { get; set; }
     public Guid? RoomTypeId { get; set; }
     //public RoomTypeEnum? RoomType { get; set; }
     public Guid? FloorId { get; set; }
