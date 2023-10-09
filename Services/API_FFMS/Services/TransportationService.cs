@@ -12,7 +12,7 @@ namespace API_FFMS.Services
 {
     public interface ITransportationService : IBaseService
     {
-        Task<ApiResponses<TransportDto>> GetTransports(TransportationQueryDto queryDto);
+        //Task<ApiResponses<TransportDto>> GetTransports(TransportationQueryDto queryDto);
         Task<ApiResponse> Create(TransportCreateDto createDto);
         Task<ApiResponse> Update(Guid id, BaseRequestUpdateDto updateDto);
         Task<ApiResponse<TransportDto>> GetTransportation(Guid id);
@@ -33,16 +33,45 @@ namespace API_FFMS.Services
 
         public async Task<ApiResponse> Create(TransportCreateDto createDto)
         {
-            var asset = await MainUnitOfWork.AssetRepository.FindOneAsync(createDto.AssetId);
-            if (asset == null)
+            var assets = new List<Asset>();
+            foreach(var assetId in createDto.AssetId!)
             {
-                throw new ApiException("Không tìm thấy trang thiết bị", StatusCode.NOT_FOUND);
+                var asset = await MainUnitOfWork.AssetRepository.FindOneAsync(assetId);
+                if (asset == null)
+                {
+                    throw new ApiException("Không tìm thấy trang thiết bị", StatusCode.NOT_FOUND);
+                }
+
+                if (asset.Status != AssetStatus.Operational)
+                {
+                    throw new ApiException("Trang thiết bị đang trong một yêu cầu khác", StatusCode.BAD_REQUEST);
+                }
+                assets.Add(asset);
             }
 
-            if (asset.Status != AssetStatus.Operational)
+            var transportation = new Transportation
             {
-                throw new ApiException("Trang thiết bị đang trong một yêu cầu khác", StatusCode.BAD_REQUEST);
-            }
+                RequestCode = createDto.RequestCode,
+                RequestDate = CurrentDate,
+                CompletionDate = createDto.CompletionDate,
+                Description = createDto.Description,
+                Notes = createDto.Notes,
+                IsInternal = createDto.IsInternal,
+                Quantity = createDto.Quantity,
+                AssignedTo = createDto.AssignedTo,
+                ToRoomId = createDto.ToRoomId
+            };
+
+            //var asset = await MainUnitOfWork.AssetRepository.FindOneAsync(createDto.AssetId);
+            //if (asset == null)
+            //{
+            //    throw new ApiException("Không tìm thấy trang thiết bị", StatusCode.NOT_FOUND);
+            //}
+
+            //if (asset.Status != AssetStatus.Operational)
+            //{
+            //    throw new ApiException("Trang thiết bị đang trong một yêu cầu khác", StatusCode.BAD_REQUEST);
+            //}
 
             //var teams = MainUnitOfWork.TeamMemberRepository.GetQuery();
             //var assignee = await MainUnitOfWork.TeamMemberRepository.FindOneAsync(
@@ -57,9 +86,9 @@ namespace API_FFMS.Services
             //    throw new ApiException("Trang thiết bị đang trong một yêu cầu khác", StatusCode.BAD_REQUEST);
             //}
 
-            var transportation = createDto.ProjectTo<TransportCreateDto, Transportation>();
+            //var transportation = createDto.ProjectTo<TransportCreateDto, Transportation>();
 
-            if (!await _transportationRepository.InsertTransportation(transportation, AccountId, CurrentDate))
+            if (!await _transportationRepository.InsertTransportations(transportation, assets, AccountId, CurrentDate))
             {
                 throw new ApiException("Tạo yêu cầu thất bại", StatusCode.SERVER_ERROR);
             }
@@ -175,131 +204,131 @@ namespace API_FFMS.Services
             return ApiResponse<TransportDto>.Success(transportation);
         }
 
-        public async Task<ApiResponses<TransportDto>> GetTransports(TransportationQueryDto queryDto)
-        {
-            var keyword = queryDto.Keyword?.Trim().ToLower();
-            var transportQuery = MainUnitOfWork.TransportationRepository.GetQuery()
-                                 .Where(x => !x!.DeletedAt.HasValue);
+        //public async Task<ApiResponses<TransportDto>> GetTransports(TransportationQueryDto queryDto)
+        //{
+        //    var keyword = queryDto.Keyword?.Trim().ToLower();
+        //    var transportQuery = MainUnitOfWork.TransportationRepository.GetQuery()
+        //                         .Where(x => !x!.DeletedAt.HasValue);
 
-            if (keyword != null)
-            {
-                transportQuery = transportQuery.Where(x => x!.RequestCode.ToLower().Contains(keyword));
-            }
+        //    if (keyword != null)
+        //    {
+        //        transportQuery = transportQuery.Where(x => x!.RequestCode.ToLower().Contains(keyword));
+        //    }
 
-            if (queryDto.AssignedTo != null)
-            {
-                transportQuery = transportQuery.Where(x => x!.AssignedTo == queryDto.AssignedTo);
-            }
+        //    if (queryDto.AssignedTo != null)
+        //    {
+        //        transportQuery = transportQuery.Where(x => x!.AssignedTo == queryDto.AssignedTo);
+        //    }
 
-            if (queryDto.AssetId != null)
-            {
-                transportQuery = transportQuery.Where(x => x!.AssetId == queryDto.AssetId);
-            }
+        //    if (queryDto.AssetId != null)
+        //    {
+        //        transportQuery = transportQuery.Where(x => x!.AssetId == queryDto.AssetId);
+        //    }
 
-            if (queryDto.Status != null)
-            {
-                transportQuery = transportQuery.Where(x => x!.Status == queryDto.Status);
-            }
+        //    if (queryDto.Status != null)
+        //    {
+        //        transportQuery = transportQuery.Where(x => x!.Status == queryDto.Status);
+        //    }
 
-            if (queryDto.RequestDate != null)
-            {
-                transportQuery = transportQuery.Where(x => x!.RequestDate == queryDto.RequestDate);
-            }
+        //    if (queryDto.RequestDate != null)
+        //    {
+        //        transportQuery = transportQuery.Where(x => x!.RequestDate == queryDto.RequestDate);
+        //    }
 
-            if (queryDto.CompletionDate != null)
-            {
-                transportQuery = transportQuery.Where(x => x!.CompletionDate == queryDto.CompletionDate);
-            }
+        //    if (queryDto.CompletionDate != null)
+        //    {
+        //        transportQuery = transportQuery.Where(x => x!.CompletionDate == queryDto.CompletionDate);
+        //    }
 
-            var roomAssets = MainUnitOfWork.RoomAssetRepository.GetQuery();
-            var roomDataset = MainUnitOfWork.RoomRepository.GetQuery();
+        //    var roomAssets = MainUnitOfWork.RoomAssetRepository.GetQuery();
+        //    var roomDataset = MainUnitOfWork.RoomRepository.GetQuery();
 
-            var joinTables = from transport in transportQuery
-                             join user in MainUnitOfWork.UserRepository.GetQuery() on transport.AssignedTo equals user.Id
-                             join asset in MainUnitOfWork.AssetRepository.GetQuery() on transport.AssetId equals asset.Id
+        //    var joinTables = from transport in transportQuery
+        //                     join user in MainUnitOfWork.UserRepository.GetQuery() on transport.AssignedTo equals user.Id
+        //                     join asset in MainUnitOfWork.AssetRepository.GetQuery() on transport.AssetId equals asset.Id
 
-                             join roomAsset in roomAssets on transport.AssetId equals roomAsset.AssetId
-                             join fromRoom in roomDataset on roomAsset.RoomId equals fromRoom.Id
+        //                     join roomAsset in roomAssets on transport.AssetId equals roomAsset.AssetId
+        //                     join fromRoom in roomDataset on roomAsset.RoomId equals fromRoom.Id
 
-                             join toRoom in roomDataset on transport.ToRoomId equals toRoom.Id
-                             select new
-                             {
-                                 Transportation = transport,
-                                 Asset = asset,
-                                 User = user,
-                                 ToRoom = toRoom,
-                                 FromRoom = fromRoom
-                             };
+        //                     join toRoom in roomDataset on transport.ToRoomId equals toRoom.Id
+        //                     select new
+        //                     {
+        //                         Transportation = transport,
+        //                         Asset = asset,
+        //                         User = user,
+        //                         ToRoom = toRoom,
+        //                         FromRoom = fromRoom
+        //                     };
 
-            var totalCount = await joinTables.CountAsync();
-            joinTables = joinTables.Skip(queryDto.Skip()).Take(queryDto.PageSize);
+        //    var totalCount = await joinTables.CountAsync();
+        //    joinTables = joinTables.Skip(queryDto.Skip()).Take(queryDto.PageSize);
 
-            var transportations = await joinTables.Select(x => new TransportDto
-            {
-                Id = x.Transportation.Id,
-                RequestCode = x.Transportation.RequestCode,
-                RequestDate = x.Transportation.RequestDate,
-                CompletionDate = x.Transportation.CompletionDate,
-                Status = x.Transportation.Status,
-                Description = x.Transportation.Description,
-                Notes = x.Transportation.Notes,
-                IsInternal = x.Transportation.IsInternal,
-                AssignedTo = x.Transportation.AssignedTo,
-                AssetId = x.Transportation.AssetId,
-                CreatedAt = x.Transportation.CreatedAt,
-                EditedAt = x.Transportation.EditedAt,
-                CreatorId = x.Transportation.CreatorId ?? Guid.Empty,
-                EditorId = x.Transportation.EditorId ?? Guid.Empty,
-                Asset = new AssetBaseDto
-                {
-                    Id = x.Asset.Id,
-                    AssetName = x.Asset.AssetName,
-                    AssetCode = x.Asset.AssetCode,
-                    IsMovable = x.Asset.IsMovable,
-                    Status = x.Asset.Status,
-                    StatusObj = x.Asset.Status.GetValue(),
-                    ManufacturingYear = x.Asset.ManufacturingYear,
-                    SerialNumber = x.Asset.SerialNumber,
-                    Quantity = x.Asset.Quantity,
-                    Description = x.Asset.Description,
-                    LastCheckedDate = x.Asset.LastCheckedDate,
-                    LastMaintenanceTime = x.Asset.LastMaintenanceTime,
-                    TypeId = x.Asset.TypeId,
-                    ModelId = x.Asset.ModelId,
-                    IsRented = x.Asset.IsRented,
-                    StartDateOfUse = x.Asset.StartDateOfUse
-                },
-                ToRoom = new RoomBaseDto
-                {
-                    Id = x.ToRoom.Id,
-                    RoomCode = x.ToRoom.RoomCode,
-                    RoomName = x.ToRoom.RoomName,
-                    StatusId = x.ToRoom.StatusId,
-                    FloorId = x.ToRoom.FloorId,
-                    CreatedAt = x.ToRoom.CreatedAt,
-                    EditedAt = x.ToRoom.EditedAt
-                },
-                FromRoom = new RoomBaseDto
-                {
-                    Id = x.FromRoom.Id,
-                    RoomCode = x.FromRoom.RoomCode,
-                    RoomName = x.FromRoom.RoomName,
-                    StatusId = x.FromRoom.StatusId,
-                    FloorId = x.FromRoom.FloorId,
-                    CreatedAt = x.FromRoom.CreatedAt,
-                    EditedAt = x.FromRoom.EditedAt
-                }
-            }).ToListAsync();
+        //    var transportations = await joinTables.Select(x => new TransportDto
+        //    {
+        //        Id = x.Transportation.Id,
+        //        RequestCode = x.Transportation.RequestCode,
+        //        RequestDate = x.Transportation.RequestDate,
+        //        CompletionDate = x.Transportation.CompletionDate,
+        //        Status = x.Transportation.Status,
+        //        Description = x.Transportation.Description,
+        //        Notes = x.Transportation.Notes,
+        //        IsInternal = x.Transportation.IsInternal,
+        //        AssignedTo = x.Transportation.AssignedTo,
+        //        AssetId = x.Transportation.AssetId,
+        //        CreatedAt = x.Transportation.CreatedAt,
+        //        EditedAt = x.Transportation.EditedAt,
+        //        CreatorId = x.Transportation.CreatorId ?? Guid.Empty,
+        //        EditorId = x.Transportation.EditorId ?? Guid.Empty,
+        //        Asset = new AssetBaseDto
+        //        {
+        //            Id = x.Asset.Id,
+        //            AssetName = x.Asset.AssetName,
+        //            AssetCode = x.Asset.AssetCode,
+        //            IsMovable = x.Asset.IsMovable,
+        //            Status = x.Asset.Status,
+        //            StatusObj = x.Asset.Status.GetValue(),
+        //            ManufacturingYear = x.Asset.ManufacturingYear,
+        //            SerialNumber = x.Asset.SerialNumber,
+        //            Quantity = x.Asset.Quantity,
+        //            Description = x.Asset.Description,
+        //            LastCheckedDate = x.Asset.LastCheckedDate,
+        //            LastMaintenanceTime = x.Asset.LastMaintenanceTime,
+        //            TypeId = x.Asset.TypeId,
+        //            ModelId = x.Asset.ModelId,
+        //            IsRented = x.Asset.IsRented,
+        //            StartDateOfUse = x.Asset.StartDateOfUse
+        //        },
+        //        ToRoom = new RoomBaseDto
+        //        {
+        //            Id = x.ToRoom.Id,
+        //            RoomCode = x.ToRoom.RoomCode,
+        //            RoomName = x.ToRoom.RoomName,
+        //            StatusId = x.ToRoom.StatusId,
+        //            FloorId = x.ToRoom.FloorId,
+        //            CreatedAt = x.ToRoom.CreatedAt,
+        //            EditedAt = x.ToRoom.EditedAt
+        //        },
+        //        FromRoom = new RoomBaseDto
+        //        {
+        //            Id = x.FromRoom.Id,
+        //            RoomCode = x.FromRoom.RoomCode,
+        //            RoomName = x.FromRoom.RoomName,
+        //            StatusId = x.FromRoom.StatusId,
+        //            FloorId = x.FromRoom.FloorId,
+        //            CreatedAt = x.FromRoom.CreatedAt,
+        //            EditedAt = x.FromRoom.EditedAt
+        //        }
+        //    }).ToListAsync();
 
-            transportations = await _mapperRepository.MapCreator(transportations);
+        //    transportations = await _mapperRepository.MapCreator(transportations);
 
-            return ApiResponses<TransportDto>.Success(
-                transportations,
-                totalCount,
-                queryDto.PageSize,
-                queryDto.Page,
-                (int)Math.Ceiling(totalCount / (double)queryDto.PageSize));
-        }
+        //    return ApiResponses<TransportDto>.Success(
+        //        transportations,
+        //        totalCount,
+        //        queryDto.PageSize,
+        //        queryDto.Page,
+        //        (int)Math.Ceiling(totalCount / (double)queryDto.PageSize));
+        //}
 
         public async Task<ApiResponse> Update(Guid id, BaseRequestUpdateDto updateDto)
         {
