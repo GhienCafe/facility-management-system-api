@@ -21,6 +21,4 @@ public class MaintenanceCreateDto : BaseRequestCreateDto
 
 public class MaintenanceUpdateDto : BaseRequestUpdateDto
 {
-    public Guid? CategoryId { get; set; }
-    public Guid? AssetTypeId { get; set; }
 }
