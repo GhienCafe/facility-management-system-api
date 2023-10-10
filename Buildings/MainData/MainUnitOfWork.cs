@@ -38,7 +38,7 @@ public class MainUnitOfWork : IDisposable
    // public BaseRepository<ActionRequest> RequestRepository => new(_context);
     public BaseRepository<AssetCheck> AssetCheckRepository => new(_context);
     public BaseRepository<TeamMember> TeamMemberRepository => new(_context);
-
+    public BaseRepository<TransportationDetail> TransportationDetailRepository => new(_context);
     public void Dispose()
     {
     }

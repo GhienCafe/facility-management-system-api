@@ -51,6 +51,8 @@ public class BaseRequestUpdateDto
     public bool? IsInternal { get; set; }
     public string? Notes { get; set; } // Results
     public Guid? AssignedTo { get; set; }
+    public Guid? AssetTypeId { get; set; }
+    public Guid? CategoryId { get; set;}
 }
 
 //public class BaseRequestUpdateDto
