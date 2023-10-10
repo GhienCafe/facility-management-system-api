@@ -1,4 +1,6 @@
-﻿namespace API_FFMS.Dtos;
+﻿using MainData.Entities;
+
+namespace API_FFMS.Dtos;
 
 public class ReplaceDto : BaseRequestDto {
     public Guid NewAssetId { get; set; }
