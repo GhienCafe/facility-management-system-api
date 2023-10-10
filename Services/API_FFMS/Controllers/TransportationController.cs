@@ -15,12 +15,12 @@ namespace API_FFMS.Controllers
             _service = transportationService;
         }
 
-        //[HttpGet]
-        //[SwaggerOperation("Get list transportations")]
-        //public async Task<ApiResponses<TransportDto>> GetTransports([FromQuery] TransportationQueryDto queryDto)
-        //{
-        //    return await _service.GetTransports(queryDto);
-        //}
+        [HttpGet]
+        [SwaggerOperation("Get list transportations")]
+        public async Task<ApiResponses<TransportDto>> GetTransports([FromQuery] TransportationQueryDto queryDto)
+        {
+            return await _service.GetTransports(queryDto);
+        }
 
         [HttpPost]
         [SwaggerOperation("Create new transportation")]

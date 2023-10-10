@@ -12,7 +12,7 @@ namespace API_FFMS.Services
 {
     public interface ITransportationService : IBaseService
     {
-        //Task<ApiResponses<TransportDto>> GetTransports(TransportationQueryDto queryDto);
+        Task<ApiResponses<TransportDto>> GetTransports(TransportationQueryDto queryDto);
         Task<ApiResponse> Create(TransportCreateDto createDto);
         Task<ApiResponse> Update(Guid id, BaseRequestUpdateDto updateDto);
         Task<ApiResponse<TransportDto>> GetTransportation(Guid id);
@@ -34,7 +34,7 @@ namespace API_FFMS.Services
         public async Task<ApiResponse> Create(TransportCreateDto createDto)
         {
             var assets = new List<Asset>();
-            foreach(var assetId in createDto.AssetId!)
+            foreach (var assetId in createDto.AssetId!)
             {
                 var asset = await MainUnitOfWork.AssetRepository.FindOneAsync(assetId);
                 if (asset == null)
@@ -61,32 +61,6 @@ namespace API_FFMS.Services
                 AssignedTo = createDto.AssignedTo,
                 ToRoomId = createDto.ToRoomId
             };
-
-            //var asset = await MainUnitOfWork.AssetRepository.FindOneAsync(createDto.AssetId);
-            //if (asset == null)
-            //{
-            //    throw new ApiException("Không tìm thấy trang thiết bị", StatusCode.NOT_FOUND);
-            //}
-
-            //if (asset.Status != AssetStatus.Operational)
-            //{
-            //    throw new ApiException("Trang thiết bị đang trong một yêu cầu khác", StatusCode.BAD_REQUEST);
-            //}
-
-            //var teams = MainUnitOfWork.TeamMemberRepository.GetQuery();
-            //var assignee = await MainUnitOfWork.TeamMemberRepository.FindOneAsync(
-            //    new Expression<Func<TeamMember, bool>>[]
-            //    {
-            //        x => !x.DeletedAt.HasValue,
-            //        x => x.MemberId == createDto.AssignedTo,
-            //        x => x.TeamId == createDto.AssignedTo
-            //    });
-            //if (assignee == null)
-            //{
-            //    throw new ApiException("Trang thiết bị đang trong một yêu cầu khác", StatusCode.BAD_REQUEST);
-            //}
-
-            //var transportation = createDto.ProjectTo<TransportCreateDto, Transportation>();
 
             if (!await _transportationRepository.InsertTransportations(transportation, assets, AccountId, CurrentDate))
             {
@@ -134,7 +108,7 @@ namespace API_FFMS.Services
                     throw new ApiException("Không tìm thấy yêu cầu vận chuyển này", StatusCode.NOT_FOUND);
                 }
 
-                if(existingTransport.Status == RequestStatus.NotStarted)
+                if (existingTransport.Status == RequestStatus.NotStarted)
                 {
                     throw new ApiException("Không thể xóa yêu cầu đang trong quá trình thực hiện", StatusCode.NOT_FOUND);
                 }
@@ -151,184 +125,192 @@ namespace API_FFMS.Services
 
         public async Task<ApiResponse<TransportDto>> GetTransportation(Guid id)
         {
-            var transportation = await MainUnitOfWork.TransportationRepository.FindOneAsync<TransportDto>(
+            var existingtransport= await MainUnitOfWork.TransportationRepository.FindOneAsync<TransportDto>(
                 new Expression<Func<Transportation, bool>>[]
                 {
                     x => !x.DeletedAt.HasValue,
                     x => x.Id == id
                 });
 
-            if (transportation == null)
+            if (existingtransport == null)
             {
                 throw new ApiException("Không tìm thấy yêu cầu vận chuyển", StatusCode.NOT_FOUND);
             }
 
-            transportation.Asset = await MainUnitOfWork.AssetRepository.FindOneAsync<AssetBaseDto>(
-                new Expression<Func<Asset, bool>>[]
-                {
-                    x => !x.DeletedAt.HasValue,
-                    x => x.Id == transportation.AssetId
-                });
+            var roomDataset = MainUnitOfWork.RoomRepository.GetQuery();
+            var toRoom = await roomDataset
+                            .Where(r => r!.Id == existingtransport.ToRoomId)
+                            .Select(r => new RoomBaseDto
+                            {
+                                Id = r!.Id,
+                                RoomCode = r.RoomCode,
+                                RoomName = r.RoomName,
+                                StatusId = r.StatusId,
+                                FloorId = r.FloorId,
+                                CreatedAt = r.CreatedAt,
+                                EditedAt = r.EditedAt
+                            }).FirstOrDefaultAsync();
 
-            if (transportation.Asset != null)
+            var transportDetails = MainUnitOfWork.TransportationDetailRepository.GetQuery();
+            var assets = await transportDetails
+                        .Where(td => td!.TransportationId == id)
+                        .Join(MainUnitOfWork.AssetRepository.GetQuery(),
+                                td => td!.AssetId,
+                                asset => asset!.Id, (td, asset) => new FromRoomAssetDto
+                                {
+                                    Asset = new AssetBaseDto
+                                    {
+                                        Id = asset!.Id,
+                                        Description = asset.Description,
+                                        AssetCode = asset.AssetCode,
+                                        AssetName = asset.AssetName,
+                                        Quantity = asset.Quantity,
+                                        IsMovable = asset.IsMovable,
+                                        IsRented = asset.IsRented,
+                                        ManufacturingYear = asset.ManufacturingYear,
+                                        StatusObj = asset.Status.GetValue(),
+                                        Status = asset.Status,
+                                        StartDateOfUse = asset.StartDateOfUse,
+                                        SerialNumber = asset.SerialNumber,
+                                        LastCheckedDate = asset.LastCheckedDate,
+                                        LastMaintenanceTime = asset.LastMaintenanceTime,
+                                        TypeId = asset.TypeId,
+                                        ModelId = asset.ModelId,
+                                        CreatedAt = asset.CreatedAt,
+                                        EditedAt = asset.EditedAt,
+                                        CreatorId = asset.CreatorId ?? Guid.Empty,
+                                        EditorId = asset.EditorId ?? Guid.Empty
+                                    },
+                                    FromRoom = new RoomBaseDto
+                                    {
+                                        Id = asset.RoomAssets!.FirstOrDefault(ra => ra.AssetId == td!.AssetId)!.Room!.Id,
+                                        RoomCode = asset.RoomAssets!.FirstOrDefault(ra => ra.AssetId == td!.AssetId)!.Room!.RoomCode,
+                                        RoomName = asset.RoomAssets!.FirstOrDefault(ra => ra.AssetId == td!.AssetId)!.Room!.RoomName,
+                                        StatusId = asset.RoomAssets!.FirstOrDefault(ra => ra.AssetId == td!.AssetId)!.Room!.StatusId,
+                                        FloorId = asset.RoomAssets!.FirstOrDefault(ra => ra.AssetId == td!.AssetId)!.Room!.FloorId,
+                                        CreatedAt = asset.RoomAssets!.FirstOrDefault(ra => ra.AssetId == td!.AssetId)!.Room!.CreatedAt,
+                                        EditedAt =  asset.RoomAssets!.FirstOrDefault(ra => ra.AssetId == td!.AssetId)!.Room!.EditedAt
+                                    }
+                                }).ToListAsync();
+
+            var tranportation = new TransportDto
             {
-                transportation.Asset!.StatusObj = transportation.Asset.Status?.GetValue();
-                var roomAsset = await MainUnitOfWork.RoomAssetRepository.FindOneAsync<RoomAsset>(
-                            new Expression<Func<RoomAsset, bool>>[]
-                {
-                    x => !x.DeletedAt.HasValue,
-                    x => x.AssetId == transportation.Asset.Id,
-                    x => x.ToDate == null
-                });
+                Id = existingtransport.Id,
+                RequestDate = existingtransport.RequestDate,
+                Quantity = existingtransport.Quantity,
+                CreatedAt = existingtransport.CreatedAt,
+                EditedAt = existingtransport.EditedAt,
+                CreatorId = existingtransport.CreatorId,
+                EditorId = existingtransport.EditorId,
+                Assets = assets,
+                ToRoom = toRoom
+            };
 
-                if (roomAsset != null)
-                {
-                    transportation.FromRoom = await MainUnitOfWork.RoomRepository.FindOneAsync<RoomBaseDto>(
-                        new Expression<Func<Room, bool>>[]
-                        {
-                            x => !x.DeletedAt.HasValue,
-                            x => x.Id == roomAsset.RoomId
-                        });
-                }
-            }
+            tranportation = await _mapperRepository.MapCreator(tranportation);
 
-            transportation.ToRoom = await MainUnitOfWork.RoomRepository.FindOneAsync<RoomBaseDto>(
-                new Expression<Func<Room, bool>>[]
-                {
-                    x => !x.DeletedAt.HasValue,
-                    x => x.Id == transportation.ToRoomId
-                });
-
-            transportation = await _mapperRepository.MapCreator(transportation);
-
-            return ApiResponse<TransportDto>.Success(transportation);
+            return ApiResponse<TransportDto>.Success(tranportation);
         }
 
-        //public async Task<ApiResponses<TransportDto>> GetTransports(TransportationQueryDto queryDto)
-        //{
-        //    var keyword = queryDto.Keyword?.Trim().ToLower();
-        //    var transportQuery = MainUnitOfWork.TransportationRepository.GetQuery()
-        //                         .Where(x => !x!.DeletedAt.HasValue);
+        public async Task<ApiResponses<TransportDto>> GetTransports(TransportationQueryDto queryDto)
+        {
+            var keyword = queryDto.Keyword?.Trim().ToLower();
+            var transportQuery = MainUnitOfWork.TransportationRepository.GetQuery()
+                                 .Where(x => !x!.DeletedAt.HasValue);
 
-        //    if (keyword != null)
-        //    {
-        //        transportQuery = transportQuery.Where(x => x!.RequestCode.ToLower().Contains(keyword));
-        //    }
+            if (keyword != null)
+            {
+                transportQuery = transportQuery.Where(x => x!.RequestCode.ToLower().Contains(keyword));
+            }
 
-        //    if (queryDto.AssignedTo != null)
-        //    {
-        //        transportQuery = transportQuery.Where(x => x!.AssignedTo == queryDto.AssignedTo);
-        //    }
+            if (queryDto.AssignedTo != null)
+            {
+                transportQuery = transportQuery.Where(x => x!.AssignedTo == queryDto.AssignedTo);
+            }
 
-        //    if (queryDto.AssetId != null)
-        //    {
-        //        transportQuery = transportQuery.Where(x => x!.AssetId == queryDto.AssetId);
-        //    }
+            if (queryDto.Status != null)
+            {
+                transportQuery = transportQuery.Where(x => x!.Status == queryDto.Status);
+            }
 
-        //    if (queryDto.Status != null)
-        //    {
-        //        transportQuery = transportQuery.Where(x => x!.Status == queryDto.Status);
-        //    }
+            if (queryDto.RequestDate != null)
+            {
+                transportQuery = transportQuery.Where(x => x!.RequestDate == queryDto.RequestDate);
+            }
 
-        //    if (queryDto.RequestDate != null)
-        //    {
-        //        transportQuery = transportQuery.Where(x => x!.RequestDate == queryDto.RequestDate);
-        //    }
+            if (queryDto.CompletionDate != null)
+            {
+                transportQuery = transportQuery.Where(x => x!.CompletionDate == queryDto.CompletionDate);
+            }
 
-        //    if (queryDto.CompletionDate != null)
-        //    {
-        //        transportQuery = transportQuery.Where(x => x!.CompletionDate == queryDto.CompletionDate);
-        //    }
+            var totalCount = await transportQuery.CountAsync();
+            transportQuery = transportQuery.Skip(queryDto.Skip()).Take(queryDto.PageSize);
 
-        //    var roomAssets = MainUnitOfWork.RoomAssetRepository.GetQuery();
-        //    var roomDataset = MainUnitOfWork.RoomRepository.GetQuery();
+            var transportations = await transportQuery.Select(t => new TransportDto
+            {
+                Id = t!.Id,
+                RequestCode = t.RequestCode,
+                RequestDate = t.RequestDate,
+                CompletionDate = t.CompletionDate,
+                Status = t.Status,
+                StatusObj = t.Status!.GetValue(),
+                Description = t.Description,
+                Notes = t.Notes,
+                IsInternal = t.IsInternal,
+                Quantity = t.Quantity,
+                ToRoomId = t.ToRoomId,
+                AssignedTo = t.AssignedTo,
+                CreatedAt = t.CreatedAt,
+                EditedAt = t.EditedAt,
+                CreatorId = t.CreatorId ?? Guid.Empty,
+                EditorId = t.EditorId ?? Guid.Empty,
+                Assets = t.TransportationDetails!.Select(td => new FromRoomAssetDto
+                {
+                    Asset = new AssetBaseDto
+                    {
+                        Id = (Guid)td.AssetId,
+                        AssetCode = td.Asset!.AssetCode,
+                        AssetName = td.Asset.AssetName,
+                        Quantity = td.Asset.Quantity,
+                        Status = td.Asset.Status,
+                        StatusObj = td.Asset.Status.GetValue(),
+                        IsMovable = td.Asset.IsMovable,
+                        Description = td.Asset.Description,
+                        IsRented = td.Asset.IsRented,
+                        ManufacturingYear = td.Asset.ManufacturingYear,
+                        LastCheckedDate = td.Asset.LastCheckedDate,
+                        StartDateOfUse = td.Asset.StartDateOfUse
+                    },
+                    FromRoom = new RoomBaseDto
+                    {
+                        Id = td.Asset.RoomAssets!.FirstOrDefault(ra => ra.AssetId == td.AssetId)!.Room!.Id,
+                        RoomCode = td.Asset.RoomAssets!.FirstOrDefault(ra => ra.AssetId == td.AssetId)!.Room!.RoomCode,
+                        RoomName = td.Asset.RoomAssets!.FirstOrDefault(ra => ra.AssetId == td.AssetId)!.Room!.RoomName,
+                        StatusId = td.Asset.RoomAssets!.FirstOrDefault(ra => ra.AssetId == td.AssetId)!.Room!.StatusId,
+                        FloorId = td.Asset.RoomAssets!.FirstOrDefault(ra => ra.AssetId == td.AssetId)!.Room!.FloorId,
+                        CreatedAt = td.Asset.RoomAssets!.FirstOrDefault(ra => ra.AssetId == td.AssetId)!.Room!.CreatedAt,
+                        EditedAt = td.Asset.RoomAssets!.FirstOrDefault(ra => ra.AssetId == td.AssetId)!.Room!.EditedAt
+                    }
+                }).ToList(),
+                ToRoom = new RoomBaseDto
+                {
+                    Id = t.ToRoom!.Id,
+                    RoomCode = t.ToRoom.RoomCode,
+                    RoomName = t.ToRoom.RoomName,
+                    StatusId = t.ToRoom.StatusId,
+                    FloorId = t.ToRoom.FloorId,
+                    CreatedAt = t.ToRoom.CreatedAt,
+                    EditedAt = t.ToRoom.EditedAt
+                }
+            }).ToListAsync();
+            transportations = await _mapperRepository.MapCreator(transportations);
 
-        //    var joinTables = from transport in transportQuery
-        //                     join user in MainUnitOfWork.UserRepository.GetQuery() on transport.AssignedTo equals user.Id
-        //                     join asset in MainUnitOfWork.AssetRepository.GetQuery() on transport.AssetId equals asset.Id
-
-        //                     join roomAsset in roomAssets on transport.AssetId equals roomAsset.AssetId
-        //                     join fromRoom in roomDataset on roomAsset.RoomId equals fromRoom.Id
-
-        //                     join toRoom in roomDataset on transport.ToRoomId equals toRoom.Id
-        //                     select new
-        //                     {
-        //                         Transportation = transport,
-        //                         Asset = asset,
-        //                         User = user,
-        //                         ToRoom = toRoom,
-        //                         FromRoom = fromRoom
-        //                     };
-
-        //    var totalCount = await joinTables.CountAsync();
-        //    joinTables = joinTables.Skip(queryDto.Skip()).Take(queryDto.PageSize);
-
-        //    var transportations = await joinTables.Select(x => new TransportDto
-        //    {
-        //        Id = x.Transportation.Id,
-        //        RequestCode = x.Transportation.RequestCode,
-        //        RequestDate = x.Transportation.RequestDate,
-        //        CompletionDate = x.Transportation.CompletionDate,
-        //        Status = x.Transportation.Status,
-        //        Description = x.Transportation.Description,
-        //        Notes = x.Transportation.Notes,
-        //        IsInternal = x.Transportation.IsInternal,
-        //        AssignedTo = x.Transportation.AssignedTo,
-        //        AssetId = x.Transportation.AssetId,
-        //        CreatedAt = x.Transportation.CreatedAt,
-        //        EditedAt = x.Transportation.EditedAt,
-        //        CreatorId = x.Transportation.CreatorId ?? Guid.Empty,
-        //        EditorId = x.Transportation.EditorId ?? Guid.Empty,
-        //        Asset = new AssetBaseDto
-        //        {
-        //            Id = x.Asset.Id,
-        //            AssetName = x.Asset.AssetName,
-        //            AssetCode = x.Asset.AssetCode,
-        //            IsMovable = x.Asset.IsMovable,
-        //            Status = x.Asset.Status,
-        //            StatusObj = x.Asset.Status.GetValue(),
-        //            ManufacturingYear = x.Asset.ManufacturingYear,
-        //            SerialNumber = x.Asset.SerialNumber,
-        //            Quantity = x.Asset.Quantity,
-        //            Description = x.Asset.Description,
-        //            LastCheckedDate = x.Asset.LastCheckedDate,
-        //            LastMaintenanceTime = x.Asset.LastMaintenanceTime,
-        //            TypeId = x.Asset.TypeId,
-        //            ModelId = x.Asset.ModelId,
-        //            IsRented = x.Asset.IsRented,
-        //            StartDateOfUse = x.Asset.StartDateOfUse
-        //        },
-        //        ToRoom = new RoomBaseDto
-        //        {
-        //            Id = x.ToRoom.Id,
-        //            RoomCode = x.ToRoom.RoomCode,
-        //            RoomName = x.ToRoom.RoomName,
-        //            StatusId = x.ToRoom.StatusId,
-        //            FloorId = x.ToRoom.FloorId,
-        //            CreatedAt = x.ToRoom.CreatedAt,
-        //            EditedAt = x.ToRoom.EditedAt
-        //        },
-        //        FromRoom = new RoomBaseDto
-        //        {
-        //            Id = x.FromRoom.Id,
-        //            RoomCode = x.FromRoom.RoomCode,
-        //            RoomName = x.FromRoom.RoomName,
-        //            StatusId = x.FromRoom.StatusId,
-        //            FloorId = x.FromRoom.FloorId,
-        //            CreatedAt = x.FromRoom.CreatedAt,
-        //            EditedAt = x.FromRoom.EditedAt
-        //        }
-        //    }).ToListAsync();
-
-        //    transportations = await _mapperRepository.MapCreator(transportations);
-
-        //    return ApiResponses<TransportDto>.Success(
-        //        transportations,
-        //        totalCount,
-        //        queryDto.PageSize,
-        //        queryDto.Page,
-        //        (int)Math.Ceiling(totalCount / (double)queryDto.PageSize));
-        //}
+            return ApiResponses<TransportDto>.Success(
+                transportations,
+                totalCount,
+                queryDto.PageSize,
+                queryDto.Page,
+                (int)Math.Ceiling(totalCount / (double)queryDto.PageSize));
+        }
 
         public async Task<ApiResponse> Update(Guid id, BaseRequestUpdateDto updateDto)
         {
@@ -338,7 +320,7 @@ namespace API_FFMS.Services
                 throw new ApiException("Không tìm thấy yêu cầu vận chuyển này", StatusCode.NOT_FOUND);
             }
 
-            if(existingTransport.Status != RequestStatus.NotStarted)
+            if (existingTransport.Status != RequestStatus.NotStarted)
             {
                 throw new ApiException("Chỉ được cập nhật các yêu cầu chưa hoàn thành", StatusCode.NOT_FOUND);
             }
