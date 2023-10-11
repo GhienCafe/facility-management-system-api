@@ -14,7 +14,7 @@ public class TaskBaseDto : BaseRequestDto
     public Guid? ToRoomId { get; set; } // For internal
     
     // Replace
-    public string? NewAssetId { get; set; }
+    //public string? NewAssetId { get; set; }
 }
 
 public class TaskQueryDto : BaseRequestQueryDto
