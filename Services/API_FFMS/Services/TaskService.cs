@@ -27,7 +27,7 @@ public class TaskService : BaseService, ITaskService
     {
         // Retrieve tasks from the Transportation table
         var transportationTasks = MainUnitOfWork.TransportationRepository.GetQuery()
-            .Where(t => !t!.DeletedAt.HasValue)
+            .Where(t => !t!.DeletedAt.HasValue && t.AssignedTo == AccountId)
             .Select(t => new TaskBaseDto
             {
                 Type = RequestType.Transportation,
@@ -36,7 +36,6 @@ public class TaskService : BaseService, ITaskService
                 EditorId = t.EditorId ?? Guid.Empty,
                 CreatedAt = t.CreatedAt,
                 EditedAt = t.EditedAt,
-                //AssetId = t.AssetId,
                 ToRoomId = t.ToRoomId,
                 Quantity = t.Quantity,
                 AssignedTo = t.AssignedTo,
@@ -47,36 +46,33 @@ public class TaskService : BaseService, ITaskService
                 RequestCode = t.RequestCode,
                 RequestDate = t.RequestDate,
                 Status = t.Status,
-                NewAssetId = Guid.Empty.ToString(),
             });
         
         // Retrieve tasks from the Maintenance table
         var maintenanceTasks = MainUnitOfWork.MaintenanceRepository.GetQuery()
-            .Where(m => !m!.DeletedAt.HasValue)
-            .Select(m => new TaskBaseDto
+            .Where(t => !t!.DeletedAt.HasValue && t.AssignedTo == AccountId)
+            .Select(t => new TaskBaseDto
             {
                 Type = RequestType.Maintenance,
-                Id = m.Id,
-                CreatorId = m.CreatorId ?? Guid.Empty,
-                EditorId = m.EditorId ?? Guid.Empty,
-                CreatedAt = m.CreatedAt,
-                EditedAt = m.EditedAt,
-                AssetId = m.AssetId,
-                AssignedTo = m.AssignedTo,
-                CompletionDate = m.CompletionDate,
-                Description = m.Description,
-                Notes = m.Notes,
-                IsInternal = m.IsInternal,
-                RequestCode = m.RequestCode,
-                RequestDate = m.RequestDate,
-                Status = m.Status,
-                NewAssetId = Guid.Empty.ToString(),
+                Id = t!.Id,
+                CreatorId = t.CreatorId ?? Guid.Empty,
+                EditorId = t.EditorId ?? Guid.Empty,
+                CreatedAt = t.CreatedAt,
+                EditedAt = t.EditedAt,
+                ToRoomId = null,
                 Quantity = null,
-                ToRoomId = Guid.Empty,
+                AssignedTo = t.AssignedTo,
+                CompletionDate = t.CompletionDate,
+                Description = t.Description,
+                IsInternal = t.IsInternal,
+                Notes = t.Notes,
+                RequestCode = t.RequestCode,
+                RequestDate = t.RequestDate,
+                Status = t.Status,
             });
-        
+
         // Concatenate the results from both tables
-        var combinedTasks = transportationTasks;
+        var combinedTasks = transportationTasks.Union(maintenanceTasks);
 
         var totalCount = await combinedTasks.CountAsync();
 
@@ -90,7 +86,6 @@ public class TaskService : BaseService, ITaskService
             EditorId = x.EditorId,
             CreatedAt = x.CreatedAt,
             EditedAt = x.EditedAt,
-            AssetId = x.AssetId,
             AssignedTo = x.AssignedTo,
             CompletionDate = x.CompletionDate,
             Description = x.Description,
@@ -100,8 +95,7 @@ public class TaskService : BaseService, ITaskService
             RequestDate = x.RequestDate,
             Status = x.Status, 
             Quantity = x.Quantity,
-            ToRoomId = x.ToRoomId,
-            NewAssetId = x.NewAssetId == null || x.NewAssetId.Equals(Guid.Empty.ToString()) ? null : x.NewAssetId.ToString(),
+            ToRoomId = x.ToRoomId
         }).ToListAsync();
 
         items.ForEach(x =>
