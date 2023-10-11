@@ -43,9 +43,9 @@ namespace API_FFMS.Services
                 throw new ApiException("Không tìm thấy trang thiết bị để thay thế", StatusCode.NOT_FOUND);
             }
 
-            if(asset.Status != AssetStatus.Operational || newAsset.Status != AssetStatus.Operational)
+            if(newAsset.Status != AssetStatus.Operational||asset.Status != AssetStatus.Maintenance || asset.Status != AssetStatus.Repair)
             {
-                throw new ApiException("Trang thiết bị đang trong một yêu cầu khác", StatusCode.BAD_REQUEST);
+                throw new ApiException("Trang thiết bị cần thay thế đang trong một yêu cầu khác", StatusCode.BAD_REQUEST);
             }
 
             var replacement = createDto.ProjectTo<ReplaceCreateDto, Replacement>();
@@ -164,7 +164,6 @@ namespace API_FFMS.Services
             {
                 replaceQuery = replaceQuery.Where(x => x!.CompletionDate == queryDto.CompletionDate);
             }
-
             var joinTables = from replace in replaceQuery
                              join asset in MainUnitOfWork.AssetRepository.GetQuery() on replace.AssetId equals asset.Id
                              join newAsset in MainUnitOfWork.AssetRepository.GetQuery() on replace.NewAssetId equals newAsset.Id
@@ -190,6 +189,7 @@ namespace API_FFMS.Services
                 IsInternal = x.Replacement.IsInternal,
                 AssignedTo = x.Replacement.AssignedTo,
                 AssetId = x.Replacement.AssetId,
+                NewAssetId = x.Replacement.NewAssetId,
                 CreatedAt = x.Replacement.CreatedAt,
                 EditedAt = x.Replacement.EditedAt,
                 CreatorId = x.Replacement.CreatorId ?? Guid.Empty,
@@ -243,6 +243,7 @@ namespace API_FFMS.Services
                 queryDto.Page,
                 (int)Math.Ceiling(totalCount / (double)queryDto.PageSize));
         }
+        
 
         public async Task<ApiResponse> Update(Guid id, BaseRequestUpdateDto updateDto)
         {
@@ -252,23 +253,30 @@ namespace API_FFMS.Services
                 throw new ApiException("Không tìm thấy yêu cầu thay thế này", StatusCode.NOT_FOUND);
             }
 
-            if (existingReplace.Status != RequestStatus.NotStarted)
+            if (existingReplace.Status != RequestStatus.NotStarted && existingReplace.Status != RequestStatus.InProgress)
             {
                 throw new ApiException("Chỉ được cập nhật các yêu cầu chưa hoàn thành", StatusCode.NOT_FOUND);
             }
-
+            
+            if (updateDto.Status == RequestStatus.InProgress)
+            {
+                if (!await _repository.UpdateStatus(existingReplace, existingReplace.Status, AccountId, CurrentDate))
+                {
+                    throw new ApiException("Cập nhật thông tin yêu cầu thất bại", StatusCode.SERVER_ERROR);
+                }
+            }
             existingReplace.RequestDate = updateDto.RequestDate ?? existingReplace.RequestDate;
             existingReplace.CompletionDate = updateDto.CompletionDate ?? existingReplace.CompletionDate;
             existingReplace.Status = updateDto.Status ?? existingReplace.Status;
             existingReplace.Description = updateDto.Description ?? existingReplace.Description;
             existingReplace.Notes = updateDto.Notes ?? existingReplace.Notes;
-
-            if (!await MainUnitOfWork.ReplacementRepository.UpdateAsync(existingReplace, AccountId, CurrentDate))
+            if (!await _repository.UpdateStatus(existingReplace, existingReplace.Status, AccountId, CurrentDate))
             {
                 throw new ApiException("Cập nhật thông tin yêu cầu thất bại", StatusCode.SERVER_ERROR);
             }
 
             return ApiResponse.Success("Cập nhật yêu cầu thành công");
         }
+
     }
 }
