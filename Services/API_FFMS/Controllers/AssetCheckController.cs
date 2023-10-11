@@ -22,6 +22,13 @@ public class AssetCheckController : BaseController
         return await _assetCheckService.GetAssetChecks(queryDto);
     }
 
+    [HttpGet("{id:guid}")]
+    [SwaggerOperation("Get detail asset check")]
+    public async Task<ApiResponse<AssetCheckDto>> GetAssetCheck(Guid id)
+    {
+        return await _assetCheckService.GetAssetCheck(id);
+    }
+
     [HttpDelete("{id:guid}")]
     [SwaggerOperation("Delete asset check")]
     public async Task<ApiResponse> Delete(Guid id)
@@ -34,5 +41,19 @@ public class AssetCheckController : BaseController
     public async Task<ApiResponse> DeleteAssetChecks(List<Guid> ids)
     {
         return await _assetCheckService.DeleteAssetChecks(ids);
+    }
+
+    [HttpPost]
+    [SwaggerOperation("Create new asset check")]
+    public async Task<ApiResponse> Create([FromBody] AssetCheckCreateDto createDto)
+    {
+        return await _assetCheckService.Create(createDto);
+    }
+
+    [HttpPut]
+    [SwaggerOperation("Update asset check")]
+    public async Task<ApiResponse> Update(Guid id, AssetCheckUpdateDto updateDto)
+    {
+        return await _assetCheckService.Update(id, updateDto);
     }
 }

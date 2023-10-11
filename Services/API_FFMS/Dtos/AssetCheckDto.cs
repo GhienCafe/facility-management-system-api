@@ -24,3 +24,7 @@ public class AssetCheckQueryDto : BaseRequestQueryDto
     public DateTime? RequestDate { get; set; }
     public DateTime? CompletionDate { get; set; }
 }
+
+public class AssetCheckCreateDto : BaseRequestCreateDto { }
+
+public class AssetCheckUpdateDto : BaseRequestUpdateDto { }

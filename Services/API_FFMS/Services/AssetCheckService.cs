@@ -1,4 +1,5 @@
 ﻿using API_FFMS.Dtos;
+using API_FFMS.Repositories;
 using AppCore.Extensions;
 using AppCore.Models;
 using MainData;
@@ -14,12 +15,30 @@ public interface IAssetCheckService : IBaseService
     Task<ApiResponses<AssetCheckDto>> GetAssetChecks(AssetCheckQueryDto queryDto);
     Task<ApiResponse> DeleteAssetChecks(List<Guid> ids);
     Task<ApiResponse> Delete(Guid id);
+    Task<ApiResponse> Create(AssetCheckCreateDto createDto);
+    Task<ApiResponse<AssetCheckDto>> GetAssetCheck(Guid id);
+    Task<ApiResponse> Update(Guid id, AssetCheckUpdateDto updateDto);
 }
 
 public class AssetCheckService : BaseService, IAssetCheckService
 {
-    public AssetCheckService(MainUnitOfWork mainUnitOfWork, IHttpContextAccessor httpContextAccessor, IMapperRepository mapperRepository) : base(mainUnitOfWork, httpContextAccessor, mapperRepository)
+    private readonly IAssetcheckRepository _assetcheckRepository;
+    public AssetCheckService(MainUnitOfWork mainUnitOfWork, IHttpContextAccessor httpContextAccessor,
+                            IMapperRepository mapperRepository, IAssetcheckRepository assetcheckRepository)
+                            : base(mainUnitOfWork, httpContextAccessor, mapperRepository)
     {
+        _assetcheckRepository = assetcheckRepository;
+    }
+
+    public async Task<ApiResponse> Create(AssetCheckCreateDto createDto)
+    {
+        var assetCheck = createDto.ProjectTo<AssetCheckCreateDto, AssetCheck>();
+        if (!await _assetcheckRepository.InsertAssetCheck(assetCheck, AccountId, CurrentDate))
+        {
+            throw new ApiException("Thêm mới thất bại", StatusCode.SERVER_ERROR);
+        }
+
+        return ApiResponse.Created("Thêm mới thành công");
     }
 
     public async Task<ApiResponse> Delete(Guid id)
@@ -55,6 +74,50 @@ public class AssetCheckService : BaseService, IAssetCheckService
             throw new ApiException("Xóa thất bại", StatusCode.SERVER_ERROR);
         }
         return ApiResponse.Success();
+    }
+
+    public async Task<ApiResponse<AssetCheckDto>> GetAssetCheck(Guid id)
+    {
+        var assetCheck = await MainUnitOfWork.AssetCheckRepository.FindOneAsync<AssetCheckDto>(
+            new Expression<Func<AssetCheck, bool>>[]
+            {
+                x => !x.DeletedAt.HasValue,
+                    x => x.Id == id
+            });
+        if (assetCheck == null)
+        {
+            throw new ApiException("Không tìm thấy yêu cầu", StatusCode.NOT_FOUND);
+        }
+
+        assetCheck.Asset = await MainUnitOfWork.AssetRepository.FindOneAsync<AssetBaseDto>(
+                new Expression<Func<Asset, bool>>[]
+                {
+                    x => !x.DeletedAt.HasValue,
+                    x => x.Id == assetCheck.AssetId
+                });
+
+        if (assetCheck.Asset != null)
+        {
+            assetCheck.Asset!.StatusObj = assetCheck.Asset.Status?.GetValue();
+            var location = await MainUnitOfWork.RoomAssetRepository.FindOneAsync<RoomAsset>(
+                new Expression<Func<RoomAsset, bool>>[]
+                {
+                    x => !x.DeletedAt.HasValue,
+                    x => x.AssetId == assetCheck.Asset.Id,
+                    x => x.ToDate == null
+                });
+            if (location != null)
+            {
+                assetCheck.Location = await MainUnitOfWork.RoomRepository.FindOneAsync<RoomBaseDto>(
+                        new Expression<Func<Room, bool>>[]
+                        {
+                            x => !x.DeletedAt.HasValue,
+                            x => x.Id == location.RoomId
+                        });
+            }
+        }
+        assetCheck = await _mapperRepository.MapCreator(assetCheck);
+        return ApiResponse<AssetCheckDto>.Success(assetCheck);
     }
 
     public async Task<ApiResponses<AssetCheckDto>> GetAssetChecks(AssetCheckQueryDto queryDto)
@@ -168,5 +231,31 @@ public class AssetCheckService : BaseService, IAssetCheckService
             queryDto.PageSize,
             queryDto.Page,
             (int)Math.Ceiling(totalCount / (double)queryDto.PageSize));
+    }
+
+    public async Task<ApiResponse> Update(Guid id, AssetCheckUpdateDto updateDto)
+    {
+        var existingAssetcheck = await MainUnitOfWork.AssetCheckRepository.FindOneAsync(id);
+        if (existingAssetcheck == null)
+        {
+            throw new ApiException("Không tìm thấy nội dung", StatusCode.NOT_FOUND);
+        }
+
+        existingAssetcheck.Description = updateDto.Description ?? existingAssetcheck.Description;
+        existingAssetcheck.Status = updateDto.Status ?? existingAssetcheck.Status;
+        existingAssetcheck.Notes = updateDto.Notes ?? existingAssetcheck.Notes;
+        existingAssetcheck.CategoryId = updateDto.CategoryId ?? existingAssetcheck.CategoryId;
+        existingAssetcheck.IsInternal = updateDto.IsInternal ?? existingAssetcheck.IsInternal;
+        existingAssetcheck.AssetTypeId = updateDto.AssetTypeId ?? existingAssetcheck.AssetTypeId;
+        existingAssetcheck.AssignedTo = updateDto.AssignedTo ?? existingAssetcheck.AssignedTo;
+        existingAssetcheck.CompletionDate = updateDto.CompletionDate ?? existingAssetcheck.CompletionDate;
+        existingAssetcheck.RequestDate = updateDto.RequestDate ?? existingAssetcheck.RequestDate;
+
+        if (!await MainUnitOfWork.AssetCheckRepository.UpdateAsync(existingAssetcheck, AccountId, CurrentDate))
+        {
+            throw new ApiException("Cập nhật thất bại", StatusCode.SERVER_ERROR);
+        }
+
+        return ApiResponse.Success("Cập nhật thành công");
     }
 }
