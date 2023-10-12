@@ -8,6 +8,8 @@ public class TransportDto : BaseDto
     public string RequestCode { get; set; } = null!;
     public DateTime? RequestDate { get; set; }
     public DateTime? CompletionDate { get; set; }
+    public RequestType Type { get; set; }
+    public EnumValue? TypeObj { get; set; }
     public RequestStatus? Status { get; set; }
     public EnumValue? StatusObj { get; set; }
     public string? Description { get; set; }
