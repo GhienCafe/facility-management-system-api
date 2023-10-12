@@ -2,10 +2,10 @@
 
 namespace API_FFMS.Dtos;
 
-public class AssetCheckDto : BaseDto
+public class AssetCheckDto : BaseRequestDto
 {
-    public Guid RequestId { get; set; }
-    public Guid AssetId { get; set; }
+    //public Guid RequestId { get; set; }
+    //public Guid AssetId { get; set; }
     public bool IsVerified { get; set; }
     public AssetBaseDto? Asset { get; set; }
     public RoomBaseDto? Location { get; set; } 
