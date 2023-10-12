@@ -179,9 +179,18 @@ public class AssetCheckService : BaseService, IAssetCheckService
 
         var assetChecks = await joinTables.Select(x => new AssetCheckDto
         {
-            RequestId = x.AssetCheck.Id,
+            //RequestId = x.AssetCheck.Id,
             IsVerified = x.AssetCheck.IsVerified,
             AssetId = x.AssetCheck.AssetId,
+            Description = x.AssetCheck.Description,
+            RequestCode = x.AssetCheck.RequestCode,
+            RequestDate = x.AssetCheck.RequestDate,
+            CompletionDate = x.AssetCheck.CompletionDate,
+            Status = x.AssetCheck.Status,
+            StatusObj = x.AssetCheck.Status!.GetValue(),
+            Notes = x.AssetCheck.Notes,
+            AssetTypeId = x.AssetCheck.AssetTypeId,
+            CategoryId = x.AssetCheck.CategoryId,
             Asset = new AssetBaseDto
             {
                 Id = x.Asset.Id,
