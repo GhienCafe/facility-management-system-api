@@ -259,8 +259,57 @@ public class TaskService : BaseService, ITaskService
                 Status = t.Status,
             });
 
+        // Retrieve tasks from the Replacement table
+        var replacementTasks = MainUnitOfWork.ReplacementRepository.GetQuery()
+            .Where(t => !t!.DeletedAt.HasValue && t.AssignedTo == AccountId)
+            .Select(t => new TaskBaseDto
+            {
+                Type = RequestType.Replacement,
+                Id = t!.Id,
+                CreatorId = t.CreatorId ?? Guid.Empty,
+                EditorId = t.EditorId ?? Guid.Empty,
+                CreatedAt = t.CreatedAt,
+                EditedAt = t.EditedAt,
+                ToRoomId = null,
+                Quantity = null,
+                AssignedTo = t.AssignedTo,
+                CompletionDate = t.CompletionDate,
+                Description = t.Description,
+                IsInternal = t.IsInternal,
+                Notes = t.Notes,
+                RequestCode = t.RequestCode,
+                RequestDate = t.RequestDate,
+                Status = t.Status,
+            });
+
+        // Retrieve tasks from the Replair table
+        var repairationTasks = MainUnitOfWork.RepairationRepository.GetQuery()
+            .Where(t => !t!.DeletedAt.HasValue && t.AssignedTo == AccountId)
+            .Select(t => new TaskBaseDto
+            {
+                Type = RequestType.Repairation,
+                Id = t!.Id,
+                CreatorId = t.CreatorId ?? Guid.Empty,
+                EditorId = t.EditorId ?? Guid.Empty,
+                CreatedAt = t.CreatedAt,
+                EditedAt = t.EditedAt,
+                ToRoomId = null,
+                Quantity = null,
+                AssignedTo = t.AssignedTo,
+                CompletionDate = t.CompletionDate,
+                Description = t.Description,
+                IsInternal = t.IsInternal,
+                Notes = t.Notes,
+                RequestCode = t.RequestCode,
+                RequestDate = t.RequestDate,
+                Status = t.Status,
+            });
+
         // Concatenate the results from both tables
-        var combinedTasks = transportationTasks.Union(maintenanceTasks).Union(assetCheckTasks);
+        var combinedTasks = transportationTasks.Union(maintenanceTasks)
+                                               .Union(assetCheckTasks)
+                                               .Union(replacementTasks)
+                                               .Union(repairationTasks);
 
         var totalCount = await combinedTasks.CountAsync();
 
@@ -268,7 +317,7 @@ public class TaskService : BaseService, ITaskService
 
         var items = await combinedTasks.Select(x => new TaskBaseDto
         {
-            Type = RequestType.Maintenance,
+            Type = x.Type,
             Id = x.Id,
             CreatorId = x.CreatorId,
             EditorId = x.EditorId,
