@@ -8,6 +8,8 @@ public class TransportDto : BaseDto
     public string RequestCode { get; set; } = null!;
     public DateTime? RequestDate { get; set; }
     public DateTime? CompletionDate { get; set; }
+    public RequestType Type { get; set; }
+    public EnumValue? TypeObj { get; set; }
     public RequestStatus? Status { get; set; }
     public EnumValue? StatusObj { get; set; }
     public string? Description { get; set; }
@@ -30,7 +32,7 @@ public class FromRoomAssetDto
 
 public class TransportCreateDto
 {
-    public List<Guid>? AssetId { get; set; }
+    public List<AssetTransportDto>? Assets { get; set; }
     public string RequestCode { get; set; } = null!;
     //public DateTime? RequestDate { get; set; }
     public DateTime? CompletionDate { get; set; }
@@ -38,9 +40,15 @@ public class TransportCreateDto
     public string? Description { get; set; }
     public string? Notes { get; set; } // Results
     public bool IsInternal { get; set; }
-    public int? Quantity { get; set; }
+    public int? Total { get; set; }
     public Guid? AssignedTo { get; set; }
     public Guid? ToRoomId { get; set; }
+}
+
+public class AssetTransportDto
+{
+    public Guid AssetId { get; set; }
+    public double? Quantity { get; set; }
 }
 
 public class TransportationQueryDto : BaseQueryDto

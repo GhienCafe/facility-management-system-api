@@ -6,6 +6,7 @@ using MainData;
 using MainData.Entities;
 using MainData.Repositories;
 using Microsoft.EntityFrameworkCore;
+using System.Linq;
 using System.Linq.Expressions;
 
 namespace API_FFMS.Services
@@ -33,21 +34,28 @@ namespace API_FFMS.Services
 
         public async Task<ApiResponse> Create(TransportCreateDto createDto)
         {
-            var assets = new List<Asset>();
-            foreach (var assetId in createDto.AssetId!)
-            {
-                var asset = await MainUnitOfWork.AssetRepository.FindOneAsync(assetId);
-                if (asset == null)
-                {
-                    throw new ApiException("Không tìm thấy trang thiết bị", StatusCode.NOT_FOUND);
-                }
+            //var assets = new List<Asset>();
+            //foreach (var assetId in createDto.Assets)
+            //{
+            //    var asset = await MainUnitOfWork.AssetRepository.FindOneAsync(assetId);
+            //    if (asset == null)
+            //    {
+            //        throw new ApiException("Không tìm thấy trang thiết bị", StatusCode.NOT_FOUND);
+            //    }
 
-                if (asset.Status != AssetStatus.Operational)
+            //    if (asset.Status != AssetStatus.Operational)
+            //    {
+            //        throw new ApiException("Trang thiết bị đang trong một yêu cầu khác", StatusCode.BAD_REQUEST);
+            //    }
+            //    assets.Add(asset);
+            //}
+
+            var assets = await MainUnitOfWork.AssetRepository.FindAsync(
+                new Expression<Func<Asset, bool>>[]
                 {
-                    throw new ApiException("Trang thiết bị đang trong một yêu cầu khác", StatusCode.BAD_REQUEST);
-                }
-                assets.Add(asset);
-            }
+                    x => !x!.DeletedAt.HasValue,
+                    x => createDto.Assets!.Select(dto => dto.AssetId).Contains(x.Id)
+                }, null);
 
             var transportation = new Transportation
             {
@@ -57,7 +65,7 @@ namespace API_FFMS.Services
                 Description = createDto.Description,
                 Notes = createDto.Notes,
                 IsInternal = createDto.IsInternal,
-                Quantity = createDto.Quantity,
+                Quantity = assets.Count(),
                 AssignedTo = createDto.AssignedTo,
                 ToRoomId = createDto.ToRoomId
             };
