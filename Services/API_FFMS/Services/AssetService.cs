@@ -8,6 +8,7 @@ using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
 using DocumentFormat.OpenXml.Office2010.Excel;
 using API_FFMS.Repositories;
+using System.Linq;
 using DocumentFormat.OpenXml.Spreadsheet;
 
 namespace API_FFMS.Services;
@@ -334,27 +335,6 @@ public class AssetService : BaseService, IAssetService
 
     public async Task<ApiResponse> DeleteAssets(List<Guid> ids)
     {
-        // var assetDeleteds = new List<Asset>();
-        // foreach (var id in ids)
-        // {
-        //     var existingAsset = await MainUnitOfWork.AssetRepository.FindOneAsync(
-        //         new Expression<Func<Asset, bool>>[]
-        //         {
-        //             x => !x.DeletedAt.HasValue,
-        //             x => x.Id == id
-        //         });
-        //     if (existingAsset == null)
-        //     {
-        //         throw new ApiException("Không tìm thấy thiết bị này", StatusCode.NOT_FOUND);
-        //     }
-        //
-        //     if (existingAsset.Status != AssetStatus.Inactive)
-        //     {
-        //         throw new ApiException("Chỉ được xóa thiết bị không thể sử dụng được nữa", StatusCode.NOT_FOUND);
-        //     }
-        //     assetDeleteds.Add(existingAsset);
-        // }
-
         var assets = await MainUnitOfWork.AssetRepository.FindAsync(new Expression<Func<Asset, bool>>[]
         {
             x => !x.DeletedAt.HasValue,

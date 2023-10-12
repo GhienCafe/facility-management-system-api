@@ -117,6 +117,7 @@ namespace API_FFMS.Repositories
                 {
                     var roomAsset = await _context.RoomAssets.FirstOrDefaultAsync(x => x.AssetId == asset.Id && x.ToDate == null);
                     var fromRoom = await _context.Rooms.FirstOrDefaultAsync(x => x.Id == roomAsset!.RoomId && roomAsset.AssetId == asset.Id);
+
                     if (statusUpdate == RequestStatus.Completed)
                     {
                         asset.Status = AssetStatus.Operational;

@@ -94,27 +94,12 @@ namespace API_FFMS.Services
 
         public async Task<ApiResponse> DeleteTransports(List<Guid> ids)
         {
-            var transportDeleteds = new List<Transportation>();
-            foreach (var id in ids)
-            {
-                var existingTransport = await MainUnitOfWork.TransportationRepository.FindOneAsync(
+            var transportDeleteds = await MainUnitOfWork.TransportationRepository.FindAsync(
                 new Expression<Func<Transportation, bool>>[]
                 {
                     x => !x.DeletedAt.HasValue,
-                    x => x.Id == id
-                });
-                if (existingTransport == null)
-                {
-                    throw new ApiException("Không tìm thấy yêu cầu vận chuyển này", StatusCode.NOT_FOUND);
-                }
-
-                if (existingTransport.Status == RequestStatus.NotStarted)
-                {
-                    throw new ApiException("Không thể xóa yêu cầu đang trong quá trình thực hiện", StatusCode.NOT_FOUND);
-                }
-
-                transportDeleteds.Add(existingTransport);
-            }
+                x => ids.Contains(x.Id)
+                }, null);
 
             if (!await MainUnitOfWork.TransportationRepository.DeleteAsync(transportDeleteds, AccountId, CurrentDate))
             {
@@ -125,7 +110,7 @@ namespace API_FFMS.Services
 
         public async Task<ApiResponse<TransportDto>> GetTransportation(Guid id)
         {
-            var existingtransport= await MainUnitOfWork.TransportationRepository.FindOneAsync<TransportDto>(
+            var existingtransport = await MainUnitOfWork.TransportationRepository.FindOneAsync<TransportDto>(
                 new Expression<Func<Transportation, bool>>[]
                 {
                     x => !x.DeletedAt.HasValue,
@@ -189,7 +174,7 @@ namespace API_FFMS.Services
                                         StatusId = asset.RoomAssets!.FirstOrDefault(ra => ra.AssetId == td!.AssetId)!.Room!.StatusId,
                                         FloorId = asset.RoomAssets!.FirstOrDefault(ra => ra.AssetId == td!.AssetId)!.Room!.FloorId,
                                         CreatedAt = asset.RoomAssets!.FirstOrDefault(ra => ra.AssetId == td!.AssetId)!.Room!.CreatedAt,
-                                        EditedAt =  asset.RoomAssets!.FirstOrDefault(ra => ra.AssetId == td!.AssetId)!.Room!.EditedAt
+                                        EditedAt = asset.RoomAssets!.FirstOrDefault(ra => ra.AssetId == td!.AssetId)!.Room!.EditedAt
                                     }
                                 }).ToListAsync();
 

@@ -71,27 +71,12 @@ namespace API_FFMS.Services
 
         public async Task<ApiResponse> DeleteReplairations(List<Guid> ids)
         {
-            var replairDeleteds = new List<Repairation>();
-            foreach(var id in ids)
-            {
-                var existingRepair = await MainUnitOfWork.RepairationRepository.FindOneAsync(
+            var replairDeleteds = await MainUnitOfWork.RepairationRepository.FindAsync(
                 new Expression<Func<Repairation, bool>>[]
                 {
                     x => !x.DeletedAt.HasValue,
-                    x => x.Id == id
-                });
-                if (existingRepair == null)
-                {
-                    throw new ApiException("Không tìm thấy yêu cầu sửa chữa này", StatusCode.NOT_FOUND);
-                }
-
-                if (existingRepair.Status == RequestStatus.NotStarted)
-                {
-                    throw new ApiException("Không thể xóa yêu cầu đang trong quá trình thực hiện", StatusCode.NOT_FOUND);
-                }
-
-                replairDeleteds.Add(existingRepair);
-            }
+                x => ids.Contains(x.Id)
+                }, null);
             if (!await MainUnitOfWork.RepairationRepository.DeleteAsync(replairDeleteds, AccountId, CurrentDate))
             {
                 throw new ApiException("Xóa thất bại", StatusCode.SERVER_ERROR);
@@ -163,7 +148,7 @@ namespace API_FFMS.Services
                 repairQuery = repairQuery.Where(x => x!.AssignedTo == queryDto.AssignedTo);
             }
 
-            if(queryDto.AssetId != null)
+            if (queryDto.AssetId != null)
             {
                 repairQuery = repairQuery.Where(x => x!.AssetId == queryDto.AssetId);
             }
@@ -264,7 +249,7 @@ namespace API_FFMS.Services
         public async Task<ApiResponse> Update(Guid id, BaseRequestUpdateDto updateDto)
         {
             var existingRepair = await MainUnitOfWork.RepairationRepository.FindOneAsync(id);
-            if(existingRepair == null)
+            if (existingRepair == null)
             {
                 throw new ApiException("Không tìm thấy yêu cầu", StatusCode.NOT_FOUND);
             }
@@ -282,7 +267,7 @@ namespace API_FFMS.Services
             existingRepair.Notes = updateDto.Notes ?? existingRepair.Notes;
             //existingRepair.IsInternal = updateDto.IsInternal;
 
-            if(!await MainUnitOfWork.RepairationRepository.UpdateAsync(existingRepair, AccountId, CurrentDate))
+            if (!await MainUnitOfWork.RepairationRepository.UpdateAsync(existingRepair, AccountId, CurrentDate))
             {
                 throw new ApiException("Cập nhật thông tin yêu cầu thất bại", StatusCode.SERVER_ERROR);
             }
