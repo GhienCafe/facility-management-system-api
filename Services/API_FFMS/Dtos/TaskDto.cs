@@ -19,7 +19,11 @@ public class TaskBaseDto : BaseRequestDto
 
 public class TaskDetailDto : BaseRequestDto
 {
+    public RequestType Type { get; set; }
+    public EnumValue? TypeObj { get; set; }
     //Maintenance, repair
+    //public AssetBaseDto? Asset { get; set; }
+
 
     //Replace
     public Guid NewAssetId { get; set; }
