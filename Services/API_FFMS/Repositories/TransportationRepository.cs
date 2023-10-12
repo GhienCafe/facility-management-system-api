@@ -61,7 +61,7 @@ namespace API_FFMS.Repositories
                             AssetId = asset.Id,
                             TransportationId = transportation.Id,
                             RequestDate = now.Value,
-                            Quantity = transportation.Quantity,
+                            Quantity = (int?)asset.Quantity,
                             CreatorId = creatorId,
                             CreatedAt = now.Value,
                             EditedAt = now.Value

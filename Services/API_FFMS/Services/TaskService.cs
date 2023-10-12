@@ -33,6 +33,7 @@ public class TaskService : BaseService, ITaskService
             {
                 x => !x.DeletedAt.HasValue,
                 x => x.AssignedTo == AccountId,
+                x => x.Id == id
             });
         if (assetCheckTask != null)
         {
@@ -62,6 +63,10 @@ public class TaskService : BaseService, ITaskService
                             });
                 }
             }
+            assetCheckTask.Status = assetCheckTask.Status;
+            assetCheckTask.StatusObj = assetCheckTask.Status?.GetValue();
+            assetCheckTask.Type = RequestType.StatusCheck;
+            assetCheckTask.TypeObj = assetCheckTask.Type.GetValue();
             taskDetail = assetCheckTask;
         }
 
@@ -71,9 +76,11 @@ public class TaskService : BaseService, ITaskService
             {
                 x => !x.DeletedAt.HasValue,
                 x => x.AssignedTo == AccountId,
+                x => x.Id == id
             });
         if (trasportTask != null)
         {
+            trasportTask.Type = RequestType.Transportation;
             var roomDataset = MainUnitOfWork.RoomRepository.GetQuery();
             var toRoom = await roomDataset
                             .Where(r => r!.Id == trasportTask!.ToRoomId)
@@ -131,9 +138,13 @@ public class TaskService : BaseService, ITaskService
             var tranportation = new TaskDetailDto
             {
                 NewAssetId = Guid.Empty,
-                Id = trasportTask!.Id,
+                Type = RequestType.Transportation,
+                TypeObj = trasportTask.Type.GetValue(),
+                Id = trasportTask.Id,
                 RequestDate = trasportTask.RequestDate,
                 Quantity = trasportTask.Quantity,
+                Status = trasportTask.Status,
+                StatusObj = trasportTask.Status!.GetValue(),
                 CreatedAt = trasportTask.CreatedAt,
                 EditedAt = trasportTask.EditedAt,
                 CreatorId = trasportTask.CreatorId,
@@ -144,11 +155,12 @@ public class TaskService : BaseService, ITaskService
             taskDetail = tranportation;
         }
 
-        //REPLAEMENT
+        //REPLACEMENT
         var replacementTask = await MainUnitOfWork.ReplacementRepository.FindOneAsync<TaskDetailDto>(
                 new Expression<Func<Replacement, bool>>[]
                 {
                     x => !x.DeletedAt.HasValue,
+                    x => x.AssignedTo == AccountId,
                     x => x.Id == id
                 });
         if (replacementTask != null)
@@ -166,21 +178,69 @@ public class TaskService : BaseService, ITaskService
                     x => !x.DeletedAt.HasValue,
                     x => x.Id == replacementTask.NewAssetId
                 });
+            replacementTask.Status = replacementTask.Status;
+            replacementTask.StatusObj = replacementTask.Status!.GetValue();
+            replacementTask.Type = RequestType.Replacement;
+            replacementTask.TypeObj = replacementTask.Type.GetValue();
             taskDetail = replacementTask;
         }
-        //var taskDetail = new TaskDetailDto();
-        //if (assetCheckTask != null)
-        //{
-        //    taskDetail = assetCheckTask;
-        //}
-        //else if (trasportTask != null)
-        //{
-        //    taskDetail = trasportTask;
-        //}
-        //else if (replacementTask != null)
-        //{
-        //    taskDetail = replacementTask;
-        //}
+
+        //REPAIRATION
+        var repairation = await MainUnitOfWork.RepairationRepository.FindOneAsync<TaskDetailDto>(
+                new Expression<Func<Repairation, bool>>[]
+                {
+                    x => !x.DeletedAt.HasValue,
+                    x => x.AssignedTo == AccountId,
+                    x => x.Id == id
+                });
+        if(repairation != null)
+        {
+            repairation.Asset = await MainUnitOfWork.AssetRepository.FindOneAsync<AssetBaseDto>(
+                new Expression<Func<Asset, bool>>[]
+                {
+                    x => !x.DeletedAt.HasValue,
+                    x => x.Id == repairation.AssetId
+                });
+            if (repairation.Asset != null)
+            {
+                repairation.Asset!.StatusObj = repairation.Asset.Status?.GetValue();
+            }
+            repairation.Status = repairation.Status;
+            repairation.StatusObj = repairation.Status!.GetValue();
+            repairation.Type = RequestType.Repairation;
+            repairation.TypeObj = repairation.Type.GetValue();
+
+            taskDetail = repairation;
+        }
+
+        //MAINTENANCE
+        var maintenance = await MainUnitOfWork.MaintenanceRepository.FindOneAsync<TaskDetailDto>(
+                new Expression<Func<Maintenance, bool>>[]
+                {
+                    x => !x.DeletedAt.HasValue,
+                    x => x.AssignedTo == AccountId,
+                    x => x.Id == id
+                });
+        if (maintenance != null)
+        {
+            maintenance.Asset = await MainUnitOfWork.AssetRepository.FindOneAsync<AssetBaseDto>(
+                new Expression<Func<Asset, bool>>[]
+                {
+                    x => !x.DeletedAt.HasValue,
+                    x => x.Id == maintenance.AssetId
+                });
+            if (maintenance.Asset != null)
+            {
+                maintenance.Asset!.StatusObj = maintenance.Asset.Status?.GetValue();
+            }
+            maintenance.Status = maintenance.Status;
+            maintenance.StatusObj = maintenance.Status!.GetValue();
+            maintenance.Type = RequestType.Maintenance;
+            maintenance.TypeObj = maintenance.Type.GetValue();
+
+            taskDetail = maintenance;
+        }
+
 
         taskDetail = await _mapperRepository.MapCreator(taskDetail);
 
