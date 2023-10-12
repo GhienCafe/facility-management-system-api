@@ -5,8 +5,8 @@ namespace API_FFMS.Dtos;
 
 public class BaseRequestDto : BaseDto
 {
-    public Guid AssetId { get; set; }
-    public string RequestCode { get; set; } = null!;
+    public Guid? AssetId { get; set; }
+    public string? RequestCode { get; set; }
     public DateTime? RequestDate { get; set; }
     public DateTime? CompletionDate { get; set; }
     public RequestStatus? Status { get; set; }
@@ -17,6 +17,17 @@ public class BaseRequestDto : BaseDto
     public Guid? AssignedTo { get; set; }    
     public Guid? AssetTypeId { get; set; }
     public Guid? CategoryId { get; set; }
+    
+}
+
+public class TransportDetailBaseDto : BaseDto
+{
+    public Guid? AssetId { get; set; }
+    public Guid? TransportationId { get; set; }
+    //public DateTime? RequestDate { get; set; }
+    public int? Quantity { get; set; }
+    
+    public AssetBaseDto? Asset { get; set; }
 }
 
 public class BaseRequestCreateDto

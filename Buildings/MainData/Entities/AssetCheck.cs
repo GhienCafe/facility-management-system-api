@@ -8,6 +8,8 @@ public class AssetCheck : BaseRequest
 {
     public Guid AssetId { get; set; }
     public bool IsVerified { get; set; } 
+    public Guid? AssetTypeId { get; set; }
+    public Guid? CategoryId { get; set; }
 }
 
 public class AssetCheckConfig : IEntityTypeConfiguration<AssetCheck>
@@ -17,6 +19,8 @@ public class AssetCheckConfig : IEntityTypeConfiguration<AssetCheck>
         builder.ToTable("AssetChecks");
         builder.Property(x => x.AssetId).IsRequired();
         builder.Property(x => x.IsVerified).IsRequired().HasDefaultValue(false);
+        builder.Property(a => a.CategoryId).IsRequired(false);
+        builder.Property(a => a.AssetTypeId).IsRequired(false);
 
         //Relationship
         builder.HasOne(x => x.User)

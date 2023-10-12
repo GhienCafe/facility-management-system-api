@@ -9,6 +9,7 @@ public class AssetType : BaseEntity
 {
     public string TypeCode { get; set; } = null!;
     public string TypeName { get; set; } = null!;
+    public bool? IsIdentified { get; set; } 
     public string? Description { get; set; }
     public Unit Unit { get; set; }
     public Guid? CategoryId { get; set; }
@@ -61,6 +62,7 @@ public class AssetCategoryConfig : IEntityTypeConfiguration<AssetType>
     {
         builder.ToTable("AssetTypes");
         builder.Property(a => a.TypeCode).IsRequired();
+        builder.Property(a => a.IsIdentified).IsRequired();
         builder.Property(a => a.TypeName).IsRequired();
         builder.Property(a => a.Unit).IsRequired();
         builder.Property(a => a.Description).IsRequired(false);
