@@ -23,31 +23,27 @@ public class BaseRequest : BaseEntity
 
 public enum RequestStatus
 {
-    [Display(Name = "Đã gửi yêu cầu")]
-    NotStarted = 1,
-    [Display(Name = "Đang trong quá trình thực hiện")]
-    InProgress = 2,
+    [Display(Name = "Đang xử lý")]
+    InProgress = 1,
     [Display(Name = "Đã hoàn thành")]
-    Completed = 3,
-    [Display(Name = "Yêu cầu không thể thực hiện")]
-    CantDo = 4,
-    [Display(Name = "Đã hủy yêu cầu")]
-    Cancelled = 5,
+    Done = 2,
+    [Display(Name = "Đã hủy")]
+    Cancelled = 3,
     [Display(Name = "Khác")]
-    Others = 6,
+    Others = 4,
 }
 
 public enum RequestType
 {
-    [Display(Name = "Kiểm trang trình trạng trang thiết bị")]
+    [Display(Name = "Kiểm trang trình trạng")]
     StatusCheck = 1,
-    [Display(Name = "Bảo trì, nâng cấp trang thiết bị")]
+    [Display(Name = "Bảo trì, nâng cấp")]
     Maintenance = 2,
-    [Display(Name = "Sửa chữa trang thiết bị")]
+    [Display(Name = "Sửa chữa")]
     Repairation = 3,
-    [Display(Name = "Thay thế trang thiết bị")]
+    [Display(Name = "Thay thế")]
     Replacement = 4,
-    [Display(Name = "Điều chuyển trang thiết bị")]
+    [Display(Name = "Điều chuyển")]
     Transportation = 5
 }
 
