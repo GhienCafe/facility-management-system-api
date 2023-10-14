@@ -25,12 +25,14 @@ public enum RequestStatus
 {
     [Display(Name = "Đang xử lý")]
     InProgress = 1,
+    [Display(Name = "Đang báo cáo")]
+    Reported = 2,
     [Display(Name = "Đã hoàn thành")]
-    Done = 2,
+    Done = 3,
     [Display(Name = "Đã hủy")]
-    Cancelled = 3,
+    Cancelled = 4,
     [Display(Name = "Khác")]
-    Others = 4,
+    Others = 5,
 }
 
 public enum RequestType
