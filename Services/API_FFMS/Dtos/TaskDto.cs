@@ -26,7 +26,7 @@ public class TaskDetailDto : BaseRequestDto
 
 
     //Replace
-    public Guid NewAssetId { get; set; }
+    public Guid? NewAssetId { get; set; }
     public AssetBaseDto? Asset { get; set; } //New asset
     public AssetBaseDto? NewAsset { get; set; }
     //Transport
