@@ -43,7 +43,7 @@ namespace API_FFMS.Services
                 throw new ApiException("Không tìm thấy trang thiết bị để thay thế", StatusCode.NOT_FOUND);
             }
 
-            if(newAsset.Status != AssetStatus.Operational||asset.Status != AssetStatus.Maintenance || asset.Status != AssetStatus.Repair)
+            if(newAsset.Status != AssetStatus.Operational)
             {
                 throw new ApiException("Trang thiết bị cần thay thế đang trong một yêu cầu khác", StatusCode.BAD_REQUEST);
             }
@@ -253,7 +253,7 @@ namespace API_FFMS.Services
                 throw new ApiException("Không tìm thấy yêu cầu thay thế này", StatusCode.NOT_FOUND);
             }
 
-            if (existingReplace.Status != RequestStatus.NotStarted && existingReplace.Status != RequestStatus.InProgress)
+            if (existingReplace.Status != RequestStatus.InProgress)
             {
                 throw new ApiException("Chỉ được cập nhật các yêu cầu chưa hoàn thành", StatusCode.NOT_FOUND);
             }

@@ -313,7 +313,7 @@ namespace API_FFMS.Services
                 throw new ApiException("Không tìm thấy yêu cầu vận chuyển này", StatusCode.NOT_FOUND);
             }
 
-            if (existingTransport.Status != RequestStatus.NotStarted)
+            if (existingTransport.Status != RequestStatus.InProgress)
             {
                 throw new ApiException("Chỉ được cập nhật các yêu cầu chưa hoàn thành", StatusCode.NOT_FOUND);
             }

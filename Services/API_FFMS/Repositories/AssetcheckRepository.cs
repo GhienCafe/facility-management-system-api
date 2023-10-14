@@ -26,7 +26,7 @@ namespace API_FFMS.Repositories
                 assetCheck.CreatorId = creatorId;
                 assetCheck.CreatedAt = now.Value;
                 assetCheck.EditedAt = now.Value;
-                assetCheck.Status = RequestStatus.NotStarted;
+                assetCheck.Status = RequestStatus.InProgress;
                 await _context.AssetChecks.AddAsync(assetCheck);
 
                 if (assetCheck.IsInternal)
