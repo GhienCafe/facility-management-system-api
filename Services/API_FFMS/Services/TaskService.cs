@@ -137,7 +137,7 @@ public class TaskService : BaseService, ITaskService
                                 }).ToListAsync();
             var tranportation = new TaskDetailDto
             {
-                NewAssetId = Guid.Empty,
+                NewAssetId = null,
                 Type = RequestType.Transportation,
                 TypeObj = trasportTask.Type.GetValue(),
                 Id = trasportTask.Id,

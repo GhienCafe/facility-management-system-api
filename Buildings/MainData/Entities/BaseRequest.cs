@@ -35,7 +35,7 @@ public enum RequestStatus
 
 public enum RequestType
 {
-    [Display(Name = "Kiểm trang trình trạng")]
+    [Display(Name = "Kiểm tra tình trạng")]
     StatusCheck = 1,
     [Display(Name = "Bảo trì, nâng cấp")]
     Maintenance = 2,
