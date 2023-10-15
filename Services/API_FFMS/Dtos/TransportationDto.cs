@@ -26,6 +26,7 @@ public class TransportDto : BaseDto
 
 public class FromRoomAssetDto
 {
+    public int? Quantity { get; set; }
     public RoomBaseDto? FromRoom { get; set; }
     public AssetBaseDto? Asset { get; set; }
 }
@@ -40,7 +41,8 @@ public class TransportCreateDto
     public string? Description { get; set; }
     public string? Notes { get; set; } // Results
     public bool IsInternal { get; set; }
-    public int? Total { get; set; }
+    //public int? Total { get; set; }
+    public int? Quantity { get; set; }
     public Guid? AssignedTo { get; set; }
     public Guid? ToRoomId { get; set; }
 }
