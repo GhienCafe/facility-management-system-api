@@ -7,7 +7,7 @@ namespace API_FFMS.Repositories
 {
     public interface ITransportationRepository
     {
-        Task<bool> InsertTransportations(Transportation transportation, IEnumerable<Asset> assets, Guid? creatorId, DateTime? now = null);
+        Task<bool> InsertTransportations(Transportation transportation, List<Asset?> assets, Guid? creatorId, DateTime? now = null);
         Task<bool> UpdateStatus(Transportation transportation, RequestStatus? statusUpdate, Guid? editorId, DateTime? now = null);
     }
     public class TransportationRepository : ITransportationRepository
@@ -22,7 +22,7 @@ namespace API_FFMS.Repositories
             _context = context;
         }
 
-        public async Task<bool> InsertTransportations(Transportation transportation, IEnumerable<Asset> assets, Guid? creatorId, DateTime? now = null)
+        public async Task<bool> InsertTransportations(Transportation transportation, List<Asset?> assets, Guid? creatorId, DateTime? now = null)
         {
             await _context.Database.BeginTransactionAsync();
             now ??= DateTime.UtcNow;
