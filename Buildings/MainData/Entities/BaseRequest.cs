@@ -12,7 +12,8 @@ public class BaseRequest : BaseEntity
     public DateTime? CompletionDate { get; set; }
     public RequestStatus? Status { get; set; }
     public string? Description { get; set; }
-    public string? Notes { get; set; } // Results
+    public string? Notes { get; set; }
+    public string? Result { get; set; }
     public bool IsInternal { get; set; }
     public Guid? AssignedTo { get; set; }
 
@@ -61,7 +62,8 @@ public class BaseRequestConfig : IEntityTypeConfiguration<BaseRequest>
         builder.Property(a => a.Notes).IsRequired(false);
         builder.Property(a => a.IsInternal).IsRequired();
         builder.Property(a => a.AssignedTo).IsRequired(false);
-
+        builder.Property(a => a.Result).IsRequired(false);
+        
         builder.HasIndex(a => a.RequestCode).IsUnique();
     }
 }
