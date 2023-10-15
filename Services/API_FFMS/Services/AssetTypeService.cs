@@ -71,6 +71,16 @@ namespace API_FFMS.Services
                     || x.Description!.ToLower().Contains(keyword));
             }
 
+            if (queryDto.Unit != null)
+            {
+                response = response.Where(x => x!.Unit == queryDto.Unit);
+            }
+            
+            if (queryDto.CategoryId != null)
+            {
+                response = response.Where(x => x!.CategoryId == queryDto.CategoryId);
+            }
+
             var totalCount = await response.CountAsync();
             var assetTypes = await response.Select(x => new AssetTypeDto
             {

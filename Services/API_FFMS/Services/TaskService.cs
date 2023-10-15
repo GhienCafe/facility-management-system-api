@@ -33,7 +33,8 @@ public class TaskService : BaseService, ITaskService
             {
                 x => !x.DeletedAt.HasValue,
                 x => x.AssignedTo == AccountId,
-                x => x.Id == id
+                x => x.Id == id,
+                x => x.Status != RequestStatus.Cancelled
             });
         if (assetCheckTask != null)
         {
@@ -55,7 +56,7 @@ public class TaskService : BaseService, ITaskService
                     });
                 if (location != null)
                 {
-                    assetCheckTask.ToRoom = await MainUnitOfWork.RoomRepository.FindOneAsync<RoomBaseDto>(
+                    assetCheckTask.Location = await MainUnitOfWork.RoomRepository.FindOneAsync<RoomBaseDto>(
                             new Expression<Func<Room, bool>>[]
                             {
                             x => !x.DeletedAt.HasValue,
@@ -76,7 +77,8 @@ public class TaskService : BaseService, ITaskService
             {
                 x => !x.DeletedAt.HasValue,
                 x => x.AssignedTo == AccountId,
-                x => x.Id == id
+                x => x.Id == id,
+                x => x.Status != RequestStatus.Cancelled
             });
         if (trasportTask != null)
         {
@@ -133,7 +135,8 @@ public class TaskService : BaseService, ITaskService
                                         FloorId = asset.RoomAssets!.FirstOrDefault(ra => ra.AssetId == td!.AssetId)!.Room!.FloorId,
                                         CreatedAt = asset.RoomAssets!.FirstOrDefault(ra => ra.AssetId == td!.AssetId)!.Room!.CreatedAt,
                                         EditedAt = asset.RoomAssets!.FirstOrDefault(ra => ra.AssetId == td!.AssetId)!.Room!.EditedAt
-                                    }
+                                    },
+                                    Quantity = td!.Quantity
                                 }).ToListAsync();
             var tranportation = new TaskDetailDto
             {
@@ -142,7 +145,7 @@ public class TaskService : BaseService, ITaskService
                 TypeObj = trasportTask.Type.GetValue(),
                 Id = trasportTask.Id,
                 RequestDate = trasportTask.RequestDate,
-                Quantity = trasportTask.Quantity,
+                //Quantity = trasportTask.Quantity,
                 Status = trasportTask.Status,
                 StatusObj = trasportTask.Status!.GetValue(),
                 CreatedAt = trasportTask.CreatedAt,
@@ -161,7 +164,8 @@ public class TaskService : BaseService, ITaskService
                 {
                     x => !x.DeletedAt.HasValue,
                     x => x.AssignedTo == AccountId,
-                    x => x.Id == id
+                    x => x.Id == id,
+                    x => x.Status != RequestStatus.Cancelled
                 });
         if (replacementTask != null)
         {
@@ -171,6 +175,23 @@ public class TaskService : BaseService, ITaskService
                     x => !x.DeletedAt.HasValue,
                     x => x.Id == replacementTask.AssetId
                     });
+            
+            var location = await MainUnitOfWork.RoomAssetRepository.FindOneAsync<RoomAsset>(
+                new Expression<Func<RoomAsset, bool>>[]
+                {
+                    x => !x.DeletedAt.HasValue,
+                    x => x.AssetId == replacementTask.Asset.Id,
+                    x => x.ToDate == null
+                });
+            if (location != null)
+            {
+                replacementTask.Location = await MainUnitOfWork.RoomRepository.FindOneAsync<RoomBaseDto>(
+                    new Expression<Func<Room, bool>>[]
+                    {
+                        x => !x.DeletedAt.HasValue,
+                        x => x.Id == location.RoomId
+                    });
+            }
 
             replacementTask.NewAsset = await MainUnitOfWork.AssetRepository.FindOneAsync<AssetBaseDto>(
                 new Expression<Func<Asset, bool>>[]
@@ -191,7 +212,8 @@ public class TaskService : BaseService, ITaskService
                 {
                     x => !x.DeletedAt.HasValue,
                     x => x.AssignedTo == AccountId,
-                    x => x.Id == id
+                    x => x.Id == id,
+                    x => x.Status != RequestStatus.Cancelled
                 });
         if(repairation != null)
         {
@@ -204,6 +226,22 @@ public class TaskService : BaseService, ITaskService
             if (repairation.Asset != null)
             {
                 repairation.Asset!.StatusObj = repairation.Asset.Status?.GetValue();
+                var location = await MainUnitOfWork.RoomAssetRepository.FindOneAsync<RoomAsset>(
+                    new Expression<Func<RoomAsset, bool>>[]
+                    {
+                        x => !x.DeletedAt.HasValue,
+                        x => x.AssetId == repairation.Asset.Id,
+                        x => x.ToDate == null
+                    });
+                if (location != null)
+                {
+                    repairation.Location = await MainUnitOfWork.RoomRepository.FindOneAsync<RoomBaseDto>(
+                        new Expression<Func<Room, bool>>[]
+                        {
+                            x => !x.DeletedAt.HasValue,
+                            x => x.Id == location.RoomId
+                        });
+                }
             }
             repairation.Status = repairation.Status;
             repairation.StatusObj = repairation.Status!.GetValue();
@@ -219,7 +257,8 @@ public class TaskService : BaseService, ITaskService
                 {
                     x => !x.DeletedAt.HasValue,
                     x => x.AssignedTo == AccountId,
-                    x => x.Id == id
+                    x => x.Id == id,
+                    x => x.Status != RequestStatus.Cancelled
                 });
         if (maintenance != null)
         {
@@ -232,6 +271,22 @@ public class TaskService : BaseService, ITaskService
             if (maintenance.Asset != null)
             {
                 maintenance.Asset!.StatusObj = maintenance.Asset.Status?.GetValue();
+                var location = await MainUnitOfWork.RoomAssetRepository.FindOneAsync<RoomAsset>(
+                    new Expression<Func<RoomAsset, bool>>[]
+                    {
+                        x => !x.DeletedAt.HasValue,
+                        x => x.AssetId == maintenance.Asset.Id,
+                        x => x.ToDate == null
+                    });
+                if (location != null)
+                {
+                    maintenance.Location = await MainUnitOfWork.RoomRepository.FindOneAsync<RoomBaseDto>(
+                        new Expression<Func<Room, bool>>[]
+                        {
+                            x => !x.DeletedAt.HasValue,
+                            x => x.Id == location.RoomId
+                        });
+                }
             }
             maintenance.Status = maintenance.Status;
             maintenance.StatusObj = maintenance.Status!.GetValue();
@@ -371,6 +426,8 @@ public class TaskService : BaseService, ITaskService
                                                .Union(replacementTasks)
                                                .Union(repairationTasks);
 
+        combinedTasks = combinedTasks.Where(x => x.Status != RequestStatus.Cancelled);
+        
         if (queryDto.Type != null)
         {
             combinedTasks = combinedTasks.Where(x => x.Type == queryDto.Type);
@@ -380,7 +437,7 @@ public class TaskService : BaseService, ITaskService
         {
             combinedTasks = combinedTasks.Where(x => x.Status == queryDto.Status);
         }
-        
+
         // Sort
         var isDescending = queryDto.OrderBy.Split(' ').Last().ToLowerInvariant()
             .StartsWith("desc");
