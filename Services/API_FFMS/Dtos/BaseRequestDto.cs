@@ -12,7 +12,8 @@ public class BaseRequestDto : BaseDto
     public RequestStatus? Status { get; set; }
     public EnumValue? StatusObj { get; set; }
     public string? Description { get; set; }
-    public string? Notes { get; set; } // Results
+    public string? Notes { get; set; }
+    public string? Result { get; set; }
     public bool IsInternal { get; set; }
     public Guid? AssignedTo { get; set; }    
     public Guid? AssetTypeId { get; set; }
@@ -65,17 +66,6 @@ public class BaseRequestUpdateDto
     public Guid? AssetTypeId { get; set; }
     public Guid? CategoryId { get; set;}
 }
-
-//public class BaseRequestUpdateDto
-//{
-//    public string RequestCode { get; set; } = null!;
-//    public DateTime? RequestDate { get; set; }
-//    public DateTime? CompletionDate { get; set; }
-//    public RequestStatus? Status { get; set; }
-//    public string? Description { get; set; }
-//    public string? Notes { get; set; } // Results
-//    public bool IsInternal { get; set; }
-//}
 
 public class BaseTransportCreateDto
 {

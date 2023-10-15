@@ -42,5 +42,5 @@ public class TaskDetailDto : BaseRequestDto
 
 public class TaskQueryDto : BaseRequestQueryDto
 {
-    public RequestType Type { get; set; }
+    public RequestType? Type { get; set; }
 }
