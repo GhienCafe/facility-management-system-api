@@ -371,6 +371,35 @@ public class TaskService : BaseService, ITaskService
                                                .Union(replacementTasks)
                                                .Union(repairationTasks);
 
+        if (queryDto.Type != null)
+        {
+            combinedTasks = combinedTasks.Where(x => x.Type == queryDto.Type);
+        }
+        
+        if (queryDto.Status != null)
+        {
+            combinedTasks = combinedTasks.Where(x => x.Status == queryDto.Status);
+        }
+        
+        // Sort
+        var isDescending = queryDto.OrderBy.Split(' ').Last().ToLowerInvariant()
+            .StartsWith("desc");
+        
+        var sortField = queryDto.OrderBy.Split(' ').First();
+        
+        // Sort
+        if (!string.IsNullOrEmpty(sortField))
+        {
+            try
+            {
+                combinedTasks = combinedTasks.OrderBy(sortField, isDescending);
+            }
+            catch
+            {
+                throw new ApiException($"Không tồn tại trường thông tin {sortField}", StatusCode.BAD_REQUEST);
+            } 
+        }
+
         var totalCount = await combinedTasks.CountAsync();
 
         combinedTasks = combinedTasks.Skip(queryDto.Skip()).Take(queryDto.PageSize);
