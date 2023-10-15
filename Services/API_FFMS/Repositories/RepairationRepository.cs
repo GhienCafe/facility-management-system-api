@@ -28,7 +28,7 @@ namespace API_FFMS.Repositories
                 repairation.CreatedAt = now.Value;
                 repairation.EditedAt = now.Value;
                 repairation.CreatorId = creatorId;
-                repairation.Status = RequestStatus.NotStarted;
+                repairation.Status = RequestStatus.InProgress;
                 await _context.Repairations.AddAsync(repairation);
 
                 var asset = await _context.Assets.FindAsync(repairation.AssetId);

@@ -28,7 +28,7 @@ namespace API_FFMS.Repositories
                 replacement.CreatedAt = now.Value;
                 replacement.EditedAt = now.Value;
                 replacement.CreatorId = creatorId;
-                replacement.Status = RequestStatus.NotStarted;
+                replacement.Status = RequestStatus.InProgress;
                 await _context.Replacements.AddAsync(replacement);
 
                 var asset = await _context.Assets.FindAsync(replacement.AssetId);
@@ -98,7 +98,7 @@ namespace API_FFMS.Repositories
                 if (replacement.IsInternal)
                 {
 
-                    if (replacement.Status == RequestStatus.Completed)
+                    if (replacement.Status == RequestStatus.Done)
                     {
                         var asset = await _context.Assets.FindAsync(replacement.AssetId);
                         asset!.Status = AssetStatus.Operational;

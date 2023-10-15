@@ -65,7 +65,7 @@ namespace API_FFMS.Services
                 Description = createDto.Description,
                 Notes = createDto.Notes,
                 IsInternal = createDto.IsInternal,
-                Quantity = assets.Count(),
+                Quantity = createDto.Quantity,
                 AssignedTo = createDto.AssignedTo,
                 ToRoomId = createDto.ToRoomId
             };
@@ -313,7 +313,7 @@ namespace API_FFMS.Services
                 throw new ApiException("Không tìm thấy yêu cầu vận chuyển này", StatusCode.NOT_FOUND);
             }
 
-            if (existingTransport.Status != RequestStatus.NotStarted)
+            if (existingTransport.Status != RequestStatus.InProgress)
             {
                 throw new ApiException("Chỉ được cập nhật các yêu cầu chưa hoàn thành", StatusCode.NOT_FOUND);
             }

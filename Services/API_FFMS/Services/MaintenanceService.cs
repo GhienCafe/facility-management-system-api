@@ -275,7 +275,7 @@ public class MaintenanceService : BaseService, IMaintenanceService
         if (maintenance == null)
             throw new ApiException("Không tìm thấy nội dung", StatusCode.NOT_FOUND);
 
-        if(maintenance.Status != RequestStatus.NotStarted)
+        if(maintenance.Status != RequestStatus.Done)
             throw new ApiException($"Không thế cập nhật với quy trình có trạng thái: {maintenance.Status?.GetDisplayName()}", StatusCode.BAD_REQUEST);
         
         maintenance.Description = updateDto.Description ?? maintenance.Description;
