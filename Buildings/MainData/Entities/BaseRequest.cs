@@ -26,7 +26,7 @@ public enum RequestStatus
 {
     [Display(Name = "Đang xử lý")]
     InProgress = 1,
-    [Display(Name = "Đang báo cáo")]
+    [Display(Name = "Đã báo cáo")]
     Reported = 2,
     [Display(Name = "Đã hoàn thành")]
     Done = 3,

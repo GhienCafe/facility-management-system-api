@@ -31,13 +31,13 @@ public class TaskDetailDto : BaseRequestDto
     public AssetBaseDto? NewAsset { get; set; }
     //Transport
     public Guid? ToRoomId { get; set; }
-    public int? Quantity { get; set; }
-    public RoomBaseDto? ToRoom { get; set; }// ToRoom
+    //public int? Quantity { get; set; }
+    public RoomBaseDto? ToRoom { get; set; } // ToRoom
     public List<FromRoomAssetDto>? Assets { get; set; }
 
     //Asset check
     //public AssetBaseDto? Asset { get; set; }
-    //public RoomBaseDto? Location { get; set; }
+    public RoomBaseDto? Location { get; set; }
 }
 
 public class TaskQueryDto : BaseRequestQueryDto

@@ -65,7 +65,7 @@ namespace API_FFMS.Services
                 Description = createDto.Description,
                 Notes = createDto.Notes,
                 IsInternal = createDto.IsInternal,
-                Quantity = assets.Count(),
+                Quantity = createDto.Quantity,
                 AssignedTo = createDto.AssignedTo,
                 ToRoomId = createDto.ToRoomId
             };
