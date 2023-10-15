@@ -48,7 +48,7 @@ public class AssetService : BaseService, IAssetService
         var existingAsset = await MainUnitOfWork.AssetRepository.FindOneAsync(id);
 
         if (existingAsset == null)
-            throw new ApiException("Không tìm thất trang thiết bị", StatusCode.NOT_FOUND);
+            throw new ApiException("Không tìm thấy trang thiết bị", StatusCode.NOT_FOUND);
 
         if (!await MainUnitOfWork.AssetRepository.DeleteAsync(existingAsset, AccountId, CurrentDate))
             throw new ApiException("Xóa trang thiết bị thất bại", StatusCode.SERVER_ERROR);

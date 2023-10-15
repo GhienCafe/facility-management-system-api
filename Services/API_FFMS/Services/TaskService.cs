@@ -56,7 +56,7 @@ public class TaskService : BaseService, ITaskService
                     });
                 if (location != null)
                 {
-                    assetCheckTask.Location = await MainUnitOfWork.RoomRepository.FindOneAsync<RoomBaseDto>(
+                    assetCheckTask.CurrentRoom = await MainUnitOfWork.RoomRepository.FindOneAsync<RoomBaseDto>(
                             new Expression<Func<Room, bool>>[]
                             {
                             x => !x.DeletedAt.HasValue,
@@ -175,7 +175,7 @@ public class TaskService : BaseService, ITaskService
                     x => !x.DeletedAt.HasValue,
                     x => x.Id == replacementTask.AssetId
                     });
-            
+
             var location = await MainUnitOfWork.RoomAssetRepository.FindOneAsync<RoomAsset>(
                 new Expression<Func<RoomAsset, bool>>[]
                 {
@@ -185,7 +185,7 @@ public class TaskService : BaseService, ITaskService
                 });
             if (location != null)
             {
-                replacementTask.Location = await MainUnitOfWork.RoomRepository.FindOneAsync<RoomBaseDto>(
+                replacementTask.CurrentRoom = await MainUnitOfWork.RoomRepository.FindOneAsync<RoomBaseDto>(
                     new Expression<Func<Room, bool>>[]
                     {
                         x => !x.DeletedAt.HasValue,
@@ -199,6 +199,23 @@ public class TaskService : BaseService, ITaskService
                     x => !x.DeletedAt.HasValue,
                     x => x.Id == replacementTask.NewAssetId
                 });
+            var toLocation = await MainUnitOfWork.RoomAssetRepository.FindOneAsync<RoomAsset>(
+                new Expression<Func<RoomAsset, bool>>[]
+                {
+                    x => !x.DeletedAt.HasValue,
+                    x => x.AssetId == replacementTask.NewAsset.Id,
+                    x => x.ToDate == null
+                });
+            if (toLocation != null)
+            {
+                replacementTask.ToRoom = await MainUnitOfWork.RoomRepository.FindOneAsync<RoomBaseDto>(
+                    new Expression<Func<Room, bool>>[]
+                    {
+                        x => !x.DeletedAt.HasValue,
+                        x => x.Id == toLocation.RoomId
+                    });
+            }
+
             replacementTask.Status = replacementTask.Status;
             replacementTask.StatusObj = replacementTask.Status!.GetValue();
             replacementTask.Type = RequestType.Replacement;
@@ -215,7 +232,7 @@ public class TaskService : BaseService, ITaskService
                     x => x.Id == id,
                     x => x.Status != RequestStatus.Cancelled
                 });
-        if(repairation != null)
+        if (repairation != null)
         {
             repairation.Asset = await MainUnitOfWork.AssetRepository.FindOneAsync<AssetBaseDto>(
                 new Expression<Func<Asset, bool>>[]
@@ -235,7 +252,7 @@ public class TaskService : BaseService, ITaskService
                     });
                 if (location != null)
                 {
-                    repairation.Location = await MainUnitOfWork.RoomRepository.FindOneAsync<RoomBaseDto>(
+                    repairation.CurrentRoom = await MainUnitOfWork.RoomRepository.FindOneAsync<RoomBaseDto>(
                         new Expression<Func<Room, bool>>[]
                         {
                             x => !x.DeletedAt.HasValue,
@@ -280,7 +297,7 @@ public class TaskService : BaseService, ITaskService
                     });
                 if (location != null)
                 {
-                    maintenance.Location = await MainUnitOfWork.RoomRepository.FindOneAsync<RoomBaseDto>(
+                    maintenance.CurrentRoom = await MainUnitOfWork.RoomRepository.FindOneAsync<RoomBaseDto>(
                         new Expression<Func<Room, bool>>[]
                         {
                             x => !x.DeletedAt.HasValue,
@@ -296,8 +313,12 @@ public class TaskService : BaseService, ITaskService
             taskDetail = maintenance;
         }
 
+        if(taskDetail == null)
+        {
+            throw new ApiException("Không tìm thấy yêu cầu", StatusCode.NOT_FOUND);
+        }
 
-        taskDetail = await _mapperRepository.MapCreator(taskDetail);
+        //taskDetail = await _mapperRepository.MapCreator(taskDetail);
 
         return ApiResponse<TaskDetailDto>.Success(taskDetail);
 
@@ -427,12 +448,12 @@ public class TaskService : BaseService, ITaskService
                                                .Union(repairationTasks);
 
         combinedTasks = combinedTasks.Where(x => x.Status != RequestStatus.Cancelled);
-        
+
         if (queryDto.Type != null)
         {
             combinedTasks = combinedTasks.Where(x => x.Type == queryDto.Type);
         }
-        
+
         if (queryDto.Status != null)
         {
             combinedTasks = combinedTasks.Where(x => x.Status == queryDto.Status);
@@ -441,9 +462,9 @@ public class TaskService : BaseService, ITaskService
         // Sort
         var isDescending = queryDto.OrderBy.Split(' ').Last().ToLowerInvariant()
             .StartsWith("desc");
-        
+
         var sortField = queryDto.OrderBy.Split(' ').First();
-        
+
         // Sort
         if (!string.IsNullOrEmpty(sortField))
         {
@@ -454,7 +475,7 @@ public class TaskService : BaseService, ITaskService
             catch
             {
                 throw new ApiException($"Không tồn tại trường thông tin {sortField}", StatusCode.BAD_REQUEST);
-            } 
+            }
         }
 
         var totalCount = await combinedTasks.CountAsync();
