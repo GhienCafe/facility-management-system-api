@@ -12,12 +12,11 @@ public class BaseRequest : BaseEntity
     public DateTime? CompletionDate { get; set; }
     public RequestStatus? Status { get; set; }
     public string? Description { get; set; }
-    public string? Notes { get; set; } // Results
+    public string? Notes { get; set; }
+    public string? Result { get; set; }
     public bool IsInternal { get; set; }
-    public Guid? AssignedTo { get; set; }    
-    public Guid? AssetTypeId { get; set; }
-    public Guid? CategoryId { get; set; }
-    
+    public Guid? AssignedTo { get; set; }
+
     //Relationship
     public virtual Asset? Asset { get; set; }
     public virtual User? User { get; set; }
@@ -25,31 +24,29 @@ public class BaseRequest : BaseEntity
 
 public enum RequestStatus
 {
-    [Display(Name = "Đã gửi yêu cầu")]
-    NotStarted = 1,
-    [Display(Name = "Đang trong quá trình thực hiện")]
-    InProgress = 2,
+    [Display(Name = "Đang xử lý")]
+    InProgress = 1,
+    [Display(Name = "Đã báo cáo")]
+    Reported = 2,
     [Display(Name = "Đã hoàn thành")]
-    Completed = 3,
-    [Display(Name = "Yêu cầu không thể thực hiện")]
-    CantDo = 4,
-    [Display(Name = "Đã hủy yêu cầu")]
-    Cancelled = 5,
+    Done = 3,
+    [Display(Name = "Đã hủy")]
+    Cancelled = 4,
     [Display(Name = "Khác")]
-    Others = 6,
+    Others = 5,
 }
 
 public enum RequestType
 {
-    [Display(Name = "Kiểm trang trình trạng trang thiết bị")]
+    [Display(Name = "Kiểm tra tình trạng")]
     StatusCheck = 1,
-    [Display(Name = "Bảo trì, nâng cấp trang thiết bị")]
+    [Display(Name = "Bảo trì, nâng cấp")]
     Maintenance = 2,
-    [Display(Name = "Sửa chữa trang thiết bị")]
+    [Display(Name = "Sửa chữa")]
     Repairation = 3,
-    [Display(Name = "Thay thế trang thiết bị")]
+    [Display(Name = "Thay thế")]
     Replacement = 4,
-    [Display(Name = "Điều chuyển trang thiết bị")]
+    [Display(Name = "Điều chuyển")]
     Transportation = 5
 }
 
@@ -65,8 +62,7 @@ public class BaseRequestConfig : IEntityTypeConfiguration<BaseRequest>
         builder.Property(a => a.Notes).IsRequired(false);
         builder.Property(a => a.IsInternal).IsRequired();
         builder.Property(a => a.AssignedTo).IsRequired(false);
-        builder.Property(a => a.CategoryId).IsRequired(false);
-        builder.Property(a => a.AssetTypeId).IsRequired(false);
+        builder.Property(a => a.Result).IsRequired(false);
         
         builder.HasIndex(a => a.RequestCode).IsUnique();
     }

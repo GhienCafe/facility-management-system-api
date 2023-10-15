@@ -202,18 +202,12 @@ public class RoomService : BaseService, IRoomService
 
     public async Task<ApiResponse> DeleteRooms(List<Guid> ids)
     {
-        var roomDeleteds = new List<Room>();
-        foreach (var id in ids)
-        {
-            var existingRoom = await MainUnitOfWork.RoomRepository.FindOneAsync(id);
-
-            if (existingRoom == null)
+        var roomDeleteds = await MainUnitOfWork.RoomRepository.FindAsync(
+            new Expression<Func<Room, bool>>[]
             {
-                throw new ApiException("Không tìm thấy phòng", StatusCode.NOT_FOUND);
-            }
-
-            roomDeleteds.Add(existingRoom);
-        }
+                x => !x.DeletedAt.HasValue,
+                x => ids.Contains(x.Id)
+            }, null);
 
         if (!await MainUnitOfWork.RoomRepository.DeleteAsync(roomDeleteds, AccountId, CurrentDate))
         {

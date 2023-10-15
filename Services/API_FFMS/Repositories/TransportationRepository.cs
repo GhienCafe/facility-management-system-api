@@ -32,7 +32,7 @@ namespace API_FFMS.Repositories
                 transportation.CreatedAt = now.Value;
                 transportation.EditedAt = now.Value;
                 transportation.CreatorId = creatorId;
-                transportation.Status = RequestStatus.NotStarted;
+                transportation.Status = RequestStatus.InProgress;
                 await _context.Transportations.AddAsync(transportation);
 
                 var toRoom = await _context.Rooms.FindAsync(transportation.ToRoomId);
@@ -61,7 +61,7 @@ namespace API_FFMS.Repositories
                             AssetId = asset.Id,
                             TransportationId = transportation.Id,
                             RequestDate = now.Value,
-                            Quantity = transportation.Quantity,
+                            Quantity = (int?)asset.Quantity,
                             CreatorId = creatorId,
                             CreatedAt = now.Value,
                             EditedAt = now.Value
@@ -117,7 +117,8 @@ namespace API_FFMS.Repositories
                 {
                     var roomAsset = await _context.RoomAssets.FirstOrDefaultAsync(x => x.AssetId == asset.Id && x.ToDate == null);
                     var fromRoom = await _context.Rooms.FirstOrDefaultAsync(x => x.Id == roomAsset!.RoomId && roomAsset.AssetId == asset.Id);
-                    if (statusUpdate == RequestStatus.Completed)
+
+                    if (statusUpdate == RequestStatus.Done)
                     {
                         asset.Status = AssetStatus.Operational;
                         asset.EditedAt = now.Value;
@@ -150,7 +151,7 @@ namespace API_FFMS.Repositories
                         };
                         _context.RoomAssets.Add(addRoomAsset);
                     }
-                    else if (statusUpdate == RequestStatus.Cancelled || statusUpdate == RequestStatus.CantDo)
+                    else if (statusUpdate == RequestStatus.Cancelled || statusUpdate == RequestStatus.Cancelled)
                     {
                         asset.Status = AssetStatus.Operational;
                         asset.EditedAt = now.Value;

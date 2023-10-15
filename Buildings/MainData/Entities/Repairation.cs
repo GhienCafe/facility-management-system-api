@@ -6,6 +6,8 @@ namespace MainData.Entities;
 public class Repairation : BaseRequest
 {
     public Guid AssetId { get; set; }
+    public Guid? AssetTypeId { get; set; }
+    public Guid? CategoryId { get; set; }
 }
 
 public class RepairationConfig : IEntityTypeConfiguration<Repairation>
@@ -14,6 +16,8 @@ public class RepairationConfig : IEntityTypeConfiguration<Repairation>
     {
         builder.ToTable("Repairations");
         builder.Property(x => x.AssetId).IsRequired();
+        builder.Property(a => a.CategoryId).IsRequired(false);
+        builder.Property(a => a.AssetTypeId).IsRequired(false);
         
         // Relationship
         builder.HasOne(x => x.User)

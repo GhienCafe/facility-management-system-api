@@ -9,6 +9,7 @@ public class AssetType : BaseEntity
 {
     public string TypeCode { get; set; } = null!;
     public string TypeName { get; set; } = null!;
+    public bool? IsIdentified { get; set; } 
     public string? Description { get; set; }
     public Unit Unit { get; set; }
     public Guid? CategoryId { get; set; }
@@ -21,39 +22,34 @@ public class AssetType : BaseEntity
 
 public enum Unit
 {
-    [Display(Name = "Định danh")]
-    Identifier = 1,
+    [Display(Name = "Cá thể")]
+    Individual = 1,
 
-    [Display(Name = "Không định danh")]
-    Unidentified = 2
+    [Display(Name = "Số lượng")]
+    Quantity = 2,
 
-    //[Display(Name = "Kilogram")]
-    //Kg = 2,
+    [Display(Name = "Mét")]
+    Meter = 3,
 
-    //[Display(Name = "Lít")]
-    //Liter = 3,
+    [Display(Name = "Mét vuông")]
+    SquareMeter = 4,
 
-    //[Display(Name = "Mét")]
-    //Meter = 4,
+    [Display(Name = "Giờ")]
+    Hour = 5,
 
-    //[Display(Name = "Mét vuông")]
-    //SquareMeter = 5,
+    [Display(Name = "Bao")]
+    Bag = 6,
 
-    //[Display(Name = "Giờ")]
-    //Hour = 6,
+    [Display(Name = "Đôi")]
+    Pair = 7,
 
-    //[Display(Name = "Bao")]
-    //Bag = 7,
+    [Display(Name = "Thùng")]
+    Crate = 8,
 
-    //[Display(Name = "Đôi")]
-    //Pair = 8,
-
-    //[Display(Name = "Thùng")]
-    //Crate = 10,
-
-    //[Display(Name = "Hộp")]
-    //Box = 11
+    [Display(Name = "Hộp")]
+    Box = 9
 }
+
 
 public class AssetCategoryConfig : IEntityTypeConfiguration<AssetType>
 {
@@ -61,6 +57,7 @@ public class AssetCategoryConfig : IEntityTypeConfiguration<AssetType>
     {
         builder.ToTable("AssetTypes");
         builder.Property(a => a.TypeCode).IsRequired();
+        builder.Property(a => a.IsIdentified).IsRequired();
         builder.Property(a => a.TypeName).IsRequired();
         builder.Property(a => a.Unit).IsRequired();
         builder.Property(a => a.Description).IsRequired(false);

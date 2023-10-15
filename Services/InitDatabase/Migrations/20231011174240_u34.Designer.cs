@@ -4,6 +4,7 @@ using MainData;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace InitDatabase.Migrations
 {
     [DbContext(typeof(DatabaseContext))]
-    partial class DatabaseContextModelSnapshot : ModelSnapshot
+    [Migration("20231011174240_u34")]
+    partial class u34
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -162,9 +165,6 @@ namespace InitDatabase.Migrations
 
                     b.Property<DateTime?>("RequestDate")
                         .HasColumnType("datetime2");
-
-                    b.Property<string>("Result")
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int?>("Status")
                         .HasColumnType("int");
@@ -477,9 +477,6 @@ namespace InitDatabase.Migrations
                     b.Property<DateTime?>("RequestDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("Result")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<int?>("Status")
                         .HasColumnType("int");
 
@@ -735,9 +732,6 @@ namespace InitDatabase.Migrations
                     b.Property<DateTime?>("RequestDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("Result")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<int?>("Status")
                         .HasColumnType("int");
 
@@ -807,9 +801,6 @@ namespace InitDatabase.Migrations
 
                     b.Property<DateTime?>("RequestDate")
                         .HasColumnType("datetime2");
-
-                    b.Property<string>("Result")
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int?>("Status")
                         .HasColumnType("int");
@@ -1207,9 +1198,6 @@ namespace InitDatabase.Migrations
 
                     b.Property<DateTime?>("RequestDate")
                         .HasColumnType("datetime2");
-
-                    b.Property<string>("Result")
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int?>("Status")
                         .HasColumnType("int");

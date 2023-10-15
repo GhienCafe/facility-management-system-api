@@ -8,6 +8,8 @@ using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
 using DocumentFormat.OpenXml.Office2010.Excel;
 using API_FFMS.Repositories;
+using System.Linq;
+using DocumentFormat.OpenXml.Spreadsheet;
 
 namespace API_FFMS.Services;
 public interface IAssetService : IBaseService
@@ -333,31 +335,17 @@ public class AssetService : BaseService, IAssetService
 
     public async Task<ApiResponse> DeleteAssets(List<Guid> ids)
     {
-        var assetDeleteds = new List<Asset>();
-        foreach (var id in ids)
+        var assets = await MainUnitOfWork.AssetRepository.FindAsync(new Expression<Func<Asset, bool>>[]
         {
-            var existingAsset = await MainUnitOfWork.AssetRepository.FindOneAsync(
-                new Expression<Func<Asset, bool>>[]
-                {
-                    x => !x.DeletedAt.HasValue,
-                    x => x.Id == id
-                });
-            if (existingAsset == null)
-            {
-                throw new ApiException("Không tìm thấy thiết bị này", StatusCode.NOT_FOUND);
-            }
+            x => !x.DeletedAt.HasValue,
+            x => ids.Contains(x.Id)
+        }, null);
 
-            if (existingAsset.Status != AssetStatus.Inactive)
-            {
-                throw new ApiException("Chỉ được xóa thiết bị không thể sử dụng được nữa", StatusCode.NOT_FOUND);
-            }
-            assetDeleteds.Add(existingAsset);
-        }
-
-        if (!await MainUnitOfWork.AssetRepository.DeleteAsync(assetDeleteds, AccountId, CurrentDate))
+        if (!await MainUnitOfWork.AssetRepository.DeleteAsync(assets, AccountId, CurrentDate))
         {
             throw new ApiException("Xóa thất bại", StatusCode.SERVER_ERROR);
         }
+        
         return ApiResponse.Success();
     }
 

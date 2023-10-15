@@ -8,6 +8,8 @@ namespace MainData.Entities;
 public class Maintenance : BaseRequest
 {
     public Guid AssetId { get; set; }
+    public Guid? AssetTypeId { get; set; }
+    public Guid? CategoryId { get; set; }
 }
 
 public class MaintenanceConfig : IEntityTypeConfiguration<Maintenance>
@@ -17,6 +19,8 @@ public class MaintenanceConfig : IEntityTypeConfiguration<Maintenance>
         builder.ToTable("Maintenances");
         builder.Property(x => x.Notes).IsRequired(false);
         builder.Property(x => x.AssetId).IsRequired();
+        builder.Property(a => a.CategoryId).IsRequired(false);
+        builder.Property(a => a.AssetTypeId).IsRequired(false);
 
         //Relationship
         builder.HasOne(x => x.User)

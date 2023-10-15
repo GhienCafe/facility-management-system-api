@@ -43,22 +43,12 @@ namespace API_FFMS.Services
 
         public async Task<ApiResponse> DeleteTeams(List<Guid> ids)
         {
-            var teamDeleteds = new List<Team>();
-            foreach(var id in ids)
-            {
-                var existingTeam = await MainUnitOfWork.TeamRepository.FindOneAsync(
+            var teamDeleteds = await MainUnitOfWork.TeamRepository.FindAsync(
                 new Expression<Func<Team, bool>>[]
                 {
                     x => !x.DeletedAt.HasValue,
-                    x => x.Id == id
-                });
-                if (existingTeam == null)
-                {
-                    throw new ApiException("Không tìm thấy đội phụ trách này", StatusCode.NOT_FOUND);
-                }
-
-                teamDeleteds.Add(existingTeam);
-            }
+                    x => ids.Contains(x.Id)
+                }, null);
 
             if (!await MainUnitOfWork.TeamRepository.DeleteAsync(teamDeleteds, AccountId, CurrentDate))
             {
@@ -79,12 +69,12 @@ namespace API_FFMS.Services
             {
                 throw new ApiException("Không tìm thấy đội nhóm", StatusCode.NOT_FOUND);
             }
-            
+
             team.TotalMember = MainUnitOfWork.TeamMemberRepository.GetQuery().Count(x => !x!.DeletedAt.HasValue
                 && x.TeamId == team.Id);
-            
+
             team = await _mapperRepository.MapCreator(team);
-            
+
             return ApiResponse<TeamDetailDto>.Success(team);
         }
 
@@ -108,35 +98,35 @@ namespace API_FFMS.Services
             var keyword = queryDto.Keyword?.Trim().ToLower();
             var teamQueryable = MainUnitOfWork.TeamRepository.GetQuery()
                 .Where(x => !x!.DeletedAt.HasValue);
-            
+
             var teamMemberQueryable = MainUnitOfWork.TeamMemberRepository.GetQuery()
                 .Where(x => !x!.DeletedAt.HasValue);
 
             var joinTables = from t in teamQueryable
-                join tm in teamMemberQueryable on t.Id equals tm.TeamId into teamMemberGroup
-                from tm in teamMemberGroup.DefaultIfEmpty()
-                group new { t, tm } by new
-                {
-                    t.Id,
-                    t.TeamName,
-                    t.Description,
-                    t.CreatedAt,
-                    t.EditedAt,
-                    t.CreatorId,
-                    t.EditorId
-                }
+                             join tm in teamMemberQueryable on t.Id equals tm.TeamId into teamMemberGroup
+                             from tm in teamMemberGroup.DefaultIfEmpty()
+                             group new { t, tm } by new
+                             {
+                                 t.Id,
+                                 t.TeamName,
+                                 t.Description,
+                                 t.CreatedAt,
+                                 t.EditedAt,
+                                 t.CreatorId,
+                                 t.EditorId
+                             }
                 into groupedData
-                select new TeamDto
-                {
-                    Id = groupedData.Key.Id,
-                    TeamName = groupedData.Key.TeamName,
-                    Description = groupedData.Key.Description,
-                    EditedAt = groupedData.Key.EditedAt,
-                    CreatedAt = groupedData.Key.CreatedAt,
-                    EditorId = groupedData.Key.EditorId ?? Guid.Empty,
-                    CreatorId = groupedData.Key.CreatorId ?? Guid.Empty,
-                    TotalMember = groupedData.Count(item => item.tm.Id != null)
-                };
+                             select new TeamDto
+                             {
+                                 Id = groupedData.Key.Id,
+                                 TeamName = groupedData.Key.TeamName,
+                                 Description = groupedData.Key.Description,
+                                 EditedAt = groupedData.Key.EditedAt,
+                                 CreatedAt = groupedData.Key.CreatedAt,
+                                 EditorId = groupedData.Key.EditorId ?? Guid.Empty,
+                                 CreatorId = groupedData.Key.CreatorId ?? Guid.Empty,
+                                 TotalMember = groupedData.Count(item => item.tm.Id != null)
+                             };
 
             var totalCount = await joinTables.CountAsync();
 
@@ -155,7 +145,7 @@ namespace API_FFMS.Services
             }).ToListAsync();
 
             items = await _mapperRepository.MapCreator(items);
-            
+
             return ApiResponses<TeamDto>.Success(
                 items,
                 totalCount,
