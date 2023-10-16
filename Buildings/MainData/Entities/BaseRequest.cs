@@ -24,6 +24,8 @@ public class BaseRequest : BaseEntity
 
 public enum RequestStatus
 {
+    [Display(Name = "Chưa bắt đầu")]
+    NotStart = 2,
     [Display(Name = "Đang xử lý")]
     InProgress = 1,
     [Display(Name = "Đã báo cáo")]
