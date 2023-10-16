@@ -64,6 +64,10 @@ public class TaskService : BaseService, ITaskService
                             });
                 }
             }
+            assetCheckTask.RequestCode = assetCheckTask.RequestCode;
+            assetCheckTask.RequestDate = assetCheckTask.RequestDate;
+            assetCheckTask.Description = assetCheckTask.Description;
+            assetCheckTask.Notes = assetCheckTask.Notes;
             assetCheckTask.Status = assetCheckTask.Status;
             assetCheckTask.StatusObj = assetCheckTask.Status?.GetValue();
             assetCheckTask.Type = RequestType.StatusCheck;
@@ -144,7 +148,10 @@ public class TaskService : BaseService, ITaskService
                 Type = RequestType.Transportation,
                 TypeObj = trasportTask.Type.GetValue(),
                 Id = trasportTask.Id,
+                RequestCode = trasportTask.RequestCode,
                 RequestDate = trasportTask.RequestDate,
+                Description = trasportTask.Description,
+                Notes = trasportTask.Notes,
                 //Quantity = trasportTask.Quantity,
                 Status = trasportTask.Status,
                 StatusObj = trasportTask.Status!.GetValue(),
@@ -203,7 +210,7 @@ public class TaskService : BaseService, ITaskService
                 new Expression<Func<RoomAsset, bool>>[]
                 {
                     x => !x.DeletedAt.HasValue,
-                    x => x.AssetId == replacementTask.NewAsset.Id,
+                    x => x.AssetId == replacementTask.NewAsset!.Id,
                     x => x.ToDate == null
                 });
             if (toLocation != null)
@@ -216,6 +223,10 @@ public class TaskService : BaseService, ITaskService
                     });
             }
 
+            replacementTask.RequestCode = replacementTask.RequestCode;
+            replacementTask.RequestDate = replacementTask.RequestDate;
+            replacementTask.Description = replacementTask.Description;
+            replacementTask.Notes = replacementTask.Notes;
             replacementTask.Status = replacementTask.Status;
             replacementTask.StatusObj = replacementTask.Status!.GetValue();
             replacementTask.Type = RequestType.Replacement;
@@ -260,6 +271,11 @@ public class TaskService : BaseService, ITaskService
                         });
                 }
             }
+
+            repairation.RequestCode = repairation.RequestCode;
+            repairation.RequestDate = repairation.RequestDate;
+            repairation.Description = repairation.Description;
+            repairation.Notes = repairation.Notes;
             repairation.Status = repairation.Status;
             repairation.StatusObj = repairation.Status!.GetValue();
             repairation.Type = RequestType.Repairation;
@@ -305,6 +321,10 @@ public class TaskService : BaseService, ITaskService
                         });
                 }
             }
+            maintenance.RequestCode = maintenance.RequestCode;
+            maintenance.RequestDate = maintenance.RequestDate;
+            maintenance.Description = maintenance.Description;
+            maintenance.Notes = maintenance.Notes;
             maintenance.Status = maintenance.Status;
             maintenance.StatusObj = maintenance.Status!.GetValue();
             maintenance.Type = RequestType.Maintenance;
