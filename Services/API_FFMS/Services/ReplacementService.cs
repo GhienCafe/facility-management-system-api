@@ -110,18 +110,36 @@ namespace API_FFMS.Services
                 throw new ApiException("Không tìm thấy yêu cầu thay thế", StatusCode.NOT_FOUND);
             }
 
+            var assetQueryable = MainUnitOfWork.AssetRepository.GetQuery()
+            .Where(x => !x!.DeletedAt.HasValue);
+
             replacement.Asset = await MainUnitOfWork.AssetRepository.FindOneAsync<AssetBaseDto>(
                 new Expression<Func<Asset, bool>>[]
                 {
                     x => !x.DeletedAt.HasValue,
-                    x => x.Id == replacement.AssetId
+                    x => x.Id == replacement.AssetId,
                 });
+            //replacement.Asset.StatusObj = 
 
             replacement.NewAsset = await MainUnitOfWork.AssetRepository.FindOneAsync<AssetBaseDto>(
                 new Expression<Func<Asset, bool>>[]
                 {
                     x => !x.DeletedAt.HasValue,
                     x => x.Id == replacement.NewAssetId
+                });
+
+            replacement.AssetType = await MainUnitOfWork.AssetTypeRepository.FindOneAsync<AssetTypeDto>(
+                new Expression<Func<AssetType, bool>>[]
+                {
+                    x => !x.DeletedAt.HasValue,
+                    x => x.Id == replacement.Asset!.TypeId
+                });
+
+            replacement.Category = await MainUnitOfWork.CategoryRepository.FindOneAsync<CategoryDto>(
+                new Expression<Func<Category, bool>>[]
+                {
+                    x => !x.DeletedAt.HasValue,
+                    x => x.Id == replacement.AssetType!.CategoryId
                 });
 
             replacement = await _mapperRepository.MapCreator(replacement);
@@ -164,14 +182,26 @@ namespace API_FFMS.Services
             {
                 replaceQuery = replaceQuery.Where(x => x!.CompletionDate == queryDto.CompletionDate);
             }
+            var assetTypeQueryable = MainUnitOfWork.AssetTypeRepository.GetQuery()
+            .Where(x => !x!.DeletedAt.HasValue);
+
+            var categoryQueryable = MainUnitOfWork.CategoryRepository.GetQuery()
+                .Where(x => !x!.DeletedAt.HasValue);
+
             var joinTables = from replace in replaceQuery
                              join asset in MainUnitOfWork.AssetRepository.GetQuery() on replace.AssetId equals asset.Id
                              join newAsset in MainUnitOfWork.AssetRepository.GetQuery() on replace.NewAssetId equals newAsset.Id
+                             join assetType in assetTypeQueryable on asset.TypeId equals assetType.Id into assetTypeGroup
+                             from assetType in assetTypeGroup.DefaultIfEmpty()
+                             join category in categoryQueryable on assetType.CategoryId equals category.Id into categoryGroup
+                             from category in categoryGroup.DefaultIfEmpty()
                              select new
                              {
                                  Replacement = replace,
                                  Asset = asset,
-                                 NewAsset = newAsset
+                                 NewAsset = newAsset,
+                                 AssetType = assetType,
+                                 Category = category
                              };
 
             var totalCount = await joinTables.CountAsync();
@@ -184,6 +214,7 @@ namespace API_FFMS.Services
                 RequestDate = x.Replacement.RequestDate,
                 CompletionDate = x.Replacement.CompletionDate,
                 Status = x.Replacement.Status,
+                StatusObj = x.Replacement.Status!.GetValue(),
                 Description = x.Replacement.Description,
                 Notes = x.Replacement.Notes,
                 IsInternal = x.Replacement.IsInternal,
@@ -231,7 +262,9 @@ namespace API_FFMS.Services
                     ModelId = x.NewAsset.ModelId,
                     IsRented = x.NewAsset.IsRented,
                     StartDateOfUse = x.NewAsset.StartDateOfUse
-                }
+                },
+                AssetType = x.AssetType.ProjectTo<AssetType, AssetTypeDto>(),
+                Category = x.Category.ProjectTo<Category, CategoryDto>()
             }).ToListAsync();
 
             replacements = await _mapperRepository.MapCreator(replacements);
