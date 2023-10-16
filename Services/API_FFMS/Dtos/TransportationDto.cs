@@ -44,12 +44,14 @@ public class TransportCreateDto
     //public int? Total { get; set; }
     public int? Quantity { get; set; }
     public Guid? AssignedTo { get; set; }
+    public Guid? FromRoomId { get; set; }
     public Guid? ToRoomId { get; set; }
 }
 
 public class AssetTransportDto
 {
     public Guid AssetId { get; set; }
+    public string? AssetName { get; set; }
     public double? Quantity { get; set; }
 }
 
