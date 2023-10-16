@@ -18,6 +18,7 @@ public interface IAssetCheckService : IBaseService
     Task<ApiResponse> Create(AssetCheckCreateDto createDto);
     Task<ApiResponse<AssetCheckDto>> GetAssetCheck(Guid id);
     Task<ApiResponse> Update(Guid id, AssetCheckUpdateDto updateDto);
+    Task<ApiResponse> UpdateStatus(Guid id, BaseUpdateStatusDto requestStatus);
 }
 
 public class AssetCheckService : BaseService, IAssetCheckService
@@ -116,6 +117,9 @@ public class AssetCheckService : BaseService, IAssetCheckService
                         });
             }
         }
+        assetCheck.Status = assetCheck.Status;
+        assetCheck.StatusObj = assetCheck.Status!.GetValue();
+
         assetCheck = await _mapperRepository.MapCreator(assetCheck);
         return ApiResponse<AssetCheckDto>.Success(assetCheck);
     }
@@ -251,7 +255,7 @@ public class AssetCheckService : BaseService, IAssetCheckService
         }
 
         existingAssetcheck.Description = updateDto.Description ?? existingAssetcheck.Description;
-        existingAssetcheck.Status = updateDto.Status ?? existingAssetcheck.Status;
+        //existingAssetcheck.Status = updateDto.Status ?? existingAssetcheck.Status;
         existingAssetcheck.Notes = updateDto.Notes ?? existingAssetcheck.Notes;
         existingAssetcheck.CategoryId = updateDto.CategoryId ?? existingAssetcheck.CategoryId;
         existingAssetcheck.IsInternal = updateDto.IsInternal ?? existingAssetcheck.IsInternal;
@@ -266,5 +270,26 @@ public class AssetCheckService : BaseService, IAssetCheckService
         }
 
         return ApiResponse.Success("Cập nhật thành công");
+    }
+
+    public async Task<ApiResponse> UpdateStatus(Guid id, BaseUpdateStatusDto requestStatus)
+    {
+        var existingAssetCheck = MainUnitOfWork.AssetCheckRepository.GetQuery()
+                                .Include(t => t!.Asset)
+                                .Where(t => t!.Id == id)
+                                .FirstOrDefault();
+        if (existingAssetCheck == null)
+        {
+            throw new ApiException("Không tìm thấy yêu cầu kiểm tra này", StatusCode.NOT_FOUND);
+        }
+
+        existingAssetCheck.Status = requestStatus.Status ?? existingAssetCheck.Status;
+
+        if (!await _assetcheckRepository.UpdateStatus(existingAssetCheck, requestStatus.Status, AccountId, CurrentDate))
+        {
+            throw new ApiException("Cập nhật trạng thái yêu cầu thất bại", StatusCode.SERVER_ERROR);
+        }
+
+        return ApiResponse.Success("Cập nhật yêu cầu thành công");
     }
 }

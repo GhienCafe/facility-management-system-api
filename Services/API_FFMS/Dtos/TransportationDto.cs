@@ -65,7 +65,7 @@ public class TransportationQueryDto : BaseQueryDto
     public Guid? AssignedTo { get; set; }
 }
 
-public class TransportUpdateStatusDto
-{
-    public RequestStatus? Status { get; set; }
-}
+//public class TransportUpdateStatusDto
+//{
+//    public RequestStatus? Status { get; set; }
+//}

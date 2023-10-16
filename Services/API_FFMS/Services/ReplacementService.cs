@@ -18,6 +18,7 @@ namespace API_FFMS.Services
         Task<ApiResponse> Delete(Guid id);
         Task<ApiResponses<ReplaceDto>> GetReplaces(ReplacementQueryDto queryDto);
         Task<ApiResponse> DeleteReplacements(List<Guid> ids);
+        Task<ApiResponse> UpdateStatus(Guid id, BaseUpdateStatusDto requestStatus);
     }
     public class ReplacementService : BaseService, IReplacementService
     {
@@ -141,6 +142,9 @@ namespace API_FFMS.Services
                     x => !x.DeletedAt.HasValue,
                     x => x.Id == replacement.AssetType!.CategoryId
                 });
+
+            replacement.Status = replacement.Status;
+            replacement.StatusObj = replacement.Status!.GetValue();
 
             replacement = await _mapperRepository.MapCreator(replacement);
 
@@ -291,16 +295,16 @@ namespace API_FFMS.Services
                 throw new ApiException("Chỉ được cập nhật các yêu cầu chưa hoàn thành", StatusCode.NOT_FOUND);
             }
             
-            if (updateDto.Status == RequestStatus.InProgress)
-            {
-                if (!await _repository.UpdateStatus(existingReplace, existingReplace.Status, AccountId, CurrentDate))
-                {
-                    throw new ApiException("Cập nhật thông tin yêu cầu thất bại", StatusCode.SERVER_ERROR);
-                }
-            }
+            //if (updateDto.Status == RequestStatus.InProgress)
+            //{
+            //    if (!await _repository.UpdateStatus(existingReplace, existingReplace.Status, AccountId, CurrentDate))
+            //    {
+            //        throw new ApiException("Cập nhật thông tin yêu cầu thất bại", StatusCode.SERVER_ERROR);
+            //    }
+            //}
             existingReplace.RequestDate = updateDto.RequestDate ?? existingReplace.RequestDate;
             existingReplace.CompletionDate = updateDto.CompletionDate ?? existingReplace.CompletionDate;
-            existingReplace.Status = updateDto.Status ?? existingReplace.Status;
+            //existingReplace.Status = updateDto.Status ?? existingReplace.Status;
             existingReplace.Description = updateDto.Description ?? existingReplace.Description;
             existingReplace.Notes = updateDto.Notes ?? existingReplace.Notes;
             if (!await _repository.UpdateStatus(existingReplace, existingReplace.Status, AccountId, CurrentDate))
@@ -311,5 +315,26 @@ namespace API_FFMS.Services
             return ApiResponse.Success("Cập nhật yêu cầu thành công");
         }
 
+        public async Task<ApiResponse> UpdateStatus(Guid id, BaseUpdateStatusDto requestStatus)
+        {
+            var existingReplace = MainUnitOfWork.ReplacementRepository.GetQuery()
+                                    .Include(r => r!.Asset)
+                                    .Where(r => r!.Id == id)
+                                    .FirstOrDefault();
+
+            if (existingReplace == null)
+            {
+                throw new ApiException("Không tìm thấy yêu cầu thay thế này", StatusCode.NOT_FOUND);
+            }
+
+            existingReplace.Status = requestStatus.Status ?? existingReplace.Status;
+
+            if (!await _repository.UpdateStatus(existingReplace, requestStatus.Status, AccountId, CurrentDate))
+            {
+                throw new ApiException("Cập nhật trạng thái yêu cầu thất bại", StatusCode.SERVER_ERROR);
+            }
+
+            return ApiResponse.Success("Cập nhật yêu cầu thành công");
+        }
     }
 }
