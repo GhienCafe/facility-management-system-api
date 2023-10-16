@@ -34,28 +34,29 @@ namespace API_FFMS.Services
 
         public async Task<ApiResponse> Create(TransportCreateDto createDto)
         {
-            //var assets = new List<Asset>();
-            //foreach (var assetId in createDto.Assets)
-            //{
-            //    var asset = await MainUnitOfWork.AssetRepository.FindOneAsync(assetId);
-            //    if (asset == null)
-            //    {
-            //        throw new ApiException("Không tìm thấy trang thiết bị", StatusCode.NOT_FOUND);
-            //    }
-
-            //    if (asset.Status != AssetStatus.Operational)
-            //    {
-            //        throw new ApiException("Trang thiết bị đang trong một yêu cầu khác", StatusCode.BAD_REQUEST);
-            //    }
-            //    assets.Add(asset);
-            //}
-
             var assets = await MainUnitOfWork.AssetRepository.FindAsync(
                 new Expression<Func<Asset, bool>>[]
                 {
                     x => !x!.DeletedAt.HasValue,
                     x => createDto.Assets!.Select(dto => dto.AssetId).Contains(x.Id)
                 }, null);
+
+            foreach (var asset in assets)
+            {
+                if (asset!.Status != AssetStatus.Operational)
+                {
+                    throw new ApiException("Trang thiết bị đang trong một yêu cầu khác", StatusCode.SERVER_ERROR);
+                }
+
+                var correspondingDto = createDto.Assets!.FirstOrDefault(dto => dto.AssetId == asset!.Id);
+                if (correspondingDto != null)
+                {
+                    asset!.Quantity = correspondingDto.Quantity ?? 0;
+                }
+            }
+
+            //var toRoom = await MainUnitOfWork.RoomRepository.FindOneAsync((Guid)createDto.ToRoomId);
+            double? totalQuantity = createDto.Assets?.Sum(assetDto => assetDto.Quantity);
 
             var transportation = new Transportation
             {
@@ -65,7 +66,7 @@ namespace API_FFMS.Services
                 Description = createDto.Description,
                 Notes = createDto.Notes,
                 IsInternal = createDto.IsInternal,
-                Quantity = createDto.Quantity,
+                Quantity = (int?)totalQuantity,
                 AssignedTo = createDto.AssignedTo,
                 ToRoomId = createDto.ToRoomId
             };
