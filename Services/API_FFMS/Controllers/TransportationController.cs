@@ -59,7 +59,7 @@ namespace API_FFMS.Controllers
 
         [HttpPut("status-update/{id:guid}")]
         [SwaggerOperation("Update transportation's status")]
-        public async Task<ApiResponse> UpdateStatus(Guid id, TransportUpdateStatusDto updateDto)
+        public async Task<ApiResponse> UpdateStatus(Guid id, BaseUpdateStatusDto updateDto)
         {
             return await _service.UpdateStatus(id, updateDto);
         }

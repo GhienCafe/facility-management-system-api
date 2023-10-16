@@ -107,9 +107,10 @@ namespace API_FFMS.Repositories
                 transportation.Status = statusUpdate;
                 _context.Entry(transportation).State = EntityState.Modified;
 
-                var assetIds = transportation.TransportationDetails!.Select(td => td.AssetId).ToList();
+                var assetIds = transportation.TransportationDetails?.Select(td => td.AssetId).ToList();
                 var assets = await _context.Assets
-                            .Where(asset => assetIds.Contains(asset.Id))
+                            .Include(a => a.Type)
+                            .Where(asset => assetIds!.Contains(asset.Id))
                             .ToListAsync();
 
                 var toRoom = await _context.Rooms.FindAsync(transportation.ToRoomId);

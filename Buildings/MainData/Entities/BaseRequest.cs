@@ -25,17 +25,17 @@ public class BaseRequest : BaseEntity
 public enum RequestStatus
 {
     [Display(Name = "Chưa bắt đầu")]
-    NotStart = 2,
+    NotStart = 1,
     [Display(Name = "Đang xử lý")]
-    InProgress = 1,
+    InProgress = 2,
     [Display(Name = "Đã báo cáo")]
-    Reported = 2,
+    Reported = 3,
     [Display(Name = "Đã hoàn thành")]
-    Done = 3,
+    Done = 4,
     [Display(Name = "Đã hủy")]
-    Cancelled = 4,
+    Cancelled = 5,
     [Display(Name = "Khác")]
-    Others = 5,
+    Others = 6,
 }
 
 public enum RequestType

@@ -279,7 +279,7 @@ public class MaintenanceService : BaseService, IMaintenanceService
             throw new ApiException($"Không thế cập nhật với quy trình có trạng thái: {maintenance.Status?.GetDisplayName()}", StatusCode.BAD_REQUEST);
         
         maintenance.Description = updateDto.Description ?? maintenance.Description;
-        maintenance.Status = updateDto.Status ?? maintenance.Status;
+        //maintenance.Status = updateDto.Status ?? maintenance.Status;
         maintenance.Notes = updateDto.Notes ?? maintenance.Notes;
         maintenance.CategoryId = updateDto.CategoryId ?? maintenance.CategoryId;
         maintenance.IsInternal = updateDto.IsInternal ?? maintenance.IsInternal;
