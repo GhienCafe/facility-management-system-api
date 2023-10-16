@@ -55,5 +55,12 @@ namespace API_FFMS.Controllers
         {
             return await _service.DeleteReplacements(ids);
         }
+
+        [HttpPut("status-update/{id:guid}")]
+        [SwaggerOperation("Update replacement's status")]
+        public async Task<ApiResponse> UpdateStatus(Guid id, BaseUpdateStatusDto updateDto)
+        {
+            return await _service.UpdateStatus(id, updateDto);
+        }
     }
 }

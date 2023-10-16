@@ -6,7 +6,6 @@ using MainData;
 using MainData.Entities;
 using MainData.Repositories;
 using Microsoft.EntityFrameworkCore;
-using System.Linq;
 using System.Linq.Expressions;
 
 namespace API_FFMS.Services
@@ -20,7 +19,7 @@ namespace API_FFMS.Services
         //Task<ApiResponses<TransportDto>> GetTransportOfStaff(TransportOfStaffQueryDto queryDto);
         Task<ApiResponse> Delete(Guid id);
         Task<ApiResponse> DeleteTransports(List<Guid> ids);
-        public Task<ApiResponse> UpdateStatus(Guid id, TransportUpdateStatusDto updateStatusDto);
+        public Task<ApiResponse> UpdateStatus(Guid id, BaseUpdateStatusDto updateStatusDto);
     }
     public class TransportationService : BaseService, ITransportationService
     {
@@ -190,6 +189,11 @@ namespace API_FFMS.Services
             var tranportation = new TransportDto
             {
                 Id = existingtransport.Id,
+                RequestCode = existingtransport.RequestCode,
+                Description = existingtransport.Description,
+                Notes = existingtransport.Notes,
+                Status = existingtransport.Status,
+                StatusObj = existingtransport.Status!.GetValue(),
                 RequestDate = existingtransport.RequestDate,
                 Quantity = existingtransport.Quantity,
                 CreatedAt = existingtransport.CreatedAt,
@@ -322,7 +326,7 @@ namespace API_FFMS.Services
             //existingTransport.RequestCode = updateDto.RequestCode ?? existingTransport.RequestCode;
             existingTransport.RequestDate = updateDto.RequestDate ?? existingTransport.RequestDate;
             existingTransport.CompletionDate = updateDto.CompletionDate ?? existingTransport.CompletionDate;
-            existingTransport.Status = updateDto.Status ?? existingTransport.Status;
+            //existingTransport.Status = updateDto.Status ?? existingTransport.Status;
             existingTransport.Description = updateDto.Description ?? existingTransport.Description;
             existingTransport.Notes = updateDto.Notes ?? existingTransport.Notes;
             //existingTransport.IsInternal = updateDto.IsInternal;
@@ -335,14 +339,12 @@ namespace API_FFMS.Services
             return ApiResponse.Success("Cập nhật yêu cầu thành công");
         }
 
-        public async Task<ApiResponse> UpdateStatus(Guid id, TransportUpdateStatusDto requestStatus)
+        public async Task<ApiResponse> UpdateStatus(Guid id, BaseUpdateStatusDto requestStatus)
         {
-            var existingTransport = await MainUnitOfWork.TransportationRepository.FindOneAsync(
-                new Expression<Func<Transportation, bool>>[]
-                {
-                    x => !x.DeletedAt.HasValue,
-                    x => x.Id == id
-                });
+            var existingTransport = MainUnitOfWork.TransportationRepository.GetQuery()
+                                    .Include(t => t!.TransportationDetails)
+                                    .Where(t => t!.Id == id)
+                                    .FirstOrDefault();
             if (existingTransport == null)
             {
                 throw new ApiException("Không tìm thấy yêu cầu vận chuyển này", StatusCode.NOT_FOUND);

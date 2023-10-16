@@ -18,6 +18,7 @@ namespace API_FFMS.Services
         Task<ApiResponse> Update(Guid id, BaseRequestUpdateDto updateDto);
         Task<ApiResponse> Delete(Guid id);
         Task<ApiResponse> DeleteReplairations(List<Guid> ids);
+        Task<ApiResponse> UpdateStatus(Guid id, BaseUpdateStatusDto updateStatusDto);
     }
     public class RepairationService : BaseService, IRepairationService
     {
@@ -120,6 +121,8 @@ namespace API_FFMS.Services
                 repairation.User!.RoleObj = repairation.User.Role?.GetValue();
             }
 
+            repairation.Status = repairation.Status;
+            repairation.StatusObj = repairation.Status!.GetValue();
 
             repairation = await _mapperRepository.MapCreator(repairation);
 
@@ -273,17 +276,35 @@ namespace API_FFMS.Services
                 throw new ApiException("Chỉ được cập nhật các yêu cầu chưa hoàn thành", StatusCode.NOT_FOUND);
             }
 
-            //existingRepair.RequestCode = updateDto.RequestCode ?? existingRepair.RequestCode;
             existingRepair.RequestDate = updateDto.RequestDate ?? existingRepair.RequestDate;
             existingRepair.CompletionDate = updateDto.CompletionDate ?? existingRepair.CompletionDate;
-            existingRepair.Status = updateDto.Status ?? existingRepair.Status;
             existingRepair.Description = updateDto.Description ?? existingRepair.Description;
             existingRepair.Notes = updateDto.Notes ?? existingRepair.Notes;
-            //existingRepair.IsInternal = updateDto.IsInternal;
 
             if (!await MainUnitOfWork.RepairationRepository.UpdateAsync(existingRepair, AccountId, CurrentDate))
             {
                 throw new ApiException("Cập nhật thông tin yêu cầu thất bại", StatusCode.SERVER_ERROR);
+            }
+
+            return ApiResponse.Success("Cập nhật yêu cầu thành công");
+        }
+
+        public async Task<ApiResponse> UpdateStatus(Guid id, BaseUpdateStatusDto requestStatus)
+        {
+            var existingRepair = MainUnitOfWork.RepairationRepository.GetQuery()
+                                    .Include(t => t!.Asset)
+                                    .Where(t => t!.Id == id)
+                                    .FirstOrDefault();
+            if (existingRepair == null)
+            {
+                throw new ApiException("Không tìm thấy yêu cầu sửa chữa này", StatusCode.NOT_FOUND);
+            }
+
+            existingRepair.Status = requestStatus.Status ?? existingRepair.Status;
+
+            if (!await _repairationRepository.UpdateStatus(existingRepair, requestStatus.Status, AccountId, CurrentDate))
+            {
+                throw new ApiException("Cập nhật trạng thái yêu cầu thất bại", StatusCode.SERVER_ERROR);
             }
 
             return ApiResponse.Success("Cập nhật yêu cầu thành công");
