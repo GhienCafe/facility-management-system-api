@@ -168,14 +168,25 @@ namespace API_FFMS.Services
                 repairQuery = repairQuery.Where(x => x!.CompletionDate == queryDto.CompletionDate);
             }
 
+            var assetTypeQueryable = MainUnitOfWork.AssetTypeRepository.GetQuery()
+            .Where(x => !x!.DeletedAt.HasValue);
+            var categoryQueryable = MainUnitOfWork.CategoryRepository.GetQuery()
+            .Where(x => !x!.DeletedAt.HasValue);
+
             var joinTable = from repair in repairQuery
                             join user in MainUnitOfWork.UserRepository.GetQuery() on repair.AssignedTo equals user.Id
                             join asset in MainUnitOfWork.AssetRepository.GetQuery() on repair.AssetId equals asset.Id
+                            join assetType in assetTypeQueryable on asset.TypeId equals assetType.Id into assetTypeGroup
+                            from assetType in assetTypeGroup.DefaultIfEmpty()
+                            join category in categoryQueryable on assetType.CategoryId equals category.Id into categoryGroup
+                            from category in categoryGroup.DefaultIfEmpty()
                             select new
                             {
                                 Repairation = repair,
                                 Asset = asset,
-                                User = user
+                                User = user,
+                                AssetType = assetType,
+                                Category = category
                             };
 
             var totalCount = await joinTable.CountAsync();
@@ -189,6 +200,7 @@ namespace API_FFMS.Services
                 RequestDate = x.Repairation.RequestDate,
                 CompletionDate = x.Repairation.CompletionDate,
                 Status = x.Repairation.Status,
+                StatusObj = x.Repairation.Status!.GetValue(),
                 Description = x.Repairation.Description,
                 Notes = x.Repairation.Notes,
                 IsInternal = x.Repairation.IsInternal,
@@ -233,7 +245,9 @@ namespace API_FFMS.Services
                     Gender = x.User.Gender,
                     PersonalIdentifyNumber = x.User.PersonalIdentifyNumber,
                     Dob = x.User.Dob
-                }
+                },
+                AssetType = x.AssetType.ProjectTo<AssetType, AssetTypeDto>(),
+                Category = x.Category.ProjectTo<Category, CategoryDto>()
             }).ToListAsync();
 
             repairations = await _mapperRepository.MapCreator(repairations);
