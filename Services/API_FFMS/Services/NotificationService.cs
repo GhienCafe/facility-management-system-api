@@ -33,17 +33,17 @@ public class NotificationService : BaseService, INotificationService
         notification!.IsRead = true;
         if (! await MainUnitOfWork.NotificationRepository.UpdateAsync(notification, AccountId, CurrentDate))
         {
-            return ApiResponse.Failed("Thông tin đã sai");
+            throw new ApiException("Thông tin đã sai");
         }
         return ApiResponse.Success("Đã đọc");
     }
     public async Task<ApiResponse> ReadAllNotification()
     {
-        var notification = await MainUnitOfWork.NotificationRepository.GetQuery().SingleOrDefaultAsync(notification => !notification!.DeletedAt.HasValue && AccountId == notification.UserId);
-        notification!.IsRead = true;
+        var notification = await MainUnitOfWork.NotificationRepository.GetQuery().Where(notification => !notification!.DeletedAt.HasValue && AccountId == notification.UserId).ToListAsync();
+        notification.ForEach(notification => notification.IsRead = true);
         if (! await MainUnitOfWork.NotificationRepository.UpdateAsync(notification, AccountId, CurrentDate))
         {
-            return ApiResponse.Failed("Thông tin đã sai");
+           throw new ApiException("Thông tin đã sai");
         }
         return ApiResponse.Success("Đã đọc toàn bộ");
     }

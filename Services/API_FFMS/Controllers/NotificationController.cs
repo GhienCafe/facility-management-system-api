@@ -16,7 +16,7 @@ namespace API_FFMS.Controllers
             _notificationService = notificationService;
         }
 
-        [HttpPut]
+        [HttpPut("{id}")]
         [SwaggerOperation("read notification")]
         public async Task<ApiResponse> ReadNotification(Guid id)
         {
