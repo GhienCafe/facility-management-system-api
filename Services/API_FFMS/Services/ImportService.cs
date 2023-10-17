@@ -43,15 +43,15 @@ namespace API_FFMS.Services
                 {
                     AssetName = dto.AssetName,
                     AssetCode = dto.AssetCode,
-                    Type = GetAssetTypeByCode(dto.TypeCode),
-                    Status = dto.Status,
+                    Type = GetAssetTypeByCode(dto.TypeCode!),
+                    Status = AssetStatus.Operational,
                     ManufacturingYear = dto.ManufacturingYear,
                     SerialNumber = dto.SerialNumber,
                     Quantity = dto.Quantity,
                     Description = dto.Description,
-                    IsRented = IsTrueOrFalse(dto.IsRented),
-                    IsMovable = IsTrueOrFalse(dto.IsMovable),
-                    Model = GetModelByName(dto.Model),
+                    IsRented = IsTrueOrFalse(dto.IsRented!),
+                    IsMovable = IsTrueOrFalse(dto.IsMovable!),
+                    Model = GetModelByName(dto.Model!),
                     StartDateOfUse = DateTime.Now,
                     LastCheckedDate = DateTime.Now,
                     LastMaintenanceTime = DateTime.Now
@@ -118,7 +118,7 @@ namespace API_FFMS.Services
         private Model? GetModelByName(string modelName)
         {
             var model = MainUnitOfWork.ModelRepository.GetQuery()
-                                .Where(x => x!.ModelName.Trim().ToLower()
+                                .Where(x => x!.ModelName!.Trim().ToLower()
                                 .Contains(modelName.Trim().ToLower()))
                                 .FirstOrDefault();
             return model;
@@ -127,7 +127,7 @@ namespace API_FFMS.Services
         public Room? GetWareHouse(string roomName)
         {
             var wareHouse = MainUnitOfWork.RoomRepository.GetQuery()
-                            .Where(x => x!.RoomName.Trim()
+                            .Where(x => x!.RoomName!.Trim()
                             .Equals(roomName.Trim()))
                             .FirstOrDefault();
             return wareHouse;
@@ -175,7 +175,6 @@ namespace API_FFMS.Services
                 if (string.IsNullOrWhiteSpace(assetDto.AssetName) ||
                     string.IsNullOrWhiteSpace(assetDto.AssetCode) ||
                     string.IsNullOrWhiteSpace(assetDto.TypeCode!.ToString()) ||
-                    string.IsNullOrWhiteSpace(assetDto.Status.ToString()) ||
                     string.IsNullOrWhiteSpace(assetDto.ManufacturingYear.ToString()) ||
                     string.IsNullOrWhiteSpace(assetDto.Quantity.ToString()))
                 {
@@ -261,24 +260,6 @@ namespace API_FFMS.Services
                 }
             }
         }
-
-        //private void CheckManufacturingYear(List<Asset> assets)
-        //{
-        //    var currentDate = DateTime.UtcNow.Year;
-
-        //    foreach (var asset in assets)
-        //    {
-        //        if (asset.ManufacturingYear >= currentDate)
-        //        {
-        //            var row = assets.IndexOf(asset) + 2;
-        //            validationErrors.Add(new ImportError
-        //            {
-        //                Row = row,
-        //                ErrorMessage = $"ManufacturingYear in row {row} is not before the current date"
-        //            });
-        //        }
-        //    }
-        //}
 
         private void CheckManufacturingYear(List<Asset> assets)
         {

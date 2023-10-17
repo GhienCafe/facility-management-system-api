@@ -12,9 +12,6 @@ namespace API_FFMS.Repositories
     }
     public class TransportationRepository : ITransportationRepository
     {
-        const string IT_ASSET = "IT"; // IT Device
-        const string ELEC_ASSET = "ED"; //Electronice Device
-        const string FUR_ASSET = "FD"; //Furniture Device
         private readonly DatabaseContext _context;
 
         public TransportationRepository(DatabaseContext context)
@@ -118,28 +115,7 @@ namespace API_FFMS.Repositories
                 {
                     var roomAsset = await _context.RoomAssets.FirstOrDefaultAsync(x => x.AssetId == asset.Id && x.ToDate == null);
                     var fromRoom = await _context.Rooms.FirstOrDefaultAsync(x => x.Id == roomAsset!.RoomId && roomAsset.AssetId == asset.Id);
-                    if (statusUpdate == RequestStatus.InProgress)
-                    {
-                        if (roomAsset != null)
-                        {
-                            roomAsset!.Status = AssetStatus.Transportation;
-                            roomAsset.EditedAt = now.Value;
-                            _context.Entry(roomAsset).State = EntityState.Modified;
-                        }
-
-                        asset.Status = AssetStatus.Transportation;
-                        asset.EditedAt = now.Value;
-                        _context.Entry(asset).State = EntityState.Modified;
-
-                        toRoom!.State = RoomState.Transportation;
-                        _context.Entry(toRoom).State = EntityState.Modified;
-
-                        fromRoom!.State = RoomState.Transportation;
-                        _context.Entry(fromRoom).State = EntityState.Modified;
-
-                        //var roomAsset = _context.RoomAssets.FirstOrDefault(x => x.Id == asset.Id && x.ToDate == null);
-                    }
-                    else if (statusUpdate == RequestStatus.Done)
+                    if (statusUpdate == RequestStatus.Done)
                     {
                         asset.Status = AssetStatus.Operational;
                         asset.EditedAt = now.Value;
@@ -164,7 +140,7 @@ namespace API_FFMS.Repositories
                         toRoom.EditedAt = now.Value;
                         _context.Entry(toRoom).State = EntityState.Modified;
 
-                        if(asset.Type!.IsIdentified == true)
+                        if (asset.Type!.IsIdentified == true)
                         {
                             var addRoomAsset = new RoomAsset
                             {

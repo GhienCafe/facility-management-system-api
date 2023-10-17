@@ -111,26 +111,10 @@ namespace API_FFMS.Repositories
                 //LOCATION
                 var assetLocation = await _context.Rooms
                                 .FirstOrDefaultAsync(x => x.Id == roomAsset!.RoomId && roomAsset.AssetId == asset!.Id);
-                
+
                 var newAssetLocation = await _context.Rooms
                                 .FirstOrDefaultAsync(x => x.Id == roomAssetNew!.RoomId && roomAssetNew.AssetId == newAsset!.Id);
-                if(replacement.Status == RequestStatus.InProgress)
-                {
-                    asset!.Status = AssetStatus.Replacement;
-                    asset.EditedAt = now.Value;
-                    _context.Entry(asset).State = EntityState.Modified;
-
-                    newAsset!.Status = AssetStatus.Replacement;
-                    newAsset.EditedAt = now.Value;
-                    _context.Entry(newAsset).State = EntityState.Modified;
-
-                    assetLocation!.State = RoomState.Replacement;
-                    _context.Entry(assetLocation).State = EntityState.Modified;
-
-                    newAssetLocation!.State = RoomState.Replacement;
-                    _context.Entry(newAssetLocation).State = EntityState.Modified;
-                }
-                else if (replacement.Status == RequestStatus.Done)
+                if (replacement.Status == RequestStatus.Done)
                 {
                     asset!.Status = AssetStatus.Operational;
                     asset.EditedAt = now.Value;
@@ -162,7 +146,7 @@ namespace API_FFMS.Repositories
                     };
                     _context.RoomAssets.Add(addRoomAsset);
                 }
-                else if(replacement.Status == RequestStatus.Cancelled)
+                else if (replacement.Status == RequestStatus.Cancelled)
                 {
                     asset!.Status = AssetStatus.Operational;
                     asset.EditedAt = now.Value;
