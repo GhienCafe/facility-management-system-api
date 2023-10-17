@@ -41,6 +41,7 @@ namespace API_FFMS.Services
                 throw new ApiException("Trang thiết bị đang trong một yêu cầu khác", StatusCode.BAD_REQUEST);
 
             var repairation = createDto.ProjectTo<RepairationCreateDto, Repairation>();
+            repairation.RequestCode = GenerateRequestCode();
 
             if (!await _repairationRepository.InsertRepairation(repairation, AccountId, CurrentDate))
                 throw new ApiException("Tạo yêu cầu thất bại", StatusCode.SERVER_ERROR);
@@ -308,6 +309,25 @@ namespace API_FFMS.Services
             }
 
             return ApiResponse.Success("Cập nhật yêu cầu thành công");
+        }
+
+        public string GenerateRequestCode()
+        {
+            var lastRequest = MainUnitOfWork.RepairationRepository.GetQueryCode()
+            .OrderByDescending(x => x!.RequestCode)
+            .FirstOrDefault();
+
+            string newRequestCode = "REP1";
+
+            if (lastRequest != null)
+            {
+                string lastRequestCode = lastRequest.RequestCode;
+                if (lastRequestCode.StartsWith("REP") && int.TryParse(lastRequestCode[3..], out int lastNumber))
+                {
+                    newRequestCode = $"REP{lastNumber + 1}";
+                }
+            }
+            return newRequestCode;
         }
     }
 }
