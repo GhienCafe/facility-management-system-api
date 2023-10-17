@@ -59,7 +59,7 @@ namespace API_FFMS.Services
 
             var transportation = new Transportation
             {
-                RequestCode = createDto.RequestCode,
+                RequestCode = GenerateRequestCode(),
                 RequestDate = CurrentDate,
                 CompletionDate = createDto.CompletionDate,
                 Description = createDto.Description,
@@ -323,13 +323,10 @@ namespace API_FFMS.Services
                 throw new ApiException("Chỉ được cập nhật các yêu cầu chưa hoàn thành", StatusCode.NOT_FOUND);
             }
 
-            //existingTransport.RequestCode = updateDto.RequestCode ?? existingTransport.RequestCode;
             existingTransport.RequestDate = updateDto.RequestDate ?? existingTransport.RequestDate;
             existingTransport.CompletionDate = updateDto.CompletionDate ?? existingTransport.CompletionDate;
-            //existingTransport.Status = updateDto.Status ?? existingTransport.Status;
             existingTransport.Description = updateDto.Description ?? existingTransport.Description;
             existingTransport.Notes = updateDto.Notes ?? existingTransport.Notes;
-            //existingTransport.IsInternal = updateDto.IsInternal;
 
             if (!await MainUnitOfWork.TransportationRepository.UpdateAsync(existingTransport, AccountId, CurrentDate))
             {
@@ -358,6 +355,25 @@ namespace API_FFMS.Services
             }
 
             return ApiResponse.Success("Cập nhật yêu cầu thành công");
+        }
+
+        public string GenerateRequestCode()
+        {
+            var lastRequest = MainUnitOfWork.TransportationRepository.GetQueryCode()
+            .OrderByDescending(x => x!.RequestCode)
+            .FirstOrDefault();
+
+            string newRequestCode = "TRS1";
+
+            if (lastRequest != null)
+            {
+                string lastRequestCode = lastRequest.RequestCode;
+                if (lastRequestCode.StartsWith("TRS") && int.TryParse(lastRequestCode[3..], out int lastNumber))
+                {
+                    newRequestCode = $"TRS{lastNumber + 1}";
+                }
+            }
+            return newRequestCode;
         }
     }
 }

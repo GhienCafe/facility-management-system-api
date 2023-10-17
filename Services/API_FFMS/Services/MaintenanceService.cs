@@ -261,6 +261,7 @@ public class MaintenanceService : BaseService, IMaintenanceService
             throw new ApiException("Trang thiết bị đang trong một yêu cầu khác", StatusCode.BAD_REQUEST);
 
         var maintenance = createDto.ProjectTo<MaintenanceCreateDto, Maintenance>();
+        maintenance.RequestCode = GenerateRequestCode();
 
         if (!await _maintenanceRepository.InsertMaintenance(maintenance, AccountId, CurrentDate))
             throw new ApiException("Tạo yêu cầu thất bại", StatusCode.SERVER_ERROR);
@@ -292,5 +293,24 @@ public class MaintenanceService : BaseService, IMaintenanceService
             throw new ApiException("Cập nhật thất bại", StatusCode.SERVER_ERROR);
 
         return ApiResponse.Success("Cập nhật thành công");
+    }
+
+    public string GenerateRequestCode()
+    {
+        var lastRequest = MainUnitOfWork.MaintenanceRepository.GetQueryCode()
+        .OrderByDescending(x => x!.RequestCode)
+        .FirstOrDefault();
+
+        string newRequestCode = "MTN1";
+
+        if (lastRequest != null)
+        {
+            string lastRequestCode = lastRequest.RequestCode;
+            if (lastRequestCode.StartsWith("MTN") && int.TryParse(lastRequestCode[3..], out int lastNumber))
+            {
+                newRequestCode = $"MTN{lastNumber + 1}";
+            }
+        }
+        return newRequestCode;
     }
 }
