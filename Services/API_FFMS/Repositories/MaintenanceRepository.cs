@@ -30,7 +30,7 @@ public class MaintenanceRepository : IMaintenanceRepository
             entity.CreatedAt = now.Value;
             entity.EditedAt = now.Value;
             entity.CreatorId = creatorId;
-            entity.Status = RequestStatus.InProgress;
+            entity.Status = RequestStatus.NotStart;
             await _context.Maintenances.AddAsync(entity);
            // await _context.SaveChangesAsync();
             

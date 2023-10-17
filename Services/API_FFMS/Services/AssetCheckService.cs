@@ -34,6 +34,7 @@ public class AssetCheckService : BaseService, IAssetCheckService
     public async Task<ApiResponse> Create(AssetCheckCreateDto createDto)
     {
         var assetCheck = createDto.ProjectTo<AssetCheckCreateDto, AssetCheck>();
+        assetCheck.RequestCode = GenerateRequestCode();
         if (!await _assetcheckRepository.InsertAssetCheck(assetCheck, AccountId, CurrentDate))
         {
             throw new ApiException("Thêm mới thất bại", StatusCode.SERVER_ERROR);
@@ -291,5 +292,24 @@ public class AssetCheckService : BaseService, IAssetCheckService
         }
 
         return ApiResponse.Success("Cập nhật yêu cầu thành công");
+    }
+
+    public string GenerateRequestCode()
+    {
+        var lastRequest = MainUnitOfWork.AssetCheckRepository.GetQueryCode()
+        .OrderByDescending(x => x!.RequestCode)
+        .FirstOrDefault();
+
+        string newRequestCode = "AC1";
+
+        if (lastRequest != null)
+        {
+            string lastRequestCode = lastRequest.RequestCode;
+            if (lastRequestCode.StartsWith("AC") && int.TryParse(lastRequestCode[2..], out int lastNumber))
+            {
+                newRequestCode = $"AC{lastNumber + 1}";
+            }
+        }
+        return newRequestCode;
     }
 }

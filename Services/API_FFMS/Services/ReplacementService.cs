@@ -50,6 +50,7 @@ namespace API_FFMS.Services
             }
 
             var replacement = createDto.ProjectTo<ReplaceCreateDto, Replacement>();
+            replacement.RequestCode = GenerateRequestCode();
 
             if (!await _repository.InsertReplacement(replacement, AccountId, CurrentDate))
             {
@@ -295,16 +296,8 @@ namespace API_FFMS.Services
                 throw new ApiException("Chỉ được cập nhật các yêu cầu chưa hoàn thành", StatusCode.NOT_FOUND);
             }
             
-            //if (updateDto.Status == RequestStatus.InProgress)
-            //{
-            //    if (!await _repository.UpdateStatus(existingReplace, existingReplace.Status, AccountId, CurrentDate))
-            //    {
-            //        throw new ApiException("Cập nhật thông tin yêu cầu thất bại", StatusCode.SERVER_ERROR);
-            //    }
-            //}
             existingReplace.RequestDate = updateDto.RequestDate ?? existingReplace.RequestDate;
             existingReplace.CompletionDate = updateDto.CompletionDate ?? existingReplace.CompletionDate;
-            //existingReplace.Status = updateDto.Status ?? existingReplace.Status;
             existingReplace.Description = updateDto.Description ?? existingReplace.Description;
             existingReplace.Notes = updateDto.Notes ?? existingReplace.Notes;
             if (!await _repository.UpdateStatus(existingReplace, existingReplace.Status, AccountId, CurrentDate))
@@ -335,6 +328,25 @@ namespace API_FFMS.Services
             }
 
             return ApiResponse.Success("Cập nhật yêu cầu thành công");
+        }
+
+        public string GenerateRequestCode()
+        {
+            var lastRequest = MainUnitOfWork.ReplacementRepository.GetQueryCode()
+            .OrderByDescending(x => x!.RequestCode)
+            .FirstOrDefault();
+
+            string newRequestCode = "RPL1";
+
+            if (lastRequest != null)
+            {
+                string lastRequestCode = lastRequest.RequestCode;
+                if (lastRequestCode.StartsWith("RPL") && int.TryParse(lastRequestCode[3..], out int lastNumber))
+                {
+                    newRequestCode = $"RPL{lastNumber + 1}";
+                }
+            }
+            return newRequestCode;
         }
     }
 }
