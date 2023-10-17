@@ -71,21 +71,13 @@ namespace API_FFMS.Repositories
                 assetCheck.Status = statusUpdate;
                 _context.Entry(assetCheck).State = EntityState.Modified;
 
+                //var mediaFile = await _context.MediaFiles.FirstOrDefaultAsync(x => x.ItemId == assetCheck.Id);
                 var asset = await _context.Assets.FindAsync(assetCheck.AssetId);
                 var roomAsset = await _context.RoomAssets
                                     .FirstOrDefaultAsync(x => x.AssetId == asset!.Id && x.ToDate == null);
                 var assetLocation = await _context.Rooms
                                 .FirstOrDefaultAsync(x => x.Id == roomAsset!.RoomId && roomAsset.AssetId == asset!.Id);
-                if (assetCheck.Status == RequestStatus.InProgress)
-                {
-                    asset!.Status = AssetStatus.NeedInspection;
-                    asset.EditedAt = now.Value;
-                    _context.Entry(asset).State = EntityState.Modified;
-
-                    assetLocation!.State = RoomState.NeedInspection;
-                    _context.Entry(assetLocation).State = EntityState.Modified;
-                }
-                else if (assetCheck.Status == RequestStatus.Done)
+                if (assetCheck.Status == RequestStatus.Done)
                 {
                     asset!.Status = AssetStatus.Operational;
                     asset.EditedAt = now.Value;

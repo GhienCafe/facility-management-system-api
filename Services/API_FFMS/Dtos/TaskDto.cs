@@ -1,5 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
-using AppCore.Models;
+﻿using AppCore.Models;
 using MainData.Entities;
 
 namespace API_FFMS.Dtos;
@@ -43,4 +42,16 @@ public class TaskDetailDto : BaseRequestDto
 public class TaskQueryDto : BaseRequestQueryDto
 {
     public RequestType? Type { get; set; }
+}
+
+public class ReportCreateDto
+{
+    public string? FileName { get; set; }
+    public string? Key { get; set; }
+    public string? RawUri { get; set; }
+    public string? Uri { get; set; }
+    public string? Extensions { get; set; }
+    public FileType FileType { get; set; }
+    public string? Content { get; set; }
+    public Guid? ItemId { get; set; }
 }
