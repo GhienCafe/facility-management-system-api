@@ -94,24 +94,7 @@ namespace API_FFMS.Repositories
 
                 var roomAsset = await _context.RoomAssets.FirstOrDefaultAsync(x => x.AssetId == asset!.Id && x.ToDate == null);
                 var location = await _context.Rooms.FirstOrDefaultAsync(x => x.Id == roomAsset!.RoomId && roomAsset.AssetId == asset!.Id);
-
-                if (statusUpdate == RequestStatus.InProgress)
-                {
-                    if (roomAsset != null)
-                    {
-                        roomAsset!.Status = AssetStatus.Repair;
-                        roomAsset.EditedAt = now.Value;
-                        _context.Entry(roomAsset).State = EntityState.Modified;
-                    }
-
-                    asset!.Status = AssetStatus.Repair;
-                    asset.EditedAt = now.Value;
-                    _context.Entry(asset).State = EntityState.Modified;
-
-                    location!.State = RoomState.Repair;
-                    _context.Entry(location).State = EntityState.Modified;
-                }
-                else if (statusUpdate == RequestStatus.Done)
+                if (statusUpdate == RequestStatus.Done)
                 {
                     asset!.Status = AssetStatus.Operational;
                     asset.EditedAt = now.Value;

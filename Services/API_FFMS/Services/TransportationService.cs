@@ -265,7 +265,7 @@ namespace API_FFMS.Services
                 {
                     Asset = new AssetBaseDto
                     {
-                        Id = (Guid)td.AssetId,
+                        Id = (Guid)td.AssetId!,
                         AssetCode = td.Asset!.AssetCode,
                         AssetName = td.Asset.AssetName,
                         Quantity = td.Asset.Quantity,
