@@ -6,7 +6,7 @@ namespace API_FFMS.Repositories
 {
     public interface ITaskRepository
     {
-        Task<bool> UpdateStatus(MediaFile mediaFile, RequestStatus? statusUpdate, Guid? editorId, DateTime? now = null);
+        Task<bool> UpdateStatus(List<MediaFile> mediaFiles, RequestStatus? statusUpdate, Guid? editorId, DateTime? now = null);
     }
     public class TaskRepository : ITaskRepository
     {
@@ -16,7 +16,7 @@ namespace API_FFMS.Repositories
         {
             _context = context;
         }
-        public async Task<bool> UpdateStatus(MediaFile mediaFile, RequestStatus? statusUpdate, Guid? editorId, DateTime? now = null)
+        public async Task<bool> UpdateStatus(List<MediaFile> mediaFiles, RequestStatus? statusUpdate, Guid? editorId, DateTime? now = null)
         {
             await _context.Database.BeginTransactionAsync();
             now ??= DateTime.UtcNow;
@@ -25,7 +25,7 @@ namespace API_FFMS.Repositories
                 //ASSET CHECK
                 var assetCheck = await _context.AssetChecks
                                  .Include(x => x.Asset)
-                                 .FirstOrDefaultAsync(x => x.Id == mediaFile.ItemId);
+                                 .FirstOrDefaultAsync(x => x.Id == mediaFiles.First().ItemId);
                 if (assetCheck != null)
                 {
                     assetCheck.EditedAt = now.Value;
@@ -50,23 +50,28 @@ namespace API_FFMS.Repositories
                     }
                     else if (assetCheck.Status == RequestStatus.Reported)
                     {
-                        var newMediaFile = new MediaFile
+                        foreach (var mediaFile in mediaFiles)
                         {
-                            Id = Guid.NewGuid(),
-                            CreatedAt = now.Value,
-                            CreatorId = editorId,
-                            EditedAt = now.Value,
-                            EditorId = editorId,
-                            FileName = mediaFile.FileName,
-                            Key = mediaFile.Key,
-                            RawUri = mediaFile.RawUri,
-                            Uri = mediaFile.Uri,
-                            Extensions = mediaFile.Extensions,
-                            FileType = mediaFile.FileType,
-                            Content = mediaFile.Content,
-                            ItemId = assetCheck.Id
-                        };
-                        _context.MediaFiles.Add(newMediaFile);
+                            var newMediaFile = new MediaFile
+                            {
+                                Id = Guid.NewGuid(),
+                                CreatedAt = now.Value,
+                                CreatorId = editorId,
+                                EditedAt = now.Value,
+                                EditorId = editorId,
+                                FileName = mediaFile.FileName,
+                                Key = mediaFile.Key,
+                                RawUri = mediaFile.RawUri,
+                                Uri = mediaFile.Uri,
+                                Extensions = mediaFile.Extensions,
+                                FileType = mediaFile.FileType,
+                                Content = mediaFile.Content,
+                                ItemId = assetCheck.Id
+                            };
+                            _context.MediaFiles.Add(newMediaFile);
+                        }
+                        assetCheck.Result = mediaFiles.First().Content;
+                        _context.Entry(assetCheck).State = EntityState.Modified;
                     }
                     await _context.SaveChangesAsync();
                     await _context.Database.CommitTransactionAsync();
@@ -77,7 +82,7 @@ namespace API_FFMS.Repositories
                 var transportation = await _context.Transportations
                                     .Include(x => x.Asset)
                                     .Include(x => x.TransportationDetails)
-                                    .FirstOrDefaultAsync(x => x.Id == mediaFile.ItemId);
+                                    .FirstOrDefaultAsync(x => x.Id == mediaFiles.First().ItemId);
                 if (transportation != null)
                 {
                     transportation.EditedAt = now.Value;
@@ -119,25 +124,29 @@ namespace API_FFMS.Repositories
                         }
                         else if (statusUpdate == RequestStatus.Reported)
                         {
-                            var newMediaFile = new MediaFile
+                            foreach (var mediaFile in mediaFiles)
                             {
-                                Id = Guid.NewGuid(),
-                                CreatedAt = now.Value,
-                                CreatorId = editorId,
-                                EditedAt = now.Value,
-                                EditorId = editorId,
-                                FileName = mediaFile.FileName,
-                                Key = mediaFile.Key,
-                                RawUri = mediaFile.RawUri,
-                                Uri = mediaFile.Uri,
-                                Extensions = mediaFile.Extensions,
-                                FileType = mediaFile.FileType,
-                                Content = mediaFile.Content,
-                                ItemId = transportation.Id
-                            };
-                            _context.MediaFiles.Add(newMediaFile);
+                                var newMediaFile = new MediaFile
+                                {
+                                    Id = Guid.NewGuid(),
+                                    CreatedAt = now.Value,
+                                    CreatorId = editorId,
+                                    EditedAt = now.Value,
+                                    EditorId = editorId,
+                                    FileName = mediaFile.FileName,
+                                    Key = mediaFile.Key,
+                                    RawUri = mediaFile.RawUri,
+                                    Uri = mediaFile.Uri,
+                                    Extensions = mediaFile.Extensions,
+                                    FileType = mediaFile.FileType,
+                                    Content = mediaFile.Content,
+                                    ItemId = transportation.Id
+                                };
+                                _context.MediaFiles.Add(newMediaFile);
+                            }
+                            transportation.Result = mediaFiles.First().Content;
+                            _context.Entry(transportation).State = EntityState.Modified;
                         }
-
                     }
                     await _context.SaveChangesAsync();
                     await _context.Database.CommitTransactionAsync();
@@ -147,7 +156,7 @@ namespace API_FFMS.Repositories
                 //REPAIRATION
                 var repairation = await _context.Repairations
                                 .Include(x => x.Asset)
-                                .FirstOrDefaultAsync(x => x.Id == mediaFile.ItemId);
+                                .FirstOrDefaultAsync(x => x.Id == mediaFiles.First().ItemId);
                 if (repairation != null)
                 {
                     repairation.EditedAt = now.Value;
@@ -180,23 +189,28 @@ namespace API_FFMS.Repositories
                     }
                     else if (statusUpdate == RequestStatus.Reported)
                     {
-                        var newMediaFile = new MediaFile
+                        foreach (var mediaFile in mediaFiles)
                         {
-                            Id = Guid.NewGuid(),
-                            CreatedAt = now.Value,
-                            CreatorId = editorId,
-                            EditedAt = now.Value,
-                            EditorId = editorId,
-                            FileName = mediaFile.FileName,
-                            Key = mediaFile.Key,
-                            RawUri = mediaFile.RawUri,
-                            Uri = mediaFile.Uri,
-                            Extensions = mediaFile.Extensions,
-                            FileType = mediaFile.FileType,
-                            Content = mediaFile.Content,
-                            ItemId = repairation.Id
-                        };
-                        _context.MediaFiles.Add(newMediaFile);
+                            var newMediaFile = new MediaFile
+                            {
+                                Id = Guid.NewGuid(),
+                                CreatedAt = now.Value,
+                                CreatorId = editorId,
+                                EditedAt = now.Value,
+                                EditorId = editorId,
+                                FileName = mediaFile.FileName,
+                                Key = mediaFile.Key,
+                                RawUri = mediaFile.RawUri,
+                                Uri = mediaFile.Uri,
+                                Extensions = mediaFile.Extensions,
+                                FileType = mediaFile.FileType,
+                                Content = mediaFile.Content,
+                                ItemId = repairation.Id
+                            };
+                            _context.MediaFiles.Add(newMediaFile);
+                        }
+                        repairation.Result = mediaFiles.First().Content;
+                        _context.Entry(repairation).State = EntityState.Modified;
                     }
 
                     await _context.SaveChangesAsync();
@@ -207,7 +221,7 @@ namespace API_FFMS.Repositories
                 //REPLACEMENT
                 var replacement = await _context.Replacements
                                   .Include(x => x.Asset)
-                                  .FirstOrDefaultAsync(x => x.Id == mediaFile.ItemId);
+                                  .FirstOrDefaultAsync(x => x.Id == mediaFiles.First().ItemId);
                 if (replacement != null)
                 {
                     replacement.EditedAt = now.Value;
@@ -250,23 +264,28 @@ namespace API_FFMS.Repositories
                     }
                     else if (replacement.Status == RequestStatus.Reported)
                     {
-                        var newMediaFile = new MediaFile
+                        foreach (var mediaFile in mediaFiles)
                         {
-                            Id = Guid.NewGuid(),
-                            CreatedAt = now.Value,
-                            CreatorId = editorId,
-                            EditedAt = now.Value,
-                            EditorId = editorId,
-                            FileName = mediaFile.FileName,
-                            Key = mediaFile.Key,
-                            RawUri = mediaFile.RawUri,
-                            Uri = mediaFile.Uri,
-                            Extensions = mediaFile.Extensions,
-                            FileType = mediaFile.FileType,
-                            Content = mediaFile.Content,
-                            ItemId = replacement.Id
-                        };
-                        _context.MediaFiles.Add(newMediaFile);
+                            var newMediaFile = new MediaFile
+                            {
+                                Id = Guid.NewGuid(),
+                                CreatedAt = now.Value,
+                                CreatorId = editorId,
+                                EditedAt = now.Value,
+                                EditorId = editorId,
+                                FileName = mediaFile.FileName,
+                                Key = mediaFile.Key,
+                                RawUri = mediaFile.RawUri,
+                                Uri = mediaFile.Uri,
+                                Extensions = mediaFile.Extensions,
+                                FileType = mediaFile.FileType,
+                                Content = mediaFile.Content,
+                                ItemId = replacement.Id
+                            };
+                            _context.MediaFiles.Add(newMediaFile);
+                        }
+                        replacement.Result = mediaFiles.First().Content;
+                        _context.Entry(replacement).State = EntityState.Modified;
                     }
                     await _context.SaveChangesAsync();
                     await _context.Database.CommitTransactionAsync();
@@ -276,7 +295,7 @@ namespace API_FFMS.Repositories
                 //MAINTENANCE
                 var maintenance = await _context.Maintenances
                                   .Include(x => x.Asset)
-                                  .FirstOrDefaultAsync(x => x.Id == mediaFile.ItemId);
+                                  .FirstOrDefaultAsync(x => x.Id == mediaFiles.First().ItemId);
                 if (maintenance != null)
                 {
                     maintenance.EditedAt = now.Value;
@@ -309,23 +328,28 @@ namespace API_FFMS.Repositories
                     }
                     else if (statusUpdate == RequestStatus.Reported)
                     {
-                        var newMediaFile = new MediaFile
+                        foreach (var mediaFile in mediaFiles)
                         {
-                            Id = Guid.NewGuid(),
-                            CreatedAt = now.Value,
-                            CreatorId = editorId,
-                            EditedAt = now.Value,
-                            EditorId = editorId,
-                            FileName = mediaFile.FileName,
-                            Key = mediaFile.Key,
-                            RawUri = mediaFile.RawUri,
-                            Uri = mediaFile.Uri,
-                            Extensions = mediaFile.Extensions,
-                            FileType = mediaFile.FileType,
-                            Content = mediaFile.Content,
-                            ItemId = maintenance.Id
-                        };
-                        _context.MediaFiles.Add(newMediaFile);
+                            var newMediaFile = new MediaFile
+                            {
+                                Id = Guid.NewGuid(),
+                                CreatedAt = now.Value,
+                                CreatorId = editorId,
+                                EditedAt = now.Value,
+                                EditorId = editorId,
+                                FileName = mediaFile.FileName,
+                                Key = mediaFile.Key,
+                                RawUri = mediaFile.RawUri,
+                                Uri = mediaFile.Uri,
+                                Extensions = mediaFile.Extensions,
+                                FileType = mediaFile.FileType,
+                                Content = mediaFile.Content,
+                                ItemId = maintenance.Id
+                            };
+                            _context.MediaFiles.Add(newMediaFile);
+                        }
+                        maintenance.Result = mediaFiles.First().Content;
+                        _context.Entry(maintenance).State = EntityState.Modified;
                     }
 
                     await _context.SaveChangesAsync();

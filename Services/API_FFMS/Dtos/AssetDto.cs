@@ -24,6 +24,7 @@ namespace API_FFMS.Dtos
         public bool? IsRented { get; set; }
         public AssetTypeDto? Type { get; set; }
         public ModelDto? Model { get; set; }
+        public CategoryDto? Category { get; set; }
     }
 
     public class AssetBaseDto : BaseDto
@@ -60,11 +61,11 @@ namespace API_FFMS.Dtos
         public DateTime? LastMaintenanceTime { get; set; }
         public Guid? TypeId { get; set; }
         public Guid? ModelId { get; set; }
-        //public bool? IsRented { get; set; }
         public AssetTypeDto? Type { get; set; }
         public ModelDto? Model { get; set; }
         public DateTime? LastCheckedDate { get; set; }
         public DateTime? StartDateOfUse { get; set; }
+        public CategoryDto? Category { get; set; }
     }
 
     public class AssetCreateDto

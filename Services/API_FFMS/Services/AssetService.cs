@@ -152,7 +152,8 @@ public class AssetService : BaseService, IAssetService
                 CreatorId = x.Type.CreatorId ?? Guid.Empty,
                 EditorId = x.Type.EditorId ?? Guid.Empty
             } : null,
-            Model = x.Model.ProjectTo<Model, ModelDto>()
+            Model = x.Model.ProjectTo<Model, ModelDto>(),
+            Category = x.Type!.Category!.ProjectTo<Category, CategoryDto>()
         }).ToListAsync();
 
         assets = await _mapperRepository.MapCreator(assets);
@@ -180,7 +181,7 @@ public class AssetService : BaseService, IAssetService
                 AssetName = x.AssetName,
                 Quantity = x.Quantity,
                 IsMovable = x.IsMovable,
-                //IsRented = x.IsRented,
+                IsRented = x.IsRented,
                 ManufacturingYear = x.ManufacturingYear,
                 ModelId = x.ModelId,
                 SerialNumber = x.SerialNumber,
@@ -192,16 +193,13 @@ public class AssetService : BaseService, IAssetService
                 EditedAt = x.EditedAt,
                 CreatorId = x.CreatorId ?? Guid.Empty,
                 EditorId = x.EditorId ?? Guid.Empty,
+                Type = x.Type!.ProjectTo<AssetType, AssetTypeDto>(),
+                Model = x.Model!.ProjectTo<Model, ModelDto>(),
+                Category = x.Type!.Category!.ProjectTo<Category, CategoryDto>()
             }).FirstOrDefaultAsync();
 
         if (asset == null)
             throw new ApiException("Không tìm thất trang thiết bị", StatusCode.NOT_FOUND);
-
-        asset.Model = (await MainUnitOfWork.ModelRepository
-            .FindOneAsync(asset.ModelId ?? Guid.Empty))?.ProjectTo<Model, ModelDto>();
-
-        // asset.Type = (await MainUnitOfWork.AssetTypeRepository
-        //     .FindOneAsync(asset.TypeId ?? Guid.Empty))?.ProjectTo<AssetType, AssetTypeDto>();
 
         asset = await _mapperRepository.MapCreator(asset);
 
@@ -228,7 +226,6 @@ public class AssetService : BaseService, IAssetService
         existingAsset.Description = updateDto.Description ?? existingAsset.Description;
         existingAsset.AssetCode = updateDto.AssetCode ?? existingAsset.AssetCode;
         existingAsset.IsMovable = updateDto.IsMovable ?? existingAsset.IsMovable;
-        //existingAsset.IsRented = updateDto.IsRented ?? existingAsset.IsRented;
         existingAsset.LastMaintenanceTime = updateDto.LastMaintenanceTime ?? existingAsset.LastMaintenanceTime;
 
         if (!await MainUnitOfWork.AssetRepository.UpdateAsync(existingAsset, AccountId, CurrentDate))
@@ -349,15 +346,6 @@ public class AssetService : BaseService, IAssetService
         }
 
         return ApiResponse.Success();
-    }
-
-    public Room? GetWareHouse(string roomName)
-    {
-        var wareHouse = MainUnitOfWork.RoomRepository.GetQuery()
-                        .Where(x => x!.RoomName!.Trim()
-                        .Equals(roomName.Trim()))
-                        .FirstOrDefault();
-        return wareHouse;
     }
 
     public async Task<ApiResponses<AssetCheckTrackingDto>> AssetCheckTracking(Guid id, AssetTaskCheckQueryDto queryDto)
@@ -658,7 +646,6 @@ public class AssetService : BaseService, IAssetService
             Id = x!.Transport.Id,
             CreatedAt = x.Transport.CreatedAt,
             EditedAt = x.Transport.EditedAt,
-            //AssetId = x.Transport.AssetId,
             RequestCode = x.Transport.RequestCode,
             RequestDate = x.Transport.RequestDate,
             CompletionDate = x.Transport.CompletionDate,
@@ -814,7 +801,7 @@ public class AssetService : BaseService, IAssetService
                 StartDateOfUse = x.ReplacedBy.StartDateOfUse
             },
             AssetType = x.AssetType.ProjectTo<AssetType, AssetTypeDto>(),
-            Category = x.Category.ProjectTo<MainData.Entities.Category, CategoryDto>()
+            Category = x.Category.ProjectTo<Category, CategoryDto>()
         }).ToListAsync();
 
         replacements = await _mapperRepository.MapCreator(replacements);
