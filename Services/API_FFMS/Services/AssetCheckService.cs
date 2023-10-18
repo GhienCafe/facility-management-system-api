@@ -296,7 +296,7 @@ public class AssetCheckService : BaseService, IAssetCheckService
 
     public string GenerateRequestCode()
     {
-        var lastRequest = MainUnitOfWork.AssetCheckRepository.GetQueryCode()
+        var lastRequest = MainUnitOfWork.AssetCheckRepository.GetQueryAll()
         .OrderByDescending(x => x!.RequestCode)
         .FirstOrDefault();
 
