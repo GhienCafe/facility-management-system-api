@@ -22,14 +22,6 @@ namespace API_FFMS.Repositories
             now ??= DateTime.UtcNow;
             try
             {
-                mediaFile.Id = Guid.NewGuid();
-                mediaFile.CreatedAt = now.Value;
-                mediaFile.CreatorId = editorId;
-                mediaFile.EditedAt = now.Value;
-                mediaFile.EditorId = editorId;
-                //_context.Entry(mediaFile).State = EntityState.Modified;
-                await _context.MediaFiles.AddAsync(mediaFile);
-
                 //ASSET CHECK
                 var assetCheck = await _context.AssetChecks.FirstOrDefaultAsync(x => x.Id == mediaFile.ItemId);
                 if (assetCheck != null)
@@ -58,7 +50,12 @@ namespace API_FFMS.Repositories
                     {
                         var newMediaFile = new MediaFile
                         {
-                            FileName = mediaFile.FileName,
+                            Id = Guid.NewGuid(),
+                        CreatedAt = now.Value,
+                        CreatorId = editorId,
+                        EditedAt = now.Value,
+                        EditorId = editorId,
+                        FileName = mediaFile.FileName,
                             Key = mediaFile.Key,
                             RawUri = mediaFile.RawUri,
                             Uri = mediaFile.Uri,
@@ -119,6 +116,11 @@ namespace API_FFMS.Repositories
                         {
                             var newMediaFile = new MediaFile
                             {
+                                Id = Guid.NewGuid(),
+                                CreatedAt = now.Value,
+                                CreatorId = editorId,
+                                EditedAt = now.Value,
+                                EditorId = editorId,
                                 FileName = mediaFile.FileName,
                                 Key = mediaFile.Key,
                                 RawUri = mediaFile.RawUri,
@@ -173,6 +175,11 @@ namespace API_FFMS.Repositories
                     {
                         var newMediaFile = new MediaFile
                         {
+                            Id = Guid.NewGuid(),
+                            CreatedAt = now.Value,
+                            CreatorId = editorId,
+                            EditedAt = now.Value,
+                            EditorId = editorId,
                             FileName = mediaFile.FileName,
                             Key = mediaFile.Key,
                             RawUri = mediaFile.RawUri,
@@ -236,6 +243,11 @@ namespace API_FFMS.Repositories
                     {
                         var newMediaFile = new MediaFile
                         {
+                            Id = Guid.NewGuid(),
+                            CreatedAt = now.Value,
+                            CreatorId = editorId,
+                            EditedAt = now.Value,
+                            EditorId = editorId,
                             FileName = mediaFile.FileName,
                             Key = mediaFile.Key,
                             RawUri = mediaFile.RawUri,
@@ -272,22 +284,27 @@ namespace API_FFMS.Repositories
                     {
                         if (roomAsset != null)
                         {
-                            roomAsset!.Status = AssetStatus.Repair;
+                            roomAsset!.Status = AssetStatus.Maintenance;
                             roomAsset.EditedAt = now.Value;
                             _context.Entry(roomAsset).State = EntityState.Modified;
                         }
 
-                        asset!.Status = AssetStatus.Repair;
+                        asset!.Status = AssetStatus.Maintenance;
                         asset.EditedAt = now.Value;
                         _context.Entry(asset).State = EntityState.Modified;
 
-                        location!.State = RoomState.Repair;
+                        location!.State = RoomState.Maintenance;
                         _context.Entry(location).State = EntityState.Modified;
                     }
                     else if (statusUpdate == RequestStatus.Reported)
                     {
                         var newMediaFile = new MediaFile
                         {
+                            Id = Guid.NewGuid(),
+                            CreatedAt = now.Value,
+                            CreatorId = editorId,
+                            EditedAt = now.Value,
+                            EditorId = editorId,
                             FileName = mediaFile.FileName,
                             Key = mediaFile.Key,
                             RawUri = mediaFile.RawUri,
