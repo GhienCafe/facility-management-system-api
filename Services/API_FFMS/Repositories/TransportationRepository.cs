@@ -32,26 +32,10 @@ namespace API_FFMS.Repositories
                 transportation.Status = RequestStatus.NotStart;
                 await _context.Transportations.AddAsync(transportation);
 
-                //var toRoom = await _context.Rooms.FindAsync(transportation.ToRoomId);
-                //toRoom!.State = RoomState.Transportation;
-                //_context.Entry(toRoom).State = EntityState.Modified;
-
                 if (transportation.IsInternal)
                 {
                     foreach (var asset in assets)
                     {
-                        //asset!.Status = AssetStatus.Transportation;
-                        //asset.EditedAt = now.Value;
-                        //_context.Entry(asset).State = EntityState.Modified;
-
-                        //var roomAsset = _context.RoomAssets.FirstOrDefault(x => x.Id == asset.Id && x.ToDate == null);
-                        //if (roomAsset != null)
-                        //{
-                        //    roomAsset!.Status = AssetStatus.Transportation;
-                        //    roomAsset.EditedAt = now.Value;
-                        //    _context.Entry(roomAsset).State = EntityState.Modified;
-                        //}
-
                         var transpsortDetail = new TransportationDetail
                         {
                             Id = Guid.NewGuid(),

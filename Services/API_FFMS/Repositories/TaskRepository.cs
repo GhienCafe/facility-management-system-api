@@ -53,11 +53,11 @@ namespace API_FFMS.Repositories
                         var newMediaFile = new MediaFile
                         {
                             Id = Guid.NewGuid(),
-                        CreatedAt = now.Value,
-                        CreatorId = editorId,
-                        EditedAt = now.Value,
-                        EditorId = editorId,
-                        FileName = mediaFile.FileName,
+                            CreatedAt = now.Value,
+                            CreatorId = editorId,
+                            EditedAt = now.Value,
+                            EditorId = editorId,
+                            FileName = mediaFile.FileName,
                             Key = mediaFile.Key,
                             RawUri = mediaFile.RawUri,
                             Uri = mediaFile.Uri,

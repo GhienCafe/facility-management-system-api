@@ -9,7 +9,7 @@ public interface IBaseRepository<TEntity> where TEntity : BaseEntity
 {
     public IQueryable<TEntity?> GetQuery();
 
-    public IQueryable<TEntity?> GetQueryCode();
+    public IQueryable<TEntity?> GetQueryAll();
 
     public Task<List<TEntity?>> FindAsync(
         Expression<Func<TEntity, bool>>[]? filters,
@@ -81,7 +81,7 @@ public class BaseRepository<TEntity> : IBaseRepository<TEntity> where TEntity : 
 
     public IQueryable<TEntity?> GetQuery() => _dbSet.Where(x => !x.DeletedAt.HasValue);
 
-    public IQueryable<TEntity?> GetQueryCode() => _dbSet;
+    public IQueryable<TEntity?> GetQueryAll() => _dbSet;
 
     public async Task<List<TEntity?>> FindAsync(Expression<Func<TEntity, bool>>[]? filters, string orderBy, int skip,
         int limit)

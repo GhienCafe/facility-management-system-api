@@ -297,7 +297,7 @@ public class MaintenanceService : BaseService, IMaintenanceService
 
     public string GenerateRequestCode()
     {
-        var lastRequest = MainUnitOfWork.MaintenanceRepository.GetQueryCode()
+        var lastRequest = MainUnitOfWork.MaintenanceRepository.GetQueryAll()
         .OrderByDescending(x => x!.RequestCode)
         .FirstOrDefault();
 
