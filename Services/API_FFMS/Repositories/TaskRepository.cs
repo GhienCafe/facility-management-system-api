@@ -23,7 +23,9 @@ namespace API_FFMS.Repositories
             try
             {
                 //ASSET CHECK
-                var assetCheck = await _context.AssetChecks.FirstOrDefaultAsync(x => x.Id == mediaFile.ItemId);
+                var assetCheck = await _context.AssetChecks
+                                 .Include(x => x.Asset)
+                                 .FirstOrDefaultAsync(x => x.Id == mediaFile.ItemId);
                 if (assetCheck != null)
                 {
                     assetCheck.EditedAt = now.Value;
@@ -72,7 +74,10 @@ namespace API_FFMS.Repositories
                 }
 
                 //TRANSPORTATION
-                var transportation = await _context.Transportations.FirstOrDefaultAsync(x => x.Id == mediaFile.ItemId);
+                var transportation = await _context.Transportations
+                                    .Include(x => x.Asset)
+                                    .Include(x => x.TransportationDetails)
+                                    .FirstOrDefaultAsync(x => x.Id == mediaFile.ItemId);
                 if (transportation != null)
                 {
                     transportation.EditedAt = now.Value;
@@ -140,7 +145,9 @@ namespace API_FFMS.Repositories
                 }
 
                 //REPAIRATION
-                var repairation = await _context.Repairations.FirstOrDefaultAsync(x => x.Id == mediaFile.ItemId);
+                var repairation = await _context.Repairations
+                                .Include(x => x.Asset)
+                                .FirstOrDefaultAsync(x => x.Id == mediaFile.ItemId);
                 if (repairation != null)
                 {
                     repairation.EditedAt = now.Value;
@@ -198,7 +205,9 @@ namespace API_FFMS.Repositories
                 }
 
                 //REPLACEMENT
-                var replacement = await _context.Replacements.FirstOrDefaultAsync(x => x.Id == mediaFile.ItemId);
+                var replacement = await _context.Replacements
+                                  .Include(x => x.Asset)
+                                  .FirstOrDefaultAsync(x => x.Id == mediaFile.ItemId);
                 if (replacement != null)
                 {
                     replacement.EditedAt = now.Value;
@@ -212,7 +221,7 @@ namespace API_FFMS.Repositories
 
                     //ROOMASSET
                     var roomAsset = await _context.RoomAssets
-                                        .FirstOrDefaultAsync(x => x.AssetId == asset!.Id && x.ToDate == null);
+                                    .FirstOrDefaultAsync(x => x.AssetId == asset!.Id && x.ToDate == null);
                     var roomAssetNew = await _context.RoomAssets
                                     .FirstOrDefaultAsync(x => x.AssetId == newAsset!.Id && x.ToDate == null);
 
@@ -265,7 +274,9 @@ namespace API_FFMS.Repositories
                 }
 
                 //MAINTENANCE
-                var maintenance = await _context.Maintenances.FirstOrDefaultAsync(x => x.Id == mediaFile.ItemId);
+                var maintenance = await _context.Maintenances
+                                  .Include(x => x.Asset)
+                                  .FirstOrDefaultAsync(x => x.Id == mediaFile.ItemId);
                 if (maintenance != null)
                 {
                     maintenance.EditedAt = now.Value;
