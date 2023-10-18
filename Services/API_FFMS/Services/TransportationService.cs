@@ -359,7 +359,7 @@ namespace API_FFMS.Services
 
         public string GenerateRequestCode()
         {
-            var lastRequest = MainUnitOfWork.TransportationRepository.GetQueryCode()
+            var lastRequest = MainUnitOfWork.TransportationRepository.GetQueryAll()
             .OrderByDescending(x => x!.RequestCode)
             .FirstOrDefault();
 

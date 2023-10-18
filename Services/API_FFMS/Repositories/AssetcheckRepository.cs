@@ -71,7 +71,6 @@ namespace API_FFMS.Repositories
                 assetCheck.Status = statusUpdate;
                 _context.Entry(assetCheck).State = EntityState.Modified;
 
-                //var mediaFile = await _context.MediaFiles.FirstOrDefaultAsync(x => x.ItemId == assetCheck.Id);
                 var asset = await _context.Assets.FindAsync(assetCheck.AssetId);
                 var roomAsset = await _context.RoomAssets
                                     .FirstOrDefaultAsync(x => x.AssetId == asset!.Id && x.ToDate == null);

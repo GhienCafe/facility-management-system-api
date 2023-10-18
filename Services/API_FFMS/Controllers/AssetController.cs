@@ -49,10 +49,10 @@ namespace API_FFMS.Controllers
         {
             return await _assetService.Delete(id);
         }
-        
+
         [HttpGet("room/{id:guid}")]
         [SwaggerOperation("Get assets in room")]
-        public async Task<ApiResponses<RoomAssetDto>> GetAssetsInRoom(Guid id, [FromQuery]RoomAssetQueryDto queryDto)
+        public async Task<ApiResponses<RoomAssetDto>> GetAssetsInRoom(Guid id, [FromQuery] RoomAssetQueryDto queryDto)
         {
             return await _assetService.GetAssetsInRoom(id, queryDto);
         }
@@ -62,6 +62,41 @@ namespace API_FFMS.Controllers
         public async Task<ApiResponse> DeleteAssets(List<Guid> ids)
         {
             return await _assetService.DeleteAssets(ids);
+        }
+
+        [HttpGet("asset-check/{id}")]
+        [SwaggerOperation("Get history checking of asset")]
+        public async Task<ApiResponses<AssetCheckTrackingDto>> AssetCheckTracking(Guid id, [FromQuery] AssetTaskCheckQueryDto queryDto)
+        {
+            return await _assetService.AssetCheckTracking(id, queryDto);
+        }
+
+        [HttpGet("maintenance/{id}")]
+        [SwaggerOperation("Get history maintenance of asset")]
+        public async Task<ApiResponses<AssetMaintenanceTrackingDto>> AssetMaintenanceTracking(Guid id, [FromQuery] AssetTaskCheckQueryDto queryDto)
+        {
+            return await _assetService.AssetMaintenanceTracking(id, queryDto);
+        }
+
+        [HttpGet("repairation/{id}")]
+        [SwaggerOperation("Get history repairation of asset")]
+        public async Task<ApiResponses<AssetRepairationTrackingDto>> AssetRepairationTracking(Guid id, [FromQuery] AssetTaskCheckQueryDto queryDto)
+        {
+            return await _assetService.AssetRepairationTracking(id, queryDto);
+        }
+
+        [HttpGet("transportation/{id}")]
+        [SwaggerOperation("Get history transportation of asset")]
+        public async Task<ApiResponses<AssetTransportationTrackingDto>> AssetTransportationTracking(Guid id, [FromQuery] AssetTaskCheckQueryDto queryDto)
+        {
+            return await _assetService.AssetTransportationTracking(id, queryDto);
+        }
+
+        [HttpGet("replacement/{id}")]
+        [SwaggerOperation("Get history replacement of asset")]
+        public async Task<ApiResponses<AssetReplacementTrackingDto>> AssetReplacementTracking(Guid id, [FromQuery] AssetTaskCheckQueryDto queryDto)
+        {
+            return await _assetService.AssetReplacementTracking(id, queryDto);
         }
     }
 }

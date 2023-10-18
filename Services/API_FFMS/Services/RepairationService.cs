@@ -313,7 +313,7 @@ namespace API_FFMS.Services
 
         public string GenerateRequestCode()
         {
-            var lastRequest = MainUnitOfWork.RepairationRepository.GetQueryCode()
+            var lastRequest = MainUnitOfWork.RepairationRepository.GetQueryAll()
             .OrderByDescending(x => x!.RequestCode)
             .FirstOrDefault();
 
