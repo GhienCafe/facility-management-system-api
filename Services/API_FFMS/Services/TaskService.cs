@@ -99,9 +99,33 @@ public class TaskService : BaseService, ITaskService
             createDto.ItemId = maintenReport.Id;
         }
 
-        var taskReport = createDto.ProjectTo<ReportCreateDto, MediaFile>();
+        var mediaFiles = new List<MediaFile>();
+        foreach (var uri in createDto.Uris!)
+        {
+            var newMediaFile = new MediaFile
+            {
+                FileName = createDto.FileName!,
+                Key = createDto.Key!,
+                RawUri = createDto.RawUri!,
+                Uri = uri,
+                Extensions = createDto.Extensions!,
+                FileType = createDto.FileType!,
+                Content = createDto.Content!,
+                ItemId = createDto.ItemId
+            };
+            mediaFiles.Add(newMediaFile);
+        }
 
-        if (!await _taskRepository.UpdateStatus(taskReport, status, AccountId, CurrentDate))
+        //var taskReport = createDto.ProjectTo<ReportCreateDto, MediaFile>();
+
+        if (mediaFiles.Count() > 0)
+        {
+            if (!await _taskRepository.UpdateStatus(mediaFiles, status, AccountId, CurrentDate))
+            {
+                throw new ApiException("Báo cáo thất bại", StatusCode.SERVER_ERROR);
+            }
+        }
+        else
         {
             throw new ApiException("Báo cáo thất bại", StatusCode.SERVER_ERROR);
         }
