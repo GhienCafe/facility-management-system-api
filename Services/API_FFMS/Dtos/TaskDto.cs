@@ -49,7 +49,7 @@ public class ReportCreateDto
     public string? FileName { get; set; }
     public string? Key { get; set; }
     public string? RawUri { get; set; }
-    public string? Uri { get; set; }
+    public List<string>? Uris { get; set; }
     public string? Extensions { get; set; }
     public FileType FileType { get; set; }
     public string? Content { get; set; }
