@@ -1,5 +1,7 @@
-﻿using AppCore.Models;
+﻿using AppCore.Configs;
+using AppCore.Models;
 using MainData.Entities;
+using Newtonsoft.Json;
 
 namespace API_FFMS.Dtos;
 
@@ -7,7 +9,9 @@ public class BaseRequestDto : BaseDto
 {
     public Guid? AssetId { get; set; }
     public string? RequestCode { get; set; }
+    [JsonConverter(typeof(LocalTimeZoneDateTimeConverter))]
     public DateTime? RequestDate { get; set; }
+    [JsonConverter(typeof(LocalTimeZoneDateTimeConverter))]
     public DateTime? CompletionDate { get; set; }
     public RequestStatus? Status { get; set; }
     public EnumValue? StatusObj { get; set; }

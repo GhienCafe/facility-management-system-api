@@ -51,6 +51,7 @@ public static class AddConfigServiceCollectionExtensions
             option.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
             option.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
             option.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
+            option.JsonSerializerOptions.Converters.Add(new LocalTimeZoneDateTimeConverter());
         });
         services.AddLogging(EnvironmentExtension.GetAppLogFolder());
     }

@@ -1,4 +1,5 @@
 ﻿using System.Text.Json.Serialization;
+using AppCore.Configs;
 
 namespace AppCore.Models;
 
@@ -33,7 +34,9 @@ public class BaseDto
     public Guid Id { get; set; }
     [JsonIgnore] public Guid CreatorId { get; set; }
     [JsonIgnore] public Guid EditorId { get; set; }
+    [JsonConverter(typeof(LocalTimeZoneDateTimeConverter))]
     public DateTime CreatedAt { get; set; }
+    [JsonConverter(typeof(LocalTimeZoneDateTimeConverter))]
     public DateTime EditedAt { get; set; }
     public AccountCreator? Creator { get; set; }
     public AccountCreator? Editor { get; set; }
