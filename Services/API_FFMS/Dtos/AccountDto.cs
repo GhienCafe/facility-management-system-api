@@ -1,5 +1,7 @@
-﻿using AppCore.Models;
+﻿using AppCore.Configs;
+using AppCore.Models;
 using MainData.Entities;
+using Newtonsoft.Json;
 
 namespace API_FFMS.Dtos;
 
@@ -14,8 +16,11 @@ public class AccountDto : BaseDto
     public string Address { get; set; } = null!;
     public bool Gender { get; set; }
     public string? PersonalIdentifyNumber { get; set; }
+    [JsonConverter(typeof(LocalTimeZoneDateTimeConverter))]
     public DateTime? Dob { get; set; }
+    [JsonConverter(typeof(LocalTimeZoneDateTimeConverter))]
     public DateTime? FirstLoginAt { get; set; }
+    [JsonConverter(typeof(LocalTimeZoneDateTimeConverter))]
     public DateTime? LastLoginAt { get; set; }
 }
 

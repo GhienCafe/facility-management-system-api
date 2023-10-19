@@ -1,5 +1,7 @@
 ﻿using AppCore.Attributes;
+using AppCore.Configs;
 using MainData.Entities;
+using Newtonsoft.Json;
 
 namespace API_FFMS.Dtos;
 
@@ -13,7 +15,9 @@ public class AuthDto
 {
     public string? AccessToken { get; set; }
     public string? RefreshToken { get; set; }
+    [JsonConverter(typeof(LocalTimeZoneDateTimeConverter))]
     public DateTime AccessExpiredAt { get; set; }
+    [JsonConverter(typeof(LocalTimeZoneDateTimeConverter))]
     public DateTime RefreshExpiredAt { get; set; }
 
     public string? Email { get; set; }
