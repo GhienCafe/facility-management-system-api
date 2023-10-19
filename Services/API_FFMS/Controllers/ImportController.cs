@@ -29,13 +29,12 @@ namespace API_FFMS.Controllers
                 worksheet.Cell(currentRow, 2).Value = "Mã thiết bị";
                 worksheet.Cell(currentRow, 3).Value = "Nhóm thiết bị";
                 worksheet.Cell(currentRow, 4).Value = "Nhãn hiệu";
-                worksheet.Cell(currentRow, 5).Value = "Trạng thái";
-                worksheet.Cell(currentRow, 6).Value = "Năm sản xuất";
-                worksheet.Cell(currentRow, 7).Value = "Số định danh";
-                worksheet.Cell(currentRow, 8).Value = "Số lượng";
-                worksheet.Cell(currentRow, 9).Value = "Mô tả";
-                worksheet.Cell(currentRow, 10).Value = "Thuộc sở hữu";
-                worksheet.Cell(currentRow, 11).Value = "Có thể di chuyển";
+                worksheet.Cell(currentRow, 5).Value = "Năm sản xuất";
+                worksheet.Cell(currentRow, 6).Value = "Số định danh";
+                worksheet.Cell(currentRow, 7).Value = "Số lượng";
+                worksheet.Cell(currentRow, 8).Value = "Mô tả";
+                worksheet.Cell(currentRow, 9).Value = "Thuộc sở hữu";
+                worksheet.Cell(currentRow, 10).Value = "Có thể di chuyển";
 
                 // Apply styles to the header row
                 var headerRange = worksheet.Range(worksheet.Cell(currentRow, 1), worksheet.Cell(currentRow, 11));

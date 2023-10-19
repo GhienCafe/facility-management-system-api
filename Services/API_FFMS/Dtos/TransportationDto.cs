@@ -34,22 +34,20 @@ public class FromRoomAssetDto
 public class TransportCreateDto
 {
     public List<AssetTransportDto>? Assets { get; set; }
-    public string RequestCode { get; set; } = null!;
-    //public DateTime? RequestDate { get; set; }
     public DateTime? CompletionDate { get; set; }
-    //public RequestStatus? Status { get; set; }
     public string? Description { get; set; }
-    public string? Notes { get; set; } // Results
+    public string? Notes { get; set; }
     public bool IsInternal { get; set; }
-    //public int? Total { get; set; }
     public int? Quantity { get; set; }
     public Guid? AssignedTo { get; set; }
+    //public Guid? FromRoomId { get; set; }
     public Guid? ToRoomId { get; set; }
 }
 
 public class AssetTransportDto
 {
     public Guid AssetId { get; set; }
+    //public string? AssetName { get; set; }
     public double? Quantity { get; set; }
 }
 
@@ -61,9 +59,4 @@ public class TransportationQueryDto : BaseQueryDto
     public RequestStatus? Status { get; set; }
     public bool? IsInternal { get; set; }
     public Guid? AssignedTo { get; set; }
-}
-
-public class TransportUpdateStatusDto
-{
-    public RequestStatus? Status { get; set; }
 }

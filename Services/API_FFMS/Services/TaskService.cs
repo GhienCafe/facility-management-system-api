@@ -1,14 +1,12 @@
 ﻿using System.Linq.Expressions;
 using API_FFMS.Dtos;
+using API_FFMS.Repositories;
 using AppCore.Extensions;
 using AppCore.Models;
-using DocumentFormat.OpenXml.Office.PowerPoint.Y2022.M08.Main;
-using DocumentFormat.OpenXml.Office2021.Excel.Pivot;
 using MainData;
 using MainData.Entities;
 using MainData.Repositories;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Internal;
 
 namespace API_FFMS.Services;
 
@@ -16,12 +14,123 @@ public interface ITaskService : IBaseService
 {
     Task<ApiResponses<TaskBaseDto>> GetTasks(TaskQueryDto queryDto);
     Task<ApiResponse<TaskDetailDto>> GetTaskDetail(Guid id);
+    Task<ApiResponse> UpdateTaskStatus(ReportCreateDto createDto, RequestStatus status);
 }
 
 public class TaskService : BaseService, ITaskService
 {
-    public TaskService(MainUnitOfWork mainUnitOfWork, IHttpContextAccessor httpContextAccessor, IMapperRepository mapperRepository) : base(mainUnitOfWork, httpContextAccessor, mapperRepository)
+    private readonly ITaskRepository _taskRepository;
+    public TaskService(MainUnitOfWork mainUnitOfWork, IHttpContextAccessor httpContextAccessor,
+                       IMapperRepository mapperRepository, ITaskRepository taskRepository)
+                       : base(mainUnitOfWork, httpContextAccessor, mapperRepository)
     {
+        _taskRepository = taskRepository;
+    }
+
+    public async Task<ApiResponse> UpdateTaskStatus(ReportCreateDto createDto, RequestStatus status)
+    {
+        //ASSET CHECK
+        var assetCheckReport = await MainUnitOfWork.AssetCheckRepository.FindOneAsync(
+            new Expression<Func<AssetCheck, bool>>[]
+            {
+                x => !x.DeletedAt.HasValue,
+                x => x.AssignedTo == AccountId,
+                x => x.Id == createDto.ItemId,
+                x => x.Status != RequestStatus.Cancelled
+            });
+        if (assetCheckReport != null)
+        {
+            createDto.ItemId = assetCheckReport.Id;
+        }
+
+        //TRANSPORTATION
+        var transportReport = await MainUnitOfWork.TransportationRepository.FindOneAsync(
+            new Expression<Func<Transportation, bool>>[]
+            {
+                x => !x.DeletedAt.HasValue,
+                x => x.AssignedTo == AccountId,
+                x => x.Id == createDto.ItemId,
+                x => x.Status != RequestStatus.Cancelled
+            });
+        if (transportReport != null)
+        {
+            createDto.ItemId = transportReport.Id;
+        }
+
+        //REPLACEMENT
+        var replaceReport = await MainUnitOfWork.ReplacementRepository.FindOneAsync(
+            new Expression<Func<Replacement, bool>>[]
+            {
+                x => !x.DeletedAt.HasValue,
+                x => x.AssignedTo == AccountId,
+                x => x.Id == createDto.ItemId,
+                x => x.Status != RequestStatus.Cancelled
+            });
+        if (replaceReport != null)
+        {
+            createDto.ItemId = replaceReport.Id;
+        }
+
+        //REPAIRATION
+        var repairReport = await MainUnitOfWork.RepairationRepository.FindOneAsync(
+            new Expression<Func<Repairation, bool>>[]
+            {
+                x => !x.DeletedAt.HasValue,
+                x => x.AssignedTo == AccountId,
+                x => x.Id == createDto.ItemId,
+                x => x.Status != RequestStatus.Cancelled
+            });
+        if (repairReport != null)
+        {
+            createDto.ItemId = repairReport.Id;
+        }
+
+        //MAINTENANCE
+        var maintenReport = await MainUnitOfWork.MaintenanceRepository.FindOneAsync(
+            new Expression<Func<Maintenance, bool>>[]
+            {
+                x => !x.DeletedAt.HasValue,
+                x => x.AssignedTo == AccountId,
+                x => x.Id == createDto.ItemId,
+                x => x.Status != RequestStatus.Cancelled
+            });
+        if (maintenReport != null)
+        {
+            createDto.ItemId = maintenReport.Id;
+        }
+
+        var mediaFiles = new List<MediaFile>();
+        foreach (var uri in createDto.Uris!)
+        {
+            var newMediaFile = new MediaFile
+            {
+                FileName = createDto.FileName!,
+                Key = createDto.Key!,
+                RawUri = createDto.RawUri!,
+                Uri = uri,
+                Extensions = createDto.Extensions!,
+                FileType = createDto.FileType!,
+                Content = createDto.Content!,
+                ItemId = createDto.ItemId
+            };
+            mediaFiles.Add(newMediaFile);
+        }
+
+        //var taskReport = createDto.ProjectTo<ReportCreateDto, MediaFile>();
+
+        if (mediaFiles.Count() > 0)
+        {
+            if (!await _taskRepository.UpdateStatus(mediaFiles, status, AccountId, CurrentDate))
+            {
+                throw new ApiException("Báo cáo thất bại", StatusCode.SERVER_ERROR);
+            }
+        }
+        else
+        {
+            throw new ApiException("Báo cáo thất bại", StatusCode.SERVER_ERROR);
+        }
+
+        return ApiResponse.Created("Báo cáo thành công");
     }
 
     public async Task<ApiResponse<TaskDetailDto>> GetTaskDetail(Guid id)
@@ -64,7 +173,6 @@ public class TaskService : BaseService, ITaskService
                             });
                 }
             }
-            assetCheckTask.Status = assetCheckTask.Status;
             assetCheckTask.StatusObj = assetCheckTask.Status?.GetValue();
             assetCheckTask.Type = RequestType.StatusCheck;
             assetCheckTask.TypeObj = assetCheckTask.Type.GetValue();
@@ -144,7 +252,10 @@ public class TaskService : BaseService, ITaskService
                 Type = RequestType.Transportation,
                 TypeObj = trasportTask.Type.GetValue(),
                 Id = trasportTask.Id,
+                RequestCode = trasportTask.RequestCode,
                 RequestDate = trasportTask.RequestDate,
+                Description = trasportTask.Description,
+                Notes = trasportTask.Notes,
                 //Quantity = trasportTask.Quantity,
                 Status = trasportTask.Status,
                 StatusObj = trasportTask.Status!.GetValue(),
@@ -180,7 +291,7 @@ public class TaskService : BaseService, ITaskService
                 new Expression<Func<RoomAsset, bool>>[]
                 {
                     x => !x.DeletedAt.HasValue,
-                    x => x.AssetId == replacementTask.Asset.Id,
+                    x => x.AssetId == replacementTask.Asset!.Id,
                     x => x.ToDate == null
                 });
             if (location != null)
@@ -203,7 +314,7 @@ public class TaskService : BaseService, ITaskService
                 new Expression<Func<RoomAsset, bool>>[]
                 {
                     x => !x.DeletedAt.HasValue,
-                    x => x.AssetId == replacementTask.NewAsset.Id,
+                    x => x.AssetId == replacementTask.NewAsset!.Id,
                     x => x.ToDate == null
                 });
             if (toLocation != null)
@@ -216,6 +327,10 @@ public class TaskService : BaseService, ITaskService
                     });
             }
 
+            replacementTask.RequestCode = replacementTask.RequestCode;
+            replacementTask.RequestDate = replacementTask.RequestDate;
+            replacementTask.Description = replacementTask.Description;
+            replacementTask.Notes = replacementTask.Notes;
             replacementTask.Status = replacementTask.Status;
             replacementTask.StatusObj = replacementTask.Status!.GetValue();
             replacementTask.Type = RequestType.Replacement;
@@ -260,7 +375,12 @@ public class TaskService : BaseService, ITaskService
                         });
                 }
             }
-            repairation.Status = repairation.Status;
+
+            //repairation.RequestCode = repairation.RequestCode;
+            //repairation.RequestDate = repairation.RequestDate;
+            //repairation.Description = repairation.Description;
+            //repairation.Notes = repairation.Notes;
+            //repairation.Status = repairation.Status;
             repairation.StatusObj = repairation.Status!.GetValue();
             repairation.Type = RequestType.Repairation;
             repairation.TypeObj = repairation.Type.GetValue();
@@ -305,7 +425,11 @@ public class TaskService : BaseService, ITaskService
                         });
                 }
             }
-            maintenance.Status = maintenance.Status;
+            //maintenance.RequestCode = maintenance.RequestCode;
+            //maintenance.RequestDate = maintenance.RequestDate;
+            //maintenance.Description = maintenance.Description;
+            //maintenance.Notes = maintenance.Notes;
+            //maintenance.Status = maintenance.Status;
             maintenance.StatusObj = maintenance.Status!.GetValue();
             maintenance.Type = RequestType.Maintenance;
             maintenance.TypeObj = maintenance.Type.GetValue();
@@ -313,7 +437,7 @@ public class TaskService : BaseService, ITaskService
             taskDetail = maintenance;
         }
 
-        if(taskDetail == null)
+        if (taskDetail == null)
         {
             throw new ApiException("Không tìm thấy yêu cầu", StatusCode.NOT_FOUND);
         }

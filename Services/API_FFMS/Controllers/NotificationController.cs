@@ -16,6 +16,19 @@ namespace API_FFMS.Controllers
             _notificationService = notificationService;
         }
 
+        [HttpPut("{id}")]
+        [SwaggerOperation("read notification")]
+        public async Task<ApiResponse> ReadNotification(Guid id)
+        {
+            return await _notificationService.ReadNotification(id);
+        }
+        [HttpPut]
+        [SwaggerOperation("read all notification")]
+        public async Task<ApiResponse> ReadAllNotification()
+        {
+            return await _notificationService.ReadAllNotification();
+        }
+
         [HttpGet]
         [SwaggerOperation("Get list notification")]
         public async Task<ApiResponses<NotifcationBaseDto>> GetListNotification([FromQuery] NotificationQueryDto queryDto)

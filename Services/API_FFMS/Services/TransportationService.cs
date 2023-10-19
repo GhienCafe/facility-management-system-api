@@ -6,7 +6,6 @@ using MainData;
 using MainData.Entities;
 using MainData.Repositories;
 using Microsoft.EntityFrameworkCore;
-using System.Linq;
 using System.Linq.Expressions;
 
 namespace API_FFMS.Services
@@ -20,7 +19,7 @@ namespace API_FFMS.Services
         //Task<ApiResponses<TransportDto>> GetTransportOfStaff(TransportOfStaffQueryDto queryDto);
         Task<ApiResponse> Delete(Guid id);
         Task<ApiResponse> DeleteTransports(List<Guid> ids);
-        public Task<ApiResponse> UpdateStatus(Guid id, TransportUpdateStatusDto updateStatusDto);
+        public Task<ApiResponse> UpdateStatus(Guid id, BaseUpdateStatusDto updateStatusDto);
     }
     public class TransportationService : BaseService, ITransportationService
     {
@@ -34,22 +33,6 @@ namespace API_FFMS.Services
 
         public async Task<ApiResponse> Create(TransportCreateDto createDto)
         {
-            //var assets = new List<Asset>();
-            //foreach (var assetId in createDto.Assets)
-            //{
-            //    var asset = await MainUnitOfWork.AssetRepository.FindOneAsync(assetId);
-            //    if (asset == null)
-            //    {
-            //        throw new ApiException("Không tìm thấy trang thiết bị", StatusCode.NOT_FOUND);
-            //    }
-
-            //    if (asset.Status != AssetStatus.Operational)
-            //    {
-            //        throw new ApiException("Trang thiết bị đang trong một yêu cầu khác", StatusCode.BAD_REQUEST);
-            //    }
-            //    assets.Add(asset);
-            //}
-
             var assets = await MainUnitOfWork.AssetRepository.FindAsync(
                 new Expression<Func<Asset, bool>>[]
                 {
@@ -57,15 +40,32 @@ namespace API_FFMS.Services
                     x => createDto.Assets!.Select(dto => dto.AssetId).Contains(x.Id)
                 }, null);
 
+            foreach (var asset in assets)
+            {
+                if (asset!.Status != AssetStatus.Operational)
+                {
+                    throw new ApiException("Trang thiết bị đang trong một yêu cầu khác", StatusCode.SERVER_ERROR);
+                }
+
+                var correspondingDto = createDto.Assets!.FirstOrDefault(dto => dto.AssetId == asset!.Id);
+                if (correspondingDto != null)
+                {
+                    asset!.Quantity = correspondingDto.Quantity ?? 0;
+                }
+            }
+
+            //var toRoom = await MainUnitOfWork.RoomRepository.FindOneAsync((Guid)createDto.ToRoomId);
+            double? totalQuantity = createDto.Assets?.Sum(assetDto => assetDto.Quantity);
+
             var transportation = new Transportation
             {
-                RequestCode = createDto.RequestCode,
+                RequestCode = GenerateRequestCode(),
                 RequestDate = CurrentDate,
                 CompletionDate = createDto.CompletionDate,
                 Description = createDto.Description,
                 Notes = createDto.Notes,
                 IsInternal = createDto.IsInternal,
-                Quantity = createDto.Quantity,
+                Quantity = (int?)totalQuantity,
                 AssignedTo = createDto.AssignedTo,
                 ToRoomId = createDto.ToRoomId
             };
@@ -189,6 +189,11 @@ namespace API_FFMS.Services
             var tranportation = new TransportDto
             {
                 Id = existingtransport.Id,
+                RequestCode = existingtransport.RequestCode,
+                Description = existingtransport.Description,
+                Notes = existingtransport.Notes,
+                Status = existingtransport.Status,
+                StatusObj = existingtransport.Status!.GetValue(),
                 RequestDate = existingtransport.RequestDate,
                 Quantity = existingtransport.Quantity,
                 CreatedAt = existingtransport.CreatedAt,
@@ -260,7 +265,7 @@ namespace API_FFMS.Services
                 {
                     Asset = new AssetBaseDto
                     {
-                        Id = (Guid)td.AssetId,
+                        Id = (Guid)td.AssetId!,
                         AssetCode = td.Asset!.AssetCode,
                         AssetName = td.Asset.AssetName,
                         Quantity = td.Asset.Quantity,
@@ -318,13 +323,10 @@ namespace API_FFMS.Services
                 throw new ApiException("Chỉ được cập nhật các yêu cầu chưa hoàn thành", StatusCode.NOT_FOUND);
             }
 
-            //existingTransport.RequestCode = updateDto.RequestCode ?? existingTransport.RequestCode;
             existingTransport.RequestDate = updateDto.RequestDate ?? existingTransport.RequestDate;
             existingTransport.CompletionDate = updateDto.CompletionDate ?? existingTransport.CompletionDate;
-            existingTransport.Status = updateDto.Status ?? existingTransport.Status;
             existingTransport.Description = updateDto.Description ?? existingTransport.Description;
             existingTransport.Notes = updateDto.Notes ?? existingTransport.Notes;
-            //existingTransport.IsInternal = updateDto.IsInternal;
 
             if (!await MainUnitOfWork.TransportationRepository.UpdateAsync(existingTransport, AccountId, CurrentDate))
             {
@@ -334,14 +336,12 @@ namespace API_FFMS.Services
             return ApiResponse.Success("Cập nhật yêu cầu thành công");
         }
 
-        public async Task<ApiResponse> UpdateStatus(Guid id, TransportUpdateStatusDto requestStatus)
+        public async Task<ApiResponse> UpdateStatus(Guid id, BaseUpdateStatusDto requestStatus)
         {
-            var existingTransport = await MainUnitOfWork.TransportationRepository.FindOneAsync(
-                new Expression<Func<Transportation, bool>>[]
-                {
-                    x => !x.DeletedAt.HasValue,
-                    x => x.Id == id
-                });
+            var existingTransport = MainUnitOfWork.TransportationRepository.GetQuery()
+                                    .Include(t => t!.TransportationDetails)
+                                    .Where(t => t!.Id == id)
+                                    .FirstOrDefault();
             if (existingTransport == null)
             {
                 throw new ApiException("Không tìm thấy yêu cầu vận chuyển này", StatusCode.NOT_FOUND);
@@ -355,6 +355,25 @@ namespace API_FFMS.Services
             }
 
             return ApiResponse.Success("Cập nhật yêu cầu thành công");
+        }
+
+        public string GenerateRequestCode()
+        {
+            var lastRequest = MainUnitOfWork.TransportationRepository.GetQueryAll()
+            .OrderByDescending(x => x!.RequestCode)
+            .FirstOrDefault();
+
+            string newRequestCode = "TRS1";
+
+            if (lastRequest != null)
+            {
+                string lastRequestCode = lastRequest.RequestCode;
+                if (lastRequestCode.StartsWith("TRS") && int.TryParse(lastRequestCode[3..], out int lastNumber))
+                {
+                    newRequestCode = $"TRS{lastNumber + 1}";
+                }
+            }
+            return newRequestCode;
         }
     }
 }

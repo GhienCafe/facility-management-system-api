@@ -16,6 +16,9 @@ public interface INotificationService : IBaseService
 {
     Task SendSingleMessage(NotificationDto noti, string token);
     Task SendMultipleMessages(RequestDto request);
+    Task<ApiResponse> ReadNotification(Guid id);
+    Task<ApiResponse> ReadAllNotification();
+
     Task<ApiResponses<NotifcationBaseDto>> GetNotificationOfAPerson(NotificationQueryDto queryDto);
 }
 public class NotificationService : BaseService, INotificationService
@@ -24,6 +27,27 @@ public class NotificationService : BaseService, INotificationService
     {
     }
 
+    public async Task<ApiResponse> ReadNotification(Guid id)
+    {
+        var notification = await MainUnitOfWork.NotificationRepository.GetQuery().SingleOrDefaultAsync(notification => !notification!.DeletedAt.HasValue && AccountId == notification.UserId && notification.Id == id);
+        notification!.IsRead = true;
+        if (! await MainUnitOfWork.NotificationRepository.UpdateAsync(notification, AccountId, CurrentDate))
+        {
+            throw new ApiException("Thông tin đã sai");
+        }
+        return ApiResponse.Success("Đã đọc");
+    }
+    public async Task<ApiResponse> ReadAllNotification()
+    {
+        var notification = await MainUnitOfWork.NotificationRepository.GetQuery().Where(notification => !notification!.DeletedAt.HasValue && AccountId == notification.UserId).ToListAsync();
+        notification.ForEach(notification => notification.IsRead = true);
+        if (! await MainUnitOfWork.NotificationRepository.UpdateAsync(notification, AccountId, CurrentDate))
+        {
+           throw new ApiException("Thông tin đã sai");
+        }
+        return ApiResponse.Success("Đã đọc toàn bộ");
+    }
+    
     public async Task<ApiResponses<NotifcationBaseDto>> GetNotificationOfAPerson(NotificationQueryDto queryDto)
     {
         var notificationQueryable = MainUnitOfWork.NotificationRepository.GetQuery()

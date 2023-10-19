@@ -18,6 +18,7 @@ namespace API_FFMS.Services
         Task<ApiResponse> Update(Guid id, BaseRequestUpdateDto updateDto);
         Task<ApiResponse> Delete(Guid id);
         Task<ApiResponse> DeleteReplairations(List<Guid> ids);
+        Task<ApiResponse> UpdateStatus(Guid id, BaseUpdateStatusDto updateStatusDto);
     }
     public class RepairationService : BaseService, IRepairationService
     {
@@ -40,6 +41,7 @@ namespace API_FFMS.Services
                 throw new ApiException("Trang thiết bị đang trong một yêu cầu khác", StatusCode.BAD_REQUEST);
 
             var repairation = createDto.ProjectTo<RepairationCreateDto, Repairation>();
+            repairation.RequestCode = GenerateRequestCode();
 
             if (!await _repairationRepository.InsertRepairation(repairation, AccountId, CurrentDate))
                 throw new ApiException("Tạo yêu cầu thất bại", StatusCode.SERVER_ERROR);
@@ -120,6 +122,8 @@ namespace API_FFMS.Services
                 repairation.User!.RoleObj = repairation.User.Role?.GetValue();
             }
 
+            repairation.Status = repairation.Status;
+            repairation.StatusObj = repairation.Status!.GetValue();
 
             repairation = await _mapperRepository.MapCreator(repairation);
 
@@ -168,14 +172,25 @@ namespace API_FFMS.Services
                 repairQuery = repairQuery.Where(x => x!.CompletionDate == queryDto.CompletionDate);
             }
 
+            var assetTypeQueryable = MainUnitOfWork.AssetTypeRepository.GetQuery()
+            .Where(x => !x!.DeletedAt.HasValue);
+            var categoryQueryable = MainUnitOfWork.CategoryRepository.GetQuery()
+            .Where(x => !x!.DeletedAt.HasValue);
+
             var joinTable = from repair in repairQuery
                             join user in MainUnitOfWork.UserRepository.GetQuery() on repair.AssignedTo equals user.Id
                             join asset in MainUnitOfWork.AssetRepository.GetQuery() on repair.AssetId equals asset.Id
+                            join assetType in assetTypeQueryable on asset.TypeId equals assetType.Id into assetTypeGroup
+                            from assetType in assetTypeGroup.DefaultIfEmpty()
+                            join category in categoryQueryable on assetType.CategoryId equals category.Id into categoryGroup
+                            from category in categoryGroup.DefaultIfEmpty()
                             select new
                             {
                                 Repairation = repair,
                                 Asset = asset,
-                                User = user
+                                User = user,
+                                AssetType = assetType,
+                                Category = category
                             };
 
             var totalCount = await joinTable.CountAsync();
@@ -189,6 +204,7 @@ namespace API_FFMS.Services
                 RequestDate = x.Repairation.RequestDate,
                 CompletionDate = x.Repairation.CompletionDate,
                 Status = x.Repairation.Status,
+                StatusObj = x.Repairation.Status!.GetValue(),
                 Description = x.Repairation.Description,
                 Notes = x.Repairation.Notes,
                 IsInternal = x.Repairation.IsInternal,
@@ -233,7 +249,9 @@ namespace API_FFMS.Services
                     Gender = x.User.Gender,
                     PersonalIdentifyNumber = x.User.PersonalIdentifyNumber,
                     Dob = x.User.Dob
-                }
+                },
+                AssetType = x.AssetType.ProjectTo<AssetType, AssetTypeDto>(),
+                Category = x.Category.ProjectTo<Category, CategoryDto>()
             }).ToListAsync();
 
             repairations = await _mapperRepository.MapCreator(repairations);
@@ -259,13 +277,10 @@ namespace API_FFMS.Services
                 throw new ApiException("Chỉ được cập nhật các yêu cầu chưa hoàn thành", StatusCode.NOT_FOUND);
             }
 
-            //existingRepair.RequestCode = updateDto.RequestCode ?? existingRepair.RequestCode;
             existingRepair.RequestDate = updateDto.RequestDate ?? existingRepair.RequestDate;
             existingRepair.CompletionDate = updateDto.CompletionDate ?? existingRepair.CompletionDate;
-            existingRepair.Status = updateDto.Status ?? existingRepair.Status;
             existingRepair.Description = updateDto.Description ?? existingRepair.Description;
             existingRepair.Notes = updateDto.Notes ?? existingRepair.Notes;
-            //existingRepair.IsInternal = updateDto.IsInternal;
 
             if (!await MainUnitOfWork.RepairationRepository.UpdateAsync(existingRepair, AccountId, CurrentDate))
             {
@@ -273,6 +288,46 @@ namespace API_FFMS.Services
             }
 
             return ApiResponse.Success("Cập nhật yêu cầu thành công");
+        }
+
+        public async Task<ApiResponse> UpdateStatus(Guid id, BaseUpdateStatusDto requestStatus)
+        {
+            var existingRepair = MainUnitOfWork.RepairationRepository.GetQuery()
+                                    .Include(t => t!.Asset)
+                                    .Where(t => t!.Id == id)
+                                    .FirstOrDefault();
+            if (existingRepair == null)
+            {
+                throw new ApiException("Không tìm thấy yêu cầu sửa chữa này", StatusCode.NOT_FOUND);
+            }
+
+            existingRepair.Status = requestStatus.Status ?? existingRepair.Status;
+
+            if (!await _repairationRepository.UpdateStatus(existingRepair, requestStatus.Status, AccountId, CurrentDate))
+            {
+                throw new ApiException("Cập nhật trạng thái yêu cầu thất bại", StatusCode.SERVER_ERROR);
+            }
+
+            return ApiResponse.Success("Cập nhật yêu cầu thành công");
+        }
+
+        public string GenerateRequestCode()
+        {
+            var lastRequest = MainUnitOfWork.RepairationRepository.GetQueryAll()
+            .OrderByDescending(x => x!.RequestCode)
+            .FirstOrDefault();
+
+            string newRequestCode = "REP1";
+
+            if (lastRequest != null)
+            {
+                string lastRequestCode = lastRequest.RequestCode;
+                if (lastRequestCode.StartsWith("REP") && int.TryParse(lastRequestCode[3..], out int lastNumber))
+                {
+                    newRequestCode = $"REP{lastNumber + 1}";
+                }
+            }
+            return newRequestCode;
         }
     }
 }

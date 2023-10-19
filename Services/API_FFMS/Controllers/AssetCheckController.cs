@@ -56,4 +56,11 @@ public class AssetCheckController : BaseController
     {
         return await _assetCheckService.Update(id, updateDto);
     }
+
+    [HttpPut("status-update/{id:guid}")]
+    [SwaggerOperation("Update repairation's status")]
+    public async Task<ApiResponse> UpdateStatus(Guid id, BaseUpdateStatusDto updateDto)
+    {
+        return await _assetCheckService.UpdateStatus(id, updateDto);
+    }
 }

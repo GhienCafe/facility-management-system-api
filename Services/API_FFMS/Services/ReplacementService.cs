@@ -18,6 +18,7 @@ namespace API_FFMS.Services
         Task<ApiResponse> Delete(Guid id);
         Task<ApiResponses<ReplaceDto>> GetReplaces(ReplacementQueryDto queryDto);
         Task<ApiResponse> DeleteReplacements(List<Guid> ids);
+        Task<ApiResponse> UpdateStatus(Guid id, BaseUpdateStatusDto requestStatus);
     }
     public class ReplacementService : BaseService, IReplacementService
     {
@@ -49,6 +50,7 @@ namespace API_FFMS.Services
             }
 
             var replacement = createDto.ProjectTo<ReplaceCreateDto, Replacement>();
+            replacement.RequestCode = GenerateRequestCode();
 
             if (!await _repository.InsertReplacement(replacement, AccountId, CurrentDate))
             {
@@ -110,12 +112,16 @@ namespace API_FFMS.Services
                 throw new ApiException("Không tìm thấy yêu cầu thay thế", StatusCode.NOT_FOUND);
             }
 
+            var assetQueryable = MainUnitOfWork.AssetRepository.GetQuery()
+            .Where(x => !x!.DeletedAt.HasValue);
+
             replacement.Asset = await MainUnitOfWork.AssetRepository.FindOneAsync<AssetBaseDto>(
                 new Expression<Func<Asset, bool>>[]
                 {
                     x => !x.DeletedAt.HasValue,
-                    x => x.Id == replacement.AssetId
+                    x => x.Id == replacement.AssetId,
                 });
+            //replacement.Asset.StatusObj = 
 
             replacement.NewAsset = await MainUnitOfWork.AssetRepository.FindOneAsync<AssetBaseDto>(
                 new Expression<Func<Asset, bool>>[]
@@ -123,6 +129,23 @@ namespace API_FFMS.Services
                     x => !x.DeletedAt.HasValue,
                     x => x.Id == replacement.NewAssetId
                 });
+
+            replacement.AssetType = await MainUnitOfWork.AssetTypeRepository.FindOneAsync<AssetTypeDto>(
+                new Expression<Func<AssetType, bool>>[]
+                {
+                    x => !x.DeletedAt.HasValue,
+                    x => x.Id == replacement.Asset!.TypeId
+                });
+
+            replacement.Category = await MainUnitOfWork.CategoryRepository.FindOneAsync<CategoryDto>(
+                new Expression<Func<Category, bool>>[]
+                {
+                    x => !x.DeletedAt.HasValue,
+                    x => x.Id == replacement.AssetType!.CategoryId
+                });
+
+            replacement.Status = replacement.Status;
+            replacement.StatusObj = replacement.Status!.GetValue();
 
             replacement = await _mapperRepository.MapCreator(replacement);
 
@@ -164,14 +187,26 @@ namespace API_FFMS.Services
             {
                 replaceQuery = replaceQuery.Where(x => x!.CompletionDate == queryDto.CompletionDate);
             }
+            var assetTypeQueryable = MainUnitOfWork.AssetTypeRepository.GetQuery()
+            .Where(x => !x!.DeletedAt.HasValue);
+
+            var categoryQueryable = MainUnitOfWork.CategoryRepository.GetQuery()
+                .Where(x => !x!.DeletedAt.HasValue);
+
             var joinTables = from replace in replaceQuery
                              join asset in MainUnitOfWork.AssetRepository.GetQuery() on replace.AssetId equals asset.Id
                              join newAsset in MainUnitOfWork.AssetRepository.GetQuery() on replace.NewAssetId equals newAsset.Id
+                             join assetType in assetTypeQueryable on asset.TypeId equals assetType.Id into assetTypeGroup
+                             from assetType in assetTypeGroup.DefaultIfEmpty()
+                             join category in categoryQueryable on assetType.CategoryId equals category.Id into categoryGroup
+                             from category in categoryGroup.DefaultIfEmpty()
                              select new
                              {
                                  Replacement = replace,
                                  Asset = asset,
-                                 NewAsset = newAsset
+                                 NewAsset = newAsset,
+                                 AssetType = assetType,
+                                 Category = category
                              };
 
             var totalCount = await joinTables.CountAsync();
@@ -184,6 +219,7 @@ namespace API_FFMS.Services
                 RequestDate = x.Replacement.RequestDate,
                 CompletionDate = x.Replacement.CompletionDate,
                 Status = x.Replacement.Status,
+                StatusObj = x.Replacement.Status!.GetValue(),
                 Description = x.Replacement.Description,
                 Notes = x.Replacement.Notes,
                 IsInternal = x.Replacement.IsInternal,
@@ -231,7 +267,9 @@ namespace API_FFMS.Services
                     ModelId = x.NewAsset.ModelId,
                     IsRented = x.NewAsset.IsRented,
                     StartDateOfUse = x.NewAsset.StartDateOfUse
-                }
+                },
+                AssetType = x.AssetType.ProjectTo<AssetType, AssetTypeDto>(),
+                Category = x.Category.ProjectTo<Category, CategoryDto>()
             }).ToListAsync();
 
             replacements = await _mapperRepository.MapCreator(replacements);
@@ -258,16 +296,8 @@ namespace API_FFMS.Services
                 throw new ApiException("Chỉ được cập nhật các yêu cầu chưa hoàn thành", StatusCode.NOT_FOUND);
             }
             
-            if (updateDto.Status == RequestStatus.InProgress)
-            {
-                if (!await _repository.UpdateStatus(existingReplace, existingReplace.Status, AccountId, CurrentDate))
-                {
-                    throw new ApiException("Cập nhật thông tin yêu cầu thất bại", StatusCode.SERVER_ERROR);
-                }
-            }
             existingReplace.RequestDate = updateDto.RequestDate ?? existingReplace.RequestDate;
             existingReplace.CompletionDate = updateDto.CompletionDate ?? existingReplace.CompletionDate;
-            existingReplace.Status = updateDto.Status ?? existingReplace.Status;
             existingReplace.Description = updateDto.Description ?? existingReplace.Description;
             existingReplace.Notes = updateDto.Notes ?? existingReplace.Notes;
             if (!await _repository.UpdateStatus(existingReplace, existingReplace.Status, AccountId, CurrentDate))
@@ -278,5 +308,45 @@ namespace API_FFMS.Services
             return ApiResponse.Success("Cập nhật yêu cầu thành công");
         }
 
+        public async Task<ApiResponse> UpdateStatus(Guid id, BaseUpdateStatusDto requestStatus)
+        {
+            var existingReplace = MainUnitOfWork.ReplacementRepository.GetQuery()
+                                    .Include(r => r!.Asset)
+                                    .Where(r => r!.Id == id)
+                                    .FirstOrDefault();
+
+            if (existingReplace == null)
+            {
+                throw new ApiException("Không tìm thấy yêu cầu thay thế này", StatusCode.NOT_FOUND);
+            }
+
+            existingReplace.Status = requestStatus.Status ?? existingReplace.Status;
+
+            if (!await _repository.UpdateStatus(existingReplace, requestStatus.Status, AccountId, CurrentDate))
+            {
+                throw new ApiException("Cập nhật trạng thái yêu cầu thất bại", StatusCode.SERVER_ERROR);
+            }
+
+            return ApiResponse.Success("Cập nhật yêu cầu thành công");
+        }
+
+        public string GenerateRequestCode()
+        {
+            var lastRequest = MainUnitOfWork.ReplacementRepository.GetQueryAll()
+            .OrderByDescending(x => x!.RequestCode)
+            .FirstOrDefault();
+
+            string newRequestCode = "RPL1";
+
+            if (lastRequest != null)
+            {
+                string lastRequestCode = lastRequest.RequestCode;
+                if (lastRequestCode.StartsWith("RPL") && int.TryParse(lastRequestCode[3..], out int lastNumber))
+                {
+                    newRequestCode = $"RPL{lastNumber + 1}";
+                }
+            }
+            return newRequestCode;
+        }
     }
 }

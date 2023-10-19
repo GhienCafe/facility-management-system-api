@@ -24,8 +24,9 @@ namespace API_FFMS.Dtos
         public bool? IsRented { get; set; }
         public AssetTypeDto? Type { get; set; }
         public ModelDto? Model { get; set; }
+        public CategoryDto? Category { get; set; }
     }
-    
+
     public class AssetBaseDto : BaseDto
     {
         public string AssetName { get; set; } = null!;
@@ -60,11 +61,11 @@ namespace API_FFMS.Dtos
         public DateTime? LastMaintenanceTime { get; set; }
         public Guid? TypeId { get; set; }
         public Guid? ModelId { get; set; }
-        //public bool? IsRented { get; set; }
         public AssetTypeDto? Type { get; set; }
         public ModelDto? Model { get; set; }
         public DateTime? LastCheckedDate { get; set; }
         public DateTime? StartDateOfUse { get; set; }
+        public CategoryDto? Category { get; set; }
     }
 
     public class AssetCreateDto
@@ -108,6 +109,44 @@ namespace API_FFMS.Dtos
         public Guid? ModelId { get; set; }
         public bool? IsRented { get; set; }
     }
+
+    public class AssetTaskCheckQueryDto : BaseQueryDto
+    {
+        public string? RequestCode { get; set; }
+        public DateTime? RequestDate { get; set; }
+        public DateTime? CompletionDate { get; set; }
+        public RequestStatus? Status { get; set; }
+        public bool? IsInternal { get; set; }
+        public Guid? AssignedTo { get; set; }
+    }
+
+    public class AssetCheckTrackingDto : BaseRequestDto
+    {
+        public UserDto? User { get; set; }
+    }
+
+    public class AssetMaintenanceTrackingDto : BaseRequestDto
+    {
+        public UserDto? User { get; set; }
+    }
+
+    public class AssetRepairationTrackingDto : BaseRequestDto
+    {
+        public UserDto? User { get; set; }
+    }
+
+    public class AssetTransportationTrackingDto : BaseRequestDto
+    {
+        public RoomBaseDto? ToRoom { get; set; }
+        public RoomBaseDto? FromRoom { get; set; }
+        public UserDto? User { get; set; }
+    }
+
+    public class AssetReplacementTrackingDto : BaseRequestDto
+    {
+        public UserDto? AssignTo { get; set; }
+        public AssetBaseDto? ReplacedBy { get; set; }
+        public AssetTypeDto? AssetType { get; set; }
+        public CategoryDto? Category { get; set; }
+    }
 }
-
-

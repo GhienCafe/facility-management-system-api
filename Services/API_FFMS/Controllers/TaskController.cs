@@ -1,6 +1,7 @@
 ﻿using API_FFMS.Dtos;
 using API_FFMS.Services;
 using AppCore.Models;
+using MainData.Entities;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
 
@@ -27,5 +28,12 @@ public class TaskController : BaseController
     public async Task<ApiResponse<TaskDetailDto>> GetTask(Guid id)
     {
         return await _taskService.GetTaskDetail(id);
+    }
+
+    [HttpPut]
+    [SwaggerOperation("Send task report")]
+    public async Task<ApiResponse> UpdateTaskStatus([FromBody] ReportCreateDto createDto, RequestStatus status)
+    {
+        return await _taskService.UpdateTaskStatus(createDto, status);
     }
 }

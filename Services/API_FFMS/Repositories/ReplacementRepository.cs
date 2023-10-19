@@ -28,38 +28,38 @@ namespace API_FFMS.Repositories
                 replacement.CreatedAt = now.Value;
                 replacement.EditedAt = now.Value;
                 replacement.CreatorId = creatorId;
-                replacement.Status = RequestStatus.InProgress;
+                replacement.Status = RequestStatus.NotStart;
                 await _context.Replacements.AddAsync(replacement);
 
-                var asset = await _context.Assets.FindAsync(replacement.AssetId);
-                asset!.Status = AssetStatus.Replacement;
-                asset.EditedAt = now.Value;
-                _context.Entry(asset).State = EntityState.Modified;
+                //var asset = await _context.Assets.FindAsync(replacement.AssetId);
+                //asset!.Status = AssetStatus.Replacement;
+                //asset.EditedAt = now.Value;
+                //_context.Entry(asset).State = EntityState.Modified;
 
-                var newAsset = await _context.Assets.FindAsync(replacement.NewAssetId);
-                newAsset!.Status = AssetStatus.Replacement;
-                newAsset.EditedAt = now.Value;
-                _context.Entry(newAsset).State = EntityState.Modified;
+                //var newAsset = await _context.Assets.FindAsync(replacement.NewAssetId);
+                //newAsset!.Status = AssetStatus.Replacement;
+                //newAsset.EditedAt = now.Value;
+                //_context.Entry(newAsset).State = EntityState.Modified;
 
                 if (replacement.IsInternal)
                 {
-                    var roomAsset = await _context.RoomAssets
-                                    .FirstOrDefaultAsync(x => x.AssetId == replacement.AssetId && x.ToDate == null);
-                    var roomAssetNew = await _context.RoomAssets
-                                    .FirstOrDefaultAsync(x => x.AssetId == replacement.NewAssetId && x.ToDate == null);
-                    if (roomAsset != null)
-                    {
-                        roomAsset.Status = AssetStatus.Replacement;
-                        roomAsset.EditedAt = now.Value;
-                        _context.Entry(roomAsset).State = EntityState.Modified;
-                    }
+                    //var roomAsset = await _context.RoomAssets
+                    //                .FirstOrDefaultAsync(x => x.AssetId == replacement.AssetId && x.ToDate == null);
+                    //var roomAssetNew = await _context.RoomAssets
+                    //                .FirstOrDefaultAsync(x => x.AssetId == replacement.NewAssetId && x.ToDate == null);
+                    //if (roomAsset != null)
+                    //{
+                    //    roomAsset.Status = AssetStatus.Replacement;
+                    //    roomAsset.EditedAt = now.Value;
+                    //    _context.Entry(roomAsset).State = EntityState.Modified;
+                    //}
 
-                    if (roomAssetNew != null)
-                    {
-                        roomAssetNew.Status = AssetStatus.Replacement;
-                        roomAssetNew.EditedAt = now.Value;
-                        _context.Entry(roomAssetNew).State = EntityState.Modified;
-                    }
+                    //if (roomAssetNew != null)
+                    //{
+                    //    roomAssetNew.Status = AssetStatus.Replacement;
+                    //    roomAssetNew.EditedAt = now.Value;
+                    //    _context.Entry(roomAssetNew).State = EntityState.Modified;
+                    //}
                     var notification = new Notification
                     {
                         CreatedAt = now.Value,
@@ -95,49 +95,74 @@ namespace API_FFMS.Repositories
             {
                 replacement.EditedAt = now.Value;
                 replacement.EditorId = editorId;
-                if (replacement.IsInternal)
+                replacement.Status = statusUpdate;
+                _context.Entry(replacement).State = EntityState.Modified;
+
+                //ASSET
+                var asset = await _context.Assets.FindAsync(replacement.AssetId);
+                var newAsset = await _context.Assets.FindAsync(replacement.NewAssetId);
+
+                //ROOMASSET
+                var roomAsset = await _context.RoomAssets
+                                    .FirstOrDefaultAsync(x => x.AssetId == asset!.Id && x.ToDate == null);
+                var roomAssetNew = await _context.RoomAssets
+                                .FirstOrDefaultAsync(x => x.AssetId == newAsset!.Id && x.ToDate == null);
+
+                //LOCATION
+                var assetLocation = await _context.Rooms
+                                .FirstOrDefaultAsync(x => x.Id == roomAsset!.RoomId && roomAsset.AssetId == asset!.Id);
+
+                var newAssetLocation = await _context.Rooms
+                                .FirstOrDefaultAsync(x => x.Id == roomAssetNew!.RoomId && roomAssetNew.AssetId == newAsset!.Id);
+                if (replacement.Status == RequestStatus.Done)
                 {
+                    asset!.Status = AssetStatus.Operational;
+                    asset.EditedAt = now.Value;
+                    _context.Entry(asset).State = EntityState.Modified;
 
-                    if (replacement.Status == RequestStatus.Done)
+                    newAsset!.Status = AssetStatus.Operational;
+                    newAsset.EditedAt = now.Value;
+                    _context.Entry(newAsset).State = EntityState.Modified;
+
+                    var addRoomAssetNew = new RoomAsset
                     {
-                        var asset = await _context.Assets.FindAsync(replacement.AssetId);
-                        asset!.Status = AssetStatus.Operational;
-                        asset.EditedAt = now.Value;
-                        _context.Entry(asset).State = EntityState.Modified;
+                        AssetId = replacement.NewAssetId,
+                        RoomId = assetLocation!.Id,
+                        Status = AssetStatus.Operational,
+                        FromDate = now.Value,
+                        Quantity = asset.Quantity,
+                        ToDate = null,
+                    };
+                    _context.RoomAssets.Add(addRoomAssetNew);
 
-                        var newAsset = await _context.Assets.FindAsync(replacement.NewAssetId);
-                        newAsset!.Status = AssetStatus.Operational;
-                        newAsset.EditedAt = now.Value;
-                        _context.Entry(newAsset).State = EntityState.Modified;
-                        var roomAsset = await _context.RoomAssets.FirstOrDefaultAsync(x => x.AssetId == asset.Id && x.ToDate == null);
-                        var fromRoomAsset = await _context.Rooms.FirstOrDefaultAsync(x => x.Id == roomAsset!.RoomId && roomAsset.AssetId == asset.Id);
-                        var roomAssetNew = await _context.RoomAssets.FirstOrDefaultAsync(x => x.AssetId == newAsset.Id && x.ToDate == null);
-                        var fromRoomAssetNew = await _context.Rooms.FirstOrDefaultAsync(x => x.Id == roomAssetNew!.RoomId && roomAssetNew.AssetId == newAsset.Id);
-                        var addRoomAssetNew = new RoomAsset
-                        {
-                            AssetId = replacement.NewAssetId,
-                            RoomId = fromRoomAsset!.Id,
-                            Status = AssetStatus.Operational,
-                            FromDate = now.Value,
-                            Quantity = 1,
-                            ToDate = null,
-                        };
-                        _context.RoomAssets.Add(addRoomAssetNew);
-                        var addRoomAsset = new RoomAsset
-                        {
-                            AssetId = replacement.AssetId,
-                            RoomId = fromRoomAssetNew!.Id,
-                            Status = AssetStatus.Operational,
-                            FromDate = now.Value,
-                            Quantity = 1,
-                            ToDate = null,
-                        };
-                        _context.RoomAssets.Add(addRoomAsset);
+                    var addRoomAsset = new RoomAsset
+                    {
+                        AssetId = replacement.AssetId,
+                        RoomId = newAssetLocation!.Id,
+                        Status = AssetStatus.Operational,
+                        FromDate = now.Value,
+                        Quantity = newAsset.Quantity,
+                        ToDate = null,
+                    };
+                    _context.RoomAssets.Add(addRoomAsset);
+                }
+                else if (replacement.Status == RequestStatus.Cancelled)
+                {
+                    asset!.Status = AssetStatus.Operational;
+                    asset.EditedAt = now.Value;
+                    _context.Entry(asset).State = EntityState.Modified;
 
-                    }
+                    newAsset!.Status = AssetStatus.Operational;
+                    newAsset.EditedAt = now.Value;
+                    _context.Entry(newAsset).State = EntityState.Modified;
+
+                    assetLocation!.State = RoomState.Operational;
+                    _context.Entry(assetLocation).State = EntityState.Modified;
+
+                    newAssetLocation!.State = RoomState.Operational;
+                    _context.Entry(newAssetLocation).State = EntityState.Modified;
                 }
 
-                _context.Entry(replacement).State = EntityState.Modified;
                 await _context.SaveChangesAsync();
                 await _context.Database.CommitTransactionAsync();
                 return true;
