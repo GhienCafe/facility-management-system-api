@@ -1,5 +1,7 @@
-﻿using AppCore.Models;
+﻿using AppCore.Configs;
+using AppCore.Models;
 using MainData.Entities;
+using Newtonsoft.Json;
 
 namespace API_FFMS.Dtos
 {
@@ -9,7 +11,9 @@ namespace API_FFMS.Dtos
         public Guid RoomId { get; set; }
         public Guid AssetId { get; set; }
         public AssetStatus Status { get; set; }
+        [JsonConverter(typeof(LocalTimeZoneDateTimeConverter))]
         public DateTime? FromDate { get; set; }
+        [JsonConverter(typeof(LocalTimeZoneDateTimeConverter))]
         public DateTime? ToDate { get; set; }
         public double? Quantity { get; set; }
         public RoomBaseDto? Room { get; set; }
@@ -41,7 +45,9 @@ namespace API_FFMS.Dtos
         public Guid RoomId { get; set; }
         public Guid AssetId { get; set; }
         public AssetStatus Status { get; set; }
+        [JsonConverter(typeof(LocalTimeZoneDateTimeConverter))]
         public DateTime? FromDate { get; set; }
+        [JsonConverter(typeof(LocalTimeZoneDateTimeConverter))]
         public DateTime? ToDate { get; set; }
         public double? Quantity { get; set; }
         public RoomBaseDto? Room { get; set; }
@@ -51,7 +57,9 @@ namespace API_FFMS.Dtos
     public class AssetTrackingDto : BaseDto
     {
         public AssetStatus Status { get; set; }
+        [JsonConverter(typeof(LocalTimeZoneDateTimeConverter))]
         public DateTime? FromDate { get; set; }
+        [JsonConverter(typeof(LocalTimeZoneDateTimeConverter))]
         public DateTime? ToDate { get; set; }
         public RoomBaseDto? Room { get; set; }
 
@@ -88,7 +96,9 @@ namespace API_FFMS.Dtos
         public AssetStatus? Status { get; set; }
         public EnumValue? StatusObj { get; set; }
         public double? Quantity { get; set; }
+        [JsonConverter(typeof(LocalTimeZoneDateTimeConverter))]
         public DateTime? FromDate { get; set; }
+        [JsonConverter(typeof(LocalTimeZoneDateTimeConverter))]
         public DateTime? ToDate { get; set; }
         public AssetBaseDto? Asset { get; set; }
     }

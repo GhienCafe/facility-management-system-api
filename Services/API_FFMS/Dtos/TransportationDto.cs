@@ -1,12 +1,16 @@
-﻿using AppCore.Models;
+﻿using AppCore.Configs;
+using AppCore.Models;
 using MainData.Entities;
+using Newtonsoft.Json;
 
 namespace API_FFMS.Dtos;
 
 public class TransportDto : BaseDto
 {
     public string RequestCode { get; set; } = null!;
+    [JsonConverter(typeof(LocalTimeZoneDateTimeConverter))]
     public DateTime? RequestDate { get; set; }
+    [JsonConverter(typeof(LocalTimeZoneDateTimeConverter))]
     public DateTime? CompletionDate { get; set; }
     public RequestType Type { get; set; }
     public EnumValue? TypeObj { get; set; }

@@ -142,20 +142,6 @@ public class ApiResponse
             Message = message,
         };
     }
-    // public ApiResponse()
-    // {
-    //     StatusCode = StatusCode.SUCCESS;
-    //     Message = "Success";
-    // }
-    //
-    // //
-    // public object Result { get; set; }
-    // public ApiResponse(object result)
-    // {
-    //     StatusCode = StatusCode.SUCCESS;
-    //     Message = "Success";
-    //     Result = result;
-    // }
 
 }
 

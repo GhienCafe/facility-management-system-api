@@ -1,7 +1,9 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using API_FFMS.Dtos;
+using AppCore.Configs;
 using AppCore.Models;
 using MainData.Entities;
+using Newtonsoft.Json;
 
 namespace API_FFMS.Dtos
 {
@@ -77,6 +79,7 @@ public class AssetExportDto : BaseDto
     [Display(Name = "Mô tả")]
     public string? Description { get; set; }
 
+    [JsonConverter(typeof(LocalTimeZoneDateTimeConverter))]
     [Display(Name = "Thời gian bảo dưỡng gần nhất")]
     public DateTime? LastMaintenanceTime { get; set; }
 
@@ -91,9 +94,11 @@ public class AssetExportDto : BaseDto
     [Display(Name = "Tên nhãn hiệu")]
     public string? ModelName { get; set; }
 
+    [JsonConverter(typeof(LocalTimeZoneDateTimeConverter))]
     [Display(Name = "Thời gian kiểm tra gần nhất")]
     public DateTime? LastCheckedDate { get; set; }
 
+    [JsonConverter(typeof(LocalTimeZoneDateTimeConverter))]
     [Display(Name = "Ngày bắt đầu sử dụng")]
     public DateTime? StartDateOfUse { get; set; }
 }
