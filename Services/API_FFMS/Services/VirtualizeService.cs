@@ -81,13 +81,13 @@ public class VirtualizeService : BaseService, IVirtualizeService
                  RoomTypeDesciption= rt.Description,
                  RoomTypeCreatedAt = rt.CreatedAt,
                  RoomTypeEditedAt = rt.EditedAt,
-                 RoomTypeCreator = rt.CreatorId,
+                 RoomTypeCreator = rt.CreatorId,                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            
                  RoomTypeEditor = rt.EditorId,
                  
              } into groupedData
              select new VirtualizeRoomDto
              {
-                 TotalAssets = groupedData.Count(),
+                 TotalAssets = groupedData.Count(item => item.ga.ToDate == null && item.ga.Room != null),
                  TotalNormalAssets = groupedData.Count(item => item.ga.ToDate == null && item.ga.Status == AssetStatus.Operational),
                  TotalDamagedAssets = groupedData.Count(item => item.ga.ToDate == null && item.ga.Status == AssetStatus.OutOfOrder),
                  TotalRepairAssets = groupedData.Count(item => item.ga.ToDate == null && item.ga.Status == AssetStatus.Repair),
