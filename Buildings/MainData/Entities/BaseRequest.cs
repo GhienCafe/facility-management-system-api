@@ -20,6 +20,8 @@ public class BaseRequest : BaseEntity
     //Relationship
     public virtual Asset? Asset { get; set; }
     public virtual User? User { get; set; }
+    
+    public virtual IEnumerable<MediaFile>? MediaFiles { get; set; }
 }
 
 public enum RequestStatus

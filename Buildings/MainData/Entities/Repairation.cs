@@ -23,5 +23,9 @@ public class RepairationConfig : IEntityTypeConfiguration<Repairation>
         builder.HasOne(x => x.User)
             .WithMany(x => x.Repairations)
             .HasForeignKey(x => x.AssignedTo);
+        
+        // builder.HasMany(x => x.MediaFiles)
+        //     .WithOne(x => x.Repairation)
+        //     .HasForeignKey(i => new { i.ItemId });
     }
 }
