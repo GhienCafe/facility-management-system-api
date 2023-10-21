@@ -27,5 +27,10 @@ public class ReplacementConfig : IEntityTypeConfiguration<Replacement>
         builder.HasOne(x => x.User)
             .WithMany(x => x.Replacements)
             .HasForeignKey(x => x.AssignedTo);
+        
+        // builder.HasMany(x => x.MediaFiles)
+        //     .WithOne(x => x.Replacement)
+        //     .HasForeignKey(i => new { i.ItemId });
+        
     }
 }

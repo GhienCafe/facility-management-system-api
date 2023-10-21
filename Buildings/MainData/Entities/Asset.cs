@@ -21,6 +21,7 @@ public class Asset : BaseEntity
     public Guid? ModelId { get; set; }
     public bool? IsRented { get; set; }
     public DateTime? StartDateOfUse { get; set; }
+    public string? ImageUrl { get; set; }
 
     //
     public virtual AssetType? Type { get; set; }
@@ -29,7 +30,6 @@ public class Asset : BaseEntity
     public virtual IEnumerable<RoomAsset>? RoomAssets { get; set; }
     public virtual IEnumerable<Maintenance>? Maintenances { get; set; }
     public virtual IEnumerable<Replacement>? Replacements { get; set; }
-    //public virtual IEnumerable<Transportation>? Transportations { get; set; }
     public virtual ICollection<TransportationDetail>? TransportationDetails { get; set; }
     public virtual IEnumerable<Repairation>? Repairations { get; set; }
     public virtual IEnumerable<AssetCheck>? AssetChecks { get; set; }
@@ -78,6 +78,7 @@ public class AssetConfig : IEntityTypeConfiguration<Asset>
         builder.Property(a => a.AssetCode).IsRequired(false);
         builder.Property(a => a.StartDateOfUse).IsRequired(false);
         builder.Property(a => a.Status).IsRequired();
+        builder.Property(a => a.ImageUrl).IsRequired();
         builder.Property(a => a.IsMovable).IsRequired();
         builder.Property(a => a.ManufacturingYear).IsRequired(false);
         builder.Property(a => a.SerialNumber).IsRequired(false);
