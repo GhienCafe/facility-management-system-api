@@ -51,32 +51,31 @@ public class MediaFileConfig : IEntityTypeConfiguration<MediaFile>
         builder.Property(a => a.Content).IsRequired(false); 
         builder.Property(a => a.ItemId).IsRequired(false);
         
-        // builder.Property(a => a.MaintenanceId).IsRequired(false);
-        // builder.Property(a => a.ReplacementId).IsRequired(false);
-        // builder.Property(a => a.RepairationId).IsRequired(false);
-        // builder.Property(a => a.TransportationId).IsRequired(false);
-        // builder.Property(a => a.AssetCheckId).IsRequired(false);
+        builder.Property(a => a.MaintenanceId).IsRequired(false);
+        builder.Property(a => a.ReplacementId).IsRequired(false);
+        builder.Property(a => a.RepairationId).IsRequired(false);
+        builder.Property(a => a.TransportationId).IsRequired(false);
+        builder.Property(a => a.AssetCheckId).IsRequired(false);
         
         //Relationship
-        // builder.HasOne(x => x.Maintenance)
-        //     .WithMany(x => x.MediaFiles)
-        //     .HasForeignKey(i => new { i.ItemId });
-        //
-        // builder.HasOne(x => x.AssetCheck)
-        //     .WithMany(x => x.MediaFiles)
-        //     .HasForeignKey(x => new {x.ItemId})
-        //     .IsRequired(false);
-        //
-        // builder.HasOne(x => x.Replacement)
-        //     .WithMany(x => x.MediaFiles)
-        //     .HasForeignKey(i => new { i.ItemId });
-        //
-        // builder.HasOne(x => x.Transportation)
-        //     .WithMany(x => x.MediaFiles)
-        //     .HasForeignKey(i => new { i.ItemId });
-        //
-        // builder.HasOne(x => x.Repairation)
-        //     .WithMany(x => x.MediaFiles)
-        //     .HasForeignKey(i => new { i.ItemId });
+        builder.HasOne(x => x.Maintenance)
+            .WithMany(x => x.MediaFiles)
+            .HasForeignKey(x => x.MaintenanceId);
+
+        builder.HasOne(x => x.AssetCheck)
+            .WithMany(x => x.MediaFiles)
+            .HasForeignKey(x => x.AssetCheckId);
+        
+        builder.HasOne(x => x.Replacement)
+            .WithMany(x => x.MediaFiles)
+            .HasForeignKey(i => i.ReplacementId);
+        
+        builder.HasOne(x => x.Transportation)
+            .WithMany(x => x.MediaFiles)
+            .HasForeignKey(i => i.TransportationId);
+        
+        builder.HasOne(x => x.Repairation)
+            .WithMany(x => x.MediaFiles)
+            .HasForeignKey(i => i.RepairationId);
     }
 }

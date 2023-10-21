@@ -27,9 +27,9 @@ public class AssetCheckConfig : IEntityTypeConfiguration<AssetCheck>
             .WithMany(x => x.AssetChecks)
             .HasForeignKey(x => x.AssignedTo);
         
-        // builder.HasMany(x => x.MediaFiles)
-        //     .WithOne(x => x.AssetCheck)
-        //     .HasForeignKey(i => new { i.ItemId });
+        builder.HasMany(x => x.MediaFiles)
+            .WithOne(x => x.AssetCheck)
+            .HasForeignKey(i => i.AssetCheckId);
     }
 }
 
