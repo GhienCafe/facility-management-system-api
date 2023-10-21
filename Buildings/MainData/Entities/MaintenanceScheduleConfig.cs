@@ -7,12 +7,12 @@ namespace MainData.Entities;
 
 public class MaintenanceScheduleConfig : BaseEntity
 {
-    public Guid AssetId { get; set; }
+   // public Guid AssetId { get; set; }
     public int RepeatIntervalInMonths { get; set; } 
     public string? Description { get; set; }
     
     //
-    public virtual Asset? Asset { get; set; }
+    public virtual IEnumerable<Asset>? Assets { get; set; }
 }
 
 public class MaintenanceScheduleConfigConfig : IEntityTypeConfiguration<MaintenanceScheduleConfig>
@@ -20,14 +20,13 @@ public class MaintenanceScheduleConfigConfig : IEntityTypeConfiguration<Maintena
     public void Configure(EntityTypeBuilder<MaintenanceScheduleConfig> builder)
     {
         builder.ToTable("MaintenanceScheduleConfigs");
-        builder.Property(x => x.AssetId).IsRequired();
         builder.Property(x => x.RepeatIntervalInMonths).IsRequired();
         builder.Property(x => x.Description).IsRequired(false);
    
         //Relationship
-        builder.HasOne(x => x.Asset)
-            .WithMany(x => x.MaintenanceScheduleConfigs)
-            .HasForeignKey(x => x.AssetId);
+        builder.HasMany(x => x.Assets)
+            .WithOne(x => x.MaintenanceScheduleConfigs)
+            .HasForeignKey(x => x.MaintenanceConfigId);
 
     }
 }

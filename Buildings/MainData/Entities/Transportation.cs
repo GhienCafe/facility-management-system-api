@@ -32,8 +32,8 @@ public class TransportationConfig : IEntityTypeConfiguration<Transportation>
             .WithOne(x => x.Transportation)
             .HasForeignKey(x => x.TransportationId);
         
-        // builder.HasMany(x => x.MediaFiles)
-        //     .WithOne(x => x.Transportation)
-        //     .HasForeignKey(i => new { i.ItemId });
+        builder.HasMany(x => x.MediaFiles)
+            .WithOne(x => x.Transportation)
+            .HasForeignKey(i => i.TransportationId);
     }
 }
