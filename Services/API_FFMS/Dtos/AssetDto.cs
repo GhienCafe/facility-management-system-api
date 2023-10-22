@@ -1,8 +1,6 @@
 ﻿using AppCore.Models;
 using MainData.Entities;
-using System.ComponentModel.DataAnnotations;
 using AppCore.Configs;
-using DocumentFormat.OpenXml.Math;
 using Newtonsoft.Json;
 
 namespace API_FFMS.Dtos
@@ -27,6 +25,7 @@ namespace API_FFMS.Dtos
         public Guid? TypeId { get; set; }
         public Guid? ModelId { get; set; }
         public bool? IsRented { get; set; }
+        public string? ImageUrl { get; set; }
         public AssetTypeDto? Type { get; set; }
         public ModelDto? Model { get; set; }
         public CategoryDto? Category { get; set; }
@@ -47,6 +46,7 @@ namespace API_FFMS.Dtos
         public DateTime? LastMaintenanceTime { get; set; }
         public Guid? TypeId { get; set; }
         public Guid? ModelId { get; set; }
+        public string? ImageUrl { get; set; }
         public bool? IsRented { get; set; }
         [JsonConverter(typeof(LocalTimeZoneDateTimeConverter))]
         public DateTime? LastCheckedDate { get; set; }
@@ -65,6 +65,7 @@ namespace API_FFMS.Dtos
         public string? SerialNumber { get; set; }
         public double Quantity { get; set; }
         public string? Description { get; set; }
+        public string? ImageUrl { get; set; }
         public bool? IsRented { get; set; }
         [JsonConverter(typeof(LocalTimeZoneDateTimeConverter))]
         public DateTime? LastMaintenanceTime { get; set; }
@@ -91,6 +92,7 @@ namespace API_FFMS.Dtos
         public string? Description { get; set; }
         public Guid? TypeId { get; set; }
         public Guid? ModelId { get; set; }
+        public string? ImageUrl { get; set; }
         public bool? IsRented { get; set; }
         // public AssetTypeDto? Type { get; set; }
         // public ModelDto? Model { get; set; }
@@ -106,6 +108,7 @@ namespace API_FFMS.Dtos
         public string? SerialNumber { get; set; }
         public double? Quantity { get; set; }
         public string? Description { get; set; }
+        public string? ImageUrl { get; set; }
         public bool? IsRented { get; set; }
         [JsonConverter(typeof(LocalTimeZoneDateTimeConverter))]
         public DateTime? LastMaintenanceTime { get; set; }

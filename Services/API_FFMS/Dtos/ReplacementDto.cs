@@ -14,9 +14,4 @@ public class ReplaceCreateDto : BaseRequestCreateDto
     public Guid NewAssetId { get; set; }
 }
 
-public class ReplacementQueryDto : BaseRequestQueryDto
-{
-    public string? RequestCode { get; set; }
-    public DateTime? RequestDate { get; set; }
-    public DateTime? CompletionDate { get; set; }
-}
+public class ReplacementQueryDto : BaseRequestQueryDto { }

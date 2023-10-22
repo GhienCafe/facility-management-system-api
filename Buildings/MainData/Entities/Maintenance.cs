@@ -26,5 +26,9 @@ public class MaintenanceConfig : IEntityTypeConfiguration<Maintenance>
         builder.HasOne(x => x.User)
             .WithMany(x => x.Maintenances)
             .HasForeignKey(x => x.AssignedTo);
+
+        builder.HasMany(x => x.MediaFiles)
+            .WithOne(x => x.Maintenance)
+            .HasForeignKey(i => i.MaintenanceId);
     }
 }

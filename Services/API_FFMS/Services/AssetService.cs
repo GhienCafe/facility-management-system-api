@@ -133,6 +133,7 @@ public class AssetService : BaseService, IAssetService
             ManufacturingYear = x.Asset.ManufacturingYear,
             ModelId = x.Asset.ModelId,
             SerialNumber = x.Asset.SerialNumber,
+            ImageUrl = x.Asset.ImageUrl,
             TypeId = x.Asset.TypeId,
             LastMaintenanceTime = x.Asset.LastMaintenanceTime,
             CreatedAt = x.Asset.CreatedAt,
@@ -148,6 +149,7 @@ public class AssetService : BaseService, IAssetService
                 Unit = x.Type.Unit,
                 UnitObj = x.Type.Unit.GetValue(),
                 CreatedAt = x.Type.CreatedAt,
+                ImageUrl = x.Type.ImageUrl,
                 EditedAt = x.Type.EditedAt,
                 CreatorId = x.Type.CreatorId ?? Guid.Empty,
                 EditorId = x.Type.EditorId ?? Guid.Empty
@@ -189,6 +191,7 @@ public class AssetService : BaseService, IAssetService
                 LastMaintenanceTime = x.LastMaintenanceTime,
                 LastCheckedDate = x.LastCheckedDate,
                 StartDateOfUse = x.StartDateOfUse,
+                ImageUrl = x.ImageUrl,
                 CreatedAt = x.CreatedAt,
                 EditedAt = x.EditedAt,
                 CreatorId = x.CreatorId ?? Guid.Empty,
@@ -227,6 +230,7 @@ public class AssetService : BaseService, IAssetService
         existingAsset.AssetCode = updateDto.AssetCode ?? existingAsset.AssetCode;
         existingAsset.IsMovable = updateDto.IsMovable ?? existingAsset.IsMovable;
         existingAsset.LastMaintenanceTime = updateDto.LastMaintenanceTime ?? existingAsset.LastMaintenanceTime;
+        existingAsset.ImageUrl = updateDto.ImageUrl ?? existingAsset.ImageUrl;
 
         if (!await MainUnitOfWork.AssetRepository.UpdateAsync(existingAsset, AccountId, CurrentDate))
             throw new ApiException("Cập nhật thông tin trang thiết bị thất bại", StatusCode.SERVER_ERROR);
@@ -312,6 +316,7 @@ public class AssetService : BaseService, IAssetService
                 SerialNumber = x.Asset.SerialNumber,
                 LastCheckedDate = x.Asset.LastCheckedDate,
                 LastMaintenanceTime = x.Asset.LastMaintenanceTime,
+                ImageUrl = x.Asset.ImageUrl,
                 TypeId = x.Asset.TypeId,
                 ModelId = x.Asset.ModelId,
                 CreatedAt = x.Asset.CreatedAt,

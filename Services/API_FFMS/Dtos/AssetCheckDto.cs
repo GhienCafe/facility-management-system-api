@@ -18,12 +18,7 @@ public class AssetCheckDto : BaseRequestDto
 //    public bool? IsVerified { get; set; }
 //}
 
-public class AssetCheckQueryDto : BaseRequestQueryDto
-{
-    public string? RequestCode { get; set; }
-    public DateTime? RequestDate { get; set; }
-    public DateTime? CompletionDate { get; set; }
-}
+public class AssetCheckQueryDto : BaseRequestQueryDto { }
 
 public class AssetCheckCreateDto : BaseRequestCreateDto { }
 

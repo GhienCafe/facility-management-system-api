@@ -215,9 +215,9 @@ namespace API_FFMS.Services
             var transportQuery = MainUnitOfWork.TransportationRepository.GetQuery()
                                  .Where(x => !x!.DeletedAt.HasValue);
 
-            if (keyword != null)
+            if (queryDto.IsInternal != null)
             {
-                transportQuery = transportQuery.Where(x => x!.RequestCode.ToLower().Contains(keyword));
+                transportQuery = transportQuery.Where(x => x!.IsInternal == queryDto.IsInternal);
             }
 
             if (queryDto.AssignedTo != null)
@@ -230,14 +230,11 @@ namespace API_FFMS.Services
                 transportQuery = transportQuery.Where(x => x!.Status == queryDto.Status);
             }
 
-            if (queryDto.RequestDate != null)
+            if (!string.IsNullOrEmpty(keyword))
             {
-                transportQuery = transportQuery.Where(x => x!.RequestDate == queryDto.RequestDate);
-            }
-
-            if (queryDto.CompletionDate != null)
-            {
-                transportQuery = transportQuery.Where(x => x!.CompletionDate == queryDto.CompletionDate);
+                transportQuery = transportQuery.Where(x => x!.Description!.ToLower().Contains(keyword)
+                                                                   || x.Notes!.ToLower().Contains(keyword) ||
+                                                                   x.RequestCode.ToLower().Contains(keyword));
             }
 
             var totalCount = await transportQuery.CountAsync();

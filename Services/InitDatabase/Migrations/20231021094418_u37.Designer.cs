@@ -4,6 +4,7 @@ using MainData;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace InitDatabase.Migrations
 {
     [DbContext(typeof(DatabaseContext))]
-    partial class DatabaseContextModelSnapshot : ModelSnapshot
+    [Migration("20231021094418_u37")]
+    partial class u37
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -72,9 +75,6 @@ namespace InitDatabase.Migrations
                     b.Property<DateTime?>("LastMaintenanceTime")
                         .HasColumnType("datetime2");
 
-                    b.Property<Guid?>("MaintenanceConfigId")
-                        .HasColumnType("uniqueidentifier");
-
                     b.Property<int?>("ManufacturingYear")
                         .HasColumnType("int");
 
@@ -102,8 +102,6 @@ namespace InitDatabase.Migrations
                     b.HasIndex("AssetCode")
                         .IsUnique()
                         .HasFilter("[AssetCode] IS NOT NULL");
-
-                    b.HasIndex("MaintenanceConfigId");
 
                     b.HasIndex("ModelId");
 
@@ -511,6 +509,9 @@ namespace InitDatabase.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<Guid>("AssetId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
@@ -536,6 +537,8 @@ namespace InitDatabase.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("AssetId");
 
                     b.ToTable("MaintenanceScheduleConfigs", (string)null);
                 });
@@ -611,6 +614,8 @@ namespace InitDatabase.Migrations
                     b.HasIndex("MaintenanceId");
 
                     b.HasIndex("RepairationId");
+
+                    b.HasIndex("ReplacementId");
 
                     b.HasIndex("TransportationId");
 
@@ -1393,10 +1398,6 @@ namespace InitDatabase.Migrations
 
             modelBuilder.Entity("MainData.Entities.Asset", b =>
                 {
-                    b.HasOne("MainData.Entities.MaintenanceScheduleConfig", "MaintenanceScheduleConfigs")
-                        .WithMany("Assets")
-                        .HasForeignKey("MaintenanceConfigId");
-
                     b.HasOne("MainData.Entities.Model", "Model")
                         .WithMany("Assets")
                         .HasForeignKey("ModelId");
@@ -1406,8 +1407,6 @@ namespace InitDatabase.Migrations
                         .HasForeignKey("TypeId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.Navigation("MaintenanceScheduleConfigs");
 
                     b.Navigation("Model");
 
@@ -1488,6 +1487,17 @@ namespace InitDatabase.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("MainData.Entities.MaintenanceScheduleConfig", b =>
+                {
+                    b.HasOne("MainData.Entities.Asset", "Asset")
+                        .WithMany("MaintenanceScheduleConfigs")
+                        .HasForeignKey("AssetId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Asset");
+                });
+
             modelBuilder.Entity("MainData.Entities.MediaFile", b =>
                 {
                     b.HasOne("MainData.Entities.AssetCheck", "AssetCheck")
@@ -1504,7 +1514,7 @@ namespace InitDatabase.Migrations
 
                     b.HasOne("MainData.Entities.Replacement", "Replacement")
                         .WithMany("MediaFiles")
-                        .HasForeignKey("RepairationId");
+                        .HasForeignKey("ReplacementId");
 
                     b.HasOne("MainData.Entities.Transportation", "Transportation")
                         .WithMany("MediaFiles")
@@ -1682,6 +1692,8 @@ namespace InitDatabase.Migrations
                 {
                     b.Navigation("AssetChecks");
 
+                    b.Navigation("MaintenanceScheduleConfigs");
+
                     b.Navigation("Maintenances");
 
                     b.Navigation("Repairations");
@@ -1726,11 +1738,6 @@ namespace InitDatabase.Migrations
             modelBuilder.Entity("MainData.Entities.Maintenance", b =>
                 {
                     b.Navigation("MediaFiles");
-                });
-
-            modelBuilder.Entity("MainData.Entities.MaintenanceScheduleConfig", b =>
-                {
-                    b.Navigation("Assets");
                 });
 
             modelBuilder.Entity("MainData.Entities.Model", b =>

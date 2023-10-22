@@ -4,7 +4,6 @@ using AppCore.Models;
 using MainData;
 using MainData.Entities;
 using MainData.Repositories;
-using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
 
 namespace API_FFMS.Services
@@ -90,6 +89,7 @@ namespace API_FFMS.Services
                 TypeName = x.TypeName,
                 Unit = x.Unit,
                 UnitObj = x.Unit.GetValue(),
+                ImageUrl = x.ImageUrl,
                 CategoryId = x.CategoryId,
                 CreatedAt = x.CreatedAt,
                 EditedAt = x.EditedAt,
@@ -120,6 +120,7 @@ namespace API_FFMS.Services
                     TypeName = x.TypeName,
                     Unit = x.Unit,
                     UnitObj = x.Unit.GetValue(),
+                    ImageUrl = x.ImageUrl,
                     CategoryId = x.CategoryId,
                     CreatedAt = x.CreatedAt,
                     EditedAt = x.EditedAt,
@@ -151,6 +152,7 @@ namespace API_FFMS.Services
             existingTpye.Unit = updateDto.Unit ?? existingTpye.Unit;
             existingTpye.CategoryId = updateDto.CategoryId ?? existingTpye.CategoryId;
             existingTpye.TypeCode = updateDto.TypeCode ?? existingTpye.TypeCode;
+            existingTpye.ImageUrl = updateDto.ImageUrl ?? existingTpye.ImageUrl;
 
             if (!await MainUnitOfWork.AssetTypeRepository.UpdateAsync(existingTpye, AccountId, CurrentDate))
             {
@@ -158,7 +160,6 @@ namespace API_FFMS.Services
             }
 
             return ApiResponse.Success("Cập nhật thành công");
-
         }
 
         public async Task<ApiResponse> DeleteAssetTypes(List<Guid> ids)

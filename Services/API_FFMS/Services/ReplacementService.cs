@@ -158,9 +158,9 @@ namespace API_FFMS.Services
             var replaceQuery = MainUnitOfWork.ReplacementRepository.GetQuery()
                                .Where(x => !x!.DeletedAt.HasValue);
 
-            if (keyword != null)
+            if (queryDto.IsInternal != null)
             {
-                replaceQuery = replaceQuery.Where(x => x!.RequestCode.ToLower().Contains(keyword));
+                replaceQuery = replaceQuery.Where(x => x!.IsInternal == queryDto.IsInternal);
             }
 
             if (queryDto.AssignedTo != null)
@@ -178,15 +178,13 @@ namespace API_FFMS.Services
                 replaceQuery = replaceQuery.Where(x => x!.Status == queryDto.Status);
             }
 
-            if (queryDto.RequestDate != null)
+            if (!string.IsNullOrEmpty(keyword))
             {
-                replaceQuery = replaceQuery.Where(x => x!.RequestDate == queryDto.RequestDate);
+                replaceQuery = replaceQuery.Where(x => x!.Description!.ToLower().Contains(keyword)
+                                                                   || x.Notes!.ToLower().Contains(keyword) ||
+                                                                   x.RequestCode.ToLower().Contains(keyword));
             }
 
-            if (queryDto.CompletionDate != null)
-            {
-                replaceQuery = replaceQuery.Where(x => x!.CompletionDate == queryDto.CompletionDate);
-            }
             var assetTypeQueryable = MainUnitOfWork.AssetTypeRepository.GetQuery()
             .Where(x => !x!.DeletedAt.HasValue);
 
