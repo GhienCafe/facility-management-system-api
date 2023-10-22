@@ -1,4 +1,5 @@
-﻿using MainData;
+﻿using AppCore.Extensions;
+using MainData;
 using MainData.Entities;
 using Microsoft.EntityFrameworkCore;
 
@@ -72,6 +73,21 @@ namespace API_FFMS.Repositories
                         }
                         assetCheck.Result = mediaFiles.First().Content;
                         _context.Entry(assetCheck).State = EntityState.Modified;
+
+                        var notification = new Notification
+                        {
+                            CreatedAt = now.Value,
+                            EditedAt = now.Value,
+                            Status = NotificationStatus.Waiting,
+                            Content = assetCheck.Description,
+                            Title = RequestType.Repairation.GetDisplayName(),
+                            Type = NotificationType.Task,
+                            CreatorId = editorId,
+                            IsRead = false,
+                            ItemId = assetCheck.Id,
+                            UserId = assetCheck.AssignedTo
+                        };
+                        await _context.Notifications.AddAsync(notification);
                     }
                     await _context.SaveChangesAsync();
                     await _context.Database.CommitTransactionAsync();
@@ -146,6 +162,21 @@ namespace API_FFMS.Repositories
                             }
                             transportation.Result = mediaFiles.First().Content;
                             _context.Entry(transportation).State = EntityState.Modified;
+
+                            var notification = new Notification
+                            {
+                                CreatedAt = now.Value,
+                                EditedAt = now.Value,
+                                Status = NotificationStatus.Waiting,
+                                Content = transportation.Description,
+                                Title = RequestType.Repairation.GetDisplayName(),
+                                Type = NotificationType.Task,
+                                CreatorId = editorId,
+                                IsRead = false,
+                                ItemId = transportation.Id,
+                                UserId = transportation.AssignedTo
+                            };
+                            await _context.Notifications.AddAsync(notification);
                         }
                     }
                     await _context.SaveChangesAsync();
@@ -211,6 +242,21 @@ namespace API_FFMS.Repositories
                         }
                         repairation.Result = mediaFiles.First().Content;
                         _context.Entry(repairation).State = EntityState.Modified;
+
+                        var notification = new Notification
+                        {
+                            CreatedAt = now.Value,
+                            EditedAt = now.Value,
+                            Status = NotificationStatus.Waiting,
+                            Content = repairation.Description,
+                            Title = RequestType.Repairation.GetDisplayName(),
+                            Type = NotificationType.Task,
+                            CreatorId = editorId,
+                            IsRead = false,
+                            ItemId = repairation.Id,
+                            UserId = repairation.AssignedTo
+                        };
+                        await _context.Notifications.AddAsync(notification);
                     }
 
                     await _context.SaveChangesAsync();
@@ -286,6 +332,21 @@ namespace API_FFMS.Repositories
                         }
                         replacement.Result = mediaFiles.First().Content;
                         _context.Entry(replacement).State = EntityState.Modified;
+
+                        var notification = new Notification
+                        {
+                            CreatedAt = now.Value,
+                            EditedAt = now.Value,
+                            Status = NotificationStatus.Waiting,
+                            Content = replacement.Description,
+                            Title = RequestType.Repairation.GetDisplayName(),
+                            Type = NotificationType.Task,
+                            CreatorId = editorId,
+                            IsRead = false,
+                            ItemId = replacement.Id,
+                            UserId = replacement.AssignedTo
+                        };
+                        await _context.Notifications.AddAsync(notification);
                     }
                     await _context.SaveChangesAsync();
                     await _context.Database.CommitTransactionAsync();
@@ -350,6 +411,21 @@ namespace API_FFMS.Repositories
                         }
                         maintenance.Result = mediaFiles.First().Content;
                         _context.Entry(maintenance).State = EntityState.Modified;
+
+                        var notification = new Notification
+                        {
+                            CreatedAt = now.Value,
+                            EditedAt = now.Value,
+                            Status = NotificationStatus.Waiting,
+                            Content = maintenance.Description,
+                            Title = RequestType.Repairation.GetDisplayName(),
+                            Type = NotificationType.Task,
+                            CreatorId = editorId,
+                            IsRead = false,
+                            ItemId = maintenance.Id,
+                            UserId = maintenance.AssignedTo
+                        };
+                        await _context.Notifications.AddAsync(notification);
                     }
 
                     await _context.SaveChangesAsync();

@@ -1,6 +1,4 @@
-﻿using MainData.Entities;
-
-namespace API_FFMS.Dtos;
+﻿namespace API_FFMS.Dtos;
 
 public class RepairationDto : BaseRequestDto
 {
@@ -12,9 +10,4 @@ public class RepairationDto : BaseRequestDto
 
 public class RepairationCreateDto : BaseRequestCreateDto { }
 
-public class RepairationQueryDto : BaseRequestQueryDto
-{
-    public string? RequestCode { get; set; }
-    public DateTime? RequestDate { get; set; }
-    public DateTime? CompletionDate { get; set; }
-}
+public class RepairationQueryDto : BaseRequestQueryDto { }
