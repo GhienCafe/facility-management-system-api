@@ -10,14 +10,104 @@ namespace API_FFMS.Services
     public interface IImportAssetService : IBaseService
     {
         Task<ApiResponses<ImportError>> ImportAssets(IFormFile formFile);
+        Task<ApiResponses<ImportTransportError>> ImportAssetsTransport(IFormFile formFile);
     }
     public class ImportService : BaseService, IImportAssetService
     {
         private List<ImportError> validationErrors;
+        private List<ImportTransportError> validationAssetErrors;
+
         public ImportService(MainUnitOfWork mainUnitOfWork, IHttpContextAccessor httpContextAccessor, IMapperRepository mapperRepository)
             : base(mainUnitOfWork, httpContextAccessor, mapperRepository)
         {
             validationErrors = new List<ImportError>();
+            validationAssetErrors = new List<ImportTransportError>();
+        }
+
+        public async Task<ApiResponses<ImportTransportError>> ImportAssetsTransport(IFormFile formFile)
+        {
+            validationAssetErrors.Clear();
+            if (formFile == null)
+            {
+                throw new ApiException("Not recognized file");
+            }
+
+            string[] extensions = { ".xlsx", ".xls" };
+            if (!extensions.Contains(Path.GetExtension(formFile.FileName)))
+            {
+                throw new ApiException("Not supported file extension");
+            }
+
+            try
+            {
+                var assetDtos = ExcelReader.AssetTransportReader(formFile.OpenReadStream());
+                var assets = ValidateAssetTransportImportDto(assetDtos!);
+
+
+                var quantityByAssetCode = assets.ToDictionary(a => a!.AssetCode, a => a!.Quantity);
+
+                if (validationAssetErrors.Count >= 0)
+                {
+                    var assetImport = assets.Select(dto => new AssetTransportDto
+                    {
+                        AssetId = dto!.Id,
+                        AssetCode = dto.AssetCode,
+                        AssetName = dto.AssetName,
+                        AssetType = dto.Type!.TypeName,
+                        Quantity = quantityByAssetCode.ContainsKey(dto.AssetCode) ? quantityByAssetCode[dto.AssetCode] : 0.0
+                    }).ToList();
+
+                    validationAssetErrors.Add(new ImportTransportError
+                    {
+                        AssetTransportImportDtos = assetImport
+                    });
+
+                }
+
+                return ApiResponses<ImportTransportError>.Fail(validationAssetErrors, StatusCode.UNPROCESSABLE_ENTITY, "Some Asset imports failed due to validation errors");
+
+            }
+            catch (Exception exception)
+            {
+                throw new ApiException(exception.Message);
+            }
+        }
+        private List<Asset> ValidateAssetTransportImportDto(List<AssetTransportImportDto> assetDtos)
+        {
+            var assets = new List<Asset>();
+
+            var assetCodes = assetDtos.Select(dto => dto.AssetCode).ToList();
+            var assetNames = assetDtos.Select(dto => dto.AssetName).ToList();
+            var assetTypes = assetDtos.Select(dto => dto.AssetType).ToList();
+
+            var assetQuery = MainUnitOfWork.AssetRepository
+                             .GetQuery()
+                             .Include(a => a!.Type);
+
+            foreach (var assetDto in assetDtos)
+            {
+                var existingAsset = assetQuery
+                    .Where(a => a!.AssetName.Contains(assetDto.AssetName!) &&
+                                a.AssetCode!.Contains(assetDto.AssetCode!) &&
+                                a.Type!.TypeName.Contains(assetDto.AssetType!))
+                    .FirstOrDefault();
+
+                if (existingAsset == null)
+                {
+                    var row = assetDtos.IndexOf(assetDto) + 2;
+
+                    validationAssetErrors.Add(new ImportTransportError
+                    {
+                        Row = row,
+                        ErrorMessage = $"Asset '{assetDto.AssetName}' in row '{row}' does not exist"
+                    });
+                }
+                else
+                {
+                    assets.Add(existingAsset!);
+                }
+            }
+            return assets;
         }
 
         public async Task<ApiResponses<ImportError>> ImportAssets(IFormFile formFile)
@@ -79,7 +169,7 @@ namespace API_FFMS.Services
 
                     var assetIds = validAssets.Select(x => x?.Id);
                     Guid wareHouseId = GetWareHouse("Kho")!.Id;
-                    if(wareHouseId != Guid.Empty)
+                    if (wareHouseId != Guid.Empty)
                     {
                         var roomAssets = assetIds.Select(x => new RoomAsset
                         {
