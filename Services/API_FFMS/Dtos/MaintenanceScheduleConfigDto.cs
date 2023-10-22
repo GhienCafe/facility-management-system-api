@@ -4,8 +4,25 @@ namespace API_FFMS.Dtos;
 
 public class MaintenanceScheduleConfigDto : BaseDto
 {
-    public Guid AssetId { get; set; }
-    public int Period { get; set; } 
-    
-    public AssetBaseDto? Asset { get; set; }
+    public int RepeatIntervalInMonths { get; set; } 
+    public string? Description { get; set; }
 }
+
+public class MaintenanceScheduleConfigCreateDto
+{
+    public int RepeatIntervalInMonths { get; set; } 
+    public string? Description { get; set; }
+    
+    public IEnumerable<Guid>? AssetIds { get; set; }
+}
+
+public class MaintenanceScheduleConfigDetailDto : BaseDto
+{
+    public int RepeatIntervalInMonths { get; set; } 
+    public string? Description { get; set; }
+}
+
+public class MaintenanceScheduleConfigQueryDto : BaseQueryDto
+{
+}
+
