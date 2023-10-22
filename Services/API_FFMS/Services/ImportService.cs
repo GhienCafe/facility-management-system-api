@@ -48,13 +48,14 @@ namespace API_FFMS.Services
 
                 if (validationAssetErrors.Count >= 0)
                 {
-                    var assetImport = assets.Select(dto => new AssetTransportDto
+                    var assetImport = assets.Select(asset => new AssetTransportDto
                     {
-                        AssetId = dto!.Id,
-                        AssetCode = dto.AssetCode,
-                        AssetName = dto.AssetName,
-                        AssetType = dto.Type!.TypeName,
-                        Quantity = quantityByAssetCode.ContainsKey(dto.AssetCode) ? quantityByAssetCode[dto.AssetCode] : 0.0
+                        AssetId = asset!.Id,
+                        AssetCode = asset.AssetCode,
+                        AssetName = asset.AssetName,
+                        AssetType = asset.Type!.TypeName,
+                        Quantity = quantityByAssetCode.ContainsKey(asset.AssetCode) ? quantityByAssetCode[asset.AssetCode] : 0.0,
+                        FromRoom = asset.RoomAssets!.Where(ra => ra.AssetId.Equals(asset.Id) && ra.ToDate == null).Select(ra => ra.Room!.RoomName).FirstOrDefault()
                     }).ToList();
 
                     validationAssetErrors.Add(new ImportTransportError
@@ -82,7 +83,8 @@ namespace API_FFMS.Services
 
             var assetQuery = MainUnitOfWork.AssetRepository
                              .GetQuery()
-                             .Include(a => a!.Type);
+                             .Include(a => a!.Type)
+                             .Include(a => a.RoomAssets).ThenInclude(ra => ra.Room);
 
             foreach (var assetDto in assetDtos)
             {

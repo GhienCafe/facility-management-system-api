@@ -55,6 +55,7 @@ public class AssetTransportDto
     public string? AssetCode { get; set; }
     public string? AssetType { get; set; }
     public double? Quantity { get; set; }
+    public string? FromRoom { get; set; }
 }
 
 public class TransportationQueryDto : BaseRequestQueryDto { }
