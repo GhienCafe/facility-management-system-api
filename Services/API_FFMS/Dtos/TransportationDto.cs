@@ -25,7 +25,7 @@ public class TransportDto : BaseDto
     public Guid? AssignedTo { get; set; }
     public List<FromRoomAssetDto>? Assets { get; set; }
     public RoomBaseDto? ToRoom { get; set; }
-    
+
 }
 
 public class FromRoomAssetDto
@@ -51,16 +51,10 @@ public class TransportCreateDto
 public class AssetTransportDto
 {
     public Guid AssetId { get; set; }
-    //public string? AssetName { get; set; }
+    public string? AssetName { get; set; }
+    public string? AssetCode { get; set; }
+    public string? AssetType { get; set; }
     public double? Quantity { get; set; }
 }
 
-public class TransportationQueryDto : BaseQueryDto
-{
-    public string? RequestCode { get; set; }
-    public DateTime? RequestDate { get; set; }
-    public DateTime? CompletionDate { get; set; }
-    public RequestStatus? Status { get; set; }
-    public bool? IsInternal { get; set; }
-    public Guid? AssignedTo { get; set; }
-}
+public class TransportationQueryDto : BaseRequestQueryDto { }

@@ -137,14 +137,9 @@ namespace API_FFMS.Services
             var repairQuery = MainUnitOfWork.RepairationRepository.GetQuery()
                               .Where(x => !x!.DeletedAt.HasValue);
 
-            //if (queryDto.IsInternal != null)
-            //{
-            //    repairQuery = repairQuery.Where(x => x!.IsInternal == queryDto.IsInternal);
-            //}
-
-            if (keyword != null)
+            if (queryDto.IsInternal != null)
             {
-                repairQuery = repairQuery.Where(x => x!.RequestCode.ToLower().Contains(keyword));
+                repairQuery = repairQuery.Where(x => x!.IsInternal == queryDto.IsInternal);
             }
 
             if (queryDto.AssignedTo != null)
@@ -162,14 +157,11 @@ namespace API_FFMS.Services
                 repairQuery = repairQuery.Where(x => x!.Status == queryDto.Status);
             }
 
-            if (queryDto.RequestDate != null)
+            if (!string.IsNullOrEmpty(keyword))
             {
-                repairQuery = repairQuery.Where(x => x!.RequestDate == queryDto.RequestDate);
-            }
-
-            if (queryDto.CompletionDate != null)
-            {
-                repairQuery = repairQuery.Where(x => x!.CompletionDate == queryDto.CompletionDate);
+                repairQuery = repairQuery.Where(x => x!.Description!.ToLower().Contains(keyword)
+                                                                   || x.Notes!.ToLower().Contains(keyword) ||
+                                                                   x.RequestCode.ToLower().Contains(keyword));
             }
 
             var assetTypeQueryable = MainUnitOfWork.AssetTypeRepository.GetQuery()

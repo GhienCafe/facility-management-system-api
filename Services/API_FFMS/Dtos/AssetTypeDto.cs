@@ -11,6 +11,7 @@ namespace API_FFMS.Dtos
         public string? Description { get; set; }
         public Unit? Unit { get; set; }
         public EnumValue? UnitObj { get; set; }
+        public string? ImageUrl { get; set; }
         public Guid? CategoryId { get; set; }
     }
 
@@ -20,6 +21,7 @@ namespace API_FFMS.Dtos
         public string TypeName { get; set; } = null!;
         public string? Description { get; set; }
         public Unit? Unit { get; set; }
+        public string? ImageUrl { get; set; }
         public Guid? CategoryId { get; set; }
         public EnumValue? UnitObj { get; set; }
     }
@@ -33,6 +35,7 @@ namespace API_FFMS.Dtos
         public string? Description { get; set; }
         [Required(ErrorMessage = "Đơn vị tính không được trống")]
         public Unit Unit { get; set; }
+        public string? ImageUrl { get; set; }
         public Guid? CategoryId { get; set; }
     }
 
@@ -42,6 +45,7 @@ namespace API_FFMS.Dtos
         public string? TypeName { get; set; }
         public string? Description { get; set; }
         public Unit? Unit { get; set; }
+        public string? ImageUrl { get; set; }
         public Guid? CategoryId { get; set; }
     }
 

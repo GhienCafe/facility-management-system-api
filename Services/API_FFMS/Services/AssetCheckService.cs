@@ -131,9 +131,9 @@ public class AssetCheckService : BaseService, IAssetCheckService
         var assetCheckQuery = MainUnitOfWork.AssetCheckRepository.GetQuery()
                                   .Where(x => !x!.DeletedAt.HasValue);
 
-        if (keyword != null)
+        if (queryDto.IsInternal != null)
         {
-            assetCheckQuery = assetCheckQuery.Where(x => x!.RequestCode.ToLower().Contains(keyword));
+            assetCheckQuery = assetCheckQuery.Where(x => x!.IsInternal == queryDto.IsInternal);
         }
 
         if (queryDto.AssignedTo != null)
@@ -151,14 +151,11 @@ public class AssetCheckService : BaseService, IAssetCheckService
             assetCheckQuery = assetCheckQuery.Where(x => x!.Status == queryDto.Status);
         }
 
-        if (queryDto.RequestDate != null)
+        if (!string.IsNullOrEmpty(keyword))
         {
-            assetCheckQuery = assetCheckQuery.Where(x => x!.RequestDate == queryDto.RequestDate);
-        }
-
-        if (queryDto.CompletionDate != null)
-        {
-            assetCheckQuery = assetCheckQuery.Where(x => x!.CompletionDate == queryDto.CompletionDate);
+            assetCheckQuery = assetCheckQuery.Where(x => x!.Description!.ToLower().Contains(keyword)
+                                                               || x.Notes!.ToLower().Contains(keyword) ||
+                                                               x.RequestCode.ToLower().Contains(keyword));
         }
 
         var joinTables = from assetCheck in assetCheckQuery
