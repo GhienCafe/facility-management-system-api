@@ -25,7 +25,7 @@ public class TransportDto : BaseDto
     public Guid? AssignedTo { get; set; }
     public List<FromRoomAssetDto>? Assets { get; set; }
     public RoomBaseDto? ToRoom { get; set; }
-
+    public MediaFileDto? MediaFile { get; set; }
 }
 
 public class FromRoomAssetDto
@@ -42,7 +42,7 @@ public class TransportCreateDto
     public string? Description { get; set; }
     public string? Notes { get; set; }
     public bool IsInternal { get; set; }
-    public int? Quantity { get; set; }
+    //public int? Quantity { get; set; }
     public Guid? AssignedTo { get; set; }
     //public Guid? FromRoomId { get; set; }
     public Guid? ToRoomId { get; set; }

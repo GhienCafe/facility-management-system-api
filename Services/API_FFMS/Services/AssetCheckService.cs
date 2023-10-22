@@ -118,6 +118,14 @@ public class AssetCheckService : BaseService, IAssetCheckService
                         });
             }
         }
+        var mediaFileQuery = MainUnitOfWork.MediaFileRepository.GetQuery().Where(m => m!.ItemId == assetCheck.Id);
+        assetCheck.MediaFile = new MediaFileDto
+        {
+            FileType = mediaFileQuery.Select(m => m!.FileType).FirstOrDefault(),
+            Uri = mediaFileQuery.Select(m => m!.Uri).ToList(),
+            Content = mediaFileQuery.Select(m => m!.Content).FirstOrDefault()
+        };
+
         assetCheck.Status = assetCheck.Status;
         assetCheck.StatusObj = assetCheck.Status!.GetValue();
 
@@ -293,18 +301,23 @@ public class AssetCheckService : BaseService, IAssetCheckService
 
     public string GenerateRequestCode()
     {
-        var lastRequest = MainUnitOfWork.AssetCheckRepository.GetQueryAll()
-        .OrderByDescending(x => x!.RequestCode)
-        .FirstOrDefault();
+        var requests = MainUnitOfWork.AssetCheckRepository.GetQueryAll().ToList();
+
+        var numbers = new List<int>();
+        foreach (var t in requests)
+        {
+            int.TryParse(t!.RequestCode[3..], out int lastNumber);
+            numbers.Add(lastNumber);
+        }
 
         string newRequestCode = "AC1";
 
-        if (lastRequest != null)
+        if (requests.Any())
         {
-            string lastRequestCode = lastRequest.RequestCode;
-            if (lastRequestCode.StartsWith("AC") && int.TryParse(lastRequestCode[2..], out int lastNumber))
+            var lastCode = numbers.AsQueryable().OrderDescending().FirstOrDefault();
+            if (requests.Any(x => x!.RequestCode.StartsWith("AC")))
             {
-                newRequestCode = $"AC{lastNumber + 1}";
+                newRequestCode = $"AC{lastCode + 1}";
             }
         }
         return newRequestCode;
