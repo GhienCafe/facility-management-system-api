@@ -7,6 +7,7 @@ public class ReplaceDto : BaseRequestDto {
     public UserDto? User { get; set; }
     public AssetTypeDto? AssetType { get; set; }
     public CategoryDto? Category { get; set; }
+    public MediaFileDto? MediaFile { get; set; }
 }
 
 public class ReplaceCreateDto : BaseRequestCreateDto
