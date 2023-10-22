@@ -204,6 +204,8 @@ public class MaintenanceService : BaseService, IMaintenanceService
         var categoryQueryable = MainUnitOfWork.CategoryRepository.GetQuery()
             .Where(x => !x!.DeletedAt.HasValue);
 
+        var mediaFileQuery = MainUnitOfWork.MediaFileRepository.GetQuery();
+
         var joinTables = from maintenance in maintenanceDto
             join user in userQueryable on maintenance.AssignedTo equals user.Id into userGroup
             from user in userGroup.DefaultIfEmpty()
@@ -213,13 +215,16 @@ public class MaintenanceService : BaseService, IMaintenanceService
             from assetType in assetTypeGroup.DefaultIfEmpty()
             join category in categoryQueryable on assetType.CategoryId equals category.Id into categoryGroup
             from category in categoryGroup.DefaultIfEmpty()
+            join image in mediaFileQuery on maintenance.Id equals image.ItemId into mediaFile
+            from image in mediaFile.DefaultIfEmpty()
             select new
             {
                 Maintenance = maintenance,
                 User = user,
                 Asset = asset,
                 AssetType = assetType,
-                Category = category
+                Category = category,
+                Image = image
             };
 
         var item = await joinTables.Select(x => new MaintenanceDto
@@ -244,7 +249,13 @@ public class MaintenanceService : BaseService, IMaintenanceService
             User = x.User.ProjectTo<User, UserBaseDto>(),
             Asset = x.Asset.ProjectTo<Asset, AssetBaseDto>(),
             AssetType = x.AssetType.ProjectTo<AssetType, AssetTypeDto>(),
-            Category = x.Category.ProjectTo<Category, CategoryDto>()
+            Category = x.Category.ProjectTo<Category, CategoryDto>(),
+            MediaFile = new MediaFileDto
+            {
+                FileType = x.Image.FileType,
+                Uri = mediaFileQuery.Where(m => m!.ItemId == x.Maintenance.Id).Select(m => m!.Uri).ToList(),
+                Content = x.Image.Content
+            }
         }).FirstOrDefaultAsync();
         
         return ApiResponse<MaintenanceDto>.Success(item);
@@ -297,18 +308,23 @@ public class MaintenanceService : BaseService, IMaintenanceService
 
     public string GenerateRequestCode()
     {
-        var lastRequest = MainUnitOfWork.MaintenanceRepository.GetQueryAll()
-        .OrderByDescending(x => x!.RequestCode)
-        .FirstOrDefault();
+        var requests = MainUnitOfWork.MaintenanceRepository.GetQueryAll().ToList();
+
+        var numbers = new List<int>();
+        foreach (var t in requests)
+        {
+            int.TryParse(t!.RequestCode[3..], out int lastNumber);
+            numbers.Add(lastNumber);
+        }
 
         string newRequestCode = "MTN1";
 
-        if (lastRequest != null)
+        if (requests.Any())
         {
-            string lastRequestCode = lastRequest.RequestCode;
-            if (lastRequestCode.StartsWith("MTN") && int.TryParse(lastRequestCode[3..], out int lastNumber))
+            var lastCode = numbers.AsQueryable().OrderDescending().FirstOrDefault();
+            if (requests.Any(x => x!.RequestCode.StartsWith("MTN")))
             {
-                newRequestCode = $"MTN{lastNumber + 1}";
+                newRequestCode = $"MTN{lastCode + 1}";
             }
         }
         return newRequestCode;

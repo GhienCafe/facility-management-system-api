@@ -260,8 +260,7 @@ public class AssetService : BaseService, IAssetService
                            from assetType in assetTypeGroup.DefaultIfEmpty()
                            join category in MainUnitOfWork.CategoryRepository.GetQuery() on assetType.CategoryId equals category.Id into categoryGroup
                            from category in categoryGroup.DefaultIfEmpty()
-                           join model in MainUnitOfWork.ModelRepository.GetQuery() on asset.ModelId equals model.Id
-                             into modelGroup
+                           join model in MainUnitOfWork.ModelRepository.GetQuery() on asset.ModelId equals model.Id into modelGroup
                            from model in modelGroup.DefaultIfEmpty()
                            where roomAsset.RoomId == roomId
                            select new
