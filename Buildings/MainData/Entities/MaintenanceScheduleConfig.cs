@@ -7,7 +7,6 @@ namespace MainData.Entities;
 
 public class MaintenanceScheduleConfig : BaseEntity
 {
-   // public Guid AssetId { get; set; }
     public int RepeatIntervalInMonths { get; set; } 
     public string? Description { get; set; }
     

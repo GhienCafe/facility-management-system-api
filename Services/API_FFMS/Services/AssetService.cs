@@ -256,11 +256,21 @@ public class AssetService : BaseService, IAssetService
 
         var joinedAssets = from roomAsset in roomAssetDataset
                            join asset in assetDataset on roomAsset.AssetId equals asset.Id
+                           join assetType in MainUnitOfWork.AssetTypeRepository.GetQuery() on asset.TypeId equals assetType.Id into assetTypeGroup
+                           from assetType in assetTypeGroup.DefaultIfEmpty()
+                           join category in MainUnitOfWork.CategoryRepository.GetQuery() on assetType.CategoryId equals category.Id into categoryGroup
+                           from category in categoryGroup.DefaultIfEmpty()
+                           join model in MainUnitOfWork.ModelRepository.GetQuery() on asset.ModelId equals model.Id
+                             into modelGroup
+                           from model in modelGroup.DefaultIfEmpty()
                            where roomAsset.RoomId == roomId
                            select new
                            {
                                RoomAsset = roomAsset,
-                               Asset = asset
+                               Asset = asset,
+                               Type = assetType,
+                               Category = category,
+                               Model = model
                            };
 
         if (queryDto.IsInCurrent is true)
@@ -300,7 +310,7 @@ public class AssetService : BaseService, IAssetService
             EditedAt = x.RoomAsset.EditedAt,
             CreatorId = x.RoomAsset.CreatorId ?? Guid.Empty,
             EditorId = x.RoomAsset.EditorId ?? Guid.Empty,
-            Asset = new AssetBaseDto
+            Asset = new AssetDto
             {
                 Id = x.Asset.Id,
                 Description = x.Asset.Description,
@@ -322,7 +332,10 @@ public class AssetService : BaseService, IAssetService
                 CreatedAt = x.Asset.CreatedAt,
                 EditedAt = x.Asset.EditedAt,
                 CreatorId = x.Asset.CreatorId ?? Guid.Empty,
-                EditorId = x.Asset.EditorId ?? Guid.Empty
+                EditorId = x.Asset.EditorId ?? Guid.Empty,
+                Type = x.Type.ProjectTo<AssetType, AssetTypeDto>(),
+                Category = x.Category.ProjectTo<Category, CategoryDto>(),
+                Model = x.Model.ProjectTo<Model, ModelDto>()
             }
         }).ToListAsync();
 

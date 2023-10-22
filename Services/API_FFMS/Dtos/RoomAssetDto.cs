@@ -100,7 +100,7 @@ namespace API_FFMS.Dtos
         public DateTime? FromDate { get; set; }
         [JsonConverter(typeof(LocalTimeZoneDateTimeConverter))]
         public DateTime? ToDate { get; set; }
-        public AssetBaseDto? Asset { get; set; }
+        public AssetDto? Asset { get; set; }
     }
 
     public class RoomAssetQueryDto : BaseQueryDto
