@@ -121,7 +121,25 @@ namespace API_FFMS.Services
                     x => !x.DeletedAt.HasValue,
                     x => x.Id == replacement.AssetId,
                 });
-            //replacement.Asset.StatusObj = 
+            if(replacement.Asset != null)
+            {
+                var location = await MainUnitOfWork.RoomAssetRepository.FindOneAsync<RoomAsset>(
+                    new Expression<Func<RoomAsset, bool>>[]
+                    {
+                        x => !x.DeletedAt.HasValue,
+                    x => x.AssetId == replacement.Asset.Id,
+                    x => x.ToDate == null
+                    });
+                if (location != null)
+                {
+                    replacement.AssetLocation = await MainUnitOfWork.RoomRepository.FindOneAsync<AssetLocation>(
+                            new Expression<Func<Room, bool>>[]
+                            {
+                            x => !x.DeletedAt.HasValue,
+                            x => x.Id == location.RoomId
+                            });
+                }
+            }
 
             replacement.NewAsset = await MainUnitOfWork.AssetRepository.FindOneAsync<AssetBaseDto>(
                 new Expression<Func<Asset, bool>>[]
@@ -129,6 +147,25 @@ namespace API_FFMS.Services
                     x => !x.DeletedAt.HasValue,
                     x => x.Id == replacement.NewAssetId
                 });
+            if (replacement.NewAsset != null)
+            {
+                var location = await MainUnitOfWork.RoomAssetRepository.FindOneAsync<RoomAsset>(
+                    new Expression<Func<RoomAsset, bool>>[]
+                    {
+                        x => !x.DeletedAt.HasValue,
+                    x => x.AssetId == replacement.NewAsset.Id,
+                    x => x.ToDate == null
+                    });
+                if (location != null)
+                {
+                    replacement.NewAssetLocation = await MainUnitOfWork.RoomRepository.FindOneAsync<AssetLocation>(
+                            new Expression<Func<Room, bool>>[]
+                            {
+                            x => !x.DeletedAt.HasValue,
+                            x => x.Id == location.RoomId
+                            });
+                }
+            }
 
             replacement.AssetType = await MainUnitOfWork.AssetTypeRepository.FindOneAsync<AssetTypeDto>(
                 new Expression<Func<AssetType, bool>>[]
@@ -151,6 +188,13 @@ namespace API_FFMS.Services
                 Uri = mediaFileQuery.Select(m => m!.Uri).ToList(),
                 Content = mediaFileQuery.Select(m => m!.Content).FirstOrDefault()
             };
+
+            replacement.AssignTo = await MainUnitOfWork.UserRepository.FindOneAsync<UserBaseDto>(
+            new Expression<Func<User, bool>>[]
+            {
+                x => !x.DeletedAt.HasValue,
+                x => x.Id == replacement.AssignedTo
+            });
 
             replacement.Status = replacement.Status;
             replacement.StatusObj = replacement.Status!.GetValue();

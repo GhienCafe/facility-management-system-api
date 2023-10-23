@@ -117,7 +117,31 @@ public class AssetCheckService : BaseService, IAssetCheckService
                             x => x.Id == location.RoomId
                         });
             }
+
+            assetCheck.AssetType = await MainUnitOfWork.AssetTypeRepository.FindOneAsync<AssetTypeDto>(
+                new Expression<Func<AssetType, bool>>[]
+                {
+                    x => !x.DeletedAt.HasValue,
+                    x => x.Id == assetCheck.Asset.TypeId
+                });
+            if(assetCheck.AssetType != null)
+            {
+                assetCheck.Category = await MainUnitOfWork.CategoryRepository.FindOneAsync<CategoryDto>(
+                    new Expression<Func<Category, bool>>[]
+                    {
+                        x => !x.DeletedAt.HasValue,
+                        x => x.Id == assetCheck.AssetType.CategoryId
+                    });
+            }
         }
+
+        assetCheck.AssignTo = await MainUnitOfWork.UserRepository.FindOneAsync<UserBaseDto>(
+            new Expression<Func<User, bool>>[]
+            {
+                x => !x.DeletedAt.HasValue,
+                x => x.Id == assetCheck.AssignedTo
+            });
+
         var mediaFileQuery = MainUnitOfWork.MediaFileRepository.GetQuery().Where(m => m!.ItemId == assetCheck.Id);
         assetCheck.MediaFile = new MediaFileDto
         {
