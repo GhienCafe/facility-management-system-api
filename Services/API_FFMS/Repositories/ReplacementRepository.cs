@@ -124,27 +124,27 @@ namespace API_FFMS.Repositories
                     newAsset.EditedAt = now.Value;
                     _context.Entry(newAsset).State = EntityState.Modified;
 
-                    var addRoomAssetNew = new RoomAsset
-                    {
-                        AssetId = replacement.NewAssetId,
-                        RoomId = assetLocation!.Id,
-                        Status = AssetStatus.Operational,
-                        FromDate = now.Value,
-                        Quantity = asset.Quantity,
-                        ToDate = null,
-                    };
-                    _context.RoomAssets.Add(addRoomAssetNew);
+                    //var addRoomAssetNew = new RoomAsset
+                    //{
+                    //    AssetId = replacement.NewAssetId,
+                    //    RoomId = assetLocation!.Id,
+                    //    Status = AssetStatus.Operational,
+                    //    FromDate = now.Value,
+                    //    Quantity = asset.Quantity,
+                    //    ToDate = null,
+                    //};
+                    //_context.RoomAssets.Add(addRoomAssetNew);
 
-                    var addRoomAsset = new RoomAsset
-                    {
-                        AssetId = replacement.AssetId,
-                        RoomId = newAssetLocation!.Id,
-                        Status = AssetStatus.Operational,
-                        FromDate = now.Value,
-                        Quantity = newAsset.Quantity,
-                        ToDate = null,
-                    };
-                    _context.RoomAssets.Add(addRoomAsset);
+                    //var addRoomAsset = new RoomAsset
+                    //{
+                    //    AssetId = replacement.AssetId,
+                    //    RoomId = newAssetLocation!.Id,
+                    //    Status = AssetStatus.Operational,
+                    //    FromDate = now.Value,
+                    //    Quantity = newAsset.Quantity,
+                    //    ToDate = null,
+                    //};
+                    //_context.RoomAssets.Add(addRoomAsset);
                 }
                 else if (replacement.Status == RequestStatus.Cancelled)
                 {

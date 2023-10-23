@@ -67,7 +67,8 @@ namespace API_FFMS.Repositories
                                 Extensions = mediaFile.Extensions,
                                 FileType = mediaFile.FileType,
                                 Content = mediaFile.Content,
-                                ItemId = assetCheck.Id
+                                ItemId = assetCheck.Id,
+                                AssetCheckId = assetCheck.Id,
                             };
                             _context.MediaFiles.Add(newMediaFile);
                         }
@@ -162,6 +163,33 @@ namespace API_FFMS.Repositories
                             }
                             transportation.Result = mediaFiles.First().Content;
                             _context.Entry(transportation).State = EntityState.Modified;
+
+                            if (asset.Type!.IsIdentified == true)
+                            {
+                                var addRoomAsset = new RoomAsset
+                                {
+                                    AssetId = asset.Id,
+                                    RoomId = toRoom?.Id ?? Guid.Empty,
+                                    Status = AssetStatus.Operational,
+                                    FromDate = now.Value,
+                                    Quantity = 1,
+                                    ToDate = null,
+                                };
+                                _context.RoomAssets.Add(addRoomAsset);
+                            }
+                            else
+                            {
+                                var addRoomAsset = new RoomAsset
+                                {
+                                    AssetId = asset.Id,
+                                    RoomId = toRoom?.Id ?? Guid.Empty,
+                                    Status = AssetStatus.Operational,
+                                    FromDate = now.Value,
+                                    Quantity = asset.Quantity,
+                                    ToDate = null,
+                                };
+                                _context.RoomAssets.Add(addRoomAsset);
+                            }
 
                             var notification = new Notification
                             {
@@ -332,6 +360,28 @@ namespace API_FFMS.Repositories
                         }
                         replacement.Result = mediaFiles.First().Content;
                         _context.Entry(replacement).State = EntityState.Modified;
+
+                        var addRoomAssetNew = new RoomAsset
+                        {
+                            AssetId = replacement.NewAssetId,
+                            RoomId = assetLocation!.Id,
+                            Status = AssetStatus.Operational,
+                            FromDate = now.Value,
+                            Quantity = asset!.Quantity,
+                            ToDate = null,
+                        };
+                        _context.RoomAssets.Add(addRoomAssetNew);
+
+                        var addRoomAsset = new RoomAsset
+                        {
+                            AssetId = replacement.AssetId,
+                            RoomId = newAssetLocation!.Id,
+                            Status = AssetStatus.Operational,
+                            FromDate = now.Value,
+                            Quantity = newAsset!.Quantity,
+                            ToDate = null,
+                        };
+                        _context.RoomAssets.Add(addRoomAsset);
 
                         var notification = new Notification
                         {
