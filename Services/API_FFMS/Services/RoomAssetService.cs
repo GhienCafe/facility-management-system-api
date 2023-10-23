@@ -6,7 +6,7 @@ using MainData.Repositories;
 using System.Linq.Expressions;
 using AppCore.Extensions;
 using Microsoft.EntityFrameworkCore;
-using DocumentFormat.OpenXml.Drawing.Spreadsheet;
+using API_FFMS.Repositories;
 
 namespace API_FFMS.Services
 {
@@ -22,8 +22,12 @@ namespace API_FFMS.Services
 
     public class RoomAssetService : BaseService, IRoomAssetService
     {
-        public RoomAssetService(MainUnitOfWork mainUnitOfWork, IHttpContextAccessor httpContextAccessor, IMapperRepository mapperRepository) : base(mainUnitOfWork, httpContextAccessor, mapperRepository)
+        private readonly IRoomAssetRepository _roomAssetRepository;
+        public RoomAssetService(MainUnitOfWork mainUnitOfWork, IHttpContextAccessor httpContextAccessor,
+                                IMapperRepository mapperRepository, IRoomAssetRepository roomAssetRepository)
+                                : base(mainUnitOfWork, httpContextAccessor, mapperRepository)
         {
+            _roomAssetRepository = roomAssetRepository;
         }
 
         public async Task<ApiResponses<AssetTrackingDto>> AssetUsedTracking(Guid id, RoomTrackingQueryDto queryDto)
@@ -179,7 +183,7 @@ namespace API_FFMS.Services
             if (checkExist.Any())
                 throw new ApiException("Đã tồn tại trang thiết bị trong phòng", StatusCode.ALREADY_EXISTS);
             
-            if (!await MainUnitOfWork.RoomAssetRepository.InsertAsync(roomAsset, AccountId, CurrentDate))
+            if (!await _roomAssetRepository.AddAssetToRoom(roomAsset, AccountId, CurrentDate))
                 throw new ApiException("Thêm mới trang thiết bị vào phòng thất bại", StatusCode.SERVER_ERROR);
             
             return ApiResponse.Created("Thêm mới trang thiết bị vào phòng thành công");

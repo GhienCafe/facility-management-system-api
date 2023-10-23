@@ -152,6 +152,22 @@ namespace API_FFMS.Services
                                 EditedAt = r.EditedAt
                             }).FirstOrDefaultAsync();
 
+            var staffs = MainUnitOfWork.UserRepository.GetQuery();
+            var assignTo = await staffs.Where(x => x!.Id == existingtransport.AssignedTo)
+                            .Select(x => new UserBaseDto
+                            {
+                                UserCode = x!.UserCode,
+                                Fullname = x.Fullname,
+                                RoleObj = x.Role.GetValue(),
+                                Avatar = x.Avatar,
+                                StatusObj = x.Status.GetValue(),
+                                Email = x.Email,
+                                PhoneNumber = x.PhoneNumber,
+                                Address = x.Address,
+                                Gender = x.Gender,
+                                Dob = x.Dob
+                            }).FirstOrDefaultAsync();
+
             var transportDetails = MainUnitOfWork.TransportationDetailRepository.GetQuery();
             var assets = await transportDetails
                         .Where(td => td!.TransportationId == id)
@@ -210,7 +226,8 @@ namespace API_FFMS.Services
                 EditorId = existingtransport.EditorId,
                 Assets = assets,
                 ToRoom = toRoom,
-                MediaFile = mediaFile
+                MediaFile = mediaFile,
+                AssignTo = assignTo
             };
 
             tranportation = await _mapperRepository.MapCreator(tranportation);
