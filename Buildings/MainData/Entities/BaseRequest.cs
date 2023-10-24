@@ -16,6 +16,8 @@ public class BaseRequest : BaseEntity
     public string? Result { get; set; }
     public bool IsInternal { get; set; }
     public Guid? AssignedTo { get; set; }
+    public DateTime? Checkin {  get; set; }
+    public DateTime? Checkout { get; set; }
 
     //Relationship
     public virtual Asset? Asset { get; set; }
@@ -67,7 +69,9 @@ public class BaseRequestConfig : IEntityTypeConfiguration<BaseRequest>
         builder.Property(a => a.IsInternal).IsRequired();
         builder.Property(a => a.AssignedTo).IsRequired(false);
         builder.Property(a => a.Result).IsRequired(false);
-        
+        builder.Property(a => a.Checkin).IsRequired(false);
+        builder.Property(a => a.Checkout).IsRequired(false);
+
         builder.HasIndex(a => a.RequestCode).IsUnique();
     }
 }

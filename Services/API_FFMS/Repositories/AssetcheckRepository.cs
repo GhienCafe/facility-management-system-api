@@ -29,6 +29,7 @@ namespace API_FFMS.Repositories
                 assetCheck.CreatedAt = now.Value;
                 assetCheck.EditedAt = now.Value;
                 assetCheck.Status = RequestStatus.NotStart;
+                assetCheck.IsVerified = false;
                 await _context.AssetChecks.AddAsync(assetCheck);
 
                 if (assetCheck.IsInternal)
