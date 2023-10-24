@@ -186,8 +186,8 @@ public class AssetCheckService : BaseService, IAssetCheckService
         if (!string.IsNullOrEmpty(keyword))
         {
             assetCheckQuery = assetCheckQuery.Where(x => x!.Description!.ToLower().Contains(keyword)
-                                                               || x.Notes!.ToLower().Contains(keyword) ||
-                                                               x.RequestCode.ToLower().Contains(keyword));
+                                                      || x.Notes!.ToLower().Contains(keyword)
+                                                      || x.RequestCode.ToLower().Contains(keyword));
         }
 
         var joinTables = from assetCheck in assetCheckQuery
@@ -330,7 +330,7 @@ public class AssetCheckService : BaseService, IAssetCheckService
         var numbers = new List<int>();
         foreach (var t in requests)
         {
-            int.TryParse(t!.RequestCode[3..], out int lastNumber);
+            int.TryParse(t!.RequestCode[2..], out int lastNumber);
             numbers.Add(lastNumber);
         }
 

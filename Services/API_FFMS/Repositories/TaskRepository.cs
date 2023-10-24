@@ -72,6 +72,7 @@ namespace API_FFMS.Repositories
                             };
                             _context.MediaFiles.Add(newMediaFile);
                         }
+                        assetCheck.IsVerified = true;
                         assetCheck.Result = mediaFiles.First().Content;
                         _context.Entry(assetCheck).State = EntityState.Modified;
 
