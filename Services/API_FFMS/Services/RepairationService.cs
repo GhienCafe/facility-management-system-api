@@ -208,6 +208,8 @@ namespace API_FFMS.Services
                 StatusObj = x.Repairation.Status!.GetValue(),
                 Description = x.Repairation.Description,
                 Notes = x.Repairation.Notes,
+                Checkin = x.Repairation.Checkin,
+                Checkout = x.Repairation.Checkout,
                 IsInternal = x.Repairation.IsInternal,
                 AssignedTo = x.Repairation.AssignedTo,
                 AssetId = x.Repairation.AssetId,
