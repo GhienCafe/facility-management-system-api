@@ -274,6 +274,8 @@ namespace API_FFMS.Services
                 Notes = x.Replacement.Notes,
                 IsInternal = x.Replacement.IsInternal,
                 AssignedTo = x.Replacement.AssignedTo,
+                Checkout = x.Replacement.Checkout,
+                Checkin = x.Replacement.Checkin,
                 AssetId = x.Replacement.AssetId,
                 NewAssetId = x.Replacement.NewAssetId,
                 CreatedAt = x.Replacement.CreatedAt,

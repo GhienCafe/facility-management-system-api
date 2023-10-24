@@ -43,7 +43,12 @@ public class MaintenanceService : BaseService, IMaintenanceService
         {
             maintenanceQueryable = maintenanceQueryable.Where(x => x!.IsInternal == queryDto.IsInternal);
         }
-        
+
+        if (queryDto.AssignedTo != null)
+        {
+            maintenanceQueryable = maintenanceQueryable.Where(x => x!.AssignedTo == queryDto.AssignedTo);
+        }
+
         if (queryDto.Status != null)
         {
             maintenanceQueryable = maintenanceQueryable.Where(x => x!.Status == queryDto.Status);
@@ -101,6 +106,8 @@ public class MaintenanceService : BaseService, IMaintenanceService
             AssignedTo = x.Maintenance.AssignedTo,
             RequestCode = x.Maintenance.RequestCode,
             CompletionDate = x.Maintenance.CompletionDate,
+            Checkin = x.Maintenance.Checkin,
+            Checkout = x.Maintenance.Checkout,
             RequestDate = x.Maintenance.RequestDate,
             CategoryId = x.Maintenance.CategoryId,
             AssetTypeId = x.Maintenance.AssetTypeId,
@@ -239,6 +246,8 @@ public class MaintenanceService : BaseService, IMaintenanceService
             RequestCode = x.Maintenance.RequestCode,
             CompletionDate = x.Maintenance.CompletionDate,
             RequestDate = x.Maintenance.RequestDate,
+            Checkout = x.Maintenance.Checkout,
+            Checkin = x.Maintenance.Checkout,
             CategoryId = x.Maintenance.CategoryId,
             AssetTypeId = x.Maintenance.AssetTypeId,
             StatusObj = x.Maintenance.Status!.GetValue(),
