@@ -223,6 +223,8 @@ public class AssetCheckService : BaseService, IAssetCheckService
             Status = x.AssetCheck.Status,
             StatusObj = x.AssetCheck.Status!.GetValue(),
             Notes = x.AssetCheck.Notes,
+            Checkin = x.AssetCheck.Checkin,
+            Checkout = x.AssetCheck.Checkout,
             AssetTypeId = x.AssetCheck.AssetTypeId,
             CategoryId = x.AssetCheck.CategoryId,
             Asset = new AssetBaseDto

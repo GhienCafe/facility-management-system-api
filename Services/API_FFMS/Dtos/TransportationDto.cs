@@ -20,6 +20,8 @@ public class TransportDto : BaseDto
     public string? Notes { get; set; } // Results
     public bool IsInternal { get; set; }
     public int? Quantity { get; set; }
+    public DateTime? Checkin { get; set; }
+    public DateTime? Checkout { get; set; }
     public Guid? FromRoomId { get; set; }
     public Guid? ToRoomId { get; set; } // For internal
     public Guid? AssignedTo { get; set; }
