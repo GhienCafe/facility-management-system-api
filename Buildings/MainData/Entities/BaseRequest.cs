@@ -15,6 +15,7 @@ public class BaseRequest : BaseEntity
     public string? Notes { get; set; }
     public string? Result { get; set; }
     public bool IsInternal { get; set; }
+    public Piority? Piority { get; set; }
     public Guid? AssignedTo { get; set; }
     public DateTime? Checkin {  get; set; }
     public DateTime? Checkout { get; set; }
@@ -54,6 +55,20 @@ public enum RequestType
     Replacement = 4,
     [Display(Name = "Điều chuyển")]
     Transportation = 5
+}
+
+public enum Piority
+{
+    [Display(Name = "Highest")]
+    Highest = 1,
+    [Display(Name = "High")]
+    High = 2,
+    [Display(Name = "Medium")]
+    Medium = 3,
+    [Display(Name = "Low")]
+    Low = 4,
+    [Display(Name = "Lowest")]
+    Lowest = 5
 }
 
 public class BaseRequestConfig : IEntityTypeConfiguration<BaseRequest>
