@@ -29,6 +29,7 @@ namespace API_FFMS.Repositories
                 replacement.EditedAt = now.Value;
                 replacement.CreatorId = creatorId;
                 replacement.Status = RequestStatus.NotStart;
+                replacement.RequestDate = now.Value;
                 await _context.Replacements.AddAsync(replacement);
 
                 //var asset = await _context.Assets.FindAsync(replacement.AssetId);

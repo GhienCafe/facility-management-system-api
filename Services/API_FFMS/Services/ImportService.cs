@@ -145,8 +145,8 @@ namespace API_FFMS.Services
                     IsMovable = IsTrueOrFalse(dto.IsMovable!),
                     Model = GetModelByName(dto.Model!),
                     StartDateOfUse = DateTime.Now,
-                    LastCheckedDate = DateTime.Now,
-                    LastMaintenanceTime = DateTime.Now
+                    LastCheckedDate = null,
+                    LastMaintenanceTime = null
                 }).ToList();
 
                 // Validation checks
@@ -157,7 +157,7 @@ namespace API_FFMS.Services
                 await CheckTypeCodeExistInDatabase(assets);
                 CheckManufacturingYear(assets);
                 CheckQuantity(assets);
-                CheckStatusValueRange(assets);
+                //CheckStatusValueRange(assets);
 
                 // Filter out assets with validation errors
                 var validAssets = assets.Where(a => !validationErrors.Any(e => e.Row == assets.IndexOf(a) + 2)).ToList();
