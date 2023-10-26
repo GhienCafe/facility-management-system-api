@@ -30,6 +30,7 @@ namespace API_FFMS.Repositories
                 repairation.EditedAt = now.Value;
                 repairation.CreatorId = creatorId;
                 repairation.Status = RequestStatus.NotStart;
+                repairation.RequestDate = now.Value;
                 await _context.Repairations.AddAsync(repairation);
 
                 //var asset = await _context.Assets.FindAsync(repairation.AssetId);
