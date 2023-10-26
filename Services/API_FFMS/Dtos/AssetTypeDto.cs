@@ -15,6 +15,17 @@ namespace API_FFMS.Dtos
         public Guid? CategoryId { get; set; }
     }
 
+    public class AssetTypeSheetDto : BaseDto
+    {
+        public string? TypeCode { get; set; }
+        public string? TypeName { get; set; }
+        public string? Description { get; set; }
+        public Unit? Unit { get; set; }
+        public string? ImageUrl { get; set; }
+        public EnumValue? UnitObj { get; set; }
+        public Guid? CategoryId { get; set; }
+    }
+
     public class AssetTypeDetailDto : BaseDto
     {
         public string TypeCode { get; set; } = null!;

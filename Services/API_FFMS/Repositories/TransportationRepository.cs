@@ -30,6 +30,7 @@ namespace API_FFMS.Repositories
                 transportation.EditedAt = now.Value;
                 transportation.CreatorId = creatorId;
                 transportation.Status = RequestStatus.NotStart;
+                transportation.RequestDate = now.Value;
                 await _context.Transportations.AddAsync(transportation);
 
                 if (transportation.IsInternal)

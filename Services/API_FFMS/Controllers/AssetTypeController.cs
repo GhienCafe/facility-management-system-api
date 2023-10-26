@@ -22,6 +22,13 @@ namespace API_FFMS.Controllers
             return await _service.GetAssetTypes(queryDto);
         }
 
+        [HttpGet("asset-types")]
+        [SwaggerOperation("Get list of asset types")]
+        public async Task<ApiResponses<AssetTypeSheetDto>> GetAssetTypes()
+        {
+            return await _service.GetAssetTypes();
+        }
+
         [HttpGet("{id:guid}")]
         [SwaggerOperation("Get asset type by ID")]
         public async Task<ApiResponse<AssetTypeDetailDto>> GetAssetType(Guid id)
