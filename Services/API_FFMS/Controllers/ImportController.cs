@@ -2,7 +2,6 @@
 using API_FFMS.Services;
 using AppCore.Models;
 using ClosedXML.Excel;
-using MainData;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
 
@@ -12,11 +11,15 @@ namespace API_FFMS.Controllers
     {
         private readonly IImportAssetService _importService;
         private readonly IAssetTypeService _assetTypeService;
+        private readonly IModelService _modelService;
 
-        public ImportController(IImportAssetService assetService, IAssetTypeService assetTypeService)
+        public ImportController(IImportAssetService assetService,
+                                IAssetTypeService assetTypeService,
+                                IModelService modelService)
         {
             _importService = assetService;
             _assetTypeService = assetTypeService;
+            _modelService = modelService;
         }
 
         [HttpGet]
@@ -27,6 +30,14 @@ namespace API_FFMS.Controllers
             {
                 var worksheet = workbook.Worksheets.Add("AssetTemplate");
                 var currentRow = 1;
+
+                worksheet.Cell(currentRow, 1).Value = "Danh sách trang thiết bị";
+                worksheet.Cell(currentRow, 1).Style.Font.FontSize = 18;
+                worksheet.Cell(currentRow, 1).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                worksheet.Cell(currentRow, 1).Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
+                worksheet.Range(1, 1, 1, 10).Row(1).Merge();
+                worksheet.Range(1, 1, 1, 10).Style.Font.Bold = true;
+                currentRow++;
 
                 worksheet.Cell(currentRow, 1).Value = "Tên thiết bị";
                 worksheet.Cell(currentRow, 2).Value = "Mã thiết bị";
@@ -45,10 +56,18 @@ namespace API_FFMS.Controllers
 
                 worksheet.Columns().AdjustToContents();
 
-
                 var assetTypesWorksheet = workbook.Worksheets.Add("AssetTypes");
                 var assetTypesCurrentRow = 1;
                 var assetTypes = await _assetTypeService.GetAssetTypes();
+
+                //Asset types
+                assetTypesWorksheet.Cell(assetTypesCurrentRow, 1).Value = "Danh sách nhóm thiết bị";
+                assetTypesWorksheet.Cell(assetTypesCurrentRow, 1).Style.Font.FontSize = 18;
+                assetTypesWorksheet.Cell(assetTypesCurrentRow, 1).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                assetTypesWorksheet.Cell(assetTypesCurrentRow, 1).Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
+                assetTypesWorksheet.Range(1, 1, 1, 4).Row(1).Merge();
+                assetTypesWorksheet.Range(1, 1, 1, 4).Style.Font.Bold = true;
+                assetTypesCurrentRow++;
 
                 assetTypesWorksheet.Cell(assetTypesCurrentRow, 1).Value = "Tên nhóm thiết bị";
                 assetTypesWorksheet.Cell(assetTypesCurrentRow, 2).Value = "Mã nhóm thiết bị";
@@ -66,6 +85,35 @@ namespace API_FFMS.Controllers
                     assetTypesWorksheet.Cell(assetTypesCurrentRow, 2).Value = assetType.TypeCode;
                     assetTypesWorksheet.Cell(assetTypesCurrentRow, 3).Value = assetType.Description;
                     assetTypesWorksheet.Cell(assetTypesCurrentRow, 4).Value = assetType.ImageUrl;
+                }
+
+                //Models
+                int assetTypesEndingRow = assetTypesCurrentRow;
+                
+                assetTypesCurrentRow++;
+
+                assetTypesWorksheet.Cell(assetTypesCurrentRow, 1).Value = "Danh sách nhãn hiệu";
+                assetTypesWorksheet.Cell(assetTypesCurrentRow, 1).Style.Font.FontSize = 18;
+                assetTypesWorksheet.Cell(assetTypesCurrentRow, 1).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                assetTypesWorksheet.Cell(assetTypesCurrentRow, 1).Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
+                assetTypesWorksheet.Range(assetTypesCurrentRow, 1, assetTypesCurrentRow, 4).Row(1).Merge();
+                assetTypesWorksheet.Range(assetTypesCurrentRow, 1, assetTypesCurrentRow, 4).Style.Font.Bold = true;
+
+                assetTypesCurrentRow++;
+                assetTypesWorksheet.Cell(assetTypesCurrentRow, 1).Value = "Tên nhãn hiệu";
+                assetTypesWorksheet.Cell(assetTypesCurrentRow, 2).Value = "Mô tả";
+
+                var modelsHeaderRange = assetTypesWorksheet.Range(assetTypesWorksheet.Cell(assetTypesCurrentRow, 1), assetTypesWorksheet.Cell(assetTypesCurrentRow, 4));
+                modelsHeaderRange.Style.Font.Bold = true;
+                modelsHeaderRange.Style.Fill.BackgroundColor = XLColor.LightGray;
+                assetTypesCurrentRow++;
+
+                var models = await _modelService.GetModels();
+                foreach ( var model in models.Data)
+                {
+                    assetTypesWorksheet.Cell(assetTypesCurrentRow, 1).Value = model.ModelName;
+                    assetTypesWorksheet.Cell(assetTypesCurrentRow, 2).Value = model.Description;
+                    assetTypesCurrentRow++;
                 }
 
                 assetTypesWorksheet.Columns().AdjustToContents();

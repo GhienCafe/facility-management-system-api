@@ -19,7 +19,9 @@ public class BaseRequestDto : BaseDto
     public string? Notes { get; set; }
     public string? Result { get; set; }
     public bool IsInternal { get; set; }
+    [JsonConverter(typeof(LocalTimeZoneDateTimeConverter))]
     public DateTime? Checkin { get; set; }
+    [JsonConverter(typeof(LocalTimeZoneDateTimeConverter))]
     public DateTime? Checkout { get; set; }
     public Guid? AssignedTo { get; set; }    
     public Guid? AssetTypeId { get; set; }

@@ -1,11 +1,5 @@
-﻿using API_FFMS.Dtos;
-using API_FFMS.Services;
-using AppCore.Models;
+﻿using API_FFMS.Services;
 using Microsoft.AspNetCore.Mvc;
-using Swashbuckle.AspNetCore.Annotations;
-using System.IO;
-using System.Net;
-using System.Threading.Tasks;
 
 namespace API_FFMS.Controllers
 {
@@ -14,10 +8,12 @@ namespace API_FFMS.Controllers
     public class ExportTrackingController : BaseController
     {
         private readonly IExportService _service;
+        private readonly ITaskExportService _taskExportService;
 
-        public ExportTrackingController(IExportService service)
+        public ExportTrackingController(IExportService service, ITaskExportService taskExportService)
         {
             _service = service;
+            _taskExportService = taskExportService;
         }
 
         [HttpGet("room")]
@@ -34,6 +30,28 @@ namespace API_FFMS.Controllers
         public async Task<IActionResult> Export([FromQuery] QueryAssetExportDto exportQuery)
         {
             var exportFile = await _service.Export(exportQuery);
+            return File(
+                exportFile.Stream,
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                $"{exportFile.FileName}.xlsx"
+            );
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> ExportAsset()
+        {
+            var exportFile = await _taskExportService.ExportAsset();
+            return File(
+                exportFile.Stream,
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                $"{exportFile.FileName}.xlsx"
+            );
+        }
+
+        [HttpGet("export-ultra")]
+        public async Task<IActionResult> ExportTaskUltra()
+        {
+            var exportFile = await _taskExportService.ExportTaskUltra();
             return File(
                 exportFile.Stream,
                 "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",

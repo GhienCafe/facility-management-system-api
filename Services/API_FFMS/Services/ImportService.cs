@@ -154,7 +154,8 @@ namespace API_FFMS.Services
                 CheckUniqueAssetCodes(assets);
                 await CheckExistTypeCode(assets);
                 await CheckUniqueAssetCodesInDatabase(assets);
-                await CheckTypeCodeExistInDatabase(assets);
+                await CheckExistModel(assets);
+                //await CheckTypeCodeExistInDatabase(assets);
                 CheckManufacturingYear(assets);
                 CheckQuantity(assets);
                 //CheckStatusValueRange(assets);
@@ -176,7 +177,7 @@ namespace API_FFMS.Services
                         var roomAssets = assetIds.Select(x => new RoomAsset
                         {
                             FromDate = CurrentDate,
-                            AssetId = x.Value,
+                            AssetId = x!.Value,
                             RoomId = wareHouseId,
                             Status = AssetStatus.Operational
                         }).ToList();
@@ -185,7 +186,7 @@ namespace API_FFMS.Services
                             throw new ApiException("Import assets to ware house failed", StatusCode.BAD_REQUEST);
                     }
 
-                    return ApiResponses<ImportError>.Fail(validationErrors, StatusCode.UNPROCESSABLE_ENTITY, "Some Asset imports failed due to validation errors");
+                    return ApiResponses<ImportError>.Fail(validationErrors, StatusCode.UNPROCESSABLE_ENTITY, "Một vài trang thiết bị lỗi xác thực trong quá trình thêm mới");
                 }
 
                 return ApiResponses<ImportError>.Success((IEnumerable<ImportError>)validAssets);
@@ -220,18 +221,18 @@ namespace API_FFMS.Services
         {
             var wareHouse = MainUnitOfWork.RoomRepository.GetQuery()
                             .Where(x => x!.RoomName!.Trim()
-                            .Equals(roomName.Trim()))
+                            .Contains(roomName.Trim()))
                             .FirstOrDefault();
             return wareHouse;
         }
 
         private bool IsTrueOrFalse(string value)
         {
-            if (value.Trim().Equals("Có"))
+            if (value.Trim().Contains("Có"))
             {
                 return true;
             }
-            else if (value.Trim().Equals("Không"))
+            else if (value.Trim().Contains("Không"))
             {
                 return false;
             }
@@ -246,7 +247,7 @@ namespace API_FFMS.Services
             foreach (var asset in assets)
             {
                 var existingTypeCode = await MainUnitOfWork.AssetTypeRepository.GetQuery()
-                                       .Where(t => t!.TypeCode.Equals(asset.Type!.TypeCode))
+                                       .Where(t => t!.TypeCode.Contains(asset.Type!.TypeCode))
                                        .FirstOrDefaultAsync();
                 if (existingTypeCode == null)
                 {
@@ -254,7 +255,26 @@ namespace API_FFMS.Services
                     validationErrors.Add(new ImportError
                     {
                         Row = row,
-                        ErrorMessage = $"Type code '{asset.Type!.TypeCode}' in row {row} does not exist"
+                        ErrorMessage = $"Mã nhóm thiết bị '{asset.Type!.TypeCode}' ở dòng {row} không tồn tại"
+                    });
+                }
+            }
+        }
+
+        private async Task CheckExistModel(List<Asset> assets)
+        {
+            foreach (var asset in assets)
+            {
+                var existingModel = await MainUnitOfWork.ModelRepository.GetQuery()
+                                         .Where(m => m!.ModelName!.Contains(asset.Model!.ModelName!))
+                                         .FirstOrDefaultAsync();
+                if(existingModel == null)
+                {
+                    var row = assets.IndexOf(asset) + 2;
+                    validationErrors.Add(new ImportError
+                    {
+                        Row = row,
+                        ErrorMessage = $"Nhãn hiệu '{asset.Model!.ModelName}' ở dòng {row} không tồn tại"
                     });
                 }
             }
@@ -274,7 +294,7 @@ namespace API_FFMS.Services
                     validationErrors.Add(new ImportError
                     {
                         Row = row,
-                        ErrorMessage = $"All fields must be filled in row {row}"
+                        ErrorMessage = $"Tất cả các thông tin phải được điền, đang trống tại dòng {row}"
                     });
                 }
             }
@@ -299,7 +319,7 @@ namespace API_FFMS.Services
                     })
                     .ToList();
 
-                var duplicateError = string.Join(", ", duplicates.Select(d => $"'{d.AssetCode}' in row {d.Row}"));
+                var duplicateError = string.Join(", ", duplicates.Select(d => $"'{d.AssetCode}' tại dòng {d.Row}"));
                 validationErrors.Add(new ImportError
                 {
                     ErrorMessage = $"Duplicate AssetCodes: {duplicateError}"
@@ -318,7 +338,7 @@ namespace API_FFMS.Services
             foreach (var asset in assets)
             {
                 var existingAsset = await MainUnitOfWork.AssetRepository.GetQuery()
-                                         .Where(a => a!.AssetCode!.Equals(asset.AssetCode))
+                                         .Where(a => a!.AssetCode!.Contains(asset.AssetCode))
                                          .FirstOrDefaultAsync();
 
                 if (existingAsset != null)
@@ -327,7 +347,7 @@ namespace API_FFMS.Services
                     validationErrors.Add(new ImportError
                     {
                         Row = row,
-                        ErrorMessage = $"Duplicate AssetCode '{asset.AssetCode}' in row {row}"
+                        ErrorMessage = $"Duplicate AssetCode '{asset.AssetCode}' tại dòng {row}"
                     });
                 }
             }
@@ -338,7 +358,7 @@ namespace API_FFMS.Services
             foreach (var asset in assets)
             {
                 var existingCategory = await MainUnitOfWork.AssetTypeRepository.GetQuery()
-                                             .Where(a => a!.TypeCode.Equals(asset.Type!.TypeCode))
+                                             .Where(a => a!.TypeCode.Contains(asset.Type!.TypeCode))
                                              .FirstOrDefaultAsync();
 
                 if (existingCategory == null)
@@ -366,7 +386,7 @@ namespace API_FFMS.Services
                     validationErrors.Add(new ImportError
                     {
                         Row = row,
-                        ErrorMessage = $"ManufacturingYear in row {row} is not a valid integer or is not within the range {minManufacturingYear}-{currentDate}"
+                        ErrorMessage = $"Năm sản xuất tại dòng {row} không phù hợp hoặc không trong phạm vi {minManufacturingYear}-{currentDate}"
                     });
                 }
             }
@@ -383,7 +403,7 @@ namespace API_FFMS.Services
                     validationErrors.Add(new ImportError
                     {
                         Row = row,
-                        ErrorMessage = $"Quantity in row {row} must be greater than 0"
+                        ErrorMessage = $"Số lượng tại dòng {row} phải lớn hơn 0"
                     });
                 }
             }
