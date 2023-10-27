@@ -16,6 +16,7 @@ namespace API_FFMS.Services
         Task<ApiResponse> Delete(Guid id);
         Task<ApiResponse> DeleteModels(List<Guid> ids);
         Task<ApiResponses<ModelDto>> GetModels(ModelQueryDto queryDto);
+        Task<ApiResponses<ModelDto>> GetModels();
     }
     public class ModelService : BaseService, IModelService
     {
@@ -109,6 +110,26 @@ namespace API_FFMS.Services
                 queryDto.Skip(),
                 (int)Math.Ceiling(response.TotalCount / (double)queryDto.PageSize)
             );
+        }
+
+        public async Task<ApiResponses<ModelDto>> GetModels()
+        {
+            var response = MainUnitOfWork.ModelRepository.GetQuery()
+                .Where(x => !x!.DeletedAt.HasValue);
+            var models = response.Select(x => new ModelDto
+            {
+                Id = x!.Id,
+                ModelName = x.ModelName,
+                Description = x.Description,
+                CreatedAt = x.CreatedAt,
+                EditedAt = x.EditedAt,
+                EditorId = x.EditorId ?? Guid.Empty,
+                CreatorId = x.CreatorId ?? Guid.Empty
+            }).ToList();
+
+            models = await _mapperRepository.MapCreator(models);
+            
+            return ApiResponses<ModelDto>.Success(models);
         }
 
         public async Task<ApiResponse> Update(Guid id, ModelUpdateDto updateDto)
