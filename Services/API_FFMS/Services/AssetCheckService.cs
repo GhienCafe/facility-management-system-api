@@ -117,7 +117,39 @@ public class AssetCheckService : BaseService, IAssetCheckService
                             x => x.Id == location.RoomId
                         });
             }
+
+            assetCheck.AssetType = await MainUnitOfWork.AssetTypeRepository.FindOneAsync<AssetTypeDto>(
+                new Expression<Func<AssetType, bool>>[]
+                {
+                    x => !x.DeletedAt.HasValue,
+                    x => x.Id == assetCheck.Asset.TypeId
+                });
+            if(assetCheck.AssetType != null)
+            {
+                assetCheck.Category = await MainUnitOfWork.CategoryRepository.FindOneAsync<CategoryDto>(
+                    new Expression<Func<Category, bool>>[]
+                    {
+                        x => !x.DeletedAt.HasValue,
+                        x => x.Id == assetCheck.AssetType.CategoryId
+                    });
+            }
         }
+
+        assetCheck.AssignTo = await MainUnitOfWork.UserRepository.FindOneAsync<UserBaseDto>(
+            new Expression<Func<User, bool>>[]
+            {
+                x => !x.DeletedAt.HasValue,
+                x => x.Id == assetCheck.AssignedTo
+            });
+
+        var mediaFileQuery = MainUnitOfWork.MediaFileRepository.GetQuery().Where(m => m!.ItemId == assetCheck.Id);
+        assetCheck.MediaFile = new MediaFileDto
+        {
+            FileType = mediaFileQuery.Select(m => m!.FileType).FirstOrDefault(),
+            Uri = mediaFileQuery.Select(m => m!.Uri).ToList(),
+            Content = mediaFileQuery.Select(m => m!.Content).FirstOrDefault()
+        };
+
         assetCheck.Status = assetCheck.Status;
         assetCheck.StatusObj = assetCheck.Status!.GetValue();
 
@@ -154,8 +186,8 @@ public class AssetCheckService : BaseService, IAssetCheckService
         if (!string.IsNullOrEmpty(keyword))
         {
             assetCheckQuery = assetCheckQuery.Where(x => x!.Description!.ToLower().Contains(keyword)
-                                                               || x.Notes!.ToLower().Contains(keyword) ||
-                                                               x.RequestCode.ToLower().Contains(keyword));
+                                                      || x.Notes!.ToLower().Contains(keyword)
+                                                      || x.RequestCode.ToLower().Contains(keyword));
         }
 
         var joinTables = from assetCheck in assetCheckQuery
@@ -191,6 +223,8 @@ public class AssetCheckService : BaseService, IAssetCheckService
             Status = x.AssetCheck.Status,
             StatusObj = x.AssetCheck.Status!.GetValue(),
             Notes = x.AssetCheck.Notes,
+            Checkin = x.AssetCheck.Checkin,
+            Checkout = x.AssetCheck.Checkout,
             AssetTypeId = x.AssetCheck.AssetTypeId,
             CategoryId = x.AssetCheck.CategoryId,
             Asset = new AssetBaseDto
@@ -293,18 +327,23 @@ public class AssetCheckService : BaseService, IAssetCheckService
 
     public string GenerateRequestCode()
     {
-        var lastRequest = MainUnitOfWork.AssetCheckRepository.GetQueryAll()
-        .OrderByDescending(x => x!.RequestCode)
-        .FirstOrDefault();
+        var requests = MainUnitOfWork.AssetCheckRepository.GetQueryAll().ToList();
+
+        var numbers = new List<int>();
+        foreach (var t in requests)
+        {
+            int.TryParse(t!.RequestCode[2..], out int lastNumber);
+            numbers.Add(lastNumber);
+        }
 
         string newRequestCode = "AC1";
 
-        if (lastRequest != null)
+        if (requests.Any())
         {
-            string lastRequestCode = lastRequest.RequestCode;
-            if (lastRequestCode.StartsWith("AC") && int.TryParse(lastRequestCode[2..], out int lastNumber))
+            var lastCode = numbers.AsQueryable().OrderDescending().FirstOrDefault();
+            if (requests.Any(x => x!.RequestCode.StartsWith("AC")))
             {
-                newRequestCode = $"AC{lastNumber + 1}";
+                newRequestCode = $"AC{lastCode + 1}";
             }
         }
         return newRequestCode;

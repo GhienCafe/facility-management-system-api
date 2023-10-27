@@ -44,7 +44,7 @@ namespace API_FFMS.Services
                 throw new ApiException("Không tìm thấy trang thiết bị để thay thế", StatusCode.NOT_FOUND);
             }
 
-            if(newAsset.Status != AssetStatus.Operational)
+            if (newAsset.Status != AssetStatus.Operational)
             {
                 throw new ApiException("Trang thiết bị cần thay thế đang trong một yêu cầu khác", StatusCode.BAD_REQUEST);
             }
@@ -121,7 +121,25 @@ namespace API_FFMS.Services
                     x => !x.DeletedAt.HasValue,
                     x => x.Id == replacement.AssetId,
                 });
-            //replacement.Asset.StatusObj = 
+            if(replacement.Asset != null)
+            {
+                var location = await MainUnitOfWork.RoomAssetRepository.FindOneAsync<RoomAsset>(
+                    new Expression<Func<RoomAsset, bool>>[]
+                    {
+                        x => !x.DeletedAt.HasValue,
+                    x => x.AssetId == replacement.Asset.Id,
+                    x => x.ToDate == null
+                    });
+                if (location != null)
+                {
+                    replacement.AssetLocation = await MainUnitOfWork.RoomRepository.FindOneAsync<AssetLocation>(
+                            new Expression<Func<Room, bool>>[]
+                            {
+                            x => !x.DeletedAt.HasValue,
+                            x => x.Id == location.RoomId
+                            });
+                }
+            }
 
             replacement.NewAsset = await MainUnitOfWork.AssetRepository.FindOneAsync<AssetBaseDto>(
                 new Expression<Func<Asset, bool>>[]
@@ -129,6 +147,25 @@ namespace API_FFMS.Services
                     x => !x.DeletedAt.HasValue,
                     x => x.Id == replacement.NewAssetId
                 });
+            if (replacement.NewAsset != null)
+            {
+                var location = await MainUnitOfWork.RoomAssetRepository.FindOneAsync<RoomAsset>(
+                    new Expression<Func<RoomAsset, bool>>[]
+                    {
+                        x => !x.DeletedAt.HasValue,
+                    x => x.AssetId == replacement.NewAsset.Id,
+                    x => x.ToDate == null
+                    });
+                if (location != null)
+                {
+                    replacement.NewAssetLocation = await MainUnitOfWork.RoomRepository.FindOneAsync<AssetLocation>(
+                            new Expression<Func<Room, bool>>[]
+                            {
+                            x => !x.DeletedAt.HasValue,
+                            x => x.Id == location.RoomId
+                            });
+                }
+            }
 
             replacement.AssetType = await MainUnitOfWork.AssetTypeRepository.FindOneAsync<AssetTypeDto>(
                 new Expression<Func<AssetType, bool>>[]
@@ -143,6 +180,21 @@ namespace API_FFMS.Services
                     x => !x.DeletedAt.HasValue,
                     x => x.Id == replacement.AssetType!.CategoryId
                 });
+            var mediaFileQuery = MainUnitOfWork.MediaFileRepository.GetQuery().Where(m => m!.ItemId == replacement.Id);
+
+            replacement.MediaFile = new MediaFileDto
+            {
+                FileType = mediaFileQuery.Select(m => m!.FileType).FirstOrDefault(),
+                Uri = mediaFileQuery.Select(m => m!.Uri).ToList(),
+                Content = mediaFileQuery.Select(m => m!.Content).FirstOrDefault()
+            };
+
+            replacement.AssignTo = await MainUnitOfWork.UserRepository.FindOneAsync<UserBaseDto>(
+            new Expression<Func<User, bool>>[]
+            {
+                x => !x.DeletedAt.HasValue,
+                x => x.Id == replacement.AssignedTo
+            });
 
             replacement.Status = replacement.Status;
             replacement.StatusObj = replacement.Status!.GetValue();
@@ -222,6 +274,8 @@ namespace API_FFMS.Services
                 Notes = x.Replacement.Notes,
                 IsInternal = x.Replacement.IsInternal,
                 AssignedTo = x.Replacement.AssignedTo,
+                Checkout = x.Replacement.Checkout,
+                Checkin = x.Replacement.Checkin,
                 AssetId = x.Replacement.AssetId,
                 NewAssetId = x.Replacement.NewAssetId,
                 CreatedAt = x.Replacement.CreatedAt,
@@ -279,7 +333,7 @@ namespace API_FFMS.Services
                 queryDto.Page,
                 (int)Math.Ceiling(totalCount / (double)queryDto.PageSize));
         }
-        
+
 
         public async Task<ApiResponse> Update(Guid id, BaseRequestUpdateDto updateDto)
         {
@@ -293,7 +347,7 @@ namespace API_FFMS.Services
             {
                 throw new ApiException("Chỉ được cập nhật các yêu cầu chưa hoàn thành", StatusCode.NOT_FOUND);
             }
-            
+
             existingReplace.RequestDate = updateDto.RequestDate ?? existingReplace.RequestDate;
             existingReplace.CompletionDate = updateDto.CompletionDate ?? existingReplace.CompletionDate;
             existingReplace.Description = updateDto.Description ?? existingReplace.Description;
@@ -330,18 +384,23 @@ namespace API_FFMS.Services
 
         public string GenerateRequestCode()
         {
-            var lastRequest = MainUnitOfWork.ReplacementRepository.GetQueryAll()
-            .OrderByDescending(x => x!.RequestCode)
-            .FirstOrDefault();
+            var requests = MainUnitOfWork.ReplacementRepository.GetQueryAll().ToList();
+
+            var numbers = new List<int>();
+            foreach (var t in requests)
+            {
+                int.TryParse(t!.RequestCode[3..], out int lastNumber);
+                numbers.Add(lastNumber);
+            }
 
             string newRequestCode = "RPL1";
 
-            if (lastRequest != null)
+            if (requests.Any())
             {
-                string lastRequestCode = lastRequest.RequestCode;
-                if (lastRequestCode.StartsWith("RPL") && int.TryParse(lastRequestCode[3..], out int lastNumber))
+                var lastCode = numbers.AsQueryable().OrderDescending().FirstOrDefault();
+                if (requests.Any(x => x!.RequestCode.StartsWith("RPL")))
                 {
-                    newRequestCode = $"RPL{lastNumber + 1}";
+                    newRequestCode = $"RPL{lastCode + 1}";
                 }
             }
             return newRequestCode;

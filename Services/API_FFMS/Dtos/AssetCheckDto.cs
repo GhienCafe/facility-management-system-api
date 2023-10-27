@@ -1,22 +1,15 @@
-﻿using AppCore.Models;
-
-namespace API_FFMS.Dtos;
+﻿namespace API_FFMS.Dtos;
 
 public class AssetCheckDto : BaseRequestDto
 {
-    //public Guid RequestId { get; set; }
-    //public Guid AssetId { get; set; }
     public bool IsVerified { get; set; }
     public AssetBaseDto? Asset { get; set; }
-    public RoomBaseDto? Location { get; set; } 
+    public RoomBaseDto? Location { get; set; }
+    public UserBaseDto? AssignTo { get; set; }
+    public AssetTypeDto? AssetType { get; set; }
+    public CategoryDto? Category { get; set; }
+    public MediaFileDto? MediaFile { get; set; }
 }
-
-//public class AssetCheckQueryDto : BaseQueryDto
-//{
-//    public Guid? RequestId { get; set; }
-//    public Guid? AssetId { get; set; }
-//    public bool? IsVerified { get; set; }
-//}
 
 public class AssetCheckQueryDto : BaseRequestQueryDto { }
 

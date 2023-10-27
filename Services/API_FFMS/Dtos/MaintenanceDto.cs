@@ -9,6 +9,15 @@ public class MaintenanceDto : BaseRequestDto {
     public UserBaseDto? User { get; set; }
     public AssetTypeDto? AssetType { get; set; }
     public CategoryDto? Category { get; set; }
+    public MediaFileDto? MediaFile { get; set; }
+}
+
+public class MediaFileDto
+{
+    public List<string>? Uri { get; set; }
+    public FileType FileType { get; set; }
+    public string? Content { get; set; }
+    public Guid? ItemId { get; set; }
 }
 
 public class MaintenanceQueryDto : BaseRequestQueryDto

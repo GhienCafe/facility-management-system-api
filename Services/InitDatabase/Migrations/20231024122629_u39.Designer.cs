@@ -4,6 +4,7 @@ using MainData;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace InitDatabase.Migrations
 {
     [DbContext(typeof(DatabaseContext))]
-    partial class DatabaseContextModelSnapshot : ModelSnapshot
+    [Migration("20231024122629_u39")]
+    partial class u39
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -170,9 +173,6 @@ namespace InitDatabase.Migrations
 
                     b.Property<string>("Notes")
                         .HasColumnType("nvarchar(max)");
-
-                    b.Property<int?>("Piority")
-                        .HasColumnType("int");
 
                     b.Property<string>("RequestCode")
                         .IsRequired()
@@ -498,9 +498,6 @@ namespace InitDatabase.Migrations
                     b.Property<string>("Notes")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int?>("Piority")
-                        .HasColumnType("int");
-
                     b.Property<string>("RequestCode")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -783,9 +780,6 @@ namespace InitDatabase.Migrations
                     b.Property<string>("Notes")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int?>("Piority")
-                        .HasColumnType("int");
-
                     b.Property<string>("RequestCode")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -864,9 +858,6 @@ namespace InitDatabase.Migrations
 
                     b.Property<string>("Notes")
                         .HasColumnType("nvarchar(max)");
-
-                    b.Property<int?>("Piority")
-                        .HasColumnType("int");
 
                     b.Property<string>("RequestCode")
                         .IsRequired()
@@ -1270,9 +1261,6 @@ namespace InitDatabase.Migrations
 
                     b.Property<string>("Notes")
                         .HasColumnType("nvarchar(max)");
-
-                    b.Property<int?>("Piority")
-                        .HasColumnType("int");
 
                     b.Property<int?>("Quantity")
                         .HasColumnType("int");

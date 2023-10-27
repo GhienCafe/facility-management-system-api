@@ -48,6 +48,9 @@ namespace API_FFMS.Repositories
 
                         assetLocation!.State = RoomState.NeedInspection;
                         _context.Entry(assetLocation).State = EntityState.Modified;
+
+                        assetCheck.Checkin = now.Value;
+                        _context.Entry(assetCheck).State = EntityState.Modified;
                     }
                     else if (assetCheck.Status == RequestStatus.Reported)
                     {
@@ -67,11 +70,14 @@ namespace API_FFMS.Repositories
                                 Extensions = mediaFile.Extensions,
                                 FileType = mediaFile.FileType,
                                 Content = mediaFile.Content,
-                                ItemId = assetCheck.Id
+                                ItemId = assetCheck.Id,
+                                AssetCheckId = assetCheck.Id,
                             };
                             _context.MediaFiles.Add(newMediaFile);
                         }
+                        assetCheck.IsVerified = true;
                         assetCheck.Result = mediaFiles.First().Content;
+                        assetCheck.Checkout = now.Value;
                         _context.Entry(assetCheck).State = EntityState.Modified;
 
                         var notification = new Notification
@@ -136,6 +142,9 @@ namespace API_FFMS.Repositories
                             fromRoom!.State = RoomState.Transportation;
                             _context.Entry(fromRoom).State = EntityState.Modified;
 
+                            transportation.Checkin = now.Value;
+                            _context.Entry(transportation).State = EntityState.Modified;
+
                             //var roomAsset = _context.RoomAssets.FirstOrDefault(x => x.Id == asset.Id && x.ToDate == null);
                         }
                         else if (statusUpdate == RequestStatus.Reported)
@@ -161,7 +170,35 @@ namespace API_FFMS.Repositories
                                 _context.MediaFiles.Add(newMediaFile);
                             }
                             transportation.Result = mediaFiles.First().Content;
+                            transportation.Checkout = now.Value;
                             _context.Entry(transportation).State = EntityState.Modified;
+
+                            if (asset.Type!.IsIdentified == true)
+                            {
+                                var addRoomAsset = new RoomAsset
+                                {
+                                    AssetId = asset.Id,
+                                    RoomId = toRoom?.Id ?? Guid.Empty,
+                                    Status = AssetStatus.Operational,
+                                    FromDate = now.Value,
+                                    Quantity = 1,
+                                    ToDate = null,
+                                };
+                                _context.RoomAssets.Add(addRoomAsset);
+                            }
+                            else
+                            {
+                                var addRoomAsset = new RoomAsset
+                                {
+                                    AssetId = asset.Id,
+                                    RoomId = toRoom?.Id ?? Guid.Empty,
+                                    Status = AssetStatus.Operational,
+                                    FromDate = now.Value,
+                                    Quantity = asset.Quantity,
+                                    ToDate = null,
+                                };
+                                _context.RoomAssets.Add(addRoomAsset);
+                            }
 
                             var notification = new Notification
                             {
@@ -217,6 +254,9 @@ namespace API_FFMS.Repositories
 
                         location!.State = RoomState.Repair;
                         _context.Entry(location).State = EntityState.Modified;
+
+                        repairation.Checkin = now.Value;
+                        _context.Entry(repairation).State = EntityState.Modified;
                     }
                     else if (statusUpdate == RequestStatus.Reported)
                     {
@@ -241,6 +281,7 @@ namespace API_FFMS.Repositories
                             _context.MediaFiles.Add(newMediaFile);
                         }
                         repairation.Result = mediaFiles.First().Content;
+                        repairation.Checkout = now.Value;
                         _context.Entry(repairation).State = EntityState.Modified;
 
                         var notification = new Notification
@@ -307,6 +348,9 @@ namespace API_FFMS.Repositories
 
                         newAssetLocation!.State = RoomState.Replacement;
                         _context.Entry(newAssetLocation).State = EntityState.Modified;
+
+                        replacement.Checkin = now.Value;
+                        _context.Entry(replacement).State = EntityState.Modified;
                     }
                     else if (replacement.Status == RequestStatus.Reported)
                     {
@@ -331,7 +375,30 @@ namespace API_FFMS.Repositories
                             _context.MediaFiles.Add(newMediaFile);
                         }
                         replacement.Result = mediaFiles.First().Content;
+                        replacement.Checkout = now.Value;
                         _context.Entry(replacement).State = EntityState.Modified;
+
+                        var addRoomAssetNew = new RoomAsset
+                        {
+                            AssetId = replacement.NewAssetId,
+                            RoomId = assetLocation!.Id,
+                            Status = AssetStatus.Operational,
+                            FromDate = now.Value,
+                            Quantity = asset!.Quantity,
+                            ToDate = null,
+                        };
+                        _context.RoomAssets.Add(addRoomAssetNew);
+
+                        var addRoomAsset = new RoomAsset
+                        {
+                            AssetId = replacement.AssetId,
+                            RoomId = newAssetLocation!.Id,
+                            Status = AssetStatus.Operational,
+                            FromDate = now.Value,
+                            Quantity = newAsset!.Quantity,
+                            ToDate = null,
+                        };
+                        _context.RoomAssets.Add(addRoomAsset);
 
                         var notification = new Notification
                         {
@@ -386,6 +453,9 @@ namespace API_FFMS.Repositories
 
                         location!.State = RoomState.Maintenance;
                         _context.Entry(location).State = EntityState.Modified;
+
+                        maintenance.Checkin = now.Value;
+                        _context.Entry(maintenance).State = EntityState.Modified;
                     }
                     else if (statusUpdate == RequestStatus.Reported)
                     {
@@ -410,6 +480,7 @@ namespace API_FFMS.Repositories
                             _context.MediaFiles.Add(newMediaFile);
                         }
                         maintenance.Result = mediaFiles.First().Content;
+                        maintenance.Checkout = now.Value;
                         _context.Entry(maintenance).State = EntityState.Modified;
 
                         var notification = new Notification

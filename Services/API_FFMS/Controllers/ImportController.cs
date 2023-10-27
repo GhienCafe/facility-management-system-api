@@ -2,6 +2,7 @@
 using API_FFMS.Services;
 using AppCore.Models;
 using ClosedXML.Excel;
+using MainData;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
 
@@ -10,10 +11,12 @@ namespace API_FFMS.Controllers
     public class ImportController : BaseController
     {
         private readonly IImportAssetService _importService;
+        private readonly IAssetTypeService _assetTypeService;
 
-        public ImportController(IImportAssetService assetService)
+        public ImportController(IImportAssetService assetService, IAssetTypeService assetTypeService)
         {
             _importService = assetService;
+            _assetTypeService = assetTypeService;
         }
 
         [HttpGet]
@@ -25,7 +28,6 @@ namespace API_FFMS.Controllers
                 var worksheet = workbook.Worksheets.Add("AssetTemplate");
                 var currentRow = 1;
 
-                // Define the column headers
                 worksheet.Cell(currentRow, 1).Value = "Tên thiết bị";
                 worksheet.Cell(currentRow, 2).Value = "Mã thiết bị";
                 worksheet.Cell(currentRow, 3).Value = "Nhóm thiết bị";
@@ -37,13 +39,36 @@ namespace API_FFMS.Controllers
                 worksheet.Cell(currentRow, 9).Value = "Thuộc sở hữu";
                 worksheet.Cell(currentRow, 10).Value = "Có thể di chuyển";
 
-                // Apply styles to the header row
                 var headerRange = worksheet.Range(worksheet.Cell(currentRow, 1), worksheet.Cell(currentRow, 10));
                 headerRange.Style.Font.Bold = true;
                 headerRange.Style.Fill.BackgroundColor = XLColor.LightGray;
 
-                // Adjust column width
                 worksheet.Columns().AdjustToContents();
+
+
+                var assetTypesWorksheet = workbook.Worksheets.Add("AssetTypes");
+                var assetTypesCurrentRow = 1;
+                var assetTypes = await _assetTypeService.GetAssetTypes();
+
+                assetTypesWorksheet.Cell(assetTypesCurrentRow, 1).Value = "Tên nhóm thiết bị";
+                assetTypesWorksheet.Cell(assetTypesCurrentRow, 2).Value = "Mã nhóm thiết bị";
+                assetTypesWorksheet.Cell(assetTypesCurrentRow, 3).Value = "Mô tả";
+                assetTypesWorksheet.Cell(assetTypesCurrentRow, 4).Value = "Hình ảnh";
+
+                var assetTypesHeaderRange = assetTypesWorksheet.Range(assetTypesWorksheet.Cell(assetTypesCurrentRow, 1), assetTypesWorksheet.Cell(assetTypesCurrentRow, 4));
+                assetTypesHeaderRange.Style.Font.Bold = true;
+                assetTypesHeaderRange.Style.Fill.BackgroundColor = XLColor.LightGray;
+
+                foreach (var assetType in assetTypes.Data)
+                {
+                    assetTypesCurrentRow++;
+                    assetTypesWorksheet.Cell(assetTypesCurrentRow, 1).Value = assetType.TypeName;
+                    assetTypesWorksheet.Cell(assetTypesCurrentRow, 2).Value = assetType.TypeCode;
+                    assetTypesWorksheet.Cell(assetTypesCurrentRow, 3).Value = assetType.Description;
+                    assetTypesWorksheet.Cell(assetTypesCurrentRow, 4).Value = assetType.ImageUrl;
+                }
+
+                assetTypesWorksheet.Columns().AdjustToContents();
 
                 using (var stream = new MemoryStream())
                 {

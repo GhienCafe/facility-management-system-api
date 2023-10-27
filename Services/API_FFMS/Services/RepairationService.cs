@@ -122,6 +122,15 @@ namespace API_FFMS.Services
                 repairation.User!.RoleObj = repairation.User.Role?.GetValue();
             }
 
+            var mediaFileQuery = MainUnitOfWork.MediaFileRepository.GetQuery().Where(m => m!.ItemId == repairation.Id);
+
+            repairation.MediaFile = new MediaFileDto
+            {
+                FileType = mediaFileQuery.Select(m => m!.FileType).FirstOrDefault(),
+                Uri = mediaFileQuery.Select(m => m!.Uri).ToList(),
+                Content = mediaFileQuery.Select(m => m!.Content).FirstOrDefault()
+            };
+
             repairation.Status = repairation.Status;
             repairation.StatusObj = repairation.Status!.GetValue();
 
@@ -199,6 +208,8 @@ namespace API_FFMS.Services
                 StatusObj = x.Repairation.Status!.GetValue(),
                 Description = x.Repairation.Description,
                 Notes = x.Repairation.Notes,
+                Checkin = x.Repairation.Checkin,
+                Checkout = x.Repairation.Checkout,
                 IsInternal = x.Repairation.IsInternal,
                 AssignedTo = x.Repairation.AssignedTo,
                 AssetId = x.Repairation.AssetId,
@@ -305,18 +316,23 @@ namespace API_FFMS.Services
 
         public string GenerateRequestCode()
         {
-            var lastRequest = MainUnitOfWork.RepairationRepository.GetQueryAll()
-            .OrderByDescending(x => x!.RequestCode)
-            .FirstOrDefault();
+            var requests = MainUnitOfWork.RepairationRepository.GetQueryAll().ToList();
+
+            var numbers = new List<int>();
+            foreach (var t in requests)
+            {
+                int.TryParse(t!.RequestCode[3..], out int lastNumber);
+                numbers.Add(lastNumber);
+            }
 
             string newRequestCode = "REP1";
 
-            if (lastRequest != null)
+            if (requests.Any())
             {
-                string lastRequestCode = lastRequest.RequestCode;
-                if (lastRequestCode.StartsWith("REP") && int.TryParse(lastRequestCode[3..], out int lastNumber))
+                var lastCode = numbers.AsQueryable().OrderDescending().FirstOrDefault();
+                if (requests.Any(x => x!.RequestCode.StartsWith("REP")))
                 {
-                    newRequestCode = $"REP{lastNumber + 1}";
+                    newRequestCode = $"REP{lastCode + 1}";
                 }
             }
             return newRequestCode;

@@ -30,6 +30,7 @@ namespace API_FFMS.Repositories
                 transportation.EditedAt = now.Value;
                 transportation.CreatorId = creatorId;
                 transportation.Status = RequestStatus.NotStart;
+                transportation.RequestDate = now.Value;
                 await _context.Transportations.AddAsync(transportation);
 
                 if (transportation.IsInternal)
@@ -124,32 +125,32 @@ namespace API_FFMS.Repositories
                         toRoom.EditedAt = now.Value;
                         _context.Entry(toRoom).State = EntityState.Modified;
 
-                        if (asset.Type!.IsIdentified == true)
-                        {
-                            var addRoomAsset = new RoomAsset
-                            {
-                                AssetId = asset.Id,
-                                RoomId = toRoom?.Id ?? Guid.Empty,
-                                Status = AssetStatus.Operational,
-                                FromDate = now.Value,
-                                Quantity = 1,
-                                ToDate = null,
-                            };
-                            _context.RoomAssets.Add(addRoomAsset);
-                        }
-                        else
-                        {
-                            var addRoomAsset = new RoomAsset
-                            {
-                                AssetId = asset.Id,
-                                RoomId = toRoom?.Id ?? Guid.Empty,
-                                Status = AssetStatus.Operational,
-                                FromDate = now.Value,
-                                Quantity = asset.Quantity,
-                                ToDate = null,
-                            };
-                            _context.RoomAssets.Add(addRoomAsset);
-                        }
+                        //if (asset.Type!.IsIdentified == true)
+                        //{
+                        //    var addRoomAsset = new RoomAsset
+                        //    {
+                        //        AssetId = asset.Id,
+                        //        RoomId = toRoom?.Id ?? Guid.Empty,
+                        //        Status = AssetStatus.Operational,
+                        //        FromDate = now.Value,
+                        //        Quantity = 1,
+                        //        ToDate = null,
+                        //    };
+                        //    _context.RoomAssets.Add(addRoomAsset);
+                        //}
+                        //else
+                        //{
+                        //    var addRoomAsset = new RoomAsset
+                        //    {
+                        //        AssetId = asset.Id,
+                        //        RoomId = toRoom?.Id ?? Guid.Empty,
+                        //        Status = AssetStatus.Operational,
+                        //        FromDate = now.Value,
+                        //        Quantity = asset.Quantity,
+                        //        ToDate = null,
+                        //    };
+                        //    _context.RoomAssets.Add(addRoomAsset);
+                        //}
                     }
                     else if (statusUpdate == RequestStatus.Cancelled)
                     {

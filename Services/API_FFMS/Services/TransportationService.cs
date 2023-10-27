@@ -130,6 +130,14 @@ namespace API_FFMS.Services
                 throw new ApiException("Không tìm thấy yêu cầu vận chuyển", StatusCode.NOT_FOUND);
             }
 
+            var mediaFileQuery = MainUnitOfWork.MediaFileRepository.GetQuery().Where(m => m!.ItemId == existingtransport.Id);
+            var mediaFile = new MediaFileDto
+            {
+                FileType = mediaFileQuery.Select(m => m!.FileType).FirstOrDefault(),
+                Uri = mediaFileQuery.Select(m => m!.Uri).ToList(),
+                Content = mediaFileQuery.Select(m => m!.Content).FirstOrDefault()
+            };
+
             var roomDataset = MainUnitOfWork.RoomRepository.GetQuery();
             var toRoom = await roomDataset
                             .Where(r => r!.Id == existingtransport.ToRoomId)
@@ -142,6 +150,22 @@ namespace API_FFMS.Services
                                 FloorId = r.FloorId,
                                 CreatedAt = r.CreatedAt,
                                 EditedAt = r.EditedAt
+                            }).FirstOrDefaultAsync();
+
+            var staffs = MainUnitOfWork.UserRepository.GetQuery();
+            var assignTo = await staffs.Where(x => x!.Id == existingtransport.AssignedTo)
+                            .Select(x => new UserBaseDto
+                            {
+                                UserCode = x!.UserCode,
+                                Fullname = x.Fullname,
+                                RoleObj = x.Role.GetValue(),
+                                Avatar = x.Avatar,
+                                StatusObj = x.Status.GetValue(),
+                                Email = x.Email,
+                                PhoneNumber = x.PhoneNumber,
+                                Address = x.Address,
+                                Gender = x.Gender,
+                                Dob = x.Dob
                             }).FirstOrDefaultAsync();
 
             var transportDetails = MainUnitOfWork.TransportationDetailRepository.GetQuery();
@@ -196,12 +220,16 @@ namespace API_FFMS.Services
                 StatusObj = existingtransport.Status!.GetValue(),
                 RequestDate = existingtransport.RequestDate,
                 Quantity = existingtransport.Quantity,
+                Checkin = existingtransport.Checkin,
+                Checkout = existingtransport.Checkout,
                 CreatedAt = existingtransport.CreatedAt,
                 EditedAt = existingtransport.EditedAt,
                 CreatorId = existingtransport.CreatorId,
                 EditorId = existingtransport.EditorId,
                 Assets = assets,
-                ToRoom = toRoom
+                ToRoom = toRoom,
+                MediaFile = mediaFile,
+                AssignTo = assignTo
             };
 
             tranportation = await _mapperRepository.MapCreator(tranportation);
@@ -249,6 +277,8 @@ namespace API_FFMS.Services
                 Status = t.Status,
                 StatusObj = t.Status!.GetValue(),
                 Description = t.Description,
+                Checkout = t.Checkout,
+                Checkin = t.Checkout,
                 Notes = t.Notes,
                 IsInternal = t.IsInternal,
                 Quantity = t.Quantity,
@@ -356,18 +386,23 @@ namespace API_FFMS.Services
 
         public string GenerateRequestCode()
         {
-            var lastRequest = MainUnitOfWork.TransportationRepository.GetQueryAll()
-            .OrderByDescending(x => x!.RequestCode)
-            .FirstOrDefault();
+            var requests = MainUnitOfWork.TransportationRepository.GetQueryAll().ToList();
+
+            var numbers = new List<int>();
+            foreach (var t in requests)
+            {
+                int.TryParse(t!.RequestCode[3..], out int lastNumber);
+                numbers.Add(lastNumber);
+            }
 
             string newRequestCode = "TRS1";
 
-            if (lastRequest != null)
+            if (requests.Any())
             {
-                string lastRequestCode = lastRequest.RequestCode;
-                if (lastRequestCode.StartsWith("TRS") && int.TryParse(lastRequestCode[3..], out int lastNumber))
+                var lastCode = numbers.AsQueryable().OrderDescending().FirstOrDefault();
+                if (requests.Any(x => x!.RequestCode.StartsWith("TRS")))
                 {
-                    newRequestCode = $"TRS{lastNumber + 1}";
+                    newRequestCode = $"TRS{lastCode + 1}";
                 }
             }
             return newRequestCode;

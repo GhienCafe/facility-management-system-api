@@ -15,7 +15,10 @@ public class BaseRequest : BaseEntity
     public string? Notes { get; set; }
     public string? Result { get; set; }
     public bool IsInternal { get; set; }
+    public Piority? Piority { get; set; }
     public Guid? AssignedTo { get; set; }
+    public DateTime? Checkin {  get; set; }
+    public DateTime? Checkout { get; set; }
 
     //Relationship
     public virtual Asset? Asset { get; set; }
@@ -54,6 +57,20 @@ public enum RequestType
     Transportation = 5
 }
 
+public enum Piority
+{
+    [Display(Name = "Highest")]
+    Highest = 1,
+    [Display(Name = "High")]
+    High = 2,
+    [Display(Name = "Medium")]
+    Medium = 3,
+    [Display(Name = "Low")]
+    Low = 4,
+    [Display(Name = "Lowest")]
+    Lowest = 5
+}
+
 public class BaseRequestConfig : IEntityTypeConfiguration<BaseRequest>
 {
     public void Configure(EntityTypeBuilder<BaseRequest> builder)
@@ -67,7 +84,9 @@ public class BaseRequestConfig : IEntityTypeConfiguration<BaseRequest>
         builder.Property(a => a.IsInternal).IsRequired();
         builder.Property(a => a.AssignedTo).IsRequired(false);
         builder.Property(a => a.Result).IsRequired(false);
-        
+        builder.Property(a => a.Checkin).IsRequired(false);
+        builder.Property(a => a.Checkout).IsRequired(false);
+
         builder.HasIndex(a => a.RequestCode).IsUnique();
     }
 }

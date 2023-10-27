@@ -11,6 +11,7 @@ namespace API_FFMS.Services
     public interface IAssetTypeService : IBaseService
     {
         Task<ApiResponses<AssetTypeDto>> GetAssetTypes(AssetTypeQueryDto queryDto);
+        Task<ApiResponses<AssetTypeSheetDto>> GetAssetTypes();
         Task<ApiResponse<AssetTypeDetailDto>> GetAssetType(Guid id);
         Task<ApiResponse> Create(AssetTypeCreateDto createDto);
         public Task<ApiResponse> Update(Guid id, AssetTypeUpdateDto updateDto);
@@ -181,6 +182,31 @@ namespace API_FFMS.Services
             }
 
             return ApiResponse.Success();
+        }
+
+        public async Task<ApiResponses<AssetTypeSheetDto>> GetAssetTypes()
+        {
+            var response = MainUnitOfWork.AssetTypeRepository.GetQuery()
+                .Where(x => !x!.DeletedAt.HasValue);
+            var assetTypes = response.Select(x => new AssetTypeSheetDto
+            {
+                Id = x!.Id,
+                Description = x.Description,
+                TypeCode = x.TypeCode,
+                TypeName = x.TypeName,
+                Unit = x.Unit,
+                UnitObj = x.Unit.GetValue(),
+                ImageUrl = x.ImageUrl,
+                CategoryId = x.CategoryId,
+                CreatedAt = x.CreatedAt,
+                EditedAt = x.EditedAt,
+                EditorId = x.EditorId ?? Guid.Empty,
+                CreatorId = x.CreatorId ?? Guid.Empty
+            }).ToList();
+
+            assetTypes = await _mapperRepository.MapCreator(assetTypes);
+
+            return ApiResponses<AssetTypeSheetDto>.Success(assetTypes);
         }
     }
 }

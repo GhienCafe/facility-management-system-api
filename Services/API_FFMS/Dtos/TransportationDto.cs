@@ -20,12 +20,15 @@ public class TransportDto : BaseDto
     public string? Notes { get; set; } // Results
     public bool IsInternal { get; set; }
     public int? Quantity { get; set; }
+    public DateTime? Checkin { get; set; }
+    public DateTime? Checkout { get; set; }
     public Guid? FromRoomId { get; set; }
     public Guid? ToRoomId { get; set; } // For internal
     public Guid? AssignedTo { get; set; }
     public List<FromRoomAssetDto>? Assets { get; set; }
     public RoomBaseDto? ToRoom { get; set; }
-
+    public MediaFileDto? MediaFile { get; set; }
+    public UserBaseDto? AssignTo { get; set; }
 }
 
 public class FromRoomAssetDto
@@ -42,7 +45,7 @@ public class TransportCreateDto
     public string? Description { get; set; }
     public string? Notes { get; set; }
     public bool IsInternal { get; set; }
-    public int? Quantity { get; set; }
+    //public int? Quantity { get; set; }
     public Guid? AssignedTo { get; set; }
     //public Guid? FromRoomId { get; set; }
     public Guid? ToRoomId { get; set; }
@@ -55,6 +58,7 @@ public class AssetTransportDto
     public string? AssetCode { get; set; }
     public string? AssetType { get; set; }
     public double? Quantity { get; set; }
+    public string? FromRoom { get; set; }
 }
 
 public class TransportationQueryDto : BaseRequestQueryDto { }
