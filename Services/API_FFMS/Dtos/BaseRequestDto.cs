@@ -26,7 +26,8 @@ public class BaseRequestDto : BaseDto
     public Guid? AssignedTo { get; set; }    
     public Guid? AssetTypeId { get; set; }
     public Guid? CategoryId { get; set; }
-    
+    //public Priority? Priority { get; set; }
+    public EnumValue? PriorityObj { get; set; }
 }
 
 public class TransportDetailBaseDto : BaseDto
@@ -43,7 +44,7 @@ public class BaseRequestCreateDto
 {
     public Guid AssetId { get; set; }
     public DateTime? CompletionDate { get; set; }
-    public Piority Piority { get; set; }
+    public Priority Priority { get; set; }
     public string? Description { get; set; }
     public string? Notes { get; set; } // Results
     public bool IsInternal { get; set; }
@@ -58,6 +59,7 @@ public class BaseRequestQueryDto : BaseQueryDto
     public RequestStatus? Status { get; set; }
     public bool? IsInternal { get; set; }
     public Guid? AssignedTo { get; set; }    
+    public Priority? Priority { get; set; }
 }
 
 public class BaseRequestUpdateDto
@@ -72,6 +74,7 @@ public class BaseRequestUpdateDto
     public Guid? AssignedTo { get; set; }
     public Guid? AssetTypeId { get; set; }
     public Guid? CategoryId { get; set;}
+    public Priority? Priority { get; set; }
 }
 
 public class BaseTransportCreateDto
