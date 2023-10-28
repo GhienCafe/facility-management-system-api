@@ -21,7 +21,7 @@ public static class EnumExtensions
         return attr != null ? attr.Description : enu.ToString();
     }
 
-    public static EnumValue GetValue(this Enum enu)
+    public static EnumValue? GetValue(this Enum? enu)
     {
         if (enu == null)
             return null;

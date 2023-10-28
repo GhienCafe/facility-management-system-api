@@ -17,6 +17,7 @@ public class FloorDto : BaseDto
     public int FloorNumber { get; set; }
     public string? Description { get; set; }
     public double? TotalArea { get; set; }
+    public int? TotalRooms { get; set; }
     public Guid BuildingId { get; set; }
     public BuildingBaseDto? Building { get; set; }
 }

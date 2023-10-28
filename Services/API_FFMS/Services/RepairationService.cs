@@ -323,7 +323,7 @@ namespace API_FFMS.Services
             existingRepair.CompletionDate = updateDto.CompletionDate ?? existingRepair.CompletionDate;
             existingRepair.Description = updateDto.Description ?? existingRepair.Description;
             existingRepair.Notes = updateDto.Notes ?? existingRepair.Notes;
-            existingRepair.Piority = updateDto.Piority ?? existingRepair.Piority;
+            existingRepair.Priority = updateDto.Priority ?? existingRepair.Priority;
 
             if (!await MainUnitOfWork.RepairationRepository.UpdateAsync(existingRepair, AccountId, CurrentDate))
             {

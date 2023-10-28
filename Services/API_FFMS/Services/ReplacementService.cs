@@ -353,7 +353,7 @@ namespace API_FFMS.Services
             existingReplace.CompletionDate = updateDto.CompletionDate ?? existingReplace.CompletionDate;
             existingReplace.Description = updateDto.Description ?? existingReplace.Description;
             existingReplace.Notes = updateDto.Notes ?? existingReplace.Notes;
-            existingReplace.Piority = updateDto.Piority ?? existingReplace.Piority;
+            existingReplace.Priority = updateDto.Priority ?? existingReplace.Priority;
             if (!await _repository.UpdateStatus(existingReplace, existingReplace.Status, AccountId, CurrentDate))
             {
                 throw new ApiException("Cập nhật thông tin yêu cầu thất bại", StatusCode.SERVER_ERROR);
