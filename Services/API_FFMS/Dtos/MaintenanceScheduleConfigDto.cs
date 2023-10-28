@@ -16,6 +16,12 @@ public class MaintenanceScheduleConfigCreateDto
     public IEnumerable<Guid>? AssetIds { get; set; }
 }
 
+public class MaintenanceScheduleConfigUpdateDto
+{
+    public int? RepeatIntervalInMonths { get; set; } 
+    public string? Description { get; set; }
+}
+
 public class MaintenanceScheduleConfigDetailDto : BaseDto
 {
     public int RepeatIntervalInMonths { get; set; } 

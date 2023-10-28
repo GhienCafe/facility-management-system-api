@@ -15,6 +15,9 @@ namespace API_FFMS.Services
         Task<ApiResponse> CreateMaintenanceSchedule(MaintenanceScheduleConfigCreateDto createDto);
         Task<ApiResponses<MaintenanceScheduleConfigDto>> GetItems(MaintenanceScheduleConfigQueryDto queryDto);
         Task<ApiResponse<MaintenanceScheduleConfigDetailDto>> GetItem(Guid id);
+        Task<ApiResponse> UpdateItem(Guid id, MaintenanceScheduleConfigUpdateDto updateDto);
+        Task<ApiResponse> DeleteItem(Guid id);
+        Task<ApiResponse> DeleteItems(List<Guid> ids);
     }
     public class MaintenanceScheduleService : BaseService, IMaintenanceScheduleService
     {
@@ -92,6 +95,63 @@ namespace API_FFMS.Services
             item = await _mapperRepository.MapCreator(item);
             
             return ApiResponse<MaintenanceScheduleConfigDetailDto>.Success(item);
+        }
+
+        public async Task<ApiResponse> UpdateItem(Guid id, MaintenanceScheduleConfigUpdateDto updateDto)
+        {
+            var checkExist = await MainUnitOfWork.MaintenanceScheduleRepository.FindAsync(
+                new Expression<Func<MaintenanceScheduleConfig, bool>>[]
+                {
+                    x => !x.DeletedAt.HasValue,
+                    x => x.RepeatIntervalInMonths == updateDto.RepeatIntervalInMonths
+                }, null);
+
+            if (checkExist != null && checkExist.Any())
+                throw new ApiException("Đã tồn tại cài đặt", StatusCode.ALREADY_EXISTS);
+            
+            var item = await MainUnitOfWork.MaintenanceScheduleRepository.FindOneAsync(id);
+
+            if (item == null)
+                throw new ApiException("Không tìm thấy nội dung", StatusCode.NOT_FOUND);
+
+            item.Description = updateDto.Description ?? item.Description;
+            item.RepeatIntervalInMonths = updateDto.RepeatIntervalInMonths ?? item.RepeatIntervalInMonths;
+
+            if (!await MainUnitOfWork.MaintenanceScheduleRepository.UpdateAsync(item, AccountId, CurrentDate))
+                throw new ApiException("Xóa thất bại", StatusCode.SERVER_ERROR);
+            
+            return ApiResponse.Success("Cập nhật thành công");
+        }
+
+        public async Task<ApiResponse> DeleteItem(Guid id)
+        {
+            var item = await MainUnitOfWork.MaintenanceScheduleRepository.FindOneAsync(id);
+
+            if (item == null)
+                throw new ApiException("Không tìm thấy nội dung", StatusCode.NOT_FOUND);
+
+            if (!await MainUnitOfWork.MaintenanceScheduleRepository.DeleteAsync(item, AccountId, CurrentDate))
+                throw new ApiException("Xóa thất bại", StatusCode.SERVER_ERROR);
+
+            return ApiResponse.Success("Xóa nội dung thành công");
+        }
+
+        public async Task<ApiResponse> DeleteItems(List<Guid> ids)
+        {
+            var items = await MainUnitOfWork.MaintenanceScheduleRepository.FindAsync(
+                new Expression<Func<MaintenanceScheduleConfig, bool>>[]
+                {
+                     x => !x.DeletedAt.HasValue,
+                     x => ids.Contains(x.Id)
+                }, null);
+
+            if (items == null || !items.Any())
+                throw new ApiException("Không tìm thấy nội dung", StatusCode.NOT_FOUND);
+
+            if (!await MainUnitOfWork.MaintenanceScheduleRepository.DeleteAsync(items, AccountId, CurrentDate))
+                throw new ApiException("Xóa thất bại", StatusCode.SERVER_ERROR);
+
+            return ApiResponse.Success("Xóa nội dung thành công");
         }
     }
 }

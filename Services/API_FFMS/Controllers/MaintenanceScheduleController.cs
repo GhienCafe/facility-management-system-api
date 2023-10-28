@@ -28,12 +28,32 @@ public class MaintenanceScheduleController : BaseController
     {
         return await _maintenanceScheduleService.GetItem(id);
     }
-    
-     
+
     [HttpPost]
     [SwaggerOperation("Create maintenance schedule")]
     public async Task<ApiResponse> CreateItem(MaintenanceScheduleConfigCreateDto createDto)
     {
         return await _maintenanceScheduleService.CreateMaintenanceSchedule(createDto);
+    }
+    
+    [HttpPut("{id}")]
+    [SwaggerOperation("Update maintenance schedule")]
+    public async Task<ApiResponse> UpdateItem(Guid id, [FromBody]MaintenanceScheduleConfigUpdateDto updateDto)
+    {
+        return await _maintenanceScheduleService.UpdateItem(id, updateDto);
+    }
+    
+    [HttpDelete("{id}")]
+    [SwaggerOperation("Delete maintenance schedule")]
+    public async Task<ApiResponse> DeleteItem(Guid id)
+    {
+        return await _maintenanceScheduleService.DeleteItem(id);
+    }
+    
+    [HttpDelete]
+    [SwaggerOperation("Delete maintenance schedules")]
+    public async Task<ApiResponse> DeleteItem(List<Guid> ids)
+    {
+        return await _maintenanceScheduleService.DeleteItems(ids);
     }
 }
