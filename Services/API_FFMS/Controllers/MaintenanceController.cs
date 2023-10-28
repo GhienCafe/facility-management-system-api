@@ -42,11 +42,18 @@ public class MaintenanceController : BaseController
     {
         return await _maintenanceService.UpdateItem(id, updateDto);
     }
-    
+
     // [HttpDelete("{id}")]
     // [SwaggerOperation("Delete maintenance")]
     // public async Task<ApiResponse> Delete(Guid id)
     // {
     //     return await _maintenanceService.DeleteMaintenance(id);
     // }
+
+    [HttpPost("multi")]
+    [SwaggerOperation("Create new list maintenance")]
+    public async Task<ApiResponse> CreateItems([FromBody] List<MaintenanceCreateDto> createDtos)
+    {
+        return await _maintenanceService.CreateItems(createDtos);
+    }
 }

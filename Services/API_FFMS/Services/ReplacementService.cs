@@ -119,7 +119,7 @@ namespace API_FFMS.Services
                 new Expression<Func<Asset, bool>>[]
                 {
                     x => !x.DeletedAt.HasValue,
-                    x => x.Id == replacement.AssetId,
+                    x => x.Id == replacement.AssetId
                 });
             if(replacement.Asset != null)
             {
@@ -127,16 +127,15 @@ namespace API_FFMS.Services
                     new Expression<Func<RoomAsset, bool>>[]
                     {
                         x => !x.DeletedAt.HasValue,
-                    x => x.AssetId == replacement.Asset.Id,
-                    x => x.ToDate == null
+                        x => x.AssetId == replacement.Asset.Id
                     });
                 if (location != null)
                 {
                     replacement.AssetLocation = await MainUnitOfWork.RoomRepository.FindOneAsync<AssetLocation>(
                             new Expression<Func<Room, bool>>[]
                             {
-                            x => !x.DeletedAt.HasValue,
-                            x => x.Id == location.RoomId
+                                x => !x.DeletedAt.HasValue,
+                                x => x.Id == location.RoomId
                             });
                 }
             }
@@ -153,16 +152,15 @@ namespace API_FFMS.Services
                     new Expression<Func<RoomAsset, bool>>[]
                     {
                         x => !x.DeletedAt.HasValue,
-                    x => x.AssetId == replacement.NewAsset.Id,
-                    x => x.ToDate == null
+                        x => x.AssetId == replacement.NewAsset.Id
                     });
                 if (location != null)
                 {
                     replacement.NewAssetLocation = await MainUnitOfWork.RoomRepository.FindOneAsync<AssetLocation>(
                             new Expression<Func<Room, bool>>[]
                             {
-                            x => !x.DeletedAt.HasValue,
-                            x => x.Id == location.RoomId
+                                x => !x.DeletedAt.HasValue,
+                                x => x.Id == location.RoomId
                             });
                 }
             }

@@ -32,35 +32,8 @@ namespace API_FFMS.Repositories
                 replacement.RequestDate = now.Value;
                 await _context.Replacements.AddAsync(replacement);
 
-                //var asset = await _context.Assets.FindAsync(replacement.AssetId);
-                //asset!.Status = AssetStatus.Replacement;
-                //asset.EditedAt = now.Value;
-                //_context.Entry(asset).State = EntityState.Modified;
-
-                //var newAsset = await _context.Assets.FindAsync(replacement.NewAssetId);
-                //newAsset!.Status = AssetStatus.Replacement;
-                //newAsset.EditedAt = now.Value;
-                //_context.Entry(newAsset).State = EntityState.Modified;
-
                 if (replacement.IsInternal)
                 {
-                    //var roomAsset = await _context.RoomAssets
-                    //                .FirstOrDefaultAsync(x => x.AssetId == replacement.AssetId && x.ToDate == null);
-                    //var roomAssetNew = await _context.RoomAssets
-                    //                .FirstOrDefaultAsync(x => x.AssetId == replacement.NewAssetId && x.ToDate == null);
-                    //if (roomAsset != null)
-                    //{
-                    //    roomAsset.Status = AssetStatus.Replacement;
-                    //    roomAsset.EditedAt = now.Value;
-                    //    _context.Entry(roomAsset).State = EntityState.Modified;
-                    //}
-
-                    //if (roomAssetNew != null)
-                    //{
-                    //    roomAssetNew.Status = AssetStatus.Replacement;
-                    //    roomAssetNew.EditedAt = now.Value;
-                    //    _context.Entry(roomAssetNew).State = EntityState.Modified;
-                    //}
                     var notification = new Notification
                     {
                         CreatedAt = now.Value,
@@ -97,6 +70,7 @@ namespace API_FFMS.Repositories
                 replacement.EditedAt = now.Value;
                 replacement.EditorId = editorId;
                 replacement.Status = statusUpdate;
+                replacement.CompletionDate = now.Value;
                 _context.Entry(replacement).State = EntityState.Modified;
 
                 //ASSET

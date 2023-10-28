@@ -1,6 +1,4 @@
-﻿using AppCore.Models;
-using MainData.Entities;
-using Microsoft.AspNetCore.Identity;
+﻿using MainData.Entities;
 
 namespace API_FFMS.Dtos;
 

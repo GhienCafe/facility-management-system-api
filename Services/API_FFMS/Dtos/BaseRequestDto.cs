@@ -19,7 +19,9 @@ public class BaseRequestDto : BaseDto
     public string? Notes { get; set; }
     public string? Result { get; set; }
     public bool IsInternal { get; set; }
+    [JsonConverter(typeof(LocalTimeZoneDateTimeConverter))]
     public DateTime? Checkin { get; set; }
+    [JsonConverter(typeof(LocalTimeZoneDateTimeConverter))]
     public DateTime? Checkout { get; set; }
     public Guid? AssignedTo { get; set; }    
     public Guid? AssetTypeId { get; set; }
@@ -40,9 +42,8 @@ public class TransportDetailBaseDto : BaseDto
 public class BaseRequestCreateDto
 {
     public Guid AssetId { get; set; }
-    //public DateTime? RequestDate { get; set; }
     public DateTime? CompletionDate { get; set; }
-
+    public Piority Piority { get; set; }
     public string? Description { get; set; }
     public string? Notes { get; set; } // Results
     public bool IsInternal { get; set; }
