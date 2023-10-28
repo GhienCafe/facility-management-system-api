@@ -86,6 +86,7 @@ namespace API_FFMS.Repositories
                 repairation.EditedAt = now.Value;
                 repairation.EditorId = editorId;
                 repairation.Status = statusUpdate;
+                repairation.CompletionDate = now.Value;
                 _context.Entry(repairation).State = EntityState.Modified;
 
                 var asset = await _context.Assets

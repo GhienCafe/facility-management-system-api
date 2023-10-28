@@ -43,6 +43,7 @@ public class BaseRequestCreateDto
 {
     public Guid AssetId { get; set; }
     public DateTime? CompletionDate { get; set; }
+    public Piority Piority { get; set; }
     public string? Description { get; set; }
     public string? Notes { get; set; } // Results
     public bool IsInternal { get; set; }

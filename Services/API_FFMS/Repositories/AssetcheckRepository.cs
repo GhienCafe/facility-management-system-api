@@ -71,6 +71,7 @@ namespace API_FFMS.Repositories
                 assetCheck.EditedAt = now.Value;
                 assetCheck.EditorId = editorId;
                 assetCheck.Status = statusUpdate;
+                assetCheck.CompletionDate = now.Value;
                 _context.Entry(assetCheck).State = EntityState.Modified;
 
                 var asset = await _context.Assets.FindAsync(assetCheck.AssetId);
