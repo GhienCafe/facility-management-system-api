@@ -50,7 +50,7 @@ public enum RoomState
     Transportation = 7,
 
     [Display(Name = "Phòng có thiết đang bị hư hại")]
-    OutOfOrder = 8,
+    Damaged = 8,
 
     [Display(Name = "Phòng thiếu trang thiết bị cần thiết")]
     MissingAsset = 9

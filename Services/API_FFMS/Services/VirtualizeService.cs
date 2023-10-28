@@ -89,7 +89,7 @@ public class VirtualizeService : BaseService, IVirtualizeService
              {
                  TotalAssets = groupedData.Count(item => item.ga.ToDate == null && item.ga.Room != null),
                  TotalNormalAssets = groupedData.Count(item => item.ga.ToDate == null && item.ga.Status == AssetStatus.Operational),
-                 TotalDamagedAssets = groupedData.Count(item => item.ga.ToDate == null && item.ga.Status == AssetStatus.OutOfOrder),
+                 TotalDamagedAssets = groupedData.Count(item => item.ga.ToDate == null && item.ga.Status == AssetStatus.Damaged),
                  TotalRepairAssets = groupedData.Count(item => item.ga.ToDate == null && item.ga.Status == AssetStatus.Repair),
                  TotalNeedInspectionAssets = groupedData.Count(item => item.ga.ToDate == null && item.ga.Status == AssetStatus.NeedInspection),
                  TotalInMaintenanceAssets = groupedData.Count(item => item.ga.ToDate == null && item.ga.Status == AssetStatus.Maintenance),
