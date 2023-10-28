@@ -123,6 +123,7 @@ namespace API_FFMS.Dtos
         public Guid? TypeId { get; set; }
         public Guid? ModelId { get; set; }
         public bool? IsRented { get; set; }
+        public Guid? RoomId  { get; set; }
     }
 
     public class AssetTaskCheckQueryDto : BaseQueryDto
