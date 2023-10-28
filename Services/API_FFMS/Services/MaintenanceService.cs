@@ -2,11 +2,9 @@
 using API_FFMS.Repositories;
 using AppCore.Extensions;
 using AppCore.Models;
-using DocumentFormat.OpenXml.Presentation;
 using MainData;
 using MainData.Entities;
 using MainData.Repositories;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
 
@@ -310,6 +308,7 @@ public class MaintenanceService : BaseService, IMaintenanceService
         maintenance.AssignedTo = updateDto.AssignedTo ?? maintenance.AssignedTo;
         maintenance.CompletionDate = updateDto.CompletionDate ?? maintenance.CompletionDate;
         maintenance.RequestDate = updateDto.RequestDate ?? maintenance.RequestDate;
+        maintenance.Piority = updateDto.Piority ?? maintenance.Piority;
         
         if(!await MainUnitOfWork.MaintenanceRepository.UpdateAsync(maintenance, AccountId, CurrentDate))
             throw new ApiException("Cập nhật thất bại", StatusCode.SERVER_ERROR);

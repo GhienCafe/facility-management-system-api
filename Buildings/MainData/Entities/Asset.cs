@@ -60,7 +60,7 @@ public enum AssetStatus
     Transportation = 7,
     
     [Display(Name = "Hư hại")]
-    OutOfOrder = 8,
+    Damaged = 8,
     
     [Display(Name = "Khác")]
     Others = 9,

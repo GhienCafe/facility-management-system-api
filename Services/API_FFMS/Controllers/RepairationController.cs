@@ -29,6 +29,13 @@ namespace API_FFMS.Controllers
             return await _service.CreateRepairation(createDto);
         }
 
+        [HttpPost("multi")]
+        [SwaggerOperation("Create new list repairations")]
+        public async Task<ApiResponse> CreateRepairations([FromBody] List<RepairationCreateDto> createDtos)
+        {
+            return await _service.CreateRepairations(createDtos);
+        }
+
         [HttpGet("{id:guid}")]
         [SwaggerOperation("Get a repairation")]
         public async Task<ApiResponse<RepairationDto>> GetRepairation(Guid id)
