@@ -194,6 +194,7 @@ namespace API_FFMS.Services
                 x => x.Id == replacement.AssignedTo
             });
 
+            replacement.PriorityObj = replacement.Priority.GetValue();
             replacement.Status = replacement.Status;
             replacement.StatusObj = replacement.Status!.GetValue();
 
@@ -235,6 +236,8 @@ namespace API_FFMS.Services
                                                                    x.RequestCode.ToLower().Contains(keyword));
             }
 
+            replaceQuery = replaceQuery.OrderByDescending(x => x!.CreatedAt);
+
             var assetTypeQueryable = MainUnitOfWork.AssetTypeRepository.GetQuery()
             .Where(x => !x!.DeletedAt.HasValue);
 
@@ -273,7 +276,9 @@ namespace API_FFMS.Services
                 IsInternal = x.Replacement.IsInternal,
                 AssignedTo = x.Replacement.AssignedTo,
                 Checkout = x.Replacement.Checkout,
+                PriorityObj = x.Replacement.Priority.GetValue(),
                 Checkin = x.Replacement.Checkin,
+                Result = x.Replacement.Result,
                 AssetId = x.Replacement.AssetId,
                 NewAssetId = x.Replacement.NewAssetId,
                 CreatedAt = x.Replacement.CreatedAt,
@@ -346,8 +351,6 @@ namespace API_FFMS.Services
                 throw new ApiException("Chỉ được cập nhật các yêu cầu chưa hoàn thành", StatusCode.NOT_FOUND);
             }
 
-            existingReplace.RequestDate = updateDto.RequestDate ?? existingReplace.RequestDate;
-            existingReplace.CompletionDate = updateDto.CompletionDate ?? existingReplace.CompletionDate;
             existingReplace.Description = updateDto.Description ?? existingReplace.Description;
             existingReplace.Notes = updateDto.Notes ?? existingReplace.Notes;
             existingReplace.Priority = updateDto.Priority ?? existingReplace.Priority;
