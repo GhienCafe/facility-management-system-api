@@ -5,6 +5,7 @@ using AppCore.Models;
 using MainData;
 using MainData.Entities;
 using MainData.Repositories;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
 
@@ -14,6 +15,7 @@ namespace API_FFMS.Services
     {
         Task<ApiResponses<RepairationDto>> GetRepairations(RepairationQueryDto queryDto);
         Task<ApiResponse> CreateRepairation(RepairationCreateDto createDto);
+        Task<ApiResponse> CreateRepairations(List<RepairationCreateDto> createDtos);
         Task<ApiResponse<RepairationDto>> GetRepairation(Guid id);
         Task<ApiResponse> Update(Guid id, BaseRequestUpdateDto updateDto);
         Task<ApiResponse> Delete(Guid id);
@@ -45,6 +47,40 @@ namespace API_FFMS.Services
 
             if (!await _repairationRepository.InsertRepairation(repairation, AccountId, CurrentDate))
                 throw new ApiException("Tạo yêu cầu thất bại", StatusCode.SERVER_ERROR);
+
+            return ApiResponse.Created("Gửi yêu cầu thành công");
+        }
+
+        public async Task<ApiResponse> CreateRepairations(List<RepairationCreateDto> createDtos)
+        {
+            var assets = await MainUnitOfWork.AssetRepository.FindAsync(
+                new Expression<Func<Asset, bool>>[]
+                {
+                    x => !x!.DeletedAt.HasValue,
+                    x => createDtos.Select(dto => dto.AssetId).Contains(x.Id)
+                }, null);
+
+            foreach (var asset in assets)
+            {
+                if (asset!.Status != AssetStatus.Operational)
+                {
+                    throw new ApiException("Trang thiết bị đang trong một yêu cầu khác", StatusCode.SERVER_ERROR);
+                }
+            }
+
+            var repairations = new List<Repairation>();
+            foreach( var createDto in createDtos)
+            {
+                var repairation = createDto.ProjectTo<RepairationCreateDto, Repairation>();
+            }
+
+            if (repairations != null)
+            {
+                if (!await _repairationRepository.InsertRepairations(repairations, AccountId, CurrentDate))
+                    throw new ApiException("Tạo yêu cầu thất bại", StatusCode.SERVER_ERROR);
+
+                return ApiResponse.Created("Gửi yêu cầu thành công");
+            }
 
             return ApiResponse.Created("Gửi yêu cầu thành công");
         }
@@ -284,6 +320,7 @@ namespace API_FFMS.Services
             existingRepair.CompletionDate = updateDto.CompletionDate ?? existingRepair.CompletionDate;
             existingRepair.Description = updateDto.Description ?? existingRepair.Description;
             existingRepair.Notes = updateDto.Notes ?? existingRepair.Notes;
+            existingRepair.Piority = updateDto.Piority ?? existingRepair.Piority;
 
             if (!await MainUnitOfWork.RepairationRepository.UpdateAsync(existingRepair, AccountId, CurrentDate))
             {

@@ -2,11 +2,9 @@
 using API_FFMS.Repositories;
 using AppCore.Extensions;
 using AppCore.Models;
-using DocumentFormat.OpenXml.Presentation;
 using MainData;
 using MainData.Entities;
 using MainData.Repositories;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
 
@@ -40,7 +38,7 @@ public class MaintenanceService : BaseService, IMaintenanceService
         {
             maintenanceQueryable = maintenanceQueryable.Where(x => x!.AssetId == queryDto.AssetId);
         }
-        
+
         if (queryDto.IsInternal != null)
         {
             maintenanceQueryable = maintenanceQueryable.Where(x => x!.IsInternal == queryDto.IsInternal);
@@ -65,33 +63,33 @@ public class MaintenanceService : BaseService, IMaintenanceService
 
         var assetQueryable = MainUnitOfWork.AssetRepository.GetQuery()
             .Where(x => !x!.DeletedAt.HasValue);
-        
+
         var userQueryable = MainUnitOfWork.UserRepository.GetQuery()
             .Where(x => !x!.DeletedAt.HasValue);
-        
+
         var assetTypeQueryable = MainUnitOfWork.AssetTypeRepository.GetQuery()
             .Where(x => !x!.DeletedAt.HasValue);
-        
+
         var categoryQueryable = MainUnitOfWork.CategoryRepository.GetQuery()
             .Where(x => !x!.DeletedAt.HasValue);
 
         var joinTables = from maintenance in maintenanceQueryable
-            join user in userQueryable on maintenance.AssignedTo equals user.Id into userGroup
-            from user in userGroup.DefaultIfEmpty()
-            join asset in assetQueryable on maintenance.AssetId equals asset.Id into assetGroup
-            from asset in assetGroup.DefaultIfEmpty()
-            join assetType in assetTypeQueryable on asset.TypeId equals assetType.Id into assetTypeGroup
-            from assetType in assetTypeGroup.DefaultIfEmpty()
-            join category in categoryQueryable on assetType.CategoryId equals category.Id into categoryGroup
-            from category in categoryGroup.DefaultIfEmpty()
-            select new
-            {
-                Maintenance = maintenance,
-                User = user,
-                Asset = asset,
-                AssetType = assetType,
-                Category = category
-            };
+                         join user in userQueryable on maintenance.AssignedTo equals user.Id into userGroup
+                         from user in userGroup.DefaultIfEmpty()
+                         join asset in assetQueryable on maintenance.AssetId equals asset.Id into assetGroup
+                         from asset in assetGroup.DefaultIfEmpty()
+                         join assetType in assetTypeQueryable on asset.TypeId equals assetType.Id into assetTypeGroup
+                         from assetType in assetTypeGroup.DefaultIfEmpty()
+                         join category in categoryQueryable on assetType.CategoryId equals category.Id into categoryGroup
+                         from category in categoryGroup.DefaultIfEmpty()
+                         select new
+                         {
+                             Maintenance = maintenance,
+                             User = user,
+                             Asset = asset,
+                             AssetType = assetType,
+                             Category = category
+                         };
 
         var totalCount = await joinTables.CountAsync();
 
@@ -140,7 +138,7 @@ public class MaintenanceService : BaseService, IMaintenanceService
         }
 
         items = await _mapperRepository.MapCreator(items);
-        
+
         return ApiResponses<MaintenanceDto>.Success(
             items,
             totalCount,
@@ -156,36 +154,36 @@ public class MaintenanceService : BaseService, IMaintenanceService
 
         if (maintenanceDto == null)
             throw new ApiException("Không tìm thấy nội dung", StatusCode.NOT_FOUND);
-        
+
         var assetQueryable = MainUnitOfWork.AssetRepository.GetQuery()
             .Where(x => !x!.DeletedAt.HasValue);
-        
+
         var userQueryable = MainUnitOfWork.UserRepository.GetQuery()
             .Where(x => !x!.DeletedAt.HasValue);
-        
+
         var assetTypeQueryable = MainUnitOfWork.AssetTypeRepository.GetQuery()
             .Where(x => !x!.DeletedAt.HasValue);
-        
+
         var categoryQueryable = MainUnitOfWork.CategoryRepository.GetQuery()
             .Where(x => !x!.DeletedAt.HasValue);
 
         var joinTables = from maintenance in maintenanceDto
-            join user in userQueryable on maintenance.AssignedTo equals user.Id into userGroup
-            from user in userGroup.DefaultIfEmpty()
-            join asset in assetQueryable on maintenance.AssetId equals asset.Id into assetGroup
-            from asset in assetGroup.DefaultIfEmpty()
-            join assetType in assetTypeQueryable on asset.TypeId equals assetType.Id into assetTypeGroup
-            from assetType in assetTypeGroup.DefaultIfEmpty()
-            join category in categoryQueryable on assetType.CategoryId equals category.Id into categoryGroup
-            from category in categoryGroup.DefaultIfEmpty()
-            select new
-            {
-                Maintenance = maintenance,
-                User = user,
-                Asset = asset,
-                AssetType = assetType,
-                Category = category
-            };
+                         join user in userQueryable on maintenance.AssignedTo equals user.Id into userGroup
+                         from user in userGroup.DefaultIfEmpty()
+                         join asset in assetQueryable on maintenance.AssetId equals asset.Id into assetGroup
+                         from asset in assetGroup.DefaultIfEmpty()
+                         join assetType in assetTypeQueryable on asset.TypeId equals assetType.Id into assetTypeGroup
+                         from assetType in assetTypeGroup.DefaultIfEmpty()
+                         join category in categoryQueryable on assetType.CategoryId equals category.Id into categoryGroup
+                         from category in categoryGroup.DefaultIfEmpty()
+                         select new
+                         {
+                             Maintenance = maintenance,
+                             User = user,
+                             Asset = asset,
+                             AssetType = assetType,
+                             Category = category
+                         };
 
         var item = await joinTables.Select(x => new MaintenanceDto
         {
@@ -215,7 +213,7 @@ public class MaintenanceService : BaseService, IMaintenanceService
             Result = x.Maintenance.Result,
             PriorityObj = x.Maintenance.Priority.GetValue()
         }).FirstOrDefaultAsync();
-        
+
         var mediaFileQuerys = MainUnitOfWork.MediaFileRepository.GetQuery().Where(m => m!.ItemId == id);
 
         item!.MediaFile = new MediaFileDto
@@ -224,7 +222,7 @@ public class MaintenanceService : BaseService, IMaintenanceService
             Uri = mediaFileQuerys.Select(m => m!.Uri).ToList(),
             Content = mediaFileQuerys.Select(m => m!.Content).FirstOrDefault()
         };
-        
+
         return ApiResponse<MaintenanceDto>.Success(item);
     }
 
@@ -234,7 +232,7 @@ public class MaintenanceService : BaseService, IMaintenanceService
 
         if (asset == null)
             throw new ApiException("Không cần tồn tại trang thiết bị", StatusCode.NOT_FOUND);
-        
+
         if (asset.Status != AssetStatus.Operational)
             throw new ApiException("Trang thiết bị đang trong một yêu cầu khác", StatusCode.BAD_REQUEST);
 
@@ -254,9 +252,9 @@ public class MaintenanceService : BaseService, IMaintenanceService
         if (maintenance == null)
             throw new ApiException("Không tìm thấy nội dung", StatusCode.NOT_FOUND);
 
-        if(maintenance.Status != RequestStatus.Done)
+        if (maintenance.Status != RequestStatus.Done)
             throw new ApiException($"Không thế cập nhật với quy trình có trạng thái: {maintenance.Status?.GetDisplayName()}", StatusCode.BAD_REQUEST);
-        
+
         maintenance.Description = updateDto.Description ?? maintenance.Description;
         //maintenance.Status = updateDto.Status ?? maintenance.Status;
         maintenance.Notes = updateDto.Notes ?? maintenance.Notes;
@@ -267,8 +265,8 @@ public class MaintenanceService : BaseService, IMaintenanceService
         maintenance.CompletionDate = updateDto.CompletionDate ?? maintenance.CompletionDate;
         maintenance.Priority = updateDto.Priority ?? maintenance.Priority;
         //maintenance.RequestDate = updateDto.RequestDate ?? maintenance.RequestDate;
-        
-        if(!await MainUnitOfWork.MaintenanceRepository.UpdateAsync(maintenance, AccountId, CurrentDate))
+
+        if (!await MainUnitOfWork.MaintenanceRepository.UpdateAsync(maintenance, AccountId, CurrentDate))
             throw new ApiException("Cập nhật thất bại", StatusCode.SERVER_ERROR);
 
         return ApiResponse.Success("Cập nhật thành công");
@@ -299,7 +297,7 @@ public class MaintenanceService : BaseService, IMaintenanceService
             //maintenance.RequestCode = GenerateRequestCode();
             maintenances.Add(maintenance);
         }
-        
+
         if (!await _maintenanceRepository.InsertMaintenances(maintenances, AccountId, CurrentDate))
             throw new ApiException("Tạo yêu cầu thất bại", StatusCode.SERVER_ERROR);
 

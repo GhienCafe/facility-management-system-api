@@ -14,7 +14,7 @@ public interface ITaskService : IBaseService
 {
     Task<ApiResponses<TaskBaseDto>> GetTasks(TaskQueryDto queryDto);
     Task<ApiResponse<TaskDetailDto>> GetTaskDetail(Guid id);
-    Task<ApiResponse> UpdateTaskStatus(ReportCreateDto createDto, RequestStatus status);
+    Task<ApiResponse> UpdateTaskStatus(ReportCreateDto createDto);
 }
 
 public class TaskService : BaseService, ITaskService
@@ -27,7 +27,7 @@ public class TaskService : BaseService, ITaskService
         _taskRepository = taskRepository;
     }
 
-    public async Task<ApiResponse> UpdateTaskStatus(ReportCreateDto createDto, RequestStatus status)
+    public async Task<ApiResponse> UpdateTaskStatus(ReportCreateDto createDto)
     {
         //ASSET CHECK
         var assetCheckReport = await MainUnitOfWork.AssetCheckRepository.FindOneAsync(
@@ -41,6 +41,7 @@ public class TaskService : BaseService, ITaskService
         if (assetCheckReport != null)
         {
             createDto.ItemId = assetCheckReport.Id;
+            assetCheckReport.IsVerified = createDto.IsVerified ?? assetCheckReport.IsVerified;
         }
 
         //TRANSPORTATION
@@ -116,11 +117,9 @@ public class TaskService : BaseService, ITaskService
             mediaFiles.Add(newMediaFile);
         }
 
-        //var taskReport = createDto.ProjectTo<ReportCreateDto, MediaFile>();
-
         if (mediaFiles.Count() > 0)
         {
-            if (!await _taskRepository.UpdateStatus(mediaFiles, status, AccountId, CurrentDate))
+            if (!await _taskRepository.UpdateStatus(mediaFiles, createDto.Status, AccountId, CurrentDate))
             {
                 throw new ApiException("Báo cáo thất bại", StatusCode.SERVER_ERROR);
             }

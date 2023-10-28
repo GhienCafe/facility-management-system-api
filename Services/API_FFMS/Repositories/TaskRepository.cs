@@ -75,10 +75,28 @@ namespace API_FFMS.Repositories
                             };
                             _context.MediaFiles.Add(newMediaFile);
                         }
-                        assetCheck.IsVerified = true;
                         assetCheck.Result = mediaFiles.First().Content;
                         assetCheck.Checkout = now.Value;
                         _context.Entry(assetCheck).State = EntityState.Modified;
+
+                        if (assetCheck.IsVerified == true)
+                        {
+                            asset!.Status = AssetStatus.Damaged;
+                            asset.EditedAt = now.Value;
+                            _context.Entry(asset).State = EntityState.Modified;
+
+                            assetLocation!.State = RoomState.Damaged;
+                            _context.Entry(assetLocation).State = EntityState.Modified;
+                        }
+                        else if (assetCheck.IsVerified == false)
+                        {
+                            asset!.Status = AssetStatus.Operational;
+                            asset.EditedAt = now.Value;
+                            _context.Entry(asset).State = EntityState.Modified;
+
+                            assetLocation!.State = RoomState.Operational;
+                            _context.Entry(assetLocation).State = EntityState.Modified;
+                        }
 
                         var notification = new Notification
                         {

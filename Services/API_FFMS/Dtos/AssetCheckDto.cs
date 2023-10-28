@@ -16,3 +16,8 @@ public class AssetCheckQueryDto : BaseRequestQueryDto { }
 public class AssetCheckCreateDto : BaseRequestCreateDto { }
 
 public class AssetCheckUpdateDto : BaseRequestUpdateDto { }
+
+public class AssetCheckUpdateStatusDto : BaseUpdateStatusDto
+{
+    public bool? IsVerified { get; set; }
+}

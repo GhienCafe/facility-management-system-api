@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using AppCore.Attributes;
 using AppCore.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -60,14 +61,23 @@ public enum RequestType
 public enum Priority
 {
     [Display(Name = "Highest")]
+    [Color("#ff5630")]
     Highest = 1,
+
     [Display(Name = "High")]
+    [Color("#ff7452")]
     High = 2,
+
     [Display(Name = "Medium")]
+    [Color("#ffab00")]
     Medium = 3,
+
     [Display(Name = "Low")]
+    [Color("#2684ff")]
     Low = 4,
+
     [Display(Name = "Lowest")]
+    [Color("#0065ff")]
     Lowest = 5
 }
 

@@ -54,4 +54,12 @@ public class ReportCreateDto
     public FileType FileType { get; set; }
     public string? Content { get; set; }
     public Guid? ItemId { get; set; }
+    public RequestStatus? Status { get; set; }
+    public bool? IsVerified { get; set; }
+}
+
+public class UpdateTaskStatus
+{
+    public RequestStatus? Status { get; set; }
+    public bool? IsVerified { get; set; }
 }
