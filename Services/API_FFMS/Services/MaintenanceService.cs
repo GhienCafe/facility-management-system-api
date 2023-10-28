@@ -6,6 +6,7 @@ using DocumentFormat.OpenXml.Presentation;
 using MainData;
 using MainData.Entities;
 using MainData.Repositories;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
 
@@ -16,6 +17,7 @@ public interface IMaintenanceService : IBaseService
     Task<ApiResponses<MaintenanceDto>> GetItems(MaintenanceQueryDto queryDto);
     Task<ApiResponse<MaintenanceDto>> GetItem(Guid id);
     Task<ApiResponse> CreateItem(MaintenanceCreateDto createDto);
+    Task<ApiResponse> CreateItems(List<MaintenanceCreateDto> createDtos);
     Task<ApiResponse> UpdateItem(Guid id, MaintenanceUpdateDto updateDto);
 }
 
@@ -313,6 +315,42 @@ public class MaintenanceService : BaseService, IMaintenanceService
             throw new ApiException("Cập nhật thất bại", StatusCode.SERVER_ERROR);
 
         return ApiResponse.Success("Cập nhật thành công");
+    }
+
+    public async Task<ApiResponse> CreateItems(List<MaintenanceCreateDto> createDtos)
+    {
+        var assets = await MainUnitOfWork.AssetRepository.FindAsync(
+                new Expression<Func<Asset, bool>>[]
+                {
+                    x => !x!.DeletedAt.HasValue,
+                    x => createDtos.Select(dto => dto.AssetId).Contains(x.Id)
+                }, null);
+
+        foreach (var asset in assets)
+        {
+            if (asset!.Status != AssetStatus.Operational)
+            {
+                throw new ApiException("Trang thiết bị đang trong một yêu cầu khác", StatusCode.SERVER_ERROR);
+            }
+        }
+
+        var maintenances = new List<Maintenance>();
+
+        foreach (var item in createDtos)
+        {
+            var maintenance = item.ProjectTo<MaintenanceCreateDto, Maintenance>();
+            //maintenance.RequestCode = GenerateRequestCode();
+            maintenances.Add(maintenance);
+        }
+
+        if(maintenances != null)
+        {
+            if (!await _maintenanceRepository.InsertMaintenances(maintenances, AccountId, CurrentDate))
+                throw new ApiException("Tạo yêu cầu thất bại", StatusCode.SERVER_ERROR);
+
+            return ApiResponse.Created("Gửi yêu cầu thành công");
+        }
+        return ApiResponse.Created("Gửi yêu cầu thành công");
     }
 
     public string GenerateRequestCode()
