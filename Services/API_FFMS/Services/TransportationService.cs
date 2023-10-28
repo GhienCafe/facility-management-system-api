@@ -64,6 +64,7 @@ namespace API_FFMS.Services
                 CompletionDate = createDto.CompletionDate,
                 Description = createDto.Description,
                 Notes = createDto.Notes,
+                Piority = createDto.Piority,
                 IsInternal = createDto.IsInternal,
                 Quantity = (int?)totalQuantity,
                 AssignedTo = createDto.AssignedTo,
@@ -351,7 +352,7 @@ namespace API_FFMS.Services
             }
 
             existingTransport.RequestDate = updateDto.RequestDate ?? existingTransport.RequestDate;
-            existingTransport.CompletionDate = updateDto.CompletionDate ?? existingTransport.CompletionDate;
+            //existingTransport.CompletionDate = updateDto.CompletionDate ?? existingTransport.CompletionDate;
             existingTransport.Description = updateDto.Description ?? existingTransport.Description;
             existingTransport.Notes = updateDto.Notes ?? existingTransport.Notes;
 

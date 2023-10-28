@@ -87,6 +87,7 @@ namespace API_FFMS.Repositories
                 transportation.EditedAt = now.Value;
                 transportation.EditorId = editorId;
                 transportation.Status = statusUpdate;
+                transportation.CompletionDate = now.Value;
                 _context.Entry(transportation).State = EntityState.Modified;
 
                 var assetIds = transportation.TransportationDetails?.Select(td => td.AssetId).ToList();
