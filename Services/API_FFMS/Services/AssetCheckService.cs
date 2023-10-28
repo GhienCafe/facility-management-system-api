@@ -295,7 +295,7 @@ public class AssetCheckService : BaseService, IAssetCheckService
         existingAssetcheck.AssignedTo = updateDto.AssignedTo ?? existingAssetcheck.AssignedTo;
         existingAssetcheck.CompletionDate = updateDto.CompletionDate ?? existingAssetcheck.CompletionDate;
         existingAssetcheck.RequestDate = updateDto.RequestDate ?? existingAssetcheck.RequestDate;
-        existingAssetcheck.Piority = updateDto.Piority ?? existingAssetcheck.Piority;
+        existingAssetcheck.Priority = updateDto.Priority ?? existingAssetcheck.Priority;
 
         if (!await MainUnitOfWork.AssetCheckRepository.UpdateAsync(existingAssetcheck, AccountId, CurrentDate))
         {
