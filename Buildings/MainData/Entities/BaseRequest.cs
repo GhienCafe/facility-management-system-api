@@ -15,7 +15,7 @@ public class BaseRequest : BaseEntity
     public string? Notes { get; set; }
     public string? Result { get; set; }
     public bool IsInternal { get; set; }
-    public Piority? Piority { get; set; }
+    public Priority? Priority { get; set; }
     public Guid? AssignedTo { get; set; }
     public DateTime? Checkin {  get; set; }
     public DateTime? Checkout { get; set; }
@@ -57,7 +57,7 @@ public enum RequestType
     Transportation = 5
 }
 
-public enum Piority
+public enum Priority
 {
     [Display(Name = "Highest")]
     Highest = 1,

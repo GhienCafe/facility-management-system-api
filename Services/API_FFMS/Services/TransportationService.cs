@@ -64,7 +64,7 @@ namespace API_FFMS.Services
                 CompletionDate = createDto.CompletionDate,
                 Description = createDto.Description,
                 Notes = createDto.Notes,
-                Piority = createDto.Piority,
+                Priority = createDto.Priority,
                 IsInternal = createDto.IsInternal,
                 Quantity = (int?)totalQuantity,
                 AssignedTo = createDto.AssignedTo,

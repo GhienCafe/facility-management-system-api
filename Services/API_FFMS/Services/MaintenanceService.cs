@@ -121,7 +121,8 @@ public class MaintenanceService : BaseService, IMaintenanceService
             User = x.User.ProjectTo<User, UserBaseDto>(),
             Asset = x.Asset.ProjectTo<Asset, AssetBaseDto>(),
             AssetType = x.AssetType.ProjectTo<AssetType, AssetTypeDto>(),
-            Category = x.Category.ProjectTo<Category, CategoryDto>()
+            Category = x.Category.ProjectTo<Category, CategoryDto>(),
+            PriorityObj = x.Maintenance.Priority.GetValue()
         }).ToListAsync();
 
         foreach (var item in items)
@@ -150,51 +151,6 @@ public class MaintenanceService : BaseService, IMaintenanceService
 
     public async Task<ApiResponse<MaintenanceDto>> GetItem(Guid id)
     {
-        // var maintenance = await MainUnitOfWork.MaintenanceRepository.FindOneAsync(id);
-        //
-        // if (maintenance == null)
-        //     throw new ApiException("Không tìm thấy nội dung", StatusCode.NOT_FOUND);
-        //
-        // var maintenanceDto = maintenance.ProjectTo<Maintenance, MaintenanceDto>();
-        // maintenanceDto.Asset = await MainUnitOfWork.AssetRepository.FindOneAsync<AssetBaseDto>(new Expression<Func<Asset, bool>>[]
-        // {
-        //     x => !x.DeletedAt.HasValue,
-        //     x => x.Id == maintenance.AssetId
-        // });
-        //
-        // if (maintenanceDto.Asset != null)
-        // {
-        //     maintenanceDto.Asset.StatusObj = maintenance.Asset?.Status.GetValue();
-        //     
-        //     maintenanceDto.AssetType = await MainUnitOfWork.AssetTypeRepository.FindOneAsync<AssetTypeDto>(new Expression<Func<AssetType, bool>>[]
-        //     {
-        //         x => !x.DeletedAt.HasValue,
-        //         x => x.Id == maintenanceDto.Asset.TypeId
-        //     });
-        // }
-        //
-        // maintenanceDto.StatusObj = maintenance.Status?.GetValue();
-        //
-        // maintenanceDto.User = await MainUnitOfWork.UserRepository.FindOneAsync<UserBaseDto>(new Expression<Func<User, bool>>[]
-        // {
-        //     x => !x.DeletedAt.HasValue,
-        //     x => x.Id == maintenance.AssignedTo
-        // });
-        //
-        // if (maintenanceDto.User != null)
-        // {
-        //     maintenanceDto.User.StatusObj = maintenanceDto.User.Status?.GetValue();
-        //     maintenanceDto.User.RoleObj = maintenanceDto.User.Role?.GetValue();
-        // }
-        //
-        // if (maintenanceDto.AssetType != null)
-        // {
-        //     maintenanceDto.Category = (await MainUnitOfWork.CategoryRepository.FindOneAsync(maintenanceDto.AssetType.CategoryId ?? Guid.Empty))?
-        //         .ProjectTo<Category, CategoryDto>();
-        // }
-        //
-        // maintenanceDto = await _mapperRepository.MapCreator(maintenanceDto);
-
         var maintenanceDto = MainUnitOfWork.MaintenanceRepository.GetQuery()
             .Where(x => !x!.DeletedAt.HasValue && x.Id == id);
 
@@ -213,8 +169,6 @@ public class MaintenanceService : BaseService, IMaintenanceService
         var categoryQueryable = MainUnitOfWork.CategoryRepository.GetQuery()
             .Where(x => !x!.DeletedAt.HasValue);
 
-        var mediaFileQuery = MainUnitOfWork.MediaFileRepository.GetQuery();
-
         var joinTables = from maintenance in maintenanceDto
             join user in userQueryable on maintenance.AssignedTo equals user.Id into userGroup
             from user in userGroup.DefaultIfEmpty()
@@ -224,16 +178,13 @@ public class MaintenanceService : BaseService, IMaintenanceService
             from assetType in assetTypeGroup.DefaultIfEmpty()
             join category in categoryQueryable on assetType.CategoryId equals category.Id into categoryGroup
             from category in categoryGroup.DefaultIfEmpty()
-            join image in mediaFileQuery on maintenance.Id equals image.ItemId into mediaFile
-            from image in mediaFile.DefaultIfEmpty()
             select new
             {
                 Maintenance = maintenance,
                 User = user,
                 Asset = asset,
                 AssetType = assetType,
-                Category = category,
-                Image = image
+                Category = category
             };
 
         var item = await joinTables.Select(x => new MaintenanceDto
@@ -261,13 +212,18 @@ public class MaintenanceService : BaseService, IMaintenanceService
             Asset = x.Asset.ProjectTo<Asset, AssetBaseDto>(),
             AssetType = x.AssetType.ProjectTo<AssetType, AssetTypeDto>(),
             Category = x.Category.ProjectTo<Category, CategoryDto>(),
-            MediaFile = new MediaFileDto
-            {
-                FileType = x.Image.FileType,
-                Uri = mediaFileQuery.Where(m => m!.ItemId == x.Maintenance.Id).Select(m => m!.Uri).ToList(),
-                Content = x.Image.Content
-            }
+            Result = x.Maintenance.Result,
+            PriorityObj = x.Maintenance.Priority.GetValue()
         }).FirstOrDefaultAsync();
+        
+        var mediaFileQuerys = MainUnitOfWork.MediaFileRepository.GetQuery().Where(m => m!.ItemId == id);
+
+        item!.MediaFile = new MediaFileDto
+        {
+            FileType = mediaFileQuerys.Select(m => m!.FileType).FirstOrDefault(),
+            Uri = mediaFileQuerys.Select(m => m!.Uri).ToList(),
+            Content = mediaFileQuerys.Select(m => m!.Content).FirstOrDefault()
+        };
         
         return ApiResponse<MaintenanceDto>.Success(item);
     }
@@ -309,7 +265,8 @@ public class MaintenanceService : BaseService, IMaintenanceService
         maintenance.AssetTypeId = updateDto.AssetTypeId ?? maintenance.AssetTypeId;
         maintenance.AssignedTo = updateDto.AssignedTo ?? maintenance.AssignedTo;
         maintenance.CompletionDate = updateDto.CompletionDate ?? maintenance.CompletionDate;
-        maintenance.RequestDate = updateDto.RequestDate ?? maintenance.RequestDate;
+        maintenance.Priority = updateDto.Priority ?? maintenance.Priority;
+        //maintenance.RequestDate = updateDto.RequestDate ?? maintenance.RequestDate;
         
         if(!await MainUnitOfWork.MaintenanceRepository.UpdateAsync(maintenance, AccountId, CurrentDate))
             throw new ApiException("Cập nhật thất bại", StatusCode.SERVER_ERROR);
@@ -342,14 +299,10 @@ public class MaintenanceService : BaseService, IMaintenanceService
             //maintenance.RequestCode = GenerateRequestCode();
             maintenances.Add(maintenance);
         }
+        
+        if (!await _maintenanceRepository.InsertMaintenances(maintenances, AccountId, CurrentDate))
+            throw new ApiException("Tạo yêu cầu thất bại", StatusCode.SERVER_ERROR);
 
-        if(maintenances != null)
-        {
-            if (!await _maintenanceRepository.InsertMaintenances(maintenances, AccountId, CurrentDate))
-                throw new ApiException("Tạo yêu cầu thất bại", StatusCode.SERVER_ERROR);
-
-            return ApiResponse.Created("Gửi yêu cầu thành công");
-        }
         return ApiResponse.Created("Gửi yêu cầu thành công");
     }
 
