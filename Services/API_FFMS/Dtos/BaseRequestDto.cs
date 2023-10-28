@@ -26,7 +26,7 @@ public class BaseRequestDto : BaseDto
     public Guid? AssignedTo { get; set; }    
     public Guid? AssetTypeId { get; set; }
     public Guid? CategoryId { get; set; }
-    //public Priority? Priority { get; set; }
+    public Priority? Priority { get; set; }
     public EnumValue? PriorityObj { get; set; }
 }
 
@@ -64,12 +64,9 @@ public class BaseRequestQueryDto : BaseQueryDto
 
 public class BaseRequestUpdateDto
 {
-    public DateTime? RequestDate { get; set; }
-    public DateTime? CompletionDate { get; set; }
-    //public RequestStatus? Status { get; set; }
     public string? Description { get; set; }
     public bool? IsInternal { get; set; }
-    public string? Notes { get; set; } // Results
+    public string? Notes { get; set; }
     public Guid? AssignedTo { get; set; }
     public Guid? AssetTypeId { get; set; }
     public Guid? CategoryId { get; set;}

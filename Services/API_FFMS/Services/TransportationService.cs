@@ -232,6 +232,7 @@ namespace API_FFMS.Services
                 StatusObj = existingtransport.Status!.GetValue(),
                 RequestDate = existingtransport.RequestDate,
                 Quantity = existingtransport.Quantity,
+                PriorityObj = existingtransport.Priority.GetValue(),
                 Checkin = existingtransport.Checkin,
                 Result = existingtransport.Result,
                 Checkout = existingtransport.Checkout,
@@ -295,6 +296,7 @@ namespace API_FFMS.Services
                 Checkout = t.Checkout,
                 Checkin = t.Checkout,
                 Result = t.Result,
+                PriorityObj = t.Priority.GetValue(),
                 Notes = t.Notes,
                 IsInternal = t.IsInternal,
                 Quantity = t.Quantity,
@@ -365,9 +367,6 @@ namespace API_FFMS.Services
             {
                 throw new ApiException("Chỉ được cập nhật các yêu cầu chưa hoàn thành", StatusCode.NOT_FOUND);
             }
-
-            existingTransport.RequestDate = updateDto.RequestDate ?? existingTransport.RequestDate;
-            //existingTransport.CompletionDate = updateDto.CompletionDate ?? existingTransport.CompletionDate;
             existingTransport.Description = updateDto.Description ?? existingTransport.Description;
             existingTransport.Notes = updateDto.Notes ?? existingTransport.Notes;
             existingTransport.Priority = updateDto.Priority ?? existingTransport.Priority;

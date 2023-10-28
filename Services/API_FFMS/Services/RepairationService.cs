@@ -167,6 +167,7 @@ namespace API_FFMS.Services
                 Content = mediaFileQuery.Select(m => m!.Content).FirstOrDefault()
             };
 
+            repairation.PriorityObj = repairation.Priority.GetValue();
             repairation.Status = repairation.Status;
             repairation.StatusObj = repairation.Status!.GetValue();
 
@@ -249,6 +250,8 @@ namespace API_FFMS.Services
                 Checkin = x.Repairation.Checkin,
                 Result = x.Repairation.Result,
                 Checkout = x.Repairation.Checkout,
+                Priority = x.Repairation.Priority,
+                PriorityObj = x.Repairation.Priority.GetValue(),
                 IsInternal = x.Repairation.IsInternal,
                 AssignedTo = x.Repairation.AssignedTo,
                 AssetId = x.Repairation.AssetId,
@@ -319,8 +322,6 @@ namespace API_FFMS.Services
                 throw new ApiException("Chỉ được cập nhật các yêu cầu chưa hoàn thành", StatusCode.NOT_FOUND);
             }
 
-            existingRepair.RequestDate = updateDto.RequestDate ?? existingRepair.RequestDate;
-            existingRepair.CompletionDate = updateDto.CompletionDate ?? existingRepair.CompletionDate;
             existingRepair.Description = updateDto.Description ?? existingRepair.Description;
             existingRepair.Notes = updateDto.Notes ?? existingRepair.Notes;
             existingRepair.Priority = updateDto.Priority ?? existingRepair.Priority;
