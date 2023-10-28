@@ -149,6 +149,8 @@ public class AssetCheckService : BaseService, IAssetCheckService
             Uri = mediaFileQuery.Select(m => m!.Uri).ToList(),
             Content = mediaFileQuery.Select(m => m!.Content).FirstOrDefault()
         };
+
+        assetCheck.PriorityObj = assetCheck.Priority.GetValue();
         assetCheck.IsVerified = assetCheck.IsVerified;
         assetCheck.Status = assetCheck.Status;
         assetCheck.StatusObj = assetCheck.Status!.GetValue();
@@ -190,6 +192,8 @@ public class AssetCheckService : BaseService, IAssetCheckService
                                                       || x.RequestCode.ToLower().Contains(keyword));
         }
 
+        assetCheckQuery = assetCheckQuery.OrderByDescending(x => x!.CreatedAt);
+
         var joinTables = from assetCheck in assetCheckQuery
                          join asset in MainUnitOfWork.AssetRepository.GetQuery() on assetCheck.AssetId equals asset.Id into
                              assetGroup
@@ -221,7 +225,9 @@ public class AssetCheckService : BaseService, IAssetCheckService
             RequestDate = x.AssetCheck.RequestDate,
             CompletionDate = x.AssetCheck.CompletionDate,
             Status = x.AssetCheck.Status,
-            StatusObj = x.AssetCheck.Status!.GetValue(),
+            StatusObj = x.AssetCheck.Status.GetValue(),
+            PriorityObj = x.AssetCheck.Priority.GetValue(),
+            Result = x.AssetCheck.Result,
             Notes = x.AssetCheck.Notes,
             Checkin = x.AssetCheck.Checkin,
             Checkout = x.AssetCheck.Checkout,
@@ -287,14 +293,11 @@ public class AssetCheckService : BaseService, IAssetCheckService
         }
 
         existingAssetcheck.Description = updateDto.Description ?? existingAssetcheck.Description;
-        //existingAssetcheck.Status = updateDto.Status ?? existingAssetcheck.Status;
         existingAssetcheck.Notes = updateDto.Notes ?? existingAssetcheck.Notes;
         existingAssetcheck.CategoryId = updateDto.CategoryId ?? existingAssetcheck.CategoryId;
         existingAssetcheck.IsInternal = updateDto.IsInternal ?? existingAssetcheck.IsInternal;
         existingAssetcheck.AssetTypeId = updateDto.AssetTypeId ?? existingAssetcheck.AssetTypeId;
         existingAssetcheck.AssignedTo = updateDto.AssignedTo ?? existingAssetcheck.AssignedTo;
-        existingAssetcheck.CompletionDate = updateDto.CompletionDate ?? existingAssetcheck.CompletionDate;
-        existingAssetcheck.RequestDate = updateDto.RequestDate ?? existingAssetcheck.RequestDate;
         existingAssetcheck.Priority = updateDto.Priority ?? existingAssetcheck.Priority;
 
         if (!await MainUnitOfWork.AssetCheckRepository.UpdateAsync(existingAssetcheck, AccountId, CurrentDate))
