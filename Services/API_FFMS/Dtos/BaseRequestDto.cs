@@ -68,7 +68,6 @@ public class BaseRequestUpdateDto
     public DateTime? CompletionDate { get; set; }
     //public RequestStatus? Status { get; set; }
     public string? Description { get; set; }
-    public Piority? Piority { get; set; }
     public bool? IsInternal { get; set; }
     public string? Notes { get; set; } // Results
     public Guid? AssignedTo { get; set; }

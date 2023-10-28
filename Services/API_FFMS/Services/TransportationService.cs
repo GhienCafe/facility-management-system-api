@@ -355,7 +355,7 @@ namespace API_FFMS.Services
             //existingTransport.CompletionDate = updateDto.CompletionDate ?? existingTransport.CompletionDate;
             existingTransport.Description = updateDto.Description ?? existingTransport.Description;
             existingTransport.Notes = updateDto.Notes ?? existingTransport.Notes;
-            existingTransport.Piority = updateDto.Piority ?? existingTransport.Piority;
+            existingTransport.Priority = updateDto.Priority ?? existingTransport.Priority;
 
             if (!await MainUnitOfWork.TransportationRepository.UpdateAsync(existingTransport, AccountId, CurrentDate))
             {
