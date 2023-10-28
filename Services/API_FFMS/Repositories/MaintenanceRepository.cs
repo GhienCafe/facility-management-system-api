@@ -176,6 +176,7 @@ public class MaintenanceRepository : IMaintenanceRepository
             maintenance.EditedAt = now.Value;
             maintenance.EditorId = editorId;
             maintenance.Status = statusUpdate;
+            maintenance.CompletionDate = now.Value;
             _context.Entry(maintenance).State = EntityState.Modified;
 
             var asset = await _context.Assets
