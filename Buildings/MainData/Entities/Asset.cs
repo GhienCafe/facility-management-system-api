@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using AppCore.Attributes;
 using AppCore.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -39,32 +40,40 @@ public class Asset : BaseEntity
 public enum AssetStatus
 {
     [Display(Name = "Hoạt động bình thường")]
+    [Color("#00FF00")] // Green color
     Operational = 1,
 
     [Display(Name = "Không thể sử dụng")]
+    [Color("#FF0000")] // Red color
     Inactive = 2,
 
     [Display(Name = "Đang bảo dưỡng")]
+    [Color("#FFFF00")] // Yellow color
     Maintenance = 3,
 
     [Display(Name = "Đang sửa chữa")]
+    [Color("#FFA500")] // Orange color
     Repair = 4,
-    
+
     [Display(Name = "Đang chờ kiểm tra")]
+    [Color("#0000FF")] // Blue color
     NeedInspection = 5,
-    
+
     [Display(Name = "Đang chờ thay thế")]
+    [Color("#800080")] // Purple color
     Replacement = 6,
-    
+
     [Display(Name = "Đang được điều chuyển")]
+    [Color("#008080")] // Teal color
     Transportation = 7,
-    
+
     [Display(Name = "Hư hại")]
+    [Color("#FF6347")] // Tomato color
     OutOfOrder = 8,
-    
+
     [Display(Name = "Khác")]
+    [Color("#808080")] // Gray color
     Others = 9,
-   
 }
 
 public enum RoomRequestStatus{}
