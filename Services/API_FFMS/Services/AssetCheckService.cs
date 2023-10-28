@@ -18,7 +18,7 @@ public interface IAssetCheckService : IBaseService
     Task<ApiResponse> Create(AssetCheckCreateDto createDto);
     Task<ApiResponse<AssetCheckDto>> GetAssetCheck(Guid id);
     Task<ApiResponse> Update(Guid id, AssetCheckUpdateDto updateDto);
-    Task<ApiResponse> UpdateStatus(Guid id, BaseUpdateStatusDto requestStatus);
+    Task<ApiResponse> UpdateStatus(Guid id, AssetCheckUpdateStatusDto requestStatus);
 }
 
 public class AssetCheckService : BaseService, IAssetCheckService
@@ -149,7 +149,7 @@ public class AssetCheckService : BaseService, IAssetCheckService
             Uri = mediaFileQuery.Select(m => m!.Uri).ToList(),
             Content = mediaFileQuery.Select(m => m!.Content).FirstOrDefault()
         };
-
+        assetCheck.IsVerified = assetCheck.IsVerified;
         assetCheck.Status = assetCheck.Status;
         assetCheck.StatusObj = assetCheck.Status!.GetValue();
 
@@ -295,6 +295,7 @@ public class AssetCheckService : BaseService, IAssetCheckService
         existingAssetcheck.AssignedTo = updateDto.AssignedTo ?? existingAssetcheck.AssignedTo;
         existingAssetcheck.CompletionDate = updateDto.CompletionDate ?? existingAssetcheck.CompletionDate;
         existingAssetcheck.RequestDate = updateDto.RequestDate ?? existingAssetcheck.RequestDate;
+        existingAssetcheck.Piority = updateDto.Piority ?? existingAssetcheck.Piority;
 
         if (!await MainUnitOfWork.AssetCheckRepository.UpdateAsync(existingAssetcheck, AccountId, CurrentDate))
         {
@@ -304,7 +305,7 @@ public class AssetCheckService : BaseService, IAssetCheckService
         return ApiResponse.Success("Cập nhật thành công");
     }
 
-    public async Task<ApiResponse> UpdateStatus(Guid id, BaseUpdateStatusDto requestStatus)
+    public async Task<ApiResponse> UpdateStatus(Guid id, AssetCheckUpdateStatusDto requestStatus)
     {
         var existingAssetCheck = MainUnitOfWork.AssetCheckRepository.GetQuery()
                                 .Include(t => t!.Asset)
@@ -316,6 +317,7 @@ public class AssetCheckService : BaseService, IAssetCheckService
         }
 
         existingAssetCheck.Status = requestStatus.Status ?? existingAssetCheck.Status;
+        existingAssetCheck.IsVerified = requestStatus.IsVerified ?? existingAssetCheck.IsVerified; 
 
         if (!await _assetcheckRepository.UpdateStatus(existingAssetCheck, requestStatus.Status, AccountId, CurrentDate))
         {

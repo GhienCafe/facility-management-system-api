@@ -69,7 +69,7 @@ public enum AssetStatus
 
     [Display(Name = "Hư hại")]
     [Color("#FF6347")] // Tomato color
-    OutOfOrder = 8,
+    Damaged = 8,
 
     [Display(Name = "Khác")]
     [Color("#808080")] // Gray color
