@@ -190,6 +190,8 @@ public class AssetCheckService : BaseService, IAssetCheckService
                                                       || x.RequestCode.ToLower().Contains(keyword));
         }
 
+        assetCheckQuery = assetCheckQuery.OrderByDescending(x => x!.CreatedAt);
+
         var joinTables = from assetCheck in assetCheckQuery
                          join asset in MainUnitOfWork.AssetRepository.GetQuery() on assetCheck.AssetId equals asset.Id into
                              assetGroup
@@ -222,6 +224,7 @@ public class AssetCheckService : BaseService, IAssetCheckService
             CompletionDate = x.AssetCheck.CompletionDate,
             Status = x.AssetCheck.Status,
             StatusObj = x.AssetCheck.Status!.GetValue(),
+            Result = x.AssetCheck.Result,
             Notes = x.AssetCheck.Notes,
             Checkin = x.AssetCheck.Checkin,
             Checkout = x.AssetCheck.Checkout,

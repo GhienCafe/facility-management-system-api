@@ -6,7 +6,6 @@ using AppCore.Models;
 using MainData;
 using MainData.Entities;
 using MainData.Repositories;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace API_FFMS.Services;
@@ -106,6 +105,15 @@ public class FloorService : BaseService, IFloorService
                 x => !x.DeletedAt.HasValue,
                 x => x.Id == floor.BuildingId
             });
+
+        var totalRoom = await MainUnitOfWork.RoomRepository.FindAsync(
+            new Expression<Func<Room, bool>>[]
+            {
+                x => !x.DeletedAt.HasValue,
+                x => x.FloorId == id
+            }, null);
+
+        floor.TotalRoom = totalRoom.Count();
 
         // Map CDC for the post
         floor = await _mapperRepository.MapCreator(floor);

@@ -235,6 +235,8 @@ namespace API_FFMS.Services
                                                                    x.RequestCode.ToLower().Contains(keyword));
             }
 
+            replaceQuery = replaceQuery.OrderByDescending(x => x!.CreatedAt);
+
             var assetTypeQueryable = MainUnitOfWork.AssetTypeRepository.GetQuery()
             .Where(x => !x!.DeletedAt.HasValue);
 
@@ -274,6 +276,7 @@ namespace API_FFMS.Services
                 AssignedTo = x.Replacement.AssignedTo,
                 Checkout = x.Replacement.Checkout,
                 Checkin = x.Replacement.Checkin,
+                Result = x.Replacement.Result,
                 AssetId = x.Replacement.AssetId,
                 NewAssetId = x.Replacement.NewAssetId,
                 CreatedAt = x.Replacement.CreatedAt,

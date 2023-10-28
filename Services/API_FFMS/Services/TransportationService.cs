@@ -2,6 +2,7 @@
 using API_FFMS.Repositories;
 using AppCore.Extensions;
 using AppCore.Models;
+using DocumentFormat.OpenXml.Wordprocessing;
 using MainData;
 using MainData.Entities;
 using MainData.Repositories;
@@ -53,9 +54,19 @@ namespace API_FFMS.Services
                     asset!.Quantity = correspondingDto.Quantity ?? 0;
                 }
             }
+            var toRoom = await MainUnitOfWork.RoomRepository.FindOneAsync((Guid)createDto.ToRoomId!);
+            var roomAssets = await MainUnitOfWork.RoomAssetRepository.FindAsync(
+                new Expression<Func<RoomAsset, bool>>[]
+                {
+                    x => !x.DeletedAt.HasValue,
+                    x => x.RoomId == toRoom!.Id,
+                    x => x.ToDate == null
+                }, null);
 
-            //var toRoom = await MainUnitOfWork.RoomRepository.FindOneAsync((Guid)createDto.ToRoomId);
-            double? totalQuantity = createDto.Assets?.Sum(assetDto => assetDto.Quantity);
+            var currentQuantityAssetInRoom = roomAssets.Sum(x => x!.Quantity);
+
+            var totalQuantity = createDto.Assets?.Sum(assetDto => assetDto.Quantity);
+            var checkCapacity = currentQuantityAssetInRoom + totalQuantity;
 
             var transportation = new Transportation
             {
@@ -182,7 +193,7 @@ namespace API_FFMS.Services
                                         Description = asset.Description,
                                         AssetCode = asset.AssetCode,
                                         AssetName = asset.AssetName,
-                                        Quantity = asset.Quantity,
+                                        Quantity = (double)td!.Quantity!,
                                         IsMovable = asset.IsMovable,
                                         IsRented = asset.IsRented,
                                         ManufacturingYear = asset.ManufacturingYear,
@@ -222,6 +233,7 @@ namespace API_FFMS.Services
                 RequestDate = existingtransport.RequestDate,
                 Quantity = existingtransport.Quantity,
                 Checkin = existingtransport.Checkin,
+                Result = existingtransport.Result,
                 Checkout = existingtransport.Checkout,
                 CreatedAt = existingtransport.CreatedAt,
                 EditedAt = existingtransport.EditedAt,
@@ -266,6 +278,8 @@ namespace API_FFMS.Services
                                                                    x.RequestCode.ToLower().Contains(keyword));
             }
 
+            transportQuery = transportQuery.OrderByDescending(x => x!.CreatedAt);
+
             var totalCount = await transportQuery.CountAsync();
             transportQuery = transportQuery.Skip(queryDto.Skip()).Take(queryDto.PageSize);
 
@@ -280,6 +294,7 @@ namespace API_FFMS.Services
                 Description = t.Description,
                 Checkout = t.Checkout,
                 Checkin = t.Checkout,
+                Result = t.Result,
                 Notes = t.Notes,
                 IsInternal = t.IsInternal,
                 Quantity = t.Quantity,
@@ -296,7 +311,7 @@ namespace API_FFMS.Services
                         Id = (Guid)td.AssetId!,
                         AssetCode = td.Asset!.AssetCode,
                         AssetName = td.Asset.AssetName,
-                        Quantity = td.Asset.Quantity,
+                        Quantity = (double)td!.Quantity!,
                         Status = td.Asset.Status,
                         StatusObj = td.Asset.Status.GetValue(),
                         IsMovable = td.Asset.IsMovable,

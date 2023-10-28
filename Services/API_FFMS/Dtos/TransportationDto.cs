@@ -16,6 +16,7 @@ public class TransportDto : BaseDto
     public EnumValue? TypeObj { get; set; }
     public RequestStatus? Status { get; set; }
     public EnumValue? StatusObj { get; set; }
+    public string? Result { get; set; }
     public string? Description { get; set; }
     public string? Notes { get; set; } // Results
     public bool IsInternal { get; set; }

@@ -216,7 +216,7 @@ public class TaskService : BaseService, ITaskService
                                         Description = asset.Description,
                                         AssetCode = asset.AssetCode,
                                         AssetName = asset.AssetName,
-                                        Quantity = asset.Quantity,
+                                        Quantity = (double)td!.Quantity!,
                                         IsMovable = asset.IsMovable,
                                         IsRented = asset.IsRented,
                                         ManufacturingYear = asset.ManufacturingYear,
@@ -375,11 +375,6 @@ public class TaskService : BaseService, ITaskService
                 }
             }
 
-            //repairation.RequestCode = repairation.RequestCode;
-            //repairation.RequestDate = repairation.RequestDate;
-            //repairation.Description = repairation.Description;
-            //repairation.Notes = repairation.Notes;
-            //repairation.Status = repairation.Status;
             repairation.StatusObj = repairation.Status!.GetValue();
             repairation.Type = RequestType.Repairation;
             repairation.TypeObj = repairation.Type.GetValue();
@@ -424,11 +419,7 @@ public class TaskService : BaseService, ITaskService
                         });
                 }
             }
-            //maintenance.RequestCode = maintenance.RequestCode;
-            //maintenance.RequestDate = maintenance.RequestDate;
-            //maintenance.Description = maintenance.Description;
-            //maintenance.Notes = maintenance.Notes;
-            //maintenance.Status = maintenance.Status;
+
             maintenance.StatusObj = maintenance.Status!.GetValue();
             maintenance.Type = RequestType.Maintenance;
             maintenance.TypeObj = maintenance.Type.GetValue();

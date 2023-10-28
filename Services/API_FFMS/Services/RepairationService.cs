@@ -209,6 +209,8 @@ namespace API_FFMS.Services
                                                                    x.RequestCode.ToLower().Contains(keyword));
             }
 
+            repairQuery = repairQuery.OrderByDescending(x => x!.CreatedAt);
+
             var assetTypeQueryable = MainUnitOfWork.AssetTypeRepository.GetQuery()
             .Where(x => !x!.DeletedAt.HasValue);
             var categoryQueryable = MainUnitOfWork.CategoryRepository.GetQuery()
@@ -245,6 +247,7 @@ namespace API_FFMS.Services
                 Description = x.Repairation.Description,
                 Notes = x.Repairation.Notes,
                 Checkin = x.Repairation.Checkin,
+                Result = x.Repairation.Result,
                 Checkout = x.Repairation.Checkout,
                 IsInternal = x.Repairation.IsInternal,
                 AssignedTo = x.Repairation.AssignedTo,
