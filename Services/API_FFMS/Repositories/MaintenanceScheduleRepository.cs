@@ -34,6 +34,7 @@ public class MaintenanceScheduleRepository : IMaintenanceScheduleRepository
             maintenanceScheduleConfig.CreatedAt = now.Value;
             maintenanceScheduleConfig.EditedAt = now.Value;
             maintenanceScheduleConfig.CreatorId = creatorId;
+            maintenanceScheduleConfig.Code = "SCH" + GenerateRequestCode(ref numbers);
             await _databaseContext.MaintenanceScheduleConfigs.AddAsync(maintenanceScheduleConfig);
 
             if (assets != null && assets.Any())
@@ -65,5 +66,12 @@ public class MaintenanceScheduleRepository : IMaintenanceScheduleRepository
             .Select(x => x.Code)
             .ToList();
         return requests;
+    }
+    
+    private int GenerateRequestCode(ref List<int> numbers)
+    {
+        int newRequestNumber = numbers.Any() ? numbers.Max() + 1 : 1;
+        numbers.Add(newRequestNumber); // Add the new number to the list
+        return newRequestNumber;
     }
 }
