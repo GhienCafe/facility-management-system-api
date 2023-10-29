@@ -19,7 +19,7 @@ namespace API_FFMS.Services
         Task<ApiResponse<RepairationDto>> GetRepairation(Guid id);
         Task<ApiResponse> Update(Guid id, BaseRequestUpdateDto updateDto);
         Task<ApiResponse> Delete(Guid id);
-        Task<ApiResponse> DeleteReplairations(List<Guid> ids);
+        Task<ApiResponse> DeleteReplairations(DeleteMutilDto deleteDto);
         Task<ApiResponse> UpdateStatus(Guid id, BaseUpdateStatusDto updateStatusDto);
     }
     public class RepairationService : BaseService, IRepairationService
@@ -107,13 +107,13 @@ namespace API_FFMS.Services
             return ApiResponse.Success();
         }
 
-        public async Task<ApiResponse> DeleteReplairations(List<Guid> ids)
+        public async Task<ApiResponse> DeleteReplairations(DeleteMutilDto deleteDto)
         {
             var replairDeleteds = await MainUnitOfWork.RepairationRepository.FindAsync(
                 new Expression<Func<Repairation, bool>>[]
                 {
                     x => !x.DeletedAt.HasValue,
-                x => ids.Contains(x.Id)
+                x => deleteDto.ListId!.Contains(x.Id)
                 }, null);
             if (!await MainUnitOfWork.RepairationRepository.DeleteAsync(replairDeleteds, AccountId, CurrentDate))
             {

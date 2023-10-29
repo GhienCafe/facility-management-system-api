@@ -16,6 +16,7 @@ public interface ICategoryService : IBaseService
     Task<ApiResponse<CategoryDetailDto>> GetCategory(Guid id);
     public Task<ApiResponse> Update(Guid id, CategoryUpdateDto updateDto);
     Task<ApiResponse> Delete(Guid id);
+    Task<ApiResponse> DeleteCategories(DeleteMutilDto deleteDto);
 }
 
 public class CategoryService : BaseService, ICategoryService
@@ -45,6 +46,23 @@ public class CategoryService : BaseService, ICategoryService
 
         if (!await MainUnitOfWork.CategoryRepository.UpdateAsync(category, AccountId, CurrentDate))
             throw new ApiException("Cập nhật thất bại", StatusCode.SERVER_ERROR);
+
+        return ApiResponse.Success();
+    }
+
+    public async Task<ApiResponse> DeleteCategories(DeleteMutilDto deleteDto)
+    {
+        var categories = await MainUnitOfWork.CategoryRepository.FindAsync(
+                        new Expression<Func<Category, bool>>[]
+                        {
+                            x => !x.DeletedAt.HasValue,
+                            x => deleteDto.ListId!.Contains(x.Id)
+                        }, null);
+
+        if (!await MainUnitOfWork.CategoryRepository.DeleteAsync(categories, AccountId, CurrentDate))
+        {
+            throw new ApiException("Xóa thất bại", StatusCode.SERVER_ERROR);
+        }
 
         return ApiResponse.Success();
     }

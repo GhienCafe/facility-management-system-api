@@ -38,9 +38,9 @@ namespace API_FFMS.Controllers
 
         [HttpDelete]
         [SwaggerOperation("Delete list transportation")]
-        public async Task<ApiResponse> DeleteTransports(List<Guid> ids)
+        public async Task<ApiResponse> DeleteTransports(DeleteMutilDto deleteDto)
         {
-            return await _service.DeleteTransports(ids);
+            return await _service.DeleteTransports(deleteDto);
         }
 
         [HttpGet("{id:guid}")]
