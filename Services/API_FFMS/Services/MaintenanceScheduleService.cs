@@ -62,8 +62,9 @@ namespace API_FFMS.Services
             if (!string.IsNullOrEmpty(keyword))
             {
                 maintenanceConfigQueryable = maintenanceConfigQueryable
-                    .Where(x => x!.Description.ToLower().Contains(keyword)
-                                || x.RepeatIntervalInMonths.ToString().Contains(keyword));
+                    .Where(x => x!.Description!.ToLower().Contains(keyword)
+                                || x.RepeatIntervalInMonths.ToString().Contains(keyword)
+                                || x.Code.ToLower().Contains(keyword));
             }
 
             var totalCount = await maintenanceConfigQueryable.CountAsync();
