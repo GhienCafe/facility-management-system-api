@@ -51,12 +51,14 @@ public class FloorService : BaseService, IFloorService
             join building in MainUnitOfWork.BuildingRepository.GetQuery() on floor.BuildingId equals building.Id into
                 buildingGroup
             from building in buildingGroup.DefaultIfEmpty()
+            join rooms in MainUnitOfWork.RoomRepository.GetQuery() on floor.Id equals rooms.FloorId into roomGroup
             select new
             {
                 Floor = floor,
-                Building = building
+                Building = building,
+                Rooms = roomGroup.Count()
             };
-
+        
         var totalCount = joinTables.Count();
 
         var floors = await joinTables.Select(
@@ -68,6 +70,7 @@ public class FloorService : BaseService, IFloorService
                 FloorMap = x.Floor.FloorMap,
                 Description = x.Floor.Description,
                 TotalArea = x.Floor.TotalArea,
+                TotalRooms = x.Rooms,
                 BuildingId = x.Floor.BuildingId,
                 CreatedAt = x.Floor.CreatedAt,
                 EditedAt = x.Floor.EditedAt,

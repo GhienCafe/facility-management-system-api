@@ -29,6 +29,7 @@ namespace API_FFMS.Dtos
         public AssetTypeDto? Type { get; set; }
         public ModelDto? Model { get; set; }
         public CategoryDto? Category { get; set; }
+        public RoomBaseDto? Room { get; set; }
     }
 
     public class AssetBaseDto : BaseDto

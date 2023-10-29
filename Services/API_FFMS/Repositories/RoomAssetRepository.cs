@@ -23,7 +23,9 @@ public class RoomAssetRepository : IRoomAssetRepository
         now ??= DateTime.UtcNow;
         try
         {
-            var asset = await _context.Assets.FindAsync(roomAsset.AssetId);
+            var asset = await _context.Assets.Include(x => x.Type)
+                                             .Where(x => x.Id == roomAsset.AssetId)
+                                             .FirstOrDefaultAsync();
             var room = await _context.Rooms.FindAsync(roomAsset.RoomId);
             var currentLocation = await _context.RoomAssets.FirstOrDefaultAsync(x => x.AssetId == asset!.Id && x.ToDate == null);
             if (currentLocation != null)
@@ -34,16 +36,35 @@ public class RoomAssetRepository : IRoomAssetRepository
                 _context.Entry(currentLocation).State = EntityState.Modified;
             }
 
-            roomAsset.Id = Guid.NewGuid();
-            roomAsset.CreatedAt = now.Value;
-            roomAsset.EditedAt = now.Value;
-            roomAsset.CreatorId = creatorId;
-            roomAsset.Status = AssetStatus.Operational;
-            roomAsset.FromDate = now.Value;
-            roomAsset.ToDate = null;
-            roomAsset.AssetId = asset!.Id;
-            roomAsset.RoomId = room!.Id;
-            await _context.RoomAssets.AddAsync(roomAsset);
+            if(asset!.Type!.IsIdentified == true)
+            {
+                roomAsset.Id = Guid.NewGuid();
+                roomAsset.CreatedAt = now.Value;
+                roomAsset.EditedAt = now.Value;
+                roomAsset.CreatorId = creatorId;
+                roomAsset.Status = AssetStatus.Operational;
+                roomAsset.FromDate = now.Value;
+                roomAsset.Quantity = 1;
+                roomAsset.ToDate = null;
+                roomAsset.AssetId = asset!.Id;
+                roomAsset.RoomId = room!.Id;
+                await _context.RoomAssets.AddAsync(roomAsset);
+            }
+            else
+            {
+                roomAsset.Id = Guid.NewGuid();
+                roomAsset.CreatedAt = now.Value;
+                roomAsset.EditedAt = now.Value;
+                roomAsset.CreatorId = creatorId;
+                roomAsset.Status = AssetStatus.Operational;
+                roomAsset.FromDate = now.Value;
+                roomAsset.Quantity = 1;
+                roomAsset.ToDate = null;
+                roomAsset.AssetId = asset!.Id;
+                roomAsset.RoomId = room!.Id;
+                await _context.RoomAssets.AddAsync(roomAsset);
+            }
+            
 
             await _context.SaveChangesAsync();
             await _context.Database.CommitTransactionAsync();

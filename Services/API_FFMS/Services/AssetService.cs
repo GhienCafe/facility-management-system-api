@@ -7,12 +7,13 @@ using MainData.Repositories;
 using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
 using API_FFMS.Repositories;
+using DocumentFormat.OpenXml.Spreadsheet;
 
 namespace API_FFMS.Services;
 public interface IAssetService : IBaseService
 {
     Task<ApiResponses<AssetDto>> GetAssets(AssetQueryDto queryDto);
-    Task<ApiResponse<AssetDetailDto>> GetAsset(Guid id);
+    Task<ApiResponse<AssetDto>> GetAsset(Guid id);
     Task<ApiResponse> Create(AssetCreateDto createDto);
     Task<ApiResponse> Update(Guid id, AssetUpdateDto updateDto);
     Task<ApiResponse> Delete(Guid id);
@@ -103,18 +104,22 @@ public class AssetService : BaseService, IAssetService
         var orderByColumn = queryDto.OrderBy.Split(' ')[0];
         assetDataSet = isDescending ? assetDataSet.OrderByDescending(user => EF.Property<object>(user!, orderByColumn)) : assetDataSet.OrderBy(user => EF.Property<object>(user!, orderByColumn));
 
-        var joinTables = from asset in assetDataSet
-                         join type in MainUnitOfWork.AssetTypeRepository.GetQuery() on asset.TypeId equals type.Id
-                             into typeGroup
-                         from type in typeGroup.DefaultIfEmpty()
+        var joinTables = from roomAsset in MainUnitOfWork.RoomAssetRepository.GetQuery()
+                         join asset in assetDataSet on roomAsset.AssetId equals asset.Id into assetGroup
+                         join room in MainUnitOfWork.RoomRepository.GetQuery() on roomAsset.RoomId equals room.Id
+                         from asset in assetGroup.DefaultIfEmpty()
                          join model in MainUnitOfWork.ModelRepository.GetQuery() on asset.ModelId equals model.Id
-                             into modelGroup
-                         from model in modelGroup.DefaultIfEmpty()
+                         join type in MainUnitOfWork.AssetTypeRepository.GetQuery() on asset.TypeId equals type.Id into typeGroup
+                         from type in typeGroup.DefaultIfEmpty()
+                         join category in MainUnitOfWork.CategoryRepository.GetQuery() on type.CategoryId equals category.Id
+                         where roomAsset.ToDate == null
                          select new
                          {
                              Asset = asset,
                              Type = type,
-                             Model = model
+                             Model = model,
+                             Category = category,
+                             Room = room,
                          };
 
         var totalCount = joinTables.Count();
@@ -160,7 +165,23 @@ public class AssetService : BaseService, IAssetService
                 EditorId = x.Type.EditorId ?? Guid.Empty
             } : null,
             Model = x.Model.ProjectTo<Model, ModelDto>(),
-            Category = x.Type!.Category!.ProjectTo<Category, CategoryDto>()
+            Category = x.Category.ProjectTo<Category, CategoryDto>(),
+            Room = new RoomBaseDto
+            {
+                Id = x.Room.Id,
+                RoomName = x.Room.RoomName,
+                RoomCode = x.Room.RoomCode,
+                Area = x.Room.Area,
+                Description = x.Room.Description,
+                RoomTypeId = x.Room.RoomTypeId,
+                Capacity = x.Room.Capacity,
+                StatusId = x.Room.StatusId,
+                FloorId = x.Room.FloorId,
+                CreatedAt = x.Room.CreatedAt,
+                EditedAt = x.Room.EditedAt,
+                CreatorId = x.Room.CreatorId ?? Guid.Empty,
+                EditorId = x.Room.EditorId ?? Guid.Empty
+            }
         }).ToListAsync();
 
         assets = await _mapperRepository.MapCreator(assets);
@@ -174,44 +195,58 @@ public class AssetService : BaseService, IAssetService
         );
     }
 
-    public async Task<ApiResponse<AssetDetailDto>> GetAsset(Guid id)
+    public async Task<ApiResponse<AssetDto>> GetAsset(Guid id)
     {
-        var asset = await MainUnitOfWork.AssetRepository.GetQuery()
-            .Where(x => !x!.DeletedAt.HasValue && x.Id == id)
-            .Select(x => new AssetDetailDto
+        var existingAsset = await MainUnitOfWork.AssetRepository.FindOneAsync<AssetDto>(
+            new Expression<Func<Asset, bool>>[]
             {
-                Id = x!.Id,
-                Description = x.Description,
-                Status = x.Status,
-                StatusObj = x.Status.GetValue(),
-                AssetCode = x.AssetCode,
-                AssetName = x.AssetName,
-                Quantity = x.Quantity,
-                IsMovable = x.IsMovable,
-                IsRented = x.IsRented,
-                ManufacturingYear = x.ManufacturingYear,
-                ModelId = x.ModelId,
-                SerialNumber = x.SerialNumber,
-                TypeId = x.TypeId,
-                LastMaintenanceTime = x.LastMaintenanceTime,
-                LastCheckedDate = x.LastCheckedDate,
-                StartDateOfUse = x.StartDateOfUse,
-                ImageUrl = x.ImageUrl,
-                CreatedAt = x.CreatedAt,
-                EditedAt = x.EditedAt,
-                CreatorId = x.CreatorId ?? Guid.Empty,
-                EditorId = x.EditorId ?? Guid.Empty,
-                Type = x.Type!.ProjectTo<AssetType, AssetTypeDto>(),
-                Model = x.Model!.ProjectTo<Model, ModelDto>(),
-                Category = x.Type!.Category!.ProjectTo<Category, CategoryDto>()
-            }).FirstOrDefaultAsync();
-
-        if (asset == null)
+                x => !x.DeletedAt.HasValue,
+                x => x.Id == id
+            });
+        if (existingAsset == null)
+        {
             throw new ApiException("Không tìm thất trang thiết bị", StatusCode.NOT_FOUND);
+        }
+        existingAsset.Model = await MainUnitOfWork.ModelRepository.FindOneAsync<ModelDto>(
+            new Expression<Func<Model, bool>>[]
+            {
+                x => !x.DeletedAt.HasValue,
+                x => x.Id == existingAsset.ModelId
+            });
 
-        asset = await _mapperRepository.MapCreator(asset);
+        existingAsset.Type = await MainUnitOfWork.AssetTypeRepository.FindOneAsync<AssetTypeDto>(
+                new Expression<Func<AssetType, bool>>[]
+                {
+                    x => !x.DeletedAt.HasValue,
+                    x => x.Id == existingAsset.TypeId
+                });
+        existingAsset.Category = await MainUnitOfWork.CategoryRepository.FindOneAsync<CategoryDto>(
+                new Expression<Func<Category, bool>>[]
+                {
+                    x => !x.DeletedAt.HasValue,
+                    x => x.Id == existingAsset.Type!.CategoryId
+                });
 
-        return ApiResponse<AssetDetailDto>.Success(asset);
+        var roomAsset = await MainUnitOfWork.RoomAssetRepository.FindOneAsync<RoomAsset>(
+            new Expression<Func<RoomAsset, bool>>[]
+            {
+                x => !x.DeletedAt.HasValue,
+                x => x.AssetId == existingAsset.Id,
+                x => x.ToDate == null
+            });
+        if (roomAsset != null)
+        {
+            existingAsset.Room = await MainUnitOfWork.RoomRepository.FindOneAsync<RoomBaseDto>(
+                new Expression<Func<Room, bool>>[]
+                {
+                    x => !x.DeletedAt.HasValue,
+                    x => x.Id == roomAsset.RoomId
+                });
+        }
+
+        existingAsset = await _mapperRepository.MapCreator(existingAsset);
+
+        return ApiResponse<AssetDto>.Success(existingAsset);
     }
 
     public async Task<ApiResponse> Update(Guid id, AssetUpdateDto updateDto)
