@@ -171,6 +171,23 @@ namespace API_FFMS.Services
 
         public async Task<ApiResponse> CreateRoomAsset(RoomAssetCreateBaseDto createBaseDto)
         {
+            var room = await MainUnitOfWork.RoomRepository.FindOneAsync(createBaseDto.RoomId);
+            var roomAssets = await MainUnitOfWork.RoomAssetRepository.FindAsync(
+                new Expression<Func<RoomAsset, bool>>[]
+                {
+                    x => !x.DeletedAt.HasValue,
+                    x => x.RoomId == room!.Id,
+                    x => x.ToDate == null
+                }, null);
+
+            var currentQuantityAssetInRoom = roomAssets.Sum(x => x!.Quantity);
+            var checkCapacity = currentQuantityAssetInRoom + createBaseDto.Quantity;
+
+            if(checkCapacity > room!.Capacity)
+            {
+                throw new ApiException("Số lượng trang thiết bị vượt quá dung tích phòng", StatusCode.UNPROCESSABLE_ENTITY);
+            }
+
             var roomAsset = createBaseDto.ProjectTo<RoomAssetCreateBaseDto, RoomAsset>();
 
             var checkExist = await MainUnitOfWork.RoomAssetRepository.FindAsync(new Expression<Func<RoomAsset, bool>>[]

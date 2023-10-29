@@ -167,6 +167,7 @@ namespace API_FFMS.Services
                 Content = mediaFileQuery.Select(m => m!.Content).FirstOrDefault()
             };
 
+            repairation.PriorityObj = repairation.Priority.GetValue();
             repairation.Status = repairation.Status;
             repairation.StatusObj = repairation.Status!.GetValue();
 
@@ -209,26 +210,28 @@ namespace API_FFMS.Services
                                                                    x.RequestCode.ToLower().Contains(keyword));
             }
 
+            repairQuery = repairQuery.OrderByDescending(x => x!.CreatedAt);
+
             var assetTypeQueryable = MainUnitOfWork.AssetTypeRepository.GetQuery()
             .Where(x => !x!.DeletedAt.HasValue);
             var categoryQueryable = MainUnitOfWork.CategoryRepository.GetQuery()
             .Where(x => !x!.DeletedAt.HasValue);
 
             var joinTable = from repair in repairQuery
-                            join user in MainUnitOfWork.UserRepository.GetQuery() on repair.AssignedTo equals user.Id
-                            join asset in MainUnitOfWork.AssetRepository.GetQuery() on repair.AssetId equals asset.Id
-                            join assetType in assetTypeQueryable on asset.TypeId equals assetType.Id into assetTypeGroup
+                                join user in MainUnitOfWork.UserRepository.GetQuery() on repair.AssignedTo equals user.Id
+                                join asset in MainUnitOfWork.AssetRepository.GetQuery() on repair.AssetId equals asset.Id
+                                join assetType in assetTypeQueryable on asset.TypeId equals assetType.Id into assetTypeGroup
                             from assetType in assetTypeGroup.DefaultIfEmpty()
-                            join category in categoryQueryable on assetType.CategoryId equals category.Id into categoryGroup
+                                join category in categoryQueryable on assetType.CategoryId equals category.Id into categoryGroup
                             from category in categoryGroup.DefaultIfEmpty()
-                            select new
-                            {
-                                Repairation = repair,
-                                Asset = asset,
-                                User = user,
-                                AssetType = assetType,
-                                Category = category
-                            };
+                                select new
+                                {
+                                    Repairation = repair,
+                                    Asset = asset,
+                                    User = user,
+                                    AssetType = assetType,
+                                    Category = category
+                                };
 
             var totalCount = await joinTable.CountAsync();
 
@@ -245,7 +248,10 @@ namespace API_FFMS.Services
                 Description = x.Repairation.Description,
                 Notes = x.Repairation.Notes,
                 Checkin = x.Repairation.Checkin,
+                Result = x.Repairation.Result,
                 Checkout = x.Repairation.Checkout,
+                Priority = x.Repairation.Priority,
+                PriorityObj = x.Repairation.Priority.GetValue(),
                 IsInternal = x.Repairation.IsInternal,
                 AssignedTo = x.Repairation.AssignedTo,
                 AssetId = x.Repairation.AssetId,
@@ -316,8 +322,6 @@ namespace API_FFMS.Services
                 throw new ApiException("Chỉ được cập nhật các yêu cầu chưa hoàn thành", StatusCode.NOT_FOUND);
             }
 
-            existingRepair.RequestDate = updateDto.RequestDate ?? existingRepair.RequestDate;
-            existingRepair.CompletionDate = updateDto.CompletionDate ?? existingRepair.CompletionDate;
             existingRepair.Description = updateDto.Description ?? existingRepair.Description;
             existingRepair.Notes = updateDto.Notes ?? existingRepair.Notes;
             existingRepair.Priority = updateDto.Priority ?? existingRepair.Priority;

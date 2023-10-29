@@ -24,7 +24,7 @@ namespace API_FFMS.Controllers
 
         [HttpGet("{id:guid}")]
         [SwaggerOperation("Get details an asset")]
-        public async Task<ApiResponse<AssetDetailDto>> GetAsset(Guid id)
+        public async Task<ApiResponse<AssetDto>> GetAsset(Guid id)
         {
             return await _assetService.GetAsset(id);
         }

@@ -7,12 +7,13 @@ using MainData.Repositories;
 using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
 using API_FFMS.Repositories;
+using DocumentFormat.OpenXml.Spreadsheet;
 
 namespace API_FFMS.Services;
 public interface IAssetService : IBaseService
 {
     Task<ApiResponses<AssetDto>> GetAssets(AssetQueryDto queryDto);
-    Task<ApiResponse<AssetDetailDto>> GetAsset(Guid id);
+    Task<ApiResponse<AssetDto>> GetAsset(Guid id);
     Task<ApiResponse> Create(AssetCreateDto createDto);
     Task<ApiResponse> Update(Guid id, AssetUpdateDto updateDto);
     Task<ApiResponse> Delete(Guid id);
@@ -61,8 +62,10 @@ public class AssetService : BaseService, IAssetService
     public async Task<ApiResponses<AssetDto>> GetAssets(AssetQueryDto queryDto)
     {
         var keyword = queryDto.Keyword?.Trim().ToLower();
-        var assetDataSet = MainUnitOfWork.AssetRepository.GetQuery()
-            .Where(x => !x!.DeletedAt.HasValue);
+        var assetDataSet = MainUnitOfWork.AssetRepository.GetQuery().Include(x => x.Model)
+                          .Include(x => x.Type).ThenInclude(t => t.Category)
+                          .Include(x => x.RoomAssets).ThenInclude(ra => ra.Room)
+                          .Where(x => !x!.DeletedAt.HasValue);
 
         if (!string.IsNullOrEmpty(keyword))
         {
@@ -103,51 +106,36 @@ public class AssetService : BaseService, IAssetService
         var orderByColumn = queryDto.OrderBy.Split(' ')[0];
         assetDataSet = isDescending ? assetDataSet.OrderByDescending(user => EF.Property<object>(user!, orderByColumn)) : assetDataSet.OrderBy(user => EF.Property<object>(user!, orderByColumn));
 
-        var joinTables = from asset in assetDataSet
-                         join type in MainUnitOfWork.AssetTypeRepository.GetQuery() on asset.TypeId equals type.Id
-                             into typeGroup
-                         from type in typeGroup.DefaultIfEmpty()
-                         join model in MainUnitOfWork.ModelRepository.GetQuery() on asset.ModelId equals model.Id
-                             into modelGroup
-                         from model in modelGroup.DefaultIfEmpty()
-                         select new
-                         {
-                             Asset = asset,
-                             Type = type,
-                             Model = model
-                         };
+        var totalCount = assetDataSet.Count();
 
-        var totalCount = joinTables.Count();
+        assetDataSet = assetDataSet.Skip(queryDto.Skip()).Take(queryDto.PageSize);
 
-        joinTables = joinTables.Skip(queryDto.Skip())
-            .Take(queryDto.PageSize);
-
-        var assets = await joinTables.Select(x => new AssetDto
+        var assets = await assetDataSet.Select(x => new AssetDto
         {
-            Id = x.Asset.Id,
-            Description = x.Asset.Description,
-            Status = x.Asset.Status,
-            StatusObj = x.Asset.Status.GetValue(),
-            LastCheckedDate = x.Asset.LastCheckedDate,
-            StartDateOfUse = x.Asset.StartDateOfUse,
-            AssetCode = x.Asset.AssetCode,
-            AssetName = x.Asset.AssetName,
-            Quantity = x.Asset.Quantity,
-            IsMovable = x.Asset.IsMovable,
-            IsRented = x.Asset.IsRented,
-            ManufacturingYear = x.Asset.ManufacturingYear,
-            ModelId = x.Asset.ModelId,
-            SerialNumber = x.Asset.SerialNumber,
-            ImageUrl = x.Asset.ImageUrl,
-            TypeId = x.Asset.TypeId,
-            LastMaintenanceTime = x.Asset.LastMaintenanceTime,
-            CreatedAt = x.Asset.CreatedAt,
-            EditedAt = x.Asset.EditedAt,
-            CreatorId = x.Asset.CreatorId ?? Guid.Empty,
-            EditorId = x.Asset.EditorId ?? Guid.Empty,
-            Type = x.Type != null ? new AssetTypeDto
+            Id = x!.Id,
+            Description = x.Description,
+            Status = x.Status,
+            StatusObj = x.Status.GetValue(),
+            LastCheckedDate = x.LastCheckedDate,
+            StartDateOfUse = x.StartDateOfUse,
+            AssetCode = x.AssetCode,
+            AssetName = x.AssetName,
+            Quantity = x.Quantity,
+            IsMovable = x.IsMovable,
+            IsRented = x.IsRented,
+            ManufacturingYear = x.ManufacturingYear,
+            ModelId = x.ModelId,
+            SerialNumber = x.SerialNumber,
+            ImageUrl = x.ImageUrl,
+            TypeId = x.TypeId,
+            LastMaintenanceTime = x.LastMaintenanceTime,
+            CreatedAt = x.CreatedAt,
+            EditedAt = x.EditedAt,
+            CreatorId = x.CreatorId ?? Guid.Empty,
+            EditorId = x.EditorId ?? Guid.Empty,
+            Type = x.Type !=null ? new AssetTypeDto
             {
-                Id = x.Type.Id,
+                Id = x.Type!.Id,
                 Description = x.Type.Description,
                 TypeCode = x.Type.TypeCode,
                 TypeName = x.Type.TypeName,
@@ -159,8 +147,42 @@ public class AssetService : BaseService, IAssetService
                 CreatorId = x.Type.CreatorId ?? Guid.Empty,
                 EditorId = x.Type.EditorId ?? Guid.Empty
             } : null,
-            Model = x.Model.ProjectTo<Model, ModelDto>(),
-            Category = x.Type!.Category!.ProjectTo<Category, CategoryDto>()
+            Category = x.Type!.Category != null ?  new CategoryDto
+            {
+                Id = x.Type!.Category!.Id,
+                Description = x.Type.Category.Description,
+                CategoryName = x.Type.Category.CategoryName,
+                CreatedAt = x.Type.Category.CreatedAt,
+                EditedAt = x.Type.Category.EditedAt,
+                CreatorId = x.Type.Category.CreatorId ?? Guid.Empty,
+                EditorId = x.Type.Category.EditorId ?? Guid.Empty
+            } : null,
+            Model = x.Model != null ? new ModelDto
+            {
+                Id = x.Model!.Id,
+                Description = x.Model.Description,
+                ModelName = x.Model.ModelName,
+                CreatedAt = x.Model.CreatedAt,
+                EditedAt = x.Model.EditedAt,
+                CreatorId = x.Model.CreatorId ?? Guid.Empty,
+                EditorId = x.Model.EditorId ?? Guid.Empty
+            } : null,
+            Room =x.RoomAssets!.Select(ra => new RoomBaseDto
+            {
+                Id = ra.RoomId,
+                RoomName = ra.Room!.RoomName,
+                RoomCode = ra.Room.RoomCode,
+                Area = ra.Room.Area,
+                Description = ra.Room.Description,
+                RoomTypeId = ra.Room.RoomTypeId,
+                Capacity = ra.Room.Capacity,
+                StatusId = ra.Room.StatusId,
+                FloorId = ra.Room.FloorId,
+                CreatedAt = ra.Room.CreatedAt,
+                EditedAt = ra.Room.EditedAt,
+                CreatorId = ra.Room.CreatorId ?? Guid.Empty,
+                EditorId = ra.Room.EditorId ?? Guid.Empty
+            }).FirstOrDefault()
         }).ToListAsync();
 
         assets = await _mapperRepository.MapCreator(assets);
@@ -174,44 +196,58 @@ public class AssetService : BaseService, IAssetService
         );
     }
 
-    public async Task<ApiResponse<AssetDetailDto>> GetAsset(Guid id)
+    public async Task<ApiResponse<AssetDto>> GetAsset(Guid id)
     {
-        var asset = await MainUnitOfWork.AssetRepository.GetQuery()
-            .Where(x => !x!.DeletedAt.HasValue && x.Id == id)
-            .Select(x => new AssetDetailDto
+        var existingAsset = await MainUnitOfWork.AssetRepository.FindOneAsync<AssetDto>(
+            new Expression<Func<Asset, bool>>[]
             {
-                Id = x!.Id,
-                Description = x.Description,
-                Status = x.Status,
-                StatusObj = x.Status.GetValue(),
-                AssetCode = x.AssetCode,
-                AssetName = x.AssetName,
-                Quantity = x.Quantity,
-                IsMovable = x.IsMovable,
-                IsRented = x.IsRented,
-                ManufacturingYear = x.ManufacturingYear,
-                ModelId = x.ModelId,
-                SerialNumber = x.SerialNumber,
-                TypeId = x.TypeId,
-                LastMaintenanceTime = x.LastMaintenanceTime,
-                LastCheckedDate = x.LastCheckedDate,
-                StartDateOfUse = x.StartDateOfUse,
-                ImageUrl = x.ImageUrl,
-                CreatedAt = x.CreatedAt,
-                EditedAt = x.EditedAt,
-                CreatorId = x.CreatorId ?? Guid.Empty,
-                EditorId = x.EditorId ?? Guid.Empty,
-                Type = x.Type!.ProjectTo<AssetType, AssetTypeDto>(),
-                Model = x.Model!.ProjectTo<Model, ModelDto>(),
-                Category = x.Type!.Category!.ProjectTo<Category, CategoryDto>()
-            }).FirstOrDefaultAsync();
-
-        if (asset == null)
+                x => !x.DeletedAt.HasValue,
+                x => x.Id == id
+            });
+        if (existingAsset == null)
+        {
             throw new ApiException("Không tìm thất trang thiết bị", StatusCode.NOT_FOUND);
+        }
+        existingAsset.Model = await MainUnitOfWork.ModelRepository.FindOneAsync<ModelDto>(
+            new Expression<Func<Model, bool>>[]
+            {
+                x => !x.DeletedAt.HasValue,
+                x => x.Id == existingAsset.ModelId
+            });
 
-        asset = await _mapperRepository.MapCreator(asset);
+        existingAsset.Type = await MainUnitOfWork.AssetTypeRepository.FindOneAsync<AssetTypeDto>(
+                new Expression<Func<AssetType, bool>>[]
+                {
+                    x => !x.DeletedAt.HasValue,
+                    x => x.Id == existingAsset.TypeId
+                });
+        existingAsset.Category = await MainUnitOfWork.CategoryRepository.FindOneAsync<CategoryDto>(
+                new Expression<Func<Category, bool>>[]
+                {
+                    x => !x.DeletedAt.HasValue,
+                    x => x.Id == existingAsset.Type!.CategoryId
+                });
 
-        return ApiResponse<AssetDetailDto>.Success(asset);
+        var roomAsset = await MainUnitOfWork.RoomAssetRepository.FindOneAsync<RoomAsset>(
+            new Expression<Func<RoomAsset, bool>>[]
+            {
+                x => !x.DeletedAt.HasValue,
+                x => x.AssetId == existingAsset.Id,
+                x => x.ToDate == null
+            });
+        if (roomAsset != null)
+        {
+            existingAsset.Room = await MainUnitOfWork.RoomRepository.FindOneAsync<RoomBaseDto>(
+                new Expression<Func<Room, bool>>[]
+                {
+                    x => !x.DeletedAt.HasValue,
+                    x => x.Id == roomAsset.RoomId
+                });
+        }
+
+        existingAsset = await _mapperRepository.MapCreator(existingAsset);
+
+        return ApiResponse<AssetDto>.Success(existingAsset);
     }
 
     public async Task<ApiResponse> Update(Guid id, AssetUpdateDto updateDto)

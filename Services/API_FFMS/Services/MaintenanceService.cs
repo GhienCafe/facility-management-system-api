@@ -108,11 +108,13 @@ public class MaintenanceService : BaseService, IMaintenanceService
             CompletionDate = x.Maintenance.CompletionDate,
             Checkin = x.Maintenance.Checkin,
             Checkout = x.Maintenance.Checkout,
+            Result = x.Maintenance.Result,
             RequestDate = x.Maintenance.RequestDate,
             CategoryId = x.Maintenance.CategoryId,
             AssetTypeId = x.Maintenance.AssetTypeId,
             StatusObj = x.Maintenance.Status!.GetValue(),
             CreatedAt = x.Maintenance.CreatedAt,
+            Priority = x.Maintenance.Priority,
             EditedAt = x.Maintenance.EditedAt,
             CreatorId = x.Maintenance.CreatorId ?? Guid.Empty,
             EditorId = x.Maintenance.EditorId ?? Guid.Empty,
@@ -197,10 +199,12 @@ public class MaintenanceService : BaseService, IMaintenanceService
             RequestCode = x.Maintenance.RequestCode,
             CompletionDate = x.Maintenance.CompletionDate,
             RequestDate = x.Maintenance.RequestDate,
+            Result = x.Maintenance.Result,
             Checkout = x.Maintenance.Checkout,
             Checkin = x.Maintenance.Checkout,
             CategoryId = x.Maintenance.CategoryId,
             AssetTypeId = x.Maintenance.AssetTypeId,
+            Priority = x.Maintenance.Priority,
             StatusObj = x.Maintenance.Status!.GetValue(),
             CreatedAt = x.Maintenance.CreatedAt,
             EditedAt = x.Maintenance.EditedAt,
@@ -210,7 +214,6 @@ public class MaintenanceService : BaseService, IMaintenanceService
             Asset = x.Asset.ProjectTo<Asset, AssetBaseDto>(),
             AssetType = x.AssetType.ProjectTo<AssetType, AssetTypeDto>(),
             Category = x.Category.ProjectTo<Category, CategoryDto>(),
-            Result = x.Maintenance.Result,
             PriorityObj = x.Maintenance.Priority.GetValue()
         }).FirstOrDefaultAsync();
 
@@ -256,15 +259,12 @@ public class MaintenanceService : BaseService, IMaintenanceService
             throw new ApiException($"Không thế cập nhật với quy trình có trạng thái: {maintenance.Status?.GetDisplayName()}", StatusCode.BAD_REQUEST);
 
         maintenance.Description = updateDto.Description ?? maintenance.Description;
-        //maintenance.Status = updateDto.Status ?? maintenance.Status;
         maintenance.Notes = updateDto.Notes ?? maintenance.Notes;
         maintenance.CategoryId = updateDto.CategoryId ?? maintenance.CategoryId;
         maintenance.IsInternal = updateDto.IsInternal ?? maintenance.IsInternal;
         maintenance.AssetTypeId = updateDto.AssetTypeId ?? maintenance.AssetTypeId;
         maintenance.AssignedTo = updateDto.AssignedTo ?? maintenance.AssignedTo;
-        maintenance.CompletionDate = updateDto.CompletionDate ?? maintenance.CompletionDate;
         maintenance.Priority = updateDto.Priority ?? maintenance.Priority;
-        //maintenance.RequestDate = updateDto.RequestDate ?? maintenance.RequestDate;
 
         if (!await MainUnitOfWork.MaintenanceRepository.UpdateAsync(maintenance, AccountId, CurrentDate))
             throw new ApiException("Cập nhật thất bại", StatusCode.SERVER_ERROR);
