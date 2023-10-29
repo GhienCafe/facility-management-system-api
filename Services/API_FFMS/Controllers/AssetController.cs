@@ -59,9 +59,9 @@ namespace API_FFMS.Controllers
 
         [HttpDelete]
         [SwaggerOperation("Delete list assets")]
-        public async Task<ApiResponse> DeleteAssets(List<Guid> ids)
+        public async Task<ApiResponse> DeleteAssets(DeleteMutilDto deleteDto)
         {
-            return await _assetService.DeleteAssets(ids);
+            return await _assetService.DeleteAssets(deleteDto);
         }
 
         [HttpGet("asset-check/{id}")]

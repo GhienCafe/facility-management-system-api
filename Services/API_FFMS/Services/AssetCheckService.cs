@@ -13,7 +13,7 @@ namespace API_FFMS.Services;
 public interface IAssetCheckService : IBaseService
 {
     Task<ApiResponses<AssetCheckDto>> GetAssetChecks(AssetCheckQueryDto queryDto);
-    Task<ApiResponse> DeleteAssetChecks(List<Guid> ids);
+    Task<ApiResponse> DeleteAssetChecks(DeleteMutilDto deleteDto);
     Task<ApiResponse> Delete(Guid id);
     Task<ApiResponse> Create(AssetCheckCreateDto createDto);
     Task<ApiResponse<AssetCheckDto>> GetAssetCheck(Guid id);
@@ -63,13 +63,13 @@ public class AssetCheckService : BaseService, IAssetCheckService
         return ApiResponse.Success();
     }
 
-    public async Task<ApiResponse> DeleteAssetChecks(List<Guid> ids)
+    public async Task<ApiResponse> DeleteAssetChecks(DeleteMutilDto deleteDto)
     {
         var assetcheckDeleteds = await MainUnitOfWork.AssetCheckRepository.FindAsync(
                                 new Expression<Func<AssetCheck, bool>>[]
                                 {
                                     x => !x.DeletedAt.HasValue,
-                                    x => ids.Contains(x.Id)
+                                    x => deleteDto.ListId!.Contains(x.Id)
                                 }, null);
         if (!await MainUnitOfWork.AssetCheckRepository.DeleteAsync(assetcheckDeleteds, AccountId, CurrentDate))
         {

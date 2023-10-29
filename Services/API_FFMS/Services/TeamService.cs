@@ -16,7 +16,7 @@ namespace API_FFMS.Services
         Task<ApiResponse<TeamDetailDto>> GetTeam(Guid id);
         public Task<ApiResponse> Insert(TeamCreateDto createDto);
         Task<ApiResponse> Delete(Guid id);
-        Task<ApiResponse> DeleteTeams(List<Guid> ids);
+        Task<ApiResponse> DeleteTeams(DeleteMutilDto deleteDto);
         Task<ApiResponse> Update(Guid id, TeamUpdateDto updateDto);
     }
     public class TeamService : BaseService, ITeamService
@@ -41,13 +41,13 @@ namespace API_FFMS.Services
             return ApiResponse.Success("Xóa thành công");
         }
 
-        public async Task<ApiResponse> DeleteTeams(List<Guid> ids)
+        public async Task<ApiResponse> DeleteTeams(DeleteMutilDto deleteDto)
         {
             var teamDeleteds = await MainUnitOfWork.TeamRepository.FindAsync(
                 new Expression<Func<Team, bool>>[]
                 {
                     x => !x.DeletedAt.HasValue,
-                    x => ids.Contains(x.Id)
+                    x => deleteDto.ListId!.Contains(x.Id)
                 }, null);
 
             if (!await MainUnitOfWork.TeamRepository.DeleteAsync(teamDeleteds, AccountId, CurrentDate))

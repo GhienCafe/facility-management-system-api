@@ -17,7 +17,7 @@ public interface IAssetService : IBaseService
     Task<ApiResponse> Create(AssetCreateDto createDto);
     Task<ApiResponse> Update(Guid id, AssetUpdateDto updateDto);
     Task<ApiResponse> Delete(Guid id);
-    Task<ApiResponse> DeleteAssets(List<Guid> ids);
+    Task<ApiResponse> DeleteAssets(DeleteMutilDto deleteDto);
     Task<ApiResponses<RoomAssetDto>> GetAssetsInRoom(Guid roomId, RoomAssetQueryDto queryDto);
     Task<ApiResponses<AssetCheckTrackingDto>> AssetCheckTracking(Guid id, AssetTaskCheckQueryDto queryDto);
     Task<ApiResponses<AssetMaintenanceTrackingDto>> AssetMaintenanceTracking(Guid id, AssetTaskCheckQueryDto queryDto);
@@ -390,12 +390,12 @@ public class AssetService : BaseService, IAssetService
         );
     }
 
-    public async Task<ApiResponse> DeleteAssets(List<Guid> ids)
+    public async Task<ApiResponse> DeleteAssets(DeleteMutilDto deleteDto)
     {
         var assets = await MainUnitOfWork.AssetRepository.FindAsync(new Expression<Func<Asset, bool>>[]
         {
             x => !x.DeletedAt.HasValue,
-            x => ids.Contains(x.Id)
+            x => deleteDto.ListId!.Contains(x.Id)
         }, null);
 
         if (!await MainUnitOfWork.AssetRepository.DeleteAsync(assets, AccountId, CurrentDate))
