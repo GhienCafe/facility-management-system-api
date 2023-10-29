@@ -97,8 +97,9 @@ namespace API_FFMS.Repositories
 
                         if (roomAsset != null)
                         {
-                            roomAsset!.Status = AssetStatus.Maintenance;
+                            roomAsset!.Status = AssetStatus.Repair;
                             roomAsset.EditedAt = now.Value;
+                            roomAsset.EditorId = creatorId;
                             _context.Entry(roomAsset).State = EntityState.Modified;
                         }
 
