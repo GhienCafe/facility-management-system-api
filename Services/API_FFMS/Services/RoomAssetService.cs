@@ -209,14 +209,6 @@ namespace API_FFMS.Services
         public async Task<ApiResponses<RoomAssetBaseDto>> GetItems(RoomAssetQueryDto queryDto)
         {
             var keyword = queryDto.Keyword?.Trim().ToLower();
-            // var asset = await MainUnitOfWork.AssetRepository.FindOneAsync<AssetDto>(new Expression<Func<Asset, bool>>[]
-            // {
-            //     x => !x.DeletedAt.HasValue
-            // });
-            // if(asset == null)
-            // {
-            //     throw new ApiException("Không tìm thấy thiết bị", StatusCode.NOT_FOUND);
-            // }
 
             var roomAssetDataset = MainUnitOfWork.RoomAssetRepository.GetQuery()
                 .Where(x => !x!.DeletedAt.HasValue);
@@ -236,6 +228,14 @@ namespace API_FFMS.Services
                     Room = room,
                     Asset = assets
                 };
+
+            if (!string.IsNullOrEmpty(keyword))
+            {
+                joinedRooms = joinedRooms.Where(x => x.Asset.AssetCode!.ToLower().Contains(keyword)
+                                                     || x.Asset.AssetName.ToLower().Contains(keyword)
+                                                     || x.Room.RoomName!.ToLower().Contains(keyword)
+                                                     || x.Room.RoomCode.ToLower().Contains(keyword));
+            }
 
             if (queryDto.IsInCurrent != null)
             {
