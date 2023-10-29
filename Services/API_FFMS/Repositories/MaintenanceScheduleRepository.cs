@@ -20,6 +20,11 @@ public class MaintenanceScheduleRepository : IMaintenanceScheduleRepository
     public async Task<bool> InsertMaintenanceScheduleConfig(MaintenanceScheduleConfig maintenanceScheduleConfig, IEnumerable<Asset>? assets,
         Guid? creatorId, DateTime? now = null)
     {
+        var requestCodes = GetCodes();
+        List<int> numbers = requestCodes.Where(x => x.StartsWith("SCH"))
+            .Select(x => int.TryParse(x[3..], out var lastNumber) ? lastNumber : 0)
+            .ToList();
+        
         _databaseContext.Database.BeginTransaction();
     
         now ??= DateTime.UtcNow;
@@ -52,5 +57,13 @@ public class MaintenanceScheduleRepository : IMaintenanceScheduleRepository
             _databaseContext.Database.RollbackTransaction();
             return false;
         }
+    }
+    
+    private List<string> GetCodes()
+    {
+        var requests = _databaseContext.MaintenanceScheduleConfigs.Where(x => x.Code.StartsWith("SCH"))
+            .Select(x => x.Code)
+            .ToList();
+        return requests;
     }
 }
