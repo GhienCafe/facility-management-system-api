@@ -87,7 +87,6 @@ namespace API_FFMS.Repositories
                 transportation.EditedAt = now.Value;
                 transportation.EditorId = editorId;
                 transportation.Status = statusUpdate;
-                transportation.CompletionDate = now.Value;
                 _context.Entry(transportation).State = EntityState.Modified;
 
                 var assetIds = transportation.TransportationDetails?.Select(td => td.AssetId).ToList();
@@ -103,8 +102,12 @@ namespace API_FFMS.Repositories
                     var fromRoom = await _context.Rooms.FirstOrDefaultAsync(x => x.Id == roomAsset!.RoomId && roomAsset.AssetId == asset.Id);
                     if (statusUpdate == RequestStatus.Done)
                     {
+                        transportation.CompletionDate = now.Value;
+                        _context.Entry(transportation).State = EntityState.Modified;
+
                         asset.Status = AssetStatus.Operational;
                         asset.EditedAt = now.Value;
+                        asset.EditorId = editorId;
                         _context.Entry(asset).State = EntityState.Modified;
 
                         if (roomAsset != null)
@@ -112,65 +115,77 @@ namespace API_FFMS.Repositories
                             roomAsset.Status = AssetStatus.Operational;
                             roomAsset.EditedAt = now.Value;
                             roomAsset.ToDate = now.Value;
+                            roomAsset.EditorId = editorId;
                             _context.Entry(roomAsset).State = EntityState.Modified;
                         }
 
                         //var totalAssetInFromRoom = fromRoom!.RoomAssets!.Sum(a => a.Quantity);
                         fromRoom!.State = RoomState.Operational;
                         fromRoom.EditedAt = now.Value;
+                        fromRoom.EditorId = editorId;
                         _context.Entry(fromRoom).State = EntityState.Modified;
 
 
                         //var totalAssetInToRoom = toRoom!.RoomAssets!.Sum(a => a.Quantity);
                         toRoom!.State = RoomState.Operational;
                         toRoom.EditedAt = now.Value;
+                        toRoom.EditorId = editorId;
                         _context.Entry(toRoom).State = EntityState.Modified;
 
-                        //if (asset.Type!.IsIdentified == true)
-                        //{
-                        //    var addRoomAsset = new RoomAsset
-                        //    {
-                        //        AssetId = asset.Id,
-                        //        RoomId = toRoom?.Id ?? Guid.Empty,
-                        //        Status = AssetStatus.Operational,
-                        //        FromDate = now.Value,
-                        //        Quantity = 1,
-                        //        ToDate = null,
-                        //    };
-                        //    _context.RoomAssets.Add(addRoomAsset);
-                        //}
-                        //else
-                        //{
-                        //    var addRoomAsset = new RoomAsset
-                        //    {
-                        //        AssetId = asset.Id,
-                        //        RoomId = toRoom?.Id ?? Guid.Empty,
-                        //        Status = AssetStatus.Operational,
-                        //        FromDate = now.Value,
-                        //        Quantity = asset.Quantity,
-                        //        ToDate = null,
-                        //    };
-                        //    _context.RoomAssets.Add(addRoomAsset);
-                        //}
+                        if (asset.Type!.IsIdentified == true)
+                        {
+                            var addRoomAsset = new RoomAsset
+                            {
+                                Id = Guid.NewGuid(),
+                                AssetId = asset.Id,
+                                RoomId = toRoom.Id,
+                                Status = AssetStatus.Operational,
+                                FromDate = now.Value,
+                                Quantity = 1,
+                                ToDate = null,
+                                CreatorId = editorId,
+                                CreatedAt = now.Value,
+                            };
+                            await _context.RoomAssets.AddAsync(addRoomAsset);
+                        }
+                        else
+                        {
+                            var addRoomAsset = new RoomAsset
+                            {
+                                AssetId = asset.Id,
+                                RoomId = toRoom.Id,
+                                Status = AssetStatus.Operational,
+                                FromDate = now.Value,
+                                Quantity = asset.Quantity,
+                                ToDate = null,
+                                CreatorId = editorId,
+                                CreatedAt = now.Value,
+                            };
+                            await _context.RoomAssets.AddAsync(addRoomAsset);
+                        }
                     }
                     else if (statusUpdate == RequestStatus.Cancelled)
                     {
                         asset.Status = AssetStatus.Operational;
                         asset.EditedAt = now.Value;
+                        asset.EditorId = editorId;
                         _context.Entry(asset).State = EntityState.Modified;
 
                         fromRoom!.State = RoomState.Operational;
                         fromRoom.EditedAt = now.Value;
+                        fromRoom.EditorId = editorId;
                         _context.Entry(fromRoom).State = EntityState.Modified;
 
                         toRoom!.State = RoomState.Operational;
                         toRoom.EditedAt = now.Value;
+                        toRoom.EditorId = editorId;
                         _context.Entry(toRoom).State = EntityState.Modified;
 
                         if (roomAsset != null)
                         {
                             roomAsset.Status = AssetStatus.Operational;
                             roomAsset.EditedAt = now.Value;
+                            roomAsset.EditorId = editorId;
                             _context.Entry(roomAsset).State = EntityState.Modified;
                         }
                     }

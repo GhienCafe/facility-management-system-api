@@ -71,7 +71,6 @@ namespace API_FFMS.Repositories
                 assetCheck.EditedAt = now.Value;
                 assetCheck.EditorId = editorId;
                 assetCheck.Status = statusUpdate;
-                assetCheck.CompletionDate = now.Value;
                 _context.Entry(assetCheck).State = EntityState.Modified;
 
                 var asset = await _context.Assets.FindAsync(assetCheck.AssetId);
@@ -81,6 +80,9 @@ namespace API_FFMS.Repositories
                                 .FirstOrDefaultAsync(x => x.Id == roomAsset!.RoomId && roomAsset.AssetId == asset!.Id);
                 if (assetCheck.Status == RequestStatus.Done)
                 {
+                    assetCheck.CompletionDate = now.Value;
+                    _context.Entry(assetCheck).State = EntityState.Modified;
+
                     asset!.Status = AssetStatus.Operational;
                     asset.EditedAt = now.Value;
                     _context.Entry(asset).State = EntityState.Modified;

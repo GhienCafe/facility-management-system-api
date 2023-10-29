@@ -44,7 +44,6 @@ public class FromRoomAssetDto
 public class TransportCreateDto
 {
     public List<AssetTransportDto>? Assets { get; set; }
-    public DateTime? CompletionDate { get; set; }
     public string? Description { get; set; }
     public string? Notes { get; set; }
     public bool IsInternal { get; set; }

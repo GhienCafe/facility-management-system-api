@@ -218,20 +218,20 @@ namespace API_FFMS.Services
             .Where(x => !x!.DeletedAt.HasValue);
 
             var joinTable = from repair in repairQuery
-                            join user in MainUnitOfWork.UserRepository.GetQuery() on repair.AssignedTo equals user.Id
-                            join asset in MainUnitOfWork.AssetRepository.GetQuery() on repair.AssetId equals asset.Id
-                            join assetType in assetTypeQueryable on asset.TypeId equals assetType.Id into assetTypeGroup
+                                join user in MainUnitOfWork.UserRepository.GetQuery() on repair.AssignedTo equals user.Id
+                                join asset in MainUnitOfWork.AssetRepository.GetQuery() on repair.AssetId equals asset.Id
+                                join assetType in assetTypeQueryable on asset.TypeId equals assetType.Id into assetTypeGroup
                             from assetType in assetTypeGroup.DefaultIfEmpty()
-                            join category in categoryQueryable on assetType.CategoryId equals category.Id into categoryGroup
+                                join category in categoryQueryable on assetType.CategoryId equals category.Id into categoryGroup
                             from category in categoryGroup.DefaultIfEmpty()
-                            select new
-                            {
-                                Repairation = repair,
-                                Asset = asset,
-                                User = user,
-                                AssetType = assetType,
-                                Category = category
-                            };
+                                select new
+                                {
+                                    Repairation = repair,
+                                    Asset = asset,
+                                    User = user,
+                                    AssetType = assetType,
+                                    Category = category
+                                };
 
             var totalCount = await joinTable.CountAsync();
 
