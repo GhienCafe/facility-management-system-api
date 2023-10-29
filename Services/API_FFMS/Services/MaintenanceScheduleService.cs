@@ -6,6 +6,7 @@ using MainData.Repositories;
 using System.Linq.Expressions;
 using API_FFMS.Repositories;
 using AppCore.Extensions;
+using DocumentFormat.OpenXml.Bibliography;
 using Microsoft.EntityFrameworkCore;
 
 namespace API_FFMS.Services
@@ -39,12 +40,13 @@ namespace API_FFMS.Services
 
             var assets = new List<Asset?>();
             
-            if (createDto.AssetIds != null && createDto.AssetIds.Any())
+            if (createDto.AssetIds != null)
             {
+                var assetIds = createDto.AssetIds.Select(id => id.Id).ToList();
                 assets = await MainUnitOfWork.AssetRepository.FindAsync(new Expression<Func<Asset, bool>>[]
                 {
                     x => !x.DeletedAt.HasValue,
-                    x => createDto.AssetIds.Contains(x.Id)
+                    x => assetIds.Contains(x.Id)
                 }, null);
             }
             
@@ -93,6 +95,18 @@ namespace API_FFMS.Services
             if (item == null)
                 throw new ApiException("Không tìm thấy nội dung", StatusCode.NOT_FOUND);
 
+            var assets = (await MainUnitOfWork.AssetRepository.FindAsync(new Expression<Func<Asset, bool>>[]
+            {
+                x => !x.DeletedAt.HasValue,
+                x => x.MaintenanceConfigId == id
+            }, null))!.ProjectTo<Asset, AssetBaseDto>();
+            
+            foreach (var asset in assets)
+            {
+                asset.StatusObj = asset.Status.GetValue();
+            }
+
+            item.Assets = assets;
             item = await _mapperRepository.MapCreator(item);
             
             return ApiResponse<MaintenanceScheduleConfigDetailDto>.Success(item);
