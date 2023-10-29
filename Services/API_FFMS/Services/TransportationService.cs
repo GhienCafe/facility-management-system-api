@@ -72,7 +72,6 @@ namespace API_FFMS.Services
             {
                 RequestCode = GenerateRequestCode(),
                 RequestDate = CurrentDate,
-                CompletionDate = createDto.CompletionDate,
                 Description = createDto.Description,
                 Notes = createDto.Notes,
                 Priority = createDto.Priority,
