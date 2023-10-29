@@ -19,7 +19,7 @@ namespace API_FFMS.Services
         Task<ApiResponse<TransportDto>> GetTransportation(Guid id);
         //Task<ApiResponses<TransportDto>> GetTransportOfStaff(TransportOfStaffQueryDto queryDto);
         Task<ApiResponse> Delete(Guid id);
-        Task<ApiResponse> DeleteTransports(List<Guid> ids);
+        Task<ApiResponse> DeleteTransports(DeleteMutilDto deleteDto);
         public Task<ApiResponse> UpdateStatus(Guid id, BaseUpdateStatusDto updateStatusDto);
     }
     public class TransportationService : BaseService, ITransportationService
@@ -111,13 +111,13 @@ namespace API_FFMS.Services
             return ApiResponse.Success();
         }
 
-        public async Task<ApiResponse> DeleteTransports(List<Guid> ids)
+        public async Task<ApiResponse> DeleteTransports(DeleteMutilDto deleteDto)
         {
             var transportDeleteds = await MainUnitOfWork.TransportationRepository.FindAsync(
                 new Expression<Func<Transportation, bool>>[]
                 {
                     x => !x.DeletedAt.HasValue,
-                x => ids.Contains(x.Id)
+                x => deleteDto.ListId!.Contains(x.Id)
                 }, null);
 
             if (!await MainUnitOfWork.TransportationRepository.DeleteAsync(transportDeleteds, AccountId, CurrentDate))

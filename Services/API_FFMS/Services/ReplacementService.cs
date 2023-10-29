@@ -17,7 +17,7 @@ namespace API_FFMS.Services
         Task<ApiResponse> Update(Guid id, BaseRequestUpdateDto updateDto);
         Task<ApiResponse> Delete(Guid id);
         Task<ApiResponses<ReplaceDto>> GetReplaces(ReplacementQueryDto queryDto);
-        Task<ApiResponse> DeleteReplacements(List<Guid> ids);
+        Task<ApiResponse> DeleteReplacements(DeleteMutilDto deleteDto);
         Task<ApiResponse> UpdateStatus(Guid id, BaseUpdateStatusDto requestStatus);
     }
     public class ReplacementService : BaseService, IReplacementService
@@ -82,14 +82,14 @@ namespace API_FFMS.Services
             return ApiResponse.Success();
         }
 
-        public async Task<ApiResponse> DeleteReplacements(List<Guid> ids)
+        public async Task<ApiResponse> DeleteReplacements(DeleteMutilDto deleteDto)
         {
             var replaceDeleteds = await MainUnitOfWork.ReplacementRepository.FindAsync(
-            new Expression<Func<Replacement, bool>>[]
-            {
-                x => !x.DeletedAt.HasValue,
-                x => ids.Contains(x.Id)
-            }, null);
+                                    new Expression<Func<Replacement, bool>>[]
+                                    {
+                                        x => !x.DeletedAt.HasValue,
+                                        x => deleteDto.ListId!.Contains(x.Id)
+                                    }, null);
 
             if (!await MainUnitOfWork.ReplacementRepository.DeleteAsync(replaceDeleteds, AccountId, CurrentDate))
             {

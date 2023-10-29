@@ -17,7 +17,7 @@ public interface IUserService : IBaseService
     Task<ApiResponses<UserDto>> GetList(UserQueryDto queryDto);
     Task<ApiResponse<IEnumerable<UserDto>>> GetListBasedOnCategory(Guid categoryId);
     Task<ApiResponse<UserDetailDto>> GetDetail(Guid id);
-    Task<ApiResponse> DeleteUsers(List<Guid> ids);
+    Task<ApiResponse> DeleteUsers(DeleteMutilDto deleteDto);
 }
 public class UserService : BaseService, IUserService
 {
@@ -223,18 +223,14 @@ public class UserService : BaseService, IUserService
         return ApiResponse.Success();
     }
 
-    public async Task<ApiResponse> DeleteUsers(List<Guid> ids)
+    public async Task<ApiResponse> DeleteUsers(DeleteMutilDto deleteDto)
     {
-        var userDeleteds = new List<User>();
-        foreach (var id in ids)
-        {
-            var existingUser = await MainUnitOfWork.UserRepository.FindOneAsync(id);
-            if (existingUser == null)
-            {
-                throw new ApiException("Không tìm thấy người dùng", StatusCode.NOT_FOUND);
-            }
-            userDeleteds.Add(existingUser);
-        }
+        var userDeleteds = await MainUnitOfWork.UserRepository.FindAsync(
+                        new Expression<Func<User, bool>>[]
+                        {
+                            x => !x.DeletedAt.HasValue,
+                            x => deleteDto.ListId!.Contains(x.Id)
+                        }, null);
 
         if (!await MainUnitOfWork.UserRepository.DeleteAsync(userDeleteds, AccountId, CurrentDate))
         {

@@ -49,4 +49,11 @@ public class CategoryController : BaseController
     {
         return await _categoryService.Delete(id);
     }
+
+    [HttpDelete]
+    [SwaggerOperation("Delete category")]
+    public async Task<ApiResponse> DeleteCategories(DeleteMutilDto deleteDto)
+    {
+        return await _categoryService.DeleteCategories(deleteDto);
+    }
 }
