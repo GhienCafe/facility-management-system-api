@@ -30,11 +30,11 @@ namespace API_FFMS.Services
 
         public async Task<ApiResponse> CreateMaintenanceSchedule(MaintenanceScheduleConfigCreateDto createDto)
         {
-            var isExists = await MainUnitOfWork.MaintenanceScheduleRepository.GetQuery()
-                .Where(x => x.RepeatIntervalInMonths == createDto.RepeatIntervalInMonths).AnyAsync();
-
-            if (isExists)
-                throw new ApiException("Đã tồn tại cài đặt", StatusCode.ALREADY_EXISTS);
+            // var isExists = await MainUnitOfWork.MaintenanceScheduleRepository.GetQuery()
+            //     .Where(x => x.RepeatIntervalInMonths == createDto.RepeatIntervalInMonths).AnyAsync();
+            //
+            // if (isExists)
+            //     throw new ApiException("Đã tồn tại cài đặt", StatusCode.ALREADY_EXISTS);
 
             var maintenanceConfig = createDto.ProjectTo<MaintenanceScheduleConfigCreateDto, MaintenanceScheduleConfig>();
 
@@ -67,6 +67,25 @@ namespace API_FFMS.Services
                     .Where(x => x!.Description!.ToLower().Contains(keyword)
                                 || x.RepeatIntervalInMonths.ToString().Contains(keyword)
                                 || x.Code.ToLower().Contains(keyword));
+            }
+            
+            // Sort
+            var isDescending = queryDto.OrderBy.Split(' ').Last().ToLowerInvariant()
+                .StartsWith("desc");
+
+            var sortField = queryDto.OrderBy.Split(' ').First();
+
+            // Sort
+            if (!string.IsNullOrEmpty(sortField))
+            {
+                try
+                {
+                    maintenanceConfigQueryable = maintenanceConfigQueryable.OrderBy(sortField, isDescending);
+                }
+                catch
+                {
+                    throw new ApiException($"Không tồn tại trường thông tin {sortField}", StatusCode.BAD_REQUEST);
+                }
             }
 
             var totalCount = await maintenanceConfigQueryable.CountAsync();
@@ -114,15 +133,15 @@ namespace API_FFMS.Services
 
         public async Task<ApiResponse> UpdateItem(Guid id, MaintenanceScheduleConfigUpdateDto updateDto)
         {
-            var checkExist = await MainUnitOfWork.MaintenanceScheduleRepository.FindAsync(
-                new Expression<Func<MaintenanceScheduleConfig, bool>>[]
-                {
-                    x => !x.DeletedAt.HasValue,
-                    x => x.RepeatIntervalInMonths == updateDto.RepeatIntervalInMonths
-                }, null);
-
-            if (checkExist != null && checkExist.Any())
-                throw new ApiException("Đã tồn tại cài đặt", StatusCode.ALREADY_EXISTS);
+            // var checkExist = await MainUnitOfWork.MaintenanceScheduleRepository.FindAsync(
+            //     new Expression<Func<MaintenanceScheduleConfig, bool>>[]
+            //     {
+            //         x => !x.DeletedAt.HasValue,
+            //         x => x.RepeatIntervalInMonths == updateDto.RepeatIntervalInMonths
+            //     }, null);
+            //
+            // if (checkExist != null && checkExist.Any())
+            //     throw new ApiException("Đã tồn tại cài đặt", StatusCode.ALREADY_EXISTS);
             
             var item = await MainUnitOfWork.MaintenanceScheduleRepository.FindOneAsync(id);
 
@@ -132,9 +151,35 @@ namespace API_FFMS.Services
             item.Description = updateDto.Description ?? item.Description;
             item.RepeatIntervalInMonths = updateDto.RepeatIntervalInMonths ?? item.RepeatIntervalInMonths;
 
-            if (!await MainUnitOfWork.MaintenanceScheduleRepository.UpdateAsync(item, AccountId, CurrentDate))
-                throw new ApiException("Xóa thất bại", StatusCode.SERVER_ERROR);
+            if (updateDto.AssetIds != null && updateDto.AssetIds.Any())
+            {
+                var oldData = await MainUnitOfWork.AssetRepository.FindAsync(new Expression<Func<Asset, bool>>[]
+                {
+                    x => !x.DeletedAt.HasValue,
+                    x => x.MaintenanceConfigId == id
+                }, null);
+
+                var assetIds = updateDto.AssetIds?.Select(x => x.Id);
+                var newData = new List<Asset?>();
             
+                if (assetIds != null)
+                {
+                    newData = await MainUnitOfWork.AssetRepository.FindAsync(new Expression<Func<Asset, bool>>[]
+                    {
+                        x => !x.DeletedAt.HasValue,
+                        x => assetIds.Contains(x.Id)
+                    }, null);
+                }
+            
+                if (!await _maintenanceScheduleRepository.UpdateMaintenanceScheduleConfig(item, oldData, newData, AccountId, CurrentDate))
+                    throw new ApiException("Cập nhật thất bại", StatusCode.SERVER_ERROR);
+            }
+            else
+            {
+                if (!await MainUnitOfWork.MaintenanceScheduleRepository.UpdateAsync(item, AccountId, CurrentDate))
+                    throw new ApiException("Cập nhật thất bại", StatusCode.SERVER_ERROR);
+            }
+
             return ApiResponse.Success("Cập nhật thành công");
         }
 
