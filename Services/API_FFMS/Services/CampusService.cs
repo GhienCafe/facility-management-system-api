@@ -40,6 +40,7 @@ public class CampusService :BaseService,ICampusService
         }
 
         var totalCount = campusesQueryable.Count();
+        campusesQueryable = campusesQueryable.Skip(queryDto.Skip()).Take(queryDto.PageSize);
 
         var campuses = await campusesQueryable.Select(x => new CampusDto
         {
