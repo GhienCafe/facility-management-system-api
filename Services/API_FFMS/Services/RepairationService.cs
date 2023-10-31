@@ -60,27 +60,16 @@ namespace API_FFMS.Services
                     x => createDtos.Select(dto => dto.AssetId).Contains(x.Id)
                 }, null);
 
-            foreach (var asset in assets)
+            if (assets.Any(asset => asset!.Status != AssetStatus.Operational))
             {
-                if (asset!.Status != AssetStatus.Operational)
-                {
-                    throw new ApiException("Trang thiết bị đang trong một yêu cầu khác", StatusCode.SERVER_ERROR);
-                }
+                throw new ApiException("Trang thiết bị đang trong một yêu cầu khác", StatusCode.SERVER_ERROR);
             }
 
-            var repairations = new List<Repairation>();
-            foreach( var createDto in createDtos)
-            {
-                var repairation = createDto.ProjectTo<RepairationCreateDto, Repairation>();
-            }
+            var repairations = createDtos.Select(dto => dto.ProjectTo<RepairationCreateDto, Repairation>())
+                                         .ToList();
 
-            if (repairations != null)
-            {
-                if (!await _repairationRepository.InsertRepairations(repairations, AccountId, CurrentDate))
-                    throw new ApiException("Tạo yêu cầu thất bại", StatusCode.SERVER_ERROR);
-
-                return ApiResponse.Created("Gửi yêu cầu thành công");
-            }
+            if (!await _repairationRepository.InsertRepairations(repairations, AccountId, CurrentDate))
+                throw new ApiException("Tạo yêu cầu thất bại", StatusCode.SERVER_ERROR);
 
             return ApiResponse.Created("Gửi yêu cầu thành công");
         }
@@ -98,9 +87,7 @@ namespace API_FFMS.Services
                 throw new ApiException("Không tìm thấy yêu cầu sửa chữa này", StatusCode.NOT_FOUND);
             }
 
-            existingRepair.Status = RequestStatus.Cancelled;
-
-            if (!await MainUnitOfWork.RepairationRepository.DeleteAsync(existingRepair, AccountId, CurrentDate))
+            if (!await _repairationRepository.DeleteRepair(existingRepair, AccountId, CurrentDate))
             {
                 throw new ApiException("Xóa thất bại", StatusCode.SERVER_ERROR);
             }
@@ -143,7 +130,7 @@ namespace API_FFMS.Services
                 });
             if (repairation.Asset != null)
             {
-                repairation.Asset!.StatusObj = repairation.Asset.Status?.GetValue();
+                repairation.Asset.StatusObj = repairation.Asset.Status?.GetValue();
             }
 
             repairation.User = await MainUnitOfWork.UserRepository.FindOneAsync<UserBaseDto>(
@@ -154,8 +141,8 @@ namespace API_FFMS.Services
                 });
             if (repairation.User != null)
             {
-                repairation.User!.StatusObj = repairation.User.Status?.GetValue();
-                repairation.User!.RoleObj = repairation.User.Role?.GetValue();
+                repairation.User.StatusObj = repairation.User.Status?.GetValue();
+                repairation.User.RoleObj = repairation.User.Role?.GetValue();
             }
 
             var mediaFileQuery = MainUnitOfWork.MediaFileRepository.GetQuery().Where(m => m!.ItemId == repairation.Id);
@@ -206,8 +193,8 @@ namespace API_FFMS.Services
             if (!string.IsNullOrEmpty(keyword))
             {
                 repairQuery = repairQuery.Where(x => x!.Description!.ToLower().Contains(keyword)
-                                                                   || x.Notes!.ToLower().Contains(keyword) ||
-                                                                   x.RequestCode.ToLower().Contains(keyword));
+                                                         || x.Notes!.ToLower().Contains(keyword)
+                                                         || x.RequestCode.ToLower().Contains(keyword));
             }
 
             repairQuery = repairQuery.OrderByDescending(x => x!.CreatedAt);
@@ -218,20 +205,20 @@ namespace API_FFMS.Services
             .Where(x => !x!.DeletedAt.HasValue);
 
             var joinTable = from repair in repairQuery
-                                join user in MainUnitOfWork.UserRepository.GetQuery() on repair.AssignedTo equals user.Id
-                                join asset in MainUnitOfWork.AssetRepository.GetQuery() on repair.AssetId equals asset.Id
-                                join assetType in assetTypeQueryable on asset.TypeId equals assetType.Id into assetTypeGroup
+                            join user in MainUnitOfWork.UserRepository.GetQuery() on repair.AssignedTo equals user.Id
+                            join asset in MainUnitOfWork.AssetRepository.GetQuery() on repair.AssetId equals asset.Id
+                            join assetType in assetTypeQueryable on asset.TypeId equals assetType.Id into assetTypeGroup
                             from assetType in assetTypeGroup.DefaultIfEmpty()
-                                join category in categoryQueryable on assetType.CategoryId equals category.Id into categoryGroup
+                            join category in categoryQueryable on assetType.CategoryId equals category.Id into categoryGroup
                             from category in categoryGroup.DefaultIfEmpty()
-                                select new
-                                {
-                                    Repairation = repair,
-                                    Asset = asset,
-                                    User = user,
-                                    AssetType = assetType,
-                                    Category = category
-                                };
+                            select new
+                            {
+                                Repairation = repair,
+                                Asset = asset,
+                                User = user,
+                                AssetType = assetType,
+                                Category = category
+                            };
 
             var totalCount = await joinTable.CountAsync();
 
@@ -244,7 +231,7 @@ namespace API_FFMS.Services
                 RequestDate = x.Repairation.RequestDate,
                 CompletionDate = x.Repairation.CompletionDate,
                 Status = x.Repairation.Status,
-                StatusObj = x.Repairation.Status!.GetValue(),
+                StatusObj = x.Repairation.Status.GetValue(),
                 Description = x.Repairation.Description,
                 Notes = x.Repairation.Notes,
                 Checkin = x.Repairation.Checkin,

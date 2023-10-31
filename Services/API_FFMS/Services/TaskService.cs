@@ -172,6 +172,7 @@ public class TaskService : BaseService, ITaskService
                             });
                 }
             }
+            assetCheckTask.PriorityObj = assetCheckTask.Priority.GetValue();
             assetCheckTask.StatusObj = assetCheckTask.Status?.GetValue();
             assetCheckTask.Type = RequestType.StatusCheck;
             assetCheckTask.TypeObj = assetCheckTask.Type.GetValue();
@@ -256,6 +257,8 @@ public class TaskService : BaseService, ITaskService
                 Description = trasportTask.Description,
                 Notes = trasportTask.Notes,
                 //Quantity = trasportTask.Quantity,
+                Priority = trasportTask.Priority,
+                PriorityObj = trasportTask.Priority.GetValue(),
                 Status = trasportTask.Status,
                 StatusObj = trasportTask.Status!.GetValue(),
                 CreatedAt = trasportTask.CreatedAt,
@@ -329,6 +332,7 @@ public class TaskService : BaseService, ITaskService
             replacementTask.RequestCode = replacementTask.RequestCode;
             replacementTask.RequestDate = replacementTask.RequestDate;
             replacementTask.Description = replacementTask.Description;
+            replacementTask.PriorityObj = replacementTask.Priority.GetValue();
             replacementTask.Notes = replacementTask.Notes;
             replacementTask.Status = replacementTask.Status;
             replacementTask.StatusObj = replacementTask.Status!.GetValue();
@@ -375,6 +379,7 @@ public class TaskService : BaseService, ITaskService
                 }
             }
 
+            repairation.PriorityObj = repairation.Priority.GetValue();
             repairation.StatusObj = repairation.Status!.GetValue();
             repairation.Type = RequestType.Repairation;
             repairation.TypeObj = repairation.Type.GetValue();
@@ -420,6 +425,7 @@ public class TaskService : BaseService, ITaskService
                 }
             }
 
+            maintenance.PriorityObj = maintenance.Priority.GetValue();
             maintenance.StatusObj = maintenance.Status!.GetValue();
             maintenance.Type = RequestType.Maintenance;
             maintenance.TypeObj = maintenance.Type.GetValue();
@@ -431,8 +437,6 @@ public class TaskService : BaseService, ITaskService
         {
             throw new ApiException("Không tìm thấy yêu cầu", StatusCode.NOT_FOUND);
         }
-
-        //taskDetail = await _mapperRepository.MapCreator(taskDetail);
 
         return ApiResponse<TaskDetailDto>.Success(taskDetail);
 
