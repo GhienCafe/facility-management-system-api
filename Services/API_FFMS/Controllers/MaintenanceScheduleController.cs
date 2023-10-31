@@ -22,6 +22,13 @@ public class MaintenanceScheduleController : BaseController
         return await _maintenanceScheduleService.GetItems(queryDto);
     }
     
+    [HttpGet("assets-in-time")]
+    [SwaggerOperation("Get list assets in time for maintenance")]
+    public async Task<ApiResponses<AssetMaintenanceDto>> GetAssetsInTime([FromQuery]AssetQueryDto queryDto)
+    {
+        return await _maintenanceScheduleService.GetMaintenanceItems(queryDto);
+    }
+    
     [HttpGet("{id}")]
     [SwaggerOperation("Get maintenance schedule")]
     public async Task<ApiResponse<MaintenanceScheduleConfigDetailDto>> GetItem(Guid id)

@@ -385,7 +385,7 @@ public class AssetService : BaseService, IAssetService
             assets,
             totalCount,
             queryDto.PageSize,
-            queryDto.Skip(),
+            queryDto.Page,
             (int)Math.Ceiling(totalCount / (double)queryDto.PageSize)
         );
     }

@@ -83,6 +83,7 @@ namespace API_FFMS.Services
             }
 
             var totalCount = await response.CountAsync();
+            response = response.Skip(queryDto.Skip()).Take(queryDto.PageSize);
             var assetTypes = await response.Select(x => new AssetTypeDto
             {
                 Id = x!.Id,

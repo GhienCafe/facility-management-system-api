@@ -6,7 +6,6 @@ using MainData.Repositories;
 using System.Linq.Expressions;
 using API_FFMS.Repositories;
 using AppCore.Extensions;
-using DocumentFormat.OpenXml.Bibliography;
 using Microsoft.EntityFrameworkCore;
 
 namespace API_FFMS.Services
@@ -19,11 +18,16 @@ namespace API_FFMS.Services
         Task<ApiResponse> UpdateItem(Guid id, MaintenanceScheduleConfigUpdateDto updateDto);
         Task<ApiResponse> DeleteItem(Guid id);
         Task<ApiResponse> DeleteItems(List<Guid> ids);
+        Task<ApiResponses<AssetMaintenanceDto>> GetMaintenanceItems(AssetQueryDto queryDto);
     }
+
     public class MaintenanceScheduleService : BaseService, IMaintenanceScheduleService
     {
         private readonly IMaintenanceScheduleRepository _maintenanceScheduleRepository;
-        public MaintenanceScheduleService(MainUnitOfWork mainUnitOfWork, IHttpContextAccessor httpContextAccessor, IMapperRepository mapperRepository, IMaintenanceScheduleRepository maintenanceScheduleRepository) : base(mainUnitOfWork, httpContextAccessor, mapperRepository)
+
+        public MaintenanceScheduleService(MainUnitOfWork mainUnitOfWork, IHttpContextAccessor httpContextAccessor,
+            IMapperRepository mapperRepository, IMaintenanceScheduleRepository maintenanceScheduleRepository) : base(
+            mainUnitOfWork, httpContextAccessor, mapperRepository)
         {
             _maintenanceScheduleRepository = maintenanceScheduleRepository;
         }
@@ -36,10 +40,11 @@ namespace API_FFMS.Services
             // if (isExists)
             //     throw new ApiException("Đã tồn tại cài đặt", StatusCode.ALREADY_EXISTS);
 
-            var maintenanceConfig = createDto.ProjectTo<MaintenanceScheduleConfigCreateDto, MaintenanceScheduleConfig>();
+            var maintenanceConfig =
+                createDto.ProjectTo<MaintenanceScheduleConfigCreateDto, MaintenanceScheduleConfig>();
 
             var assets = new List<Asset?>();
-            
+
             if (createDto.AssetIds != null)
             {
                 var assetIds = createDto.AssetIds.Select(id => id.Id).ToList();
@@ -49,14 +54,16 @@ namespace API_FFMS.Services
                     x => assetIds.Contains(x.Id)
                 }, null);
             }
-            
-            if(! await _maintenanceScheduleRepository.InsertMaintenanceScheduleConfig(maintenanceConfig, assets, AccountId, CurrentDate))
+
+            if (!await _maintenanceScheduleRepository.InsertMaintenanceScheduleConfig(maintenanceConfig, assets,
+                    AccountId, CurrentDate))
                 throw new ApiException("Thêm mới thất bại", StatusCode.SERVER_ERROR);
-            
+
             return ApiResponse.Created("Thêm mới thành công");
         }
 
-        public async Task<ApiResponses<MaintenanceScheduleConfigDto>> GetItems(MaintenanceScheduleConfigQueryDto queryDto)
+        public async Task<ApiResponses<MaintenanceScheduleConfigDto>> GetItems(
+            MaintenanceScheduleConfigQueryDto queryDto)
         {
             var keyword = queryDto.Keyword?.Trim().ToLower();
             var maintenanceConfigQueryable = MainUnitOfWork.MaintenanceScheduleRepository.GetQuery();
@@ -68,7 +75,7 @@ namespace API_FFMS.Services
                                 || x.RepeatIntervalInMonths.ToString().Contains(keyword)
                                 || x.Code.ToLower().Contains(keyword));
             }
-            
+
             // Sort
             var isDescending = queryDto.OrderBy.Split(' ').Last().ToLowerInvariant()
                 .StartsWith("desc");
@@ -97,7 +104,7 @@ namespace API_FFMS.Services
                 .ProjectTo<MaintenanceScheduleConfig, MaintenanceScheduleConfigDto>();
 
             items = await _mapperRepository.MapCreator(items);
-            
+
             return ApiResponses<MaintenanceScheduleConfigDto>.Success(
                 items,
                 totalCount,
@@ -119,7 +126,7 @@ namespace API_FFMS.Services
                 x => !x.DeletedAt.HasValue,
                 x => x.MaintenanceConfigId == id
             }, null))!.ProjectTo<Asset, AssetBaseDto>();
-            
+
             foreach (var asset in assets)
             {
                 asset.StatusObj = asset.Status.GetValue();
@@ -127,7 +134,7 @@ namespace API_FFMS.Services
 
             item.Assets = assets;
             item = await _mapperRepository.MapCreator(item);
-            
+
             return ApiResponse<MaintenanceScheduleConfigDetailDto>.Success(item);
         }
 
@@ -142,7 +149,7 @@ namespace API_FFMS.Services
             //
             // if (checkExist != null && checkExist.Any())
             //     throw new ApiException("Đã tồn tại cài đặt", StatusCode.ALREADY_EXISTS);
-            
+
             var item = await MainUnitOfWork.MaintenanceScheduleRepository.FindOneAsync(id);
 
             if (item == null)
@@ -161,7 +168,7 @@ namespace API_FFMS.Services
 
                 var assetIds = updateDto.AssetIds?.Select(x => x.Id);
                 var newData = new List<Asset?>();
-            
+
                 if (assetIds != null)
                 {
                     newData = await MainUnitOfWork.AssetRepository.FindAsync(new Expression<Func<Asset, bool>>[]
@@ -170,8 +177,9 @@ namespace API_FFMS.Services
                         x => assetIds.Contains(x.Id)
                     }, null);
                 }
-            
-                if (!await _maintenanceScheduleRepository.UpdateMaintenanceScheduleConfig(item, oldData, newData, AccountId, CurrentDate))
+
+                if (!await _maintenanceScheduleRepository.UpdateMaintenanceScheduleConfig(item, oldData, newData,
+                        AccountId, CurrentDate))
                     throw new ApiException("Cập nhật thất bại", StatusCode.SERVER_ERROR);
             }
             else
@@ -201,8 +209,8 @@ namespace API_FFMS.Services
             var items = await MainUnitOfWork.MaintenanceScheduleRepository.FindAsync(
                 new Expression<Func<MaintenanceScheduleConfig, bool>>[]
                 {
-                     x => !x.DeletedAt.HasValue,
-                     x => ids.Contains(x.Id)
+                    x => !x.DeletedAt.HasValue,
+                    x => ids.Contains(x.Id)
                 }, null);
 
             if (items == null || !items.Any())
@@ -212,6 +220,89 @@ namespace API_FFMS.Services
                 throw new ApiException("Xóa thất bại", StatusCode.SERVER_ERROR);
 
             return ApiResponse.Success("Xóa nội dung thành công");
+        }
+
+        public async Task<ApiResponses<AssetMaintenanceDto>> GetMaintenanceItems(AssetQueryDto queryDto)
+        {
+            var keyword = queryDto.Keyword?.Trim().ToLower();
+
+            var assetsQueryable = MainUnitOfWork.AssetRepository.GetQuery();
+            var maintenanceScheduleConfigQueryable = MainUnitOfWork.MaintenanceScheduleRepository.GetQuery();
+
+            var maintenanceItems = (from asset in assetsQueryable
+                join maintenanceScheduleConfig in maintenanceScheduleConfigQueryable
+                    on asset.MaintenanceConfigId equals maintenanceScheduleConfig.Id into maintenanceScheduleConfigGroup
+                from maintenanceScheduleConfig in maintenanceScheduleConfigGroup.DefaultIfEmpty()
+                select new AssetMaintenanceDto
+                {
+                    // Map other properties from your entities to the DTO
+                    Id = asset.Id,
+                    AssetName = asset.AssetName,
+                    AssetCode = asset.AssetCode,
+                    IsMovable = asset.IsMovable,
+                    Status = asset.Status,
+                    StatusObj = asset.Status.GetValue(),
+                    ManufacturingYear = asset.ManufacturingYear,
+                    SerialNumber = asset.SerialNumber,
+                    Quantity = asset.Quantity,
+                    Description = asset.Description,
+                    LastMaintenanceTime = asset.LastMaintenanceTime,
+                    LastCheckedDate = asset.LastCheckedDate,
+                    TypeId = asset.TypeId,
+                    ModelId = asset.ModelId,
+                    IsRented = asset.IsRented,
+                    StartDateOfUse = asset.StartDateOfUse,
+                    ImageUrl = asset.ImageUrl,
+                    MaintenanceConfigId = asset.MaintenanceConfigId,
+                    // Calculate the NextMaintenanceDate
+                    NextMaintenanceDate = asset.LastMaintenanceTime != null
+                        ? asset.LastMaintenanceTime.Value.AddMonths(maintenanceScheduleConfig.RepeatIntervalInMonths)
+                        : asset.StartDateOfUse.Value.AddMonths(maintenanceScheduleConfig.RepeatIntervalInMonths)
+                });
+
+            maintenanceItems = maintenanceItems.Where(x => x.NextMaintenanceDate <= CurrentDate);
+
+            if (!string.IsNullOrEmpty(keyword))
+            {
+                maintenanceItems = maintenanceItems.Where(x => x.AssetName.ToLower().Contains(keyword)
+                                                               || x.AssetCode.Contains(keyword)
+                                                               || x.Description.Contains(keyword));
+            }
+
+            if (queryDto.TypeId != null)
+            {
+                maintenanceItems = maintenanceItems.Where(x => x.TypeId == queryDto.TypeId);
+            }
+
+            if (queryDto.Status != null)
+            {
+                maintenanceItems = maintenanceItems.Where(x => x.Status == queryDto.Status);
+            }
+
+            if (queryDto.ModelId != null)
+            {
+                maintenanceItems = maintenanceItems.Where(x => x.ModelId == queryDto.ModelId);
+            }
+
+            if (queryDto.IsMovable != null)
+            {
+                maintenanceItems = maintenanceItems.Where(x => x.IsMovable == queryDto.IsMovable);
+            }
+
+            var totalCount = await maintenanceItems.CountAsync();
+            maintenanceItems = maintenanceItems.Skip(queryDto.Skip()).Take(queryDto.PageSize);
+
+            var items = await maintenanceItems.ToListAsync();
+
+            items = await _mapperRepository.MapCreator(items);
+
+            return ApiResponses<AssetMaintenanceDto>.Success(
+                items,
+                totalCount,
+                queryDto.PageSize,
+                queryDto.Page,
+                (int)Math.Ceiling(totalCount / (double)queryDto.PageSize)
+            );
         }
     }
 }
