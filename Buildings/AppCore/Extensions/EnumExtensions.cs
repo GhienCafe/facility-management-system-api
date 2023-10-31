@@ -27,6 +27,9 @@ public static class EnumExtensions
             return null;
         var attr = GetDisplayAttribute(enu);
         var colorAttr = GetColorAttribute(enu);
+        if (attr == null)
+            return null;
+        
         return new EnumValue
         {
             Value = Convert.ToInt32(enu),
@@ -35,7 +38,7 @@ public static class EnumExtensions
             Color = colorAttr
         };
     }
-
+ 
     public static EnumValue? GetValue<T>(int value) where T : Enum
     {
         foreach (var itemType in Enum.GetValues(typeof(T)))
