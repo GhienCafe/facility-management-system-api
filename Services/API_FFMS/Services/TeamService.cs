@@ -80,21 +80,6 @@ namespace API_FFMS.Services
 
         public async Task<ApiResponses<TeamDto>> GetTeams(TeamQueryDto queryDto)
         {
-            // var teams = await MainUnitOfWork.TeamRepository.FindResultAsync<TeamDto>(
-            //     new Expression<Func<Team, bool>>[]
-            //     {
-            //         x => !x.DeletedAt.HasValue,
-            //         x => queryDto.TeamName == null || x.TeamName!.ToLower().Contains(queryDto.TeamName.Trim().ToLower())
-            //     }, queryDto.OrderBy, queryDto.Skip(), queryDto.PageSize);
-            //
-            // teams.Items = await _mapperRepository.MapCreator(teams.Items.ToList());
-            //
-            // return ApiResponses<TeamDto>.Success(
-            // teams.Items,
-            // teams.TotalCount,
-            // queryDto.PageSize,
-            // queryDto.Page,
-            // (int)Math.Ceiling(teams.TotalCount / (double)queryDto.PageSize));
             var keyword = queryDto.Keyword?.Trim().ToLower();
             var teamQueryable = MainUnitOfWork.TeamRepository.GetQuery()
                 .Where(x => !x!.DeletedAt.HasValue);

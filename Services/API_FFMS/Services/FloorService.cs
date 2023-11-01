@@ -60,6 +60,7 @@ public class FloorService : BaseService, IFloorService
             };
         
         var totalCount = joinTables.Count();
+        joinTables = joinTables.Skip(queryDto.Skip()).Take(queryDto.PageSize);
 
         var floors = await joinTables.Select(
             x => new FloorDto
