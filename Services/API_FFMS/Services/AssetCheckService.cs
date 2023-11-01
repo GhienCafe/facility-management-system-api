@@ -45,18 +45,18 @@ public class AssetCheckService : BaseService, IAssetCheckService
 
     public async Task<ApiResponse> Delete(Guid id)
     {
-        var existingAssetcheck = await MainUnitOfWork.AssetCheckRepository.FindAsync(
+        var existingAssetcheck = await MainUnitOfWork.AssetCheckRepository.FindOneAsync(
                                 new Expression<Func<AssetCheck, bool>>[]
                                 {
                                     x => !x.DeletedAt.HasValue,
                                     x => x.Id == id
-                                }, null);
+                                });
         if (existingAssetcheck == null)
         {
             throw new ApiException("Không tìm thấy yêu cầu kiểm tra này", StatusCode.NOT_FOUND);
         }
 
-        if (!await MainUnitOfWork.AssetCheckRepository.DeleteAsync(existingAssetcheck, AccountId, CurrentDate))
+        if (!await _assetcheckRepository.DeleteAssetCheck(existingAssetcheck, AccountId, CurrentDate))
         {
             throw new ApiException("Xóa thất bại", StatusCode.SERVER_ERROR);
         }

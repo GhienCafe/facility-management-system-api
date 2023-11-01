@@ -1,9 +1,7 @@
 ﻿using AppCore.Extensions;
-using DocumentFormat.OpenXml.Office2010.Word;
 using MainData;
 using MainData.Entities;
 using Microsoft.EntityFrameworkCore;
-using System;
 
 namespace API_FFMS.Repositories;
 
@@ -11,8 +9,9 @@ public interface IMaintenanceRepository
 {
     Task<bool> InsertMaintenance(Maintenance maintenance, Guid? creatorId, DateTime? now = null);
     Task<bool> UpdateStatus(Maintenance maintenance, RequestStatus? statusUpdate, Guid? editorId, DateTime? now = null);
-
     Task<bool> InsertMaintenances(List<Maintenance> maintenances, Guid? creatorId, DateTime? now = null);
+    Task<bool> DeleteMaintenances(List<Maintenance> maintenances, Guid? deleterId, DateTime? now = null);
+    Task<bool> DeleteMaintenance(Maintenance maintenance, Guid? deleterId, DateTime? now = null);
 }
 
 public class MaintenanceRepository : IMaintenanceRepository
@@ -38,7 +37,6 @@ public class MaintenanceRepository : IMaintenanceRepository
             entity.Status = RequestStatus.NotStart;
             entity.RequestDate = now.Value;
             await _context.Maintenances.AddAsync(entity);
-            // await _context.SaveChangesAsync();
 
             // Update asset status
             var asset = await _context.Assets.FindAsync(entity.AssetId);
@@ -56,6 +54,7 @@ public class MaintenanceRepository : IMaintenanceRepository
                 {
                     roomAsset!.Status = AssetStatus.Maintenance;
                     roomAsset.EditedAt = now.Value;
+                    roomAsset.EditorId = creatorId;
                     _context.Entry(roomAsset).State = EntityState.Modified;
                 }
 
@@ -111,6 +110,7 @@ public class MaintenanceRepository : IMaintenanceRepository
                 var asset = await _context.Assets.FindAsync(entity.AssetId);
                 asset!.Status = AssetStatus.Maintenance;
                 asset.EditedAt = now.Value;
+                asset.EditorId = creatorId;
                 _context.Entry(asset).State = EntityState.Modified;
 
                 if (entity.IsInternal)
@@ -122,6 +122,7 @@ public class MaintenanceRepository : IMaintenanceRepository
                     {
                         roomAsset!.Status = AssetStatus.Maintenance;
                         roomAsset.EditedAt = now.Value;
+                        roomAsset.EditorId = creatorId;
                         _context.Entry(roomAsset).State = EntityState.Modified;
                     }
 
@@ -190,31 +191,148 @@ public class MaintenanceRepository : IMaintenanceRepository
             {
                 asset!.Status = AssetStatus.Operational;
                 asset.EditedAt = now.Value;
+                asset.EditorId = editorId;
                 _context.Entry(asset).State = EntityState.Modified;
 
                 roomAsset!.Status = AssetStatus.Operational;
                 roomAsset.EditedAt = now.Value;
                 roomAsset.ToDate = now.Value;
+                roomAsset.EditorId = editorId;
                 _context.Entry(roomAsset).State = EntityState.Modified;
 
                 location!.State = RoomState.Operational;
+                location.EditedAt = now.Value;
+                location.EditorId = editorId;
                 _context.Entry(location).State = EntityState.Modified;
             }
             else if (statusUpdate == RequestStatus.Cancelled)
             {
                 asset!.Status = AssetStatus.Operational;
                 asset.EditedAt = now.Value;
+                asset.EditorId = editorId;
                 _context.Entry(asset).State = EntityState.Modified;
 
                 roomAsset!.Status = AssetStatus.Operational;
                 roomAsset.EditedAt = now.Value;
                 roomAsset.ToDate = now.Value;
+                roomAsset.EditorId = editorId;
                 _context.Entry(roomAsset).State = EntityState.Modified;
 
                 location!.State = RoomState.Operational;
+                location.EditedAt = now.Value;
+                location.EditorId = editorId;
                 _context.Entry(location).State = EntityState.Modified;
             }
 
+            await _context.SaveChangesAsync();
+            await _context.Database.CommitTransactionAsync();
+            return true;
+        }
+        catch
+        {
+            await _context.Database.RollbackTransactionAsync();
+            return false;
+        }
+    }
+
+    public async Task<bool> DeleteMaintenances(List<Maintenance> maintenances, Guid? deleterId, DateTime? now = null)
+    {
+        await _context.Database.BeginTransactionAsync();
+        now ??= DateTime.UtcNow;
+        try
+        {
+            foreach (var maintenance in maintenances)
+            {
+                maintenance.DeletedAt = now.Value;
+                maintenance.DeleterId = deleterId;
+                _context.Entry(maintenance).State = EntityState.Modified;
+
+                var asset = await _context.Assets.FindAsync(maintenance.AssetId);
+                asset!.Status = AssetStatus.Maintenance;
+                asset.EditedAt = now.Value;
+                asset.EditorId = deleterId;
+                _context.Entry(asset).State = EntityState.Modified;
+
+                var roomAsset = await _context.RoomAssets
+                    .FirstOrDefaultAsync(x => x.AssetId == maintenance.AssetId && x.ToDate == null);
+                var location = await _context.Rooms.FirstOrDefaultAsync(x => x.Id == roomAsset!.RoomId && roomAsset.AssetId == asset!.Id);
+
+                if (asset != null)
+                {
+                    asset.Status = AssetStatus.Operational;
+                    asset.EditedAt = now.Value;
+                    asset.EditorId = deleterId;
+                    _context.Entry(asset).State = EntityState.Modified;
+                }
+
+                if (roomAsset != null)
+                {
+                    roomAsset.Status = AssetStatus.Operational;
+                    roomAsset.EditedAt = now.Value;
+                    roomAsset.EditorId = deleterId;
+                    _context.Entry(roomAsset).State = EntityState.Modified;
+                }
+
+                if (location != null)
+                {
+                    location!.State = RoomState.Operational;
+                    location.EditedAt = now.Value;
+                    location.EditorId = deleterId;
+                    _context.Entry(location).State = EntityState.Modified;
+                }
+            }
+            await _context.SaveChangesAsync();
+            await _context.Database.CommitTransactionAsync();
+            return true;
+        }
+        catch
+        {
+            await _context.Database.RollbackTransactionAsync();
+            return false;
+        }
+    }
+
+    public async Task<bool> DeleteMaintenance(Maintenance maintenance, Guid? deleterId, DateTime? now = null)
+    {
+        await _context.Database.BeginTransactionAsync();
+        now ??= DateTime.UtcNow;
+        try
+        {
+            maintenance.DeletedAt = now.Value;
+            maintenance.DeleterId = deleterId;
+            _context.Entry(maintenance).State = EntityState.Modified;
+
+            var asset = await _context.Assets
+                            .Include(a => a.Type)
+                            .Where(a => a.Id == maintenance.AssetId)
+                            .FirstOrDefaultAsync();
+
+            var roomAsset = await _context.RoomAssets.FirstOrDefaultAsync(x => x.AssetId == asset!.Id && x.ToDate == null);
+            var location = await _context.Rooms.FirstOrDefaultAsync(x => x.Id == roomAsset!.RoomId && roomAsset.AssetId == asset!.Id);
+
+            if (asset != null)
+            {
+                asset.Status = AssetStatus.Operational;
+                asset.EditedAt = now.Value;
+                asset.EditorId = deleterId;
+                _context.Entry(asset).State = EntityState.Modified;
+            }
+
+            if (roomAsset != null)
+            {
+                roomAsset.Status = AssetStatus.Operational;
+                roomAsset.EditedAt = now.Value;
+                roomAsset.EditorId = deleterId;
+                _context.Entry(roomAsset).State = EntityState.Modified;
+            }
+
+            if (location != null)
+            {
+                location!.State = RoomState.Operational;
+                location.EditedAt = now.Value;
+                location.EditorId = deleterId;
+                _context.Entry(location).State = EntityState.Modified;
+            }
             await _context.SaveChangesAsync();
             await _context.Database.CommitTransactionAsync();
             return true;
