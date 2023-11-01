@@ -5,7 +5,6 @@ using AppCore.Models;
 using MainData;
 using MainData.Entities;
 using MainData.Repositories;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
 
@@ -65,10 +64,10 @@ namespace API_FFMS.Services
                 throw new ApiException("Trang thiết bị đang trong một yêu cầu khác", StatusCode.SERVER_ERROR);
             }
 
-            var repairations = createDtos.Select(dto => dto.ProjectTo<RepairationCreateDto, Repairation>())
+            var repairs = createDtos.Select(dto => dto.ProjectTo<RepairationCreateDto, Repairation>())
                                          .ToList();
 
-            if (!await _repairationRepository.InsertRepairations(repairations, AccountId, CurrentDate))
+            if (!await _repairationRepository.InsertRepairations(repairs, AccountId, CurrentDate))
                 throw new ApiException("Tạo yêu cầu thất bại", StatusCode.SERVER_ERROR);
 
             return ApiResponse.Created("Gửi yêu cầu thành công");
@@ -100,9 +99,12 @@ namespace API_FFMS.Services
                 new Expression<Func<Repairation, bool>>[]
                 {
                     x => !x.DeletedAt.HasValue,
-                x => deleteDto.ListId!.Contains(x.Id)
+                    x => deleteDto.ListId!.Contains(x.Id)
                 }, null);
-            if (!await MainUnitOfWork.RepairationRepository.DeleteAsync(replairDeleteds, AccountId, CurrentDate))
+
+            var repairs = replairDeleteds.Where(r => r != null).ToList();
+
+            if (!await _repairationRepository.DeleteRepairs(repairs, AccountId, CurrentDate))
             {
                 throw new ApiException("Xóa thất bại", StatusCode.SERVER_ERROR);
             }

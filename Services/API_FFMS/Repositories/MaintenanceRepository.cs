@@ -10,7 +10,7 @@ public interface IMaintenanceRepository
     Task<bool> InsertMaintenance(Maintenance maintenance, Guid? creatorId, DateTime? now = null);
     Task<bool> UpdateStatus(Maintenance maintenance, RequestStatus? statusUpdate, Guid? editorId, DateTime? now = null);
     Task<bool> InsertMaintenances(List<Maintenance> maintenances, Guid? creatorId, DateTime? now = null);
-    Task<bool> DeleteMaintenances(List<Maintenance> maintenances, Guid? deleterId, DateTime? now = null);
+    Task<bool> DeleteMaintenances(List<Maintenance?> maintenances, Guid? deleterId, DateTime? now = null);
     Task<bool> DeleteMaintenance(Maintenance maintenance, Guid? deleterId, DateTime? now = null);
 }
 
@@ -235,7 +235,7 @@ public class MaintenanceRepository : IMaintenanceRepository
         }
     }
 
-    public async Task<bool> DeleteMaintenances(List<Maintenance> maintenances, Guid? deleterId, DateTime? now = null)
+    public async Task<bool> DeleteMaintenances(List<Maintenance?> maintenances, Guid? deleterId, DateTime? now = null)
     {
         await _context.Database.BeginTransactionAsync();
         now ??= DateTime.UtcNow;
@@ -243,6 +243,8 @@ public class MaintenanceRepository : IMaintenanceRepository
         {
             foreach (var maintenance in maintenances)
             {
+                if (maintenance == null) continue;
+
                 maintenance.DeletedAt = now.Value;
                 maintenance.DeleterId = deleterId;
                 _context.Entry(maintenance).State = EntityState.Modified;

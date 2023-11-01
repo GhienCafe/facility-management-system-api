@@ -2,7 +2,6 @@
 using API_FFMS.Repositories;
 using AppCore.Extensions;
 using AppCore.Models;
-using DocumentFormat.OpenXml.Wordprocessing;
 using MainData;
 using MainData.Entities;
 using MainData.Repositories;
@@ -102,9 +101,7 @@ namespace API_FFMS.Services
                 throw new ApiException("Không tìm thấy yêu cầu vận chuyển này", StatusCode.NOT_FOUND);
             }
 
-            existingTransport.Status = RequestStatus.Cancelled;
-
-            if (!await MainUnitOfWork.TransportationRepository.DeleteAsync(existingTransport, AccountId, CurrentDate))
+            if (!await _transportationRepository.DeleteTransport(existingTransport, AccountId, CurrentDate))
             {
                 throw new ApiException("Xóa thất bại", StatusCode.SERVER_ERROR);
             }
@@ -120,7 +117,8 @@ namespace API_FFMS.Services
                 x => deleteDto.ListId!.Contains(x.Id)
                 }, null);
 
-            if (!await MainUnitOfWork.TransportationRepository.DeleteAsync(transportDeleteds, AccountId, CurrentDate))
+            var transportations = transportDeleteds.Where(t => t != null).ToList();
+            if (!await MainUnitOfWork.TransportationRepository.DeleteAsync(transportations, AccountId, CurrentDate))
             {
                 throw new ApiException("Xóa thất bại", StatusCode.SERVER_ERROR);
             }
