@@ -133,9 +133,9 @@ public class AssetService : BaseService, IAssetService
             EditedAt = x.EditedAt,
             CreatorId = x.CreatorId ?? Guid.Empty,
             EditorId = x.EditorId ?? Guid.Empty,
-            Type = x.Type !=null ? new AssetTypeDto
+            Type = x.Type != null ? new AssetTypeDto
             {
-                Id = x.Type!.Id,
+                Id = x.Type.Id,
                 Description = x.Type.Description,
                 TypeCode = x.Type.TypeCode,
                 TypeName = x.Type.TypeName,
@@ -149,7 +149,7 @@ public class AssetService : BaseService, IAssetService
             } : null,
             Category = x.Type!.Category != null ?  new CategoryDto
             {
-                Id = x.Type!.Category!.Id,
+                Id = x.Type.Category.Id,
                 Description = x.Type.Category.Description,
                 CategoryName = x.Type.Category.CategoryName,
                 CreatedAt = x.Type.Category.CreatedAt,
@@ -159,7 +159,7 @@ public class AssetService : BaseService, IAssetService
             } : null,
             Model = x.Model != null ? new ModelDto
             {
-                Id = x.Model!.Id,
+                Id = x.Model.Id,
                 Description = x.Model.Description,
                 ModelName = x.Model.ModelName,
                 CreatedAt = x.Model.CreatedAt,
@@ -167,7 +167,7 @@ public class AssetService : BaseService, IAssetService
                 CreatorId = x.Model.CreatorId ?? Guid.Empty,
                 EditorId = x.Model.EditorId ?? Guid.Empty
             } : null,
-            Room =x.RoomAssets!.Select(ra => new RoomBaseDto
+            Room = x.RoomAssets!.Select(ra => new RoomBaseDto
             {
                 Id = ra.RoomId,
                 RoomName = ra.Room!.RoomName,

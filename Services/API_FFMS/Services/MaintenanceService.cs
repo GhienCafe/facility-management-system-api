@@ -281,22 +281,13 @@ public class MaintenanceService : BaseService, IMaintenanceService
                     x => createDtos.Select(dto => dto.AssetId).Contains(x.Id)
                 }, null);
 
-        foreach (var asset in assets)
+        if (assets.Any(asset => asset!.Status != AssetStatus.Operational))
         {
-            if (asset!.Status != AssetStatus.Operational)
-            {
-                throw new ApiException("Trang thiết bị đang trong một yêu cầu khác", StatusCode.SERVER_ERROR);
-            }
+            throw new ApiException("Trang thiết bị đang trong một yêu cầu khác", StatusCode.SERVER_ERROR);
         }
 
-        var maintenances = new List<Maintenance>();
-
-        foreach (var item in createDtos)
-        {
-            var maintenance = item.ProjectTo<MaintenanceCreateDto, Maintenance>();
-            //maintenance.RequestCode = GenerateRequestCode();
-            maintenances.Add(maintenance);
-        }
+        var maintenances = createDtos.Select(dto => dto.ProjectTo<MaintenanceCreateDto, Maintenance>())
+                                     .ToList();
 
         if (!await _maintenanceRepository.InsertMaintenances(maintenances, AccountId, CurrentDate))
             throw new ApiException("Tạo yêu cầu thất bại", StatusCode.SERVER_ERROR);

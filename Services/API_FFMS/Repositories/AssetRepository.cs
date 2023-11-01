@@ -26,8 +26,6 @@ namespace API_FFMS.Repositories
                 asset.EditedAt = now.Value;
                 asset.CreatorId = creatorId;
                 asset.StartDateOfUse = now.Value;
-                //asset.LastCheckedDate = now.Value;
-                //asset.LastMaintenanceTime = now.Value;
                 asset.Status = AssetStatus.Operational;
 
                 await _context.Assets.AddAsync(asset);
