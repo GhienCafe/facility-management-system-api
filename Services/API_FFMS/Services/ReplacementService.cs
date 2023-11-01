@@ -73,9 +73,7 @@ namespace API_FFMS.Services
                 throw new ApiException("Không tìm thấy yêu cầu thay thế này", StatusCode.NOT_FOUND);
             }
 
-            existingReplace.Status = RequestStatus.Cancelled;
-
-            if (!await MainUnitOfWork.ReplacementRepository.DeleteAsync(existingReplace, AccountId, CurrentDate))
+            if (!await _repository.DeleteReplacement(existingReplace, AccountId, CurrentDate))
             {
                 throw new ApiException("Xóa thất bại", StatusCode.SERVER_ERROR);
             }
@@ -91,7 +89,9 @@ namespace API_FFMS.Services
                                         x => deleteDto.ListId!.Contains(x.Id)
                                     }, null);
 
-            if (!await MainUnitOfWork.ReplacementRepository.DeleteAsync(replaceDeleteds, AccountId, CurrentDate))
+            var replacements = replaceDeleteds.Where(r => r != null).ToList();
+
+            if (!await _repository.DeleteReplacements(replaceDeleteds, AccountId, CurrentDate))
             {
                 throw new ApiException("Xóa thất bại", StatusCode.SERVER_ERROR);
             }

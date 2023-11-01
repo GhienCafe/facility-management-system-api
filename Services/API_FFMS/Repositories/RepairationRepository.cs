@@ -1,5 +1,4 @@
 ﻿using AppCore.Extensions;
-using DocumentFormat.OpenXml.Bibliography;
 using MainData;
 using MainData.Entities;
 using Microsoft.EntityFrameworkCore;
@@ -8,11 +7,11 @@ namespace API_FFMS.Repositories;
 
 public interface IRepairationRepository
 {
-    Task<bool> InsertRepairation(Repairation repairation, Guid? creatorId, DateTime? now = null);
-    Task<bool> InsertRepairations(List<Repairation> repairations, Guid? creatorId, DateTime? now = null);
-    Task<bool> UpdateStatus(Repairation Repairation, RequestStatus? statusUpdate, Guid? editorId, DateTime? now = null);
+    Task<bool> InsertRepairation(Repairation repair, Guid? creatorId, DateTime? now = null);
+    Task<bool> InsertRepairations(List<Repairation> repairs, Guid? creatorId, DateTime? now = null);
+    Task<bool> UpdateStatus(Repairation repair, RequestStatus? statusUpdate, Guid? editorId, DateTime? now = null);
     Task<bool> DeleteRepair(Repairation repair, Guid? deleterId, DateTime? now = null);
-    Task<bool> DeleteRepairs(List<Repairation> repairs, Guid? deleterId, DateTime? now = null);
+    Task<bool> DeleteRepairs(List<Repairation?> repairs, Guid? deleterId, DateTime? now = null);
 }
 public class RepairationRepository : IRepairationRepository
 {
@@ -23,34 +22,34 @@ public class RepairationRepository : IRepairationRepository
         _context = context;
     }
 
-    public async Task<bool> InsertRepairation(Repairation repairation, Guid? creatorId, DateTime? now = null)
+    public async Task<bool> InsertRepairation(Repairation repair, Guid? creatorId, DateTime? now = null)
     {
         await _context.Database.BeginTransactionAsync();
         now ??= DateTime.UtcNow;
         try
         {
-            repairation.Id = Guid.NewGuid();
-            repairation.CreatedAt = now.Value;
-            repairation.EditedAt = now.Value;
-            repairation.CreatorId = creatorId;
-            repairation.Status = RequestStatus.NotStart;
-            repairation.RequestDate = now.Value;
-            await _context.Repairations.AddAsync(repairation);
+            repair.Id = Guid.NewGuid();
+            repair.CreatedAt = now.Value;
+            repair.EditedAt = now.Value;
+            repair.CreatorId = creatorId;
+            repair.Status = RequestStatus.NotStart;
+            repair.RequestDate = now.Value;
+            await _context.Repairations.AddAsync(repair);
 
-            if (repairation.IsInternal)
+            if (repair.IsInternal)
             {
                 var notification = new Notification
                 {
                     CreatedAt = now.Value,
                     EditedAt = now.Value,
                     Status = NotificationStatus.Waiting,
-                    Content = repairation.Description,
+                    Content = repair.Description,
                     Title = RequestType.Repairation.GetDisplayName(),
                     Type = NotificationType.Task,
                     CreatorId = creatorId,
                     IsRead = false,
-                    ItemId = repairation.Id,
-                    UserId = repairation.AssignedTo
+                    ItemId = repair.Id,
+                    UserId = repair.AssignedTo
                 };
 
                 await _context.Notifications.AddAsync(notification);
@@ -150,28 +149,28 @@ public class RepairationRepository : IRepairationRepository
         return requests;
     }
 
-    public async Task<bool> UpdateStatus(Repairation repairation, RequestStatus? statusUpdate, Guid? editorId, DateTime? now = null)
+    public async Task<bool> UpdateStatus(Repairation repair, RequestStatus? statusUpdate, Guid? editorId, DateTime? now = null)
     {
         await _context.Database.BeginTransactionAsync();
         now ??= DateTime.UtcNow;
         try
         {
-            repairation.EditedAt = now.Value;
-            repairation.EditorId = editorId;
-            repairation.Status = statusUpdate;
-            _context.Entry(repairation).State = EntityState.Modified;
+            repair.EditedAt = now.Value;
+            repair.EditorId = editorId;
+            repair.Status = statusUpdate;
+            _context.Entry(repair).State = EntityState.Modified;
 
             var asset = await _context.Assets
                         .Include(a => a.Type)
-                        .Where(a => a.Id == repairation.AssetId)
+                        .Where(a => a.Id == repair.AssetId)
                         .FirstOrDefaultAsync();
 
             var roomAsset = await _context.RoomAssets.FirstOrDefaultAsync(x => x.AssetId == asset!.Id && x.ToDate == null);
             var location = await _context.Rooms.FirstOrDefaultAsync(x => x.Id == roomAsset!.RoomId && roomAsset.AssetId == asset!.Id);
             if (statusUpdate == RequestStatus.Done)
             {
-                repairation.CompletionDate = now.Value;
-                _context.Entry(repairation).State = EntityState.Modified;
+                repair.CompletionDate = now.Value;
+                _context.Entry(repair).State = EntityState.Modified;
 
                 asset!.Status = AssetStatus.Operational;
                 asset.EditedAt = now.Value;
@@ -270,7 +269,7 @@ public class RepairationRepository : IRepairationRepository
         }
     }
 
-    public async Task<bool> DeleteRepairs(List<Repairation> repairs, Guid? deleterId, DateTime? now = null)
+    public async Task<bool> DeleteRepairs(List<Repairation?> repairs, Guid? deleterId, DateTime? now = null)
     {
         await _context.Database.BeginTransactionAsync();
         now ??= DateTime.UtcNow;
@@ -278,40 +277,43 @@ public class RepairationRepository : IRepairationRepository
         {
             foreach (var repair in repairs)
             {
-                repair.DeletedAt = now.Value;
-                repair.DeleterId = deleterId;
-                _context.Entry(repair).State = EntityState.Modified;
-
-                var asset = await _context.Assets
-                            .Include(a => a.Type)
-                            .Where(a => a.Id == repair.AssetId)
-                            .FirstOrDefaultAsync();
-
-                var roomAsset = await _context.RoomAssets.FirstOrDefaultAsync(x => x.AssetId == asset!.Id && x.ToDate == null);
-                var location = await _context.Rooms.FirstOrDefaultAsync(x => x.Id == roomAsset!.RoomId && roomAsset.AssetId == asset!.Id);
-
-                if (asset != null)
+                if (repair != null)
                 {
-                    asset.Status = AssetStatus.Operational;
-                    asset.EditedAt = now.Value;
-                    asset.EditorId = deleterId;
-                    _context.Entry(asset).State = EntityState.Modified;
-                }
+                    repair.DeletedAt = now.Value;
+                    repair.DeleterId = deleterId;
+                    _context.Entry(repair).State = EntityState.Modified;
 
-                if (roomAsset != null)
-                {
-                    roomAsset.Status = AssetStatus.Operational;
-                    roomAsset.EditedAt = now.Value;
-                    roomAsset.EditorId = deleterId;
-                    _context.Entry(roomAsset).State = EntityState.Modified;
-                }
+                    var asset = await _context.Assets
+                                .Include(a => a.Type)
+                                .Where(a => a.Id == repair.AssetId)
+                                .FirstOrDefaultAsync();
 
-                if (location != null)
-                {
-                    location.State = RoomState.Operational;
-                    location.EditedAt = now.Value;
-                    location.EditorId = deleterId;
-                    _context.Entry(location).State = EntityState.Modified;
+                    var roomAsset = await _context.RoomAssets.FirstOrDefaultAsync(x => x.AssetId == asset!.Id && x.ToDate == null);
+                    var location = await _context.Rooms.FirstOrDefaultAsync(x => x.Id == roomAsset!.RoomId && roomAsset.AssetId == asset!.Id);
+
+                    if (asset != null)
+                    {
+                        asset.Status = AssetStatus.Operational;
+                        asset.EditedAt = now.Value;
+                        asset.EditorId = deleterId;
+                        _context.Entry(asset).State = EntityState.Modified;
+                    }
+
+                    if (roomAsset != null)
+                    {
+                        roomAsset.Status = AssetStatus.Operational;
+                        roomAsset.EditedAt = now.Value;
+                        roomAsset.EditorId = deleterId;
+                        _context.Entry(roomAsset).State = EntityState.Modified;
+                    }
+
+                    if (location != null)
+                    {
+                        location.State = RoomState.Operational;
+                        location.EditedAt = now.Value;
+                        location.EditorId = deleterId;
+                        _context.Entry(location).State = EntityState.Modified;
+                    }
                 }
             }
             await _context.SaveChangesAsync();

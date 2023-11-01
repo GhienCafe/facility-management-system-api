@@ -17,6 +17,8 @@ public interface IMaintenanceService : IBaseService
     Task<ApiResponse> CreateItem(MaintenanceCreateDto createDto);
     Task<ApiResponse> CreateItems(List<MaintenanceCreateDto> createDtos);
     Task<ApiResponse> UpdateItem(Guid id, MaintenanceUpdateDto updateDto);
+    Task<ApiResponse> DeleteItem(Guid id);
+    Task<ApiResponse> DeleteItems(DeleteMutilDto deleteDto);
 }
 
 public class MaintenanceService : BaseService, IMaintenanceService
@@ -317,5 +319,42 @@ public class MaintenanceService : BaseService, IMaintenanceService
             }
         }
         return newRequestCode;
+    }
+
+    public async Task<ApiResponse> DeleteItem(Guid id)
+    {
+        var existingMaintenance = await MainUnitOfWork.MaintenanceRepository.FindOneAsync(
+                new Expression<Func<Maintenance, bool>>[]
+                {
+                    x => !x.DeletedAt.HasValue,
+                    x => x.Id == id
+                });
+        if (existingMaintenance == null)
+        {
+            throw new ApiException("Không tìm thấy yêu cầu bảo trì này", StatusCode.NOT_FOUND);
+        }
+
+        if (!await _maintenanceRepository.DeleteMaintenance(existingMaintenance, AccountId, CurrentDate))
+        {
+            throw new ApiException("Xóa thất bại", StatusCode.SERVER_ERROR);
+        }
+        return ApiResponse.Success();
+    }
+
+    public async Task<ApiResponse> DeleteItems(DeleteMutilDto deleteDto)
+    {
+        var maintenDeleteds = await MainUnitOfWork.MaintenanceRepository.FindAsync(
+            new Expression<Func<Maintenance, bool>>[]
+            {
+                x => !x.DeletedAt.HasValue,
+                x => deleteDto.ListId!.Contains(x.Id)
+            }, null);
+
+        var maintenances = maintenDeleteds.Where(m => m != null).ToList();
+        if (!await _maintenanceRepository.DeleteMaintenances(maintenances, AccountId, CurrentDate))
+        {
+            throw new ApiException("Xóa thất bại", StatusCode.SERVER_ERROR);
+        }
+        return ApiResponse.Success();
     }
 }
