@@ -71,7 +71,9 @@ public class AssetCheckService : BaseService, IAssetCheckService
                                     x => !x.DeletedAt.HasValue,
                                     x => deleteDto.ListId!.Contains(x.Id)
                                 }, null);
-        if (!await MainUnitOfWork.AssetCheckRepository.DeleteAsync(assetcheckDeleteds, AccountId, CurrentDate))
+
+        var assetChecks = assetcheckDeleteds.Where(a => a != null).ToList();
+        if (!await _assetcheckRepository.DeleteAssetChecks(assetChecks, AccountId, CurrentDate))
         {
             throw new ApiException("Xóa thất bại", StatusCode.SERVER_ERROR);
         }
