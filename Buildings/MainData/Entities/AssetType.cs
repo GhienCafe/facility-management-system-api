@@ -62,7 +62,7 @@ public class AssetCategoryConfig : IEntityTypeConfiguration<AssetType>
         builder.Property(a => a.TypeName).IsRequired();
         builder.Property(a => a.Unit).IsRequired();
         builder.Property(a => a.Description).IsRequired(false);
-        builder.Property(a => a.ImageUrl).IsRequired();
+        builder.Property(a => a.ImageUrl).IsRequired(false);
         
         // Attributes
         builder.HasIndex(a => a.TypeCode).IsUnique();

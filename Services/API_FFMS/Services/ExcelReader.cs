@@ -17,7 +17,7 @@ namespace API_FFMS.Services
                     var worksheet = workBook.Worksheet(1);
 
                     // Read asset data starting from the second row (assuming the first row contains headers)
-                    var nonEmptyDataRows = worksheet.RowsUsed().Skip(1);
+                    var nonEmptyDataRows = worksheet.RowsUsed().Skip(2);
                     foreach (var dataRow in nonEmptyDataRows)
                     {
                         assets.Add(new ImportAssetDto
