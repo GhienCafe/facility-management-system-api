@@ -44,7 +44,7 @@ public class BaseRequestCreateDto
 {
     public Guid AssetId { get; set; }
     public DateTime? CompletionDate { get; set; }
-    public Priority Priority { get; set; }
+    public Priority Priority { get; set; } = Priority.Medium;
     public string? Description { get; set; }
     public string? Notes { get; set; } // Results
     public bool IsInternal { get; set; }

@@ -34,7 +34,10 @@ public class AssetCheckService : BaseService, IAssetCheckService
     public async Task<ApiResponse> Create(AssetCheckCreateDto createDto)
     {
         var assetCheck = createDto.ProjectTo<AssetCheckCreateDto, AssetCheck>();
+
         assetCheck.RequestCode = GenerateRequestCode();
+        assetCheck.Priority = assetCheck.Priority != null ? assetCheck.Priority : Priority.Medium;
+
         if (!await _assetcheckRepository.InsertAssetCheck(assetCheck, AccountId, CurrentDate))
         {
             throw new ApiException("Thêm mới thất bại", StatusCode.SERVER_ERROR);

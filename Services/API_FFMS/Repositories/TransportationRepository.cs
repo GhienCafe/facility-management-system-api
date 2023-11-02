@@ -171,7 +171,7 @@ public class TransportationRepository : ITransportationRepository
                         AssetId = asset!.Id,
                         TransportationId = transportation.Id,
                         RequestDate = now.Value,
-                        Quantity = (int?)asset.Quantity,
+                        Quantity = transportation.Quantity,
                         CreatorId = creatorId,
                         CreatedAt = now.Value,
                         EditedAt = now.Value
@@ -260,7 +260,7 @@ public class TransportationRepository : ITransportationRepository
                     toRoom.EditorId = editorId;
                     _context.Entry(toRoom).State = EntityState.Modified;
 
-                    if (asset.Type!.IsIdentified == true)
+                    if (asset.Type!.Unit == Unit.Individual)
                     {
                         var addRoomAsset = new RoomAsset
                         {
@@ -276,7 +276,7 @@ public class TransportationRepository : ITransportationRepository
                         };
                         await _context.RoomAssets.AddAsync(addRoomAsset);
                     }
-                    else
+                    else if (asset.Type!.Unit == Unit.Quantity)
                     {
                         var addRoomAsset = new RoomAsset
                         {
@@ -284,7 +284,7 @@ public class TransportationRepository : ITransportationRepository
                             RoomId = toRoom.Id,
                             Status = AssetStatus.Operational,
                             FromDate = now.Value,
-                            Quantity = asset.Quantity,
+                            Quantity = transportation.Quantity,
                             ToDate = null,
                             CreatorId = editorId,
                             CreatedAt = now.Value,

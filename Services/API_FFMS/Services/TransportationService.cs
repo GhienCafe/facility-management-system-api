@@ -2,6 +2,7 @@
 using API_FFMS.Repositories;
 using AppCore.Extensions;
 using AppCore.Models;
+using DocumentFormat.OpenXml.Wordprocessing;
 using MainData;
 using MainData.Entities;
 using MainData.Repositories;
@@ -66,6 +67,10 @@ namespace API_FFMS.Services
 
             var totalQuantity = createDto.Assets?.Sum(assetDto => assetDto.Quantity);
             var checkCapacity = currentQuantityAssetInRoom + totalQuantity;
+            if (checkCapacity > toRoom!.Capacity)
+            {
+                throw new ApiException("Số lượng trang thiết bị vượt quá dung tích phòng", StatusCode.UNPROCESSABLE_ENTITY);
+            }
 
             var transportation = new Transportation
             {
