@@ -47,7 +47,7 @@ public class TransportCreateDto
     public string? Description { get; set; }
     public string? Notes { get; set; }
     public bool IsInternal { get; set; }
-    public Priority Priority { get; set; }
+    public Priority Priority { get; set; } = Priority.Medium;
     public Guid? AssignedTo { get; set; }
     public Guid? ToRoomId { get; set; }
 }
