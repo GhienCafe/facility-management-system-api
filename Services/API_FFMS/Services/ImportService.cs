@@ -144,6 +144,7 @@ namespace API_FFMS.Services
                     IsRented = IsTrueOrFalse(dto.IsRented!),
                     IsMovable = IsTrueOrFalse(dto.IsMovable!),
                     Model = GetModelByName(dto.Model!),
+                    ImageUrl = "",
                     StartDateOfUse = DateTime.Now,
                     LastCheckedDate = null,
                     LastMaintenanceTime = null
