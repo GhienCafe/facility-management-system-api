@@ -39,6 +39,7 @@ public class DatabaseContext : DbContext
     //public DbSet<ActionRequest> ActionRequests { get; set; }
     public DbSet<TeamMember> TeamMembers { get; set; }
     public DbSet<TransportationDetail> TransportationDetails { get; set; }
+    public DbSet<Brand> Brands { get; set; }
 
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -74,5 +75,6 @@ public class DatabaseContext : DbContext
         //modelBuilder.ApplyConfiguration(new RequestConfig());
         modelBuilder.ApplyConfiguration(new TeamMemberConfig());
         modelBuilder.ApplyConfiguration(new TransportationDetailConfig());
+        modelBuilder.ApplyConfiguration(new BrandConfig());
     }
 }
