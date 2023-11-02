@@ -356,7 +356,7 @@ public class AssetService : BaseService, IAssetService
                 Description = x.Asset.Description,
                 AssetCode = x.Asset.AssetCode,
                 AssetName = x.Asset.AssetName,
-                Quantity = x.Asset.Quantity,
+                Quantity = x.RoomAsset.Quantity,
                 IsMovable = x.Asset.IsMovable,
                 IsRented = x.Asset.IsRented,
                 ManufacturingYear = x.Asset.ManufacturingYear,
