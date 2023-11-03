@@ -187,12 +187,10 @@ namespace API_FFMS.Services
                             throw new ApiException("Import assets to ware house failed", StatusCode.BAD_REQUEST);
                     }
 
-                    return ApiResponses<ImportError>.Fail(validationErrors, StatusCode.UNPROCESSABLE_ENTITY, "Một vài trang thiết bị lỗi xác thực trong quá trình thêm mới");
+                    return ApiResponses<ImportError>.Fail(validationErrors, StatusCode.MULTI_STATUS, "Hoàn tất nhập trang thiết bị vui lòng kiểm tra lại");
                 }
 
                 return ApiResponses<ImportError>.Success((IEnumerable<ImportError>)validAssets);
-
-
             }
             catch (Exception exception)
             {
