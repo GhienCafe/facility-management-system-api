@@ -217,7 +217,23 @@ namespace API_FFMS.Services
                 CreatorId = x.RoomAsset.CreatorId ?? Guid.Empty,
                 EditorId = x.RoomAsset.EditorId ?? Guid.Empty,
                 Room = x.Room.ProjectTo<Room, RoomBaseDto>(),
-                Asset = x.Asset.ProjectTo<Asset, AssetBaseDto>()
+                Asset = new AssetBaseDto
+                {
+                    Id = x.Asset.Id,
+                    AssetName = x.Asset.AssetName,
+                    AssetCode = x.Asset.AssetCode,
+                    IsMovable = x.Asset.IsMovable,
+                    Status = x.Asset.Status,
+                    StatusObj = x.Asset.Status.GetValue(),
+                    ManufacturingYear = x.Asset.ManufacturingYear,
+                    SerialNumber = x.Asset.SerialNumber,
+                    Quantity = (double)x.RoomAsset.Quantity,
+                    Description = x.Asset.Description,
+                    TypeId = x.Asset.TypeId,
+                    ModelId = x.Asset.ModelId,
+                    IsRented = x.Asset.IsRented,
+                    StartDateOfUse = x.Asset.StartDateOfUse
+                }
             }).ToListAsync();
             
             items.ForEach(x =>
@@ -248,8 +264,24 @@ namespace API_FFMS.Services
 
             var roomAssetDto = roomAsset.ProjectTo<RoomAsset, RoomAssetDetailDto>();
 
-            roomAssetDto.Asset = (await MainUnitOfWork.AssetRepository.FindOneAsync(roomAsset.AssetId))?
-                .ProjectTo<Asset, AssetBaseDto>();
+            var asset = await MainUnitOfWork.AssetRepository.FindOneAsync(roomAsset.AssetId);
+            roomAssetDto.Asset = new AssetBaseDto
+            {
+                Id = asset.Id,
+                AssetName = asset.AssetName,
+                AssetCode = asset.AssetCode,
+                IsMovable = asset.IsMovable,
+                Status = asset.Status,
+                StatusObj = asset.Status.GetValue(),
+                ManufacturingYear = asset.ManufacturingYear,
+                SerialNumber = asset.SerialNumber,
+                Quantity = (double)roomAsset.Quantity,
+                Description = asset.Description,
+                TypeId = asset.TypeId,
+                ModelId = asset.ModelId,
+                IsRented = asset.IsRented,
+                StartDateOfUse = asset.StartDateOfUse
+            };
             
             roomAssetDto.Room = (await MainUnitOfWork.RoomRepository.FindOneAsync(roomAsset.RoomId))?
                 .ProjectTo<Room, RoomBaseDto>();
