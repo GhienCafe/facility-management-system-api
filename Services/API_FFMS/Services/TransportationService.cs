@@ -2,7 +2,6 @@
 using API_FFMS.Repositories;
 using AppCore.Extensions;
 using AppCore.Models;
-using DocumentFormat.OpenXml.Wordprocessing;
 using MainData;
 using MainData.Entities;
 using MainData.Repositories;
@@ -38,23 +37,37 @@ namespace API_FFMS.Services
                 new Expression<Func<Asset, bool>>[]
                 {
                     x => !x!.DeletedAt.HasValue,
-                    x => createDto.Assets!.Select(dto => dto.AssetId).Contains(x.Id)
+                    x => createDto.Assets.Select(dto => dto.AssetId).Contains(x.Id)
                 }, null);
 
-            foreach (var asset in assets)
-            {
-                if (asset!.Status != AssetStatus.Operational)
-                {
-                    throw new ApiException("Trang thiết bị đang trong một yêu cầu khác", StatusCode.SERVER_ERROR);
-                }
+            var assetQuery = MainUnitOfWork.AssetRepository.GetQuery()
+                                                            .Where(x => createDto.Assets!.Select(dto => dto.AssetId).Contains(x!.Id));
+            var typeQuery = MainUnitOfWork.AssetTypeRepository.GetQuery();
+            var joinTable = from asset in assetQuery
+                            join type in typeQuery on asset.TypeId equals type.Id into typeGroup
+                            from type in typeGroup.DefaultIfEmpty()
+                            select new
+                            {
+                                Asset = asset,
+                                AssetType = type
+                            };
 
-                var correspondingDto = createDto.Assets!.FirstOrDefault(dto => dto.AssetId == asset!.Id);
+            var assetList = await joinTable.ToListAsync();
+
+            foreach (var a in assetList)
+            {
+                    if (a.AssetType.Unit == Unit.Individual && a.Asset.Status != AssetStatus.Operational)
+                    {
+                        throw new ApiException("Trang thiết bị đang trong một yêu cầu khác", StatusCode.SERVER_ERROR);
+                    }
+                var correspondingDto = createDto.Assets!.FirstOrDefault(dto => dto.AssetId == a.Asset.Id);
                 if (correspondingDto != null)
                 {
-                    asset!.Quantity = correspondingDto.Quantity ?? 0;
+                    a.Asset.Quantity = correspondingDto.Quantity ?? 0;
                 }
             }
-            var toRoom = await MainUnitOfWork.RoomRepository.FindOneAsync((Guid)createDto.ToRoomId!);
+
+            var toRoom = await MainUnitOfWork.RoomRepository.FindOneAsync(createDto.ToRoomId);
             var roomAssets = await MainUnitOfWork.RoomAssetRepository.FindAsync(
                 new Expression<Func<RoomAsset, bool>>[]
                 {
@@ -132,19 +145,19 @@ namespace API_FFMS.Services
 
         public async Task<ApiResponse<TransportDto>> GetTransportation(Guid id)
         {
-            var existingtransport = await MainUnitOfWork.TransportationRepository.FindOneAsync<TransportDto>(
+            var existingTransport = await MainUnitOfWork.TransportationRepository.FindOneAsync<TransportDto>(
                 new Expression<Func<Transportation, bool>>[]
                 {
                     x => !x.DeletedAt.HasValue,
                     x => x.Id == id
                 });
 
-            if (existingtransport == null)
+            if (existingTransport == null)
             {
                 throw new ApiException("Không tìm thấy yêu cầu vận chuyển", StatusCode.NOT_FOUND);
             }
 
-            var mediaFileQuery = MainUnitOfWork.MediaFileRepository.GetQuery().Where(m => m!.ItemId == existingtransport.Id);
+            var mediaFileQuery = MainUnitOfWork.MediaFileRepository.GetQuery().Where(m => m!.ItemId == existingTransport.Id);
             var mediaFile = new MediaFileDto
             {
                 FileType = mediaFileQuery.Select(m => m!.FileType).FirstOrDefault(),
@@ -154,7 +167,7 @@ namespace API_FFMS.Services
 
             var roomDataset = MainUnitOfWork.RoomRepository.GetQuery();
             var toRoom = await roomDataset
-                            .Where(r => r!.Id == existingtransport.ToRoomId)
+                            .Where(r => r!.Id == existingTransport.ToRoomId)
                             .Select(r => new RoomBaseDto
                             {
                                 Id = r!.Id,
@@ -167,7 +180,7 @@ namespace API_FFMS.Services
                             }).FirstOrDefaultAsync();
 
             var staffs = MainUnitOfWork.UserRepository.GetQuery();
-            var assignTo = await staffs.Where(x => x!.Id == existingtransport.AssignedTo)
+            var assignTo = await staffs.Where(x => x!.Id == existingTransport.AssignedTo)
                             .Select(x => new UserBaseDto
                             {
                                 UserCode = x!.UserCode,
@@ -226,23 +239,23 @@ namespace API_FFMS.Services
 
             var tranportation = new TransportDto
             {
-                Id = existingtransport.Id,
-                RequestCode = existingtransport.RequestCode,
-                Description = existingtransport.Description,
-                Notes = existingtransport.Notes,
-                Status = existingtransport.Status,
-                StatusObj = existingtransport.Status!.GetValue(),
-                RequestDate = existingtransport.RequestDate,
-                Quantity = existingtransport.Quantity,
-                Priority = existingtransport.Priority,
-                PriorityObj = existingtransport.Priority.GetValue(),
-                Checkin = existingtransport.Checkin,
-                Result = existingtransport.Result,
-                Checkout = existingtransport.Checkout,
-                CreatedAt = existingtransport.CreatedAt,
-                EditedAt = existingtransport.EditedAt,
-                CreatorId = existingtransport.CreatorId,
-                EditorId = existingtransport.EditorId,
+                Id = existingTransport.Id,
+                RequestCode = existingTransport.RequestCode,
+                Description = existingTransport.Description,
+                Notes = existingTransport.Notes,
+                Status = existingTransport.Status,
+                StatusObj = existingTransport.Status!.GetValue(),
+                RequestDate = existingTransport.RequestDate,
+                Quantity = existingTransport.Quantity,
+                Priority = existingTransport.Priority,
+                PriorityObj = existingTransport.Priority.GetValue(),
+                Checkin = existingTransport.Checkin,
+                Result = existingTransport.Result,
+                Checkout = existingTransport.Checkout,
+                CreatedAt = existingTransport.CreatedAt,
+                EditedAt = existingTransport.EditedAt,
+                CreatorId = existingTransport.CreatorId,
+                EditorId = existingTransport.EditorId,
                 Assets = assets,
                 ToRoom = toRoom,
                 MediaFile = mediaFile,
@@ -392,6 +405,34 @@ namespace API_FFMS.Services
             if (existingTransport == null)
             {
                 throw new ApiException("Không tìm thấy yêu cầu vận chuyển này", StatusCode.NOT_FOUND);
+            }
+
+            var roomDataset = MainUnitOfWork.RoomRepository.GetQuery();
+            var toRoom = await roomDataset
+                            .Where(r => r!.Id == existingTransport.ToRoomId)
+                            .FirstOrDefaultAsync();
+
+            var roomAssets = await MainUnitOfWork.RoomAssetRepository.FindAsync(
+                new Expression<Func<RoomAsset, bool>>[]
+                {
+                    x => !x.DeletedAt.HasValue,
+                    x => x.RoomId == existingTransport.ToRoomId,
+                    x => x.ToDate == null
+                }, null);
+            var currentQuantityAssetInRoom = roomAssets.Sum(x => x!.Quantity);
+
+            var transportDetails = MainUnitOfWork.TransportationDetailRepository.GetQuery();
+            var assetQuantity = await transportDetails
+                        .Where(td => td!.TransportationId == id)
+                        .Join(MainUnitOfWork.AssetRepository.GetQuery(),
+                                td => td!.AssetId,
+                                asset => asset!.Id, (td, asset) => td!.Quantity).ToListAsync();
+
+            var totalQuantity = assetQuantity.Sum(a => a!.Value);
+            var checkCapacity = currentQuantityAssetInRoom + totalQuantity;
+            if (checkCapacity > toRoom!.Capacity)
+            {
+                throw new ApiException("Số lượng trang thiết bị vượt quá dung tích phòng", StatusCode.UNPROCESSABLE_ENTITY);
             }
 
             existingTransport.Status = requestStatus.Status ?? existingTransport.Status;

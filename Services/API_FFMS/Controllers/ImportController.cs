@@ -86,13 +86,11 @@ namespace API_FFMS.Controllers
                     assetTypesWorksheet.Cell(assetTypesCurrentRow, 3).Value = assetType.Description;
                     assetTypesWorksheet.Cell(assetTypesCurrentRow, 4).Value = assetType.ImageUrl;
                 }
-
+                assetTypesCurrentRow++;
                 //Models
-                int assetTypesEndingRow = assetTypesCurrentRow;
-                
                 assetTypesCurrentRow++;
 
-                assetTypesWorksheet.Cell(assetTypesCurrentRow, 1).Value = "Danh sách nhãn hiệu";
+                assetTypesWorksheet.Cell(assetTypesCurrentRow, 1).Value = "Danh sách dòng sản phẩm";
                 assetTypesWorksheet.Cell(assetTypesCurrentRow, 1).Style.Font.FontSize = 18;
                 assetTypesWorksheet.Cell(assetTypesCurrentRow, 1).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
                 assetTypesWorksheet.Cell(assetTypesCurrentRow, 1).Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
@@ -100,7 +98,7 @@ namespace API_FFMS.Controllers
                 assetTypesWorksheet.Range(assetTypesCurrentRow, 1, assetTypesCurrentRow, 4).Style.Font.Bold = true;
 
                 assetTypesCurrentRow++;
-                assetTypesWorksheet.Cell(assetTypesCurrentRow, 1).Value = "Tên nhãn hiệu";
+                assetTypesWorksheet.Cell(assetTypesCurrentRow, 1).Value = "Tên Dòng sản phẩm";
                 assetTypesWorksheet.Cell(assetTypesCurrentRow, 2).Value = "Mô tả";
 
                 var modelsHeaderRange = assetTypesWorksheet.Range(assetTypesWorksheet.Cell(assetTypesCurrentRow, 1), assetTypesWorksheet.Cell(assetTypesCurrentRow, 4));
@@ -115,6 +113,25 @@ namespace API_FFMS.Controllers
                     assetTypesWorksheet.Cell(assetTypesCurrentRow, 2).Value = model.Description;
                     assetTypesCurrentRow++;
                 }
+
+                //Brands
+                assetTypesCurrentRow++;
+
+                assetTypesWorksheet.Cell(assetTypesCurrentRow, 1).Value = "Danh sách nhãn hiệu";
+                assetTypesWorksheet.Cell(assetTypesCurrentRow, 1).Style.Font.FontSize = 18;
+                assetTypesWorksheet.Cell(assetTypesCurrentRow, 1).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                assetTypesWorksheet.Cell(assetTypesCurrentRow, 1).Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
+                assetTypesWorksheet.Range(assetTypesCurrentRow, 1, assetTypesCurrentRow, 4).Row(1).Merge();
+                assetTypesWorksheet.Range(assetTypesCurrentRow, 1, assetTypesCurrentRow, 4).Style.Font.Bold = true;
+
+                assetTypesCurrentRow++;
+                assetTypesWorksheet.Cell(assetTypesCurrentRow, 1).Value = "Tên nhãn hiệu";
+                assetTypesWorksheet.Cell(assetTypesCurrentRow, 2).Value = "Mô tả";
+
+                var brandsHeaderRange = assetTypesWorksheet.Range(assetTypesWorksheet.Cell(assetTypesCurrentRow, 1), assetTypesWorksheet.Cell(assetTypesCurrentRow, 4));
+                brandsHeaderRange.Style.Font.Bold = true;
+                brandsHeaderRange.Style.Fill.BackgroundColor = XLColor.LightGray;
+                assetTypesCurrentRow++;
 
                 assetTypesWorksheet.Columns().AdjustToContents();
 
