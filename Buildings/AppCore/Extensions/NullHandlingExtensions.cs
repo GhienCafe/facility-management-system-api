@@ -20,4 +20,39 @@ public static class NullHandlingExtensions
 
         return value;
     }
+
+    public static void CheckNullOrEmpty(object entity)
+    {
+        if (entity == null)
+        {
+            throw new ArgumentNullException(nameof(entity));
+        }
+
+        var properties = entity.GetType().GetProperties();
+
+        foreach (var property in properties)
+        {
+            if (property.CanRead && property.CanWrite)
+            {
+                var value = property.GetValue(entity);
+                if (value == null)
+                {
+                    var propertyType = property.PropertyType;
+                    if (propertyType == typeof(string))
+                    {
+                        property.SetValue(entity, "");
+                    }
+                    else if (propertyType == typeof(int))
+                    {
+                        property.SetValue(entity, 0);
+                    }
+                    else if (propertyType == typeof(double))
+                    {
+                        property.SetValue(entity, 0.0);
+                    }
+                }
+            }
+        }
+    }
+
 }

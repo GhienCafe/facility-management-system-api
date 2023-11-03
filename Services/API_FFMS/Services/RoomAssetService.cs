@@ -267,22 +267,22 @@ namespace API_FFMS.Services
             var asset = await MainUnitOfWork.AssetRepository.FindOneAsync(roomAsset.AssetId);
             roomAssetDto.Asset = new AssetBaseDto
             {
-                Id = asset.Id,
+                Id = asset!.Id,
                 AssetName = asset.AssetName,
                 AssetCode = asset.AssetCode,
                 IsMovable = asset.IsMovable,
-                Status = asset.Status,
-                StatusObj = asset.Status.GetValue(),
+                Status = roomAsset.Status,
+                StatusObj = roomAsset.Status.GetValue(),
                 ManufacturingYear = asset.ManufacturingYear,
                 SerialNumber = asset.SerialNumber,
-                Quantity = (double)roomAsset.Quantity,
+                Quantity = roomAsset.Quantity,
                 Description = asset.Description,
                 TypeId = asset.TypeId,
                 ModelId = asset.ModelId,
                 IsRented = asset.IsRented,
                 StartDateOfUse = asset.StartDateOfUse
             };
-            
+
             roomAssetDto.Room = (await MainUnitOfWork.RoomRepository.FindOneAsync(roomAsset.RoomId))?
                 .ProjectTo<Room, RoomBaseDto>();
 
