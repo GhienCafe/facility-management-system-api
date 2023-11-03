@@ -234,11 +234,12 @@ public class MaintenanceService : BaseService, IMaintenanceService
     public async Task<ApiResponse> CreateItem(MaintenanceCreateDto createDto)
     {
         var asset = await MainUnitOfWork.AssetRepository.FindOneAsync(createDto.AssetId);
+        var assetType = await MainUnitOfWork.AssetTypeRepository.FindOneAsync((Guid)createDto.AssetTypeId!);
 
         if (asset == null)
             throw new ApiException("Không cần tồn tại trang thiết bị", StatusCode.NOT_FOUND);
 
-        if (asset.Status != AssetStatus.Operational)
+        if (assetType!.Unit == Unit.Individual &&  asset.Status != AssetStatus.Operational)
             throw new ApiException("Trang thiết bị đang trong một yêu cầu khác", StatusCode.BAD_REQUEST);
 
         var maintenance = createDto.ProjectTo<MaintenanceCreateDto, Maintenance>();

@@ -40,7 +40,7 @@ namespace API_FFMS.Services
             var existingModel = await MainUnitOfWork.ModelRepository.FindOneAsync(id);
             if (existingModel == null)
             {
-                throw new ApiException("Không tìm thấy nhãn hiệu", StatusCode.NOT_FOUND);
+                throw new ApiException("Không tìm thấy dòng sản phẩm", StatusCode.NOT_FOUND);
             }
 
             if (!await MainUnitOfWork.ModelRepository.DeleteAsync(existingModel, AccountId, CurrentDate))
@@ -79,7 +79,7 @@ namespace API_FFMS.Services
 
             if (model == null)
             {
-                throw new ApiException("Không tìm thấy nhãn hiệu", StatusCode.NOT_FOUND);
+                throw new ApiException("Không tìm thấy dòng sản phẩm", StatusCode.NOT_FOUND);
             }
 
             model = await _mapperRepository.MapCreator(model);
@@ -133,7 +133,7 @@ namespace API_FFMS.Services
             var existingModel = await MainUnitOfWork.ModelRepository.FindOneAsync(id);
             if (existingModel == null)
             {
-                throw new ApiException("Không tìm thấy nhãn hiệu", StatusCode.NOT_FOUND);
+                throw new ApiException("Không tìm thấy Dòng sản phẩm", StatusCode.NOT_FOUND);
             }
 
             existingModel.ModelName = updateDto.ModelName ?? existingModel.ModelName;
