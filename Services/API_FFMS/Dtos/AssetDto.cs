@@ -41,7 +41,7 @@ namespace API_FFMS.Dtos
         public EnumValue? StatusObj { get; set; }
         public int? ManufacturingYear { get; set; }
         public string? SerialNumber { get; set; }
-        public double Quantity { get; set; }
+        public double? Quantity { get; set; }
         public string? Description { get; set; }
         [JsonConverter(typeof(LocalTimeZoneDateTimeConverter))]
         public DateTime? LastMaintenanceTime { get; set; }
