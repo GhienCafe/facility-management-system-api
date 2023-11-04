@@ -4,6 +4,7 @@ using AppCore.Models;
 using MainData;
 using MainData.Entities;
 using MainData.Repositories;
+using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
 
 namespace API_FFMS.Services
@@ -82,6 +83,13 @@ namespace API_FFMS.Services
                 throw new ApiException("Không tìm thấy dòng sản phẩm", StatusCode.NOT_FOUND);
             }
 
+            model.Brand = await MainUnitOfWork.BrandRepository.FindOneAsync<BrandDto>(
+                new Expression<Func<Brand, bool>>[]
+                {
+                    x => !x.DeletedAt.HasValue,
+                    x => x.Id == model.BrandId
+                });
+
             model = await _mapperRepository.MapCreator(model);
 
             return ApiResponse<ModelDto>.Success(model);
@@ -89,22 +97,43 @@ namespace API_FFMS.Services
 
         public async Task<ApiResponses<ModelDto>> GetModels(ModelQueryDto queryDto)
         {
-            var response = await MainUnitOfWork.ModelRepository.FindResultAsync<ModelDto>(
-                new Expression<Func<Model, bool>>[]
-                {
-                    x => !x.DeletedAt.HasValue,
-                    x => string.IsNullOrEmpty(queryDto.ModelName) ||
-                         x.ModelName.ToLower().Contains(queryDto.ModelName.Trim().ToLower())
-                }, queryDto.OrderBy, queryDto.Skip(), queryDto.PageSize);
+            var keyword = queryDto.Keyword?.Trim().ToLower();
+            var modelDataSet = MainUnitOfWork.ModelRepository.GetQuery().Include(x => x!.Brand)
+                               .Where(x => !x!.DeletedAt.HasValue);
+            if (!string.IsNullOrEmpty(keyword))
+            {
+                modelDataSet = modelDataSet.Where(x => x.ModelName!.ToLower().Contains(keyword));
+            }
+            
+            var totalCount = modelDataSet.Count();
 
-            response.Items = await _mapperRepository.MapCreator(response.Items.ToList());
+            modelDataSet = modelDataSet.Skip(queryDto.Skip()).Take(queryDto.PageSize);
+            
+            var models = await modelDataSet.Select(x => new ModelDto 
+            {
+                Id = x!.Id,
+                ModelName = x.ModelName,
+                Description = x.Description,
+                CreatedAt = x.CreatedAt,
+                EditedAt = x.EditedAt,
+                CreatorId = x.CreatorId ?? Guid.Empty,
+                EditorId = x.EditorId ?? Guid.Empty,
+                Brand = x.Brand != null ? new BrandDto
+                {
+                    Id = x.Brand!.Id,
+                    BrandName = x.Brand.BrandName,
+                    Description = x.Brand.Description
+                } : null
+            }).ToListAsync();
+
+            models = await _mapperRepository.MapCreator(models);
 
             return ApiResponses<ModelDto>.Success(
-                response.Items,
-                response.TotalCount,
+                models,
+                totalCount,
                 queryDto.PageSize,
                 queryDto.Page,
-                (int)Math.Ceiling(response.TotalCount / (double)queryDto.PageSize)
+                (int)Math.Ceiling(totalCount / (double)queryDto.PageSize)
             );
         }
 
@@ -138,6 +167,7 @@ namespace API_FFMS.Services
 
             existingModel.ModelName = updateDto.ModelName ?? existingModel.ModelName;
             existingModel.Description = updateDto.Description ?? existingModel.Description;
+            existingModel.BrandId = updateDto.BrandId ?? existingModel.BrandId;
 
             if (!await MainUnitOfWork.ModelRepository.UpdateAsync(existingModel, AccountId, CurrentDate))
             {
