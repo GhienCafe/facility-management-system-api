@@ -58,7 +58,7 @@ public class RoomAssetRepository : IRoomAssetRepository
                 roomAsset.CreatorId = creatorId;
                 roomAsset.Status = AssetStatus.Operational;
                 roomAsset.FromDate = now.Value;
-                roomAsset.Quantity = 1;
+                roomAsset.Quantity = roomAsset.Quantity;
                 roomAsset.ToDate = null;
                 roomAsset.AssetId = asset!.Id;
                 roomAsset.RoomId = room!.Id;

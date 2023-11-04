@@ -6,6 +6,8 @@ public class ModelDto : BaseDto
 {
     public string? ModelName { get; set; }
     public string? Description { get; set; }
+    public Guid BrandId { get; set; }
+    public BrandDto? Brand { get; set; }
 }
 
 public class ModelCreateDto
@@ -19,6 +21,7 @@ public class ModelUpdateDto
 {
     public string? ModelName { get; set; }
     public string? Description { get; set; }
+    public Guid? BrandId { get; set; }
 }
 
 public class ModelQueryDto : BaseQueryDto
