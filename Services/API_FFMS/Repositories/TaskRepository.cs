@@ -199,7 +199,8 @@ namespace API_FFMS.Repositories
                                     Extensions = mediaFile.Extensions,
                                     FileType = mediaFile.FileType,
                                     Content = mediaFile.Content,
-                                    ItemId = transportation.Id
+                                    ItemId = transportation.Id,
+                                    TransportationId = transportation.Id
                                 };
                                 _context.MediaFiles.Add(newMediaFile);
                             }
@@ -287,7 +288,8 @@ namespace API_FFMS.Repositories
                                 Extensions = mediaFile.Extensions,
                                 FileType = mediaFile.FileType,
                                 Content = mediaFile.Content,
-                                ItemId = repairation.Id
+                                ItemId = repairation.Id,
+                                RepairationId = repairation.Id
                             };
                             _context.MediaFiles.Add(newMediaFile);
                         }
@@ -387,7 +389,8 @@ namespace API_FFMS.Repositories
                                 Extensions = mediaFile.Extensions,
                                 FileType = mediaFile.FileType,
                                 Content = mediaFile.Content,
-                                ItemId = replacement.Id
+                                ItemId = replacement.Id,
+                                ReplacementId = replacement.Id
                             };
                             _context.MediaFiles.Add(newMediaFile);
                         }
@@ -474,7 +477,8 @@ namespace API_FFMS.Repositories
                                 Extensions = mediaFile.Extensions,
                                 FileType = mediaFile.FileType,
                                 Content = mediaFile.Content,
-                                ItemId = maintenance.Id
+                                ItemId = maintenance.Id,
+                                MaintenanceId = maintenance.Id
                             };
                             _context.MediaFiles.Add(newMediaFile);
                         }
