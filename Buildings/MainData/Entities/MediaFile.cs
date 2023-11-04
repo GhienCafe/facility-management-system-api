@@ -11,6 +11,7 @@ public class MediaFile : BaseEntity
     public string RawUri { get; set; } = null!;
     public string Uri { get; set; } = null!;
     public string Extensions { get; set; } = null!;
+    public bool? IsVerified { get; set; }
     public FileType FileType { get; set; }
     public string Content { get; set; } = null!;
     
@@ -50,7 +51,8 @@ public class MediaFileConfig : IEntityTypeConfiguration<MediaFile>
         builder.Property(a => a.FileType).IsRequired();
         builder.Property(a => a.Content).IsRequired(false); 
         builder.Property(a => a.ItemId).IsRequired(false);
-        
+        builder.Property(x => x.IsVerified).IsRequired().HasDefaultValue(false);
+
         builder.Property(a => a.MaintenanceId).IsRequired(false);
         builder.Property(a => a.ReplacementId).IsRequired(false);
         builder.Property(a => a.RepairationId).IsRequired(false);

@@ -114,6 +114,7 @@ namespace API_FFMS.Services
                 Id = x!.Id,
                 ModelName = x.ModelName,
                 Description = x.Description,
+                ImageUrl = x.ImageUrl,
                 CreatedAt = x.CreatedAt,
                 EditedAt = x.EditedAt,
                 CreatorId = x.CreatorId ?? Guid.Empty,
@@ -146,6 +147,7 @@ namespace API_FFMS.Services
                 Id = x!.Id,
                 ModelName = x.ModelName,
                 Description = x.Description,
+                ImageUrl = x.ImageUrl,
                 CreatedAt = x.CreatedAt,
                 EditedAt = x.EditedAt,
                 EditorId = x.EditorId ?? Guid.Empty,
@@ -169,6 +171,7 @@ namespace API_FFMS.Services
             existingModel.Description = updateDto.Description ?? existingModel.Description;
             existingModel.MaintenancePeriodTime =
                 updateDto.MaintenancePeriodTime ?? existingModel.MaintenancePeriodTime;
+            existingModel.ImageUrl = updateDto.ImageUrl ?? existingModel.ImageUrl;
             existingModel.BrandId = updateDto.BrandId ?? existingModel.BrandId;
 
             if (!await MainUnitOfWork.ModelRepository.UpdateAsync(existingModel, AccountId, CurrentDate))

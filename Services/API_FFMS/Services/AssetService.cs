@@ -127,7 +127,7 @@ public class AssetService : BaseService, IAssetService
             ManufacturingYear = x.ManufacturingYear,
             ModelId = x.ModelId,
             SerialNumber = x.SerialNumber,
-            ImageUrl = x.ImageUrl,
+            ImageUrl = x.ImageUrl ?? x.Model!.ImageUrl,
             TypeId = x.TypeId,
             LastMaintenanceTime = x.LastMaintenanceTime,
             CreatedAt = x.CreatedAt,
@@ -215,6 +215,10 @@ public class AssetService : BaseService, IAssetService
                 x => !x.DeletedAt.HasValue,
                 x => x.Id == existingAsset.ModelId
             });
+        if(existingAsset.ImageUrl == null && existingAsset.Model != null)
+        {
+            existingAsset.ImageUrl = existingAsset.Model.ImageUrl;
+        }
 
         existingAsset.Type = await MainUnitOfWork.AssetTypeRepository.FindOneAsync<AssetTypeDto>(
                 new Expression<Func<AssetType, bool>>[]
