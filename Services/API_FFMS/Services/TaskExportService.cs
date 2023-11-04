@@ -262,7 +262,7 @@ public class TaskExportService : BaseService, ITaskExportService
 
         //TRANSPORTATION
         var transportQuery = MainUnitOfWork.TransportationRepository.GetQuery()
-                                    .Include(x => x.User)
+                                    .Include(x => x!.User)
                                  .Where(x => !x!.DeletedAt.HasValue);
 
         var transportDetails = MainUnitOfWork.TransportationDetailRepository.GetQuery();
@@ -273,7 +273,7 @@ public class TaskExportService : BaseService, ITaskExportService
             RequestDate = x.RequestDate,
             CompletionDate = x.CompletionDate,
             AssignedTo = x.User!.Fullname,
-            Status = x.Status!.GetValue().DisplayName,
+            Status = x.Status.GetValue()!.DisplayName,
             Description = x.Description,
             Notes = x.Notes,
             Result = x.Result,
