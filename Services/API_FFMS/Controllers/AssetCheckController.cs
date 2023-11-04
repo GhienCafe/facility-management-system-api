@@ -50,6 +50,13 @@ public class AssetCheckController : BaseController
         return await _assetCheckService.Create(createDto);
     }
 
+    [HttpPost("multi")]
+    [SwaggerOperation("Create new list asset check")]
+    public async Task<ApiResponse> CreateItems([FromBody] List<AssetCheckCreateDto> createDtos)
+    {
+        return await _assetCheckService.CreateItems(createDtos);
+    }
+
     [HttpPut]
     [SwaggerOperation("Update asset check")]
     public async Task<ApiResponse> Update(Guid id, AssetCheckUpdateDto updateDto)
