@@ -23,11 +23,10 @@ public class Asset : BaseEntity
     public bool? IsRented { get; set; }
     public DateTime? StartDateOfUse { get; set; }
     public string? ImageUrl { get; set; }
-    public Guid? MaintenanceConfigId { get; set; }
 
     //
     public virtual AssetType? Type { get; set; }
-    public virtual MaintenanceScheduleConfig? MaintenanceScheduleConfigs { get; set; }
+   // public virtual MaintenanceScheduleConfig? MaintenanceScheduleConfigs { get; set; }
     public virtual Model? Model { get; set; }
     public virtual IEnumerable<RoomAsset>? RoomAssets { get; set; }
     public virtual IEnumerable<Maintenance>? Maintenances { get; set; }
@@ -106,9 +105,9 @@ public class AssetConfig : IEntityTypeConfiguration<Asset>
             .WithMany(x => x.Assets)
             .HasForeignKey(x => x.TypeId);
         
-        builder.HasOne(x => x.MaintenanceScheduleConfigs)
-            .WithMany(x => x.Assets)
-            .HasForeignKey(x => x.MaintenanceConfigId);
+        // builder.HasOne(x => x.MaintenanceScheduleConfigs)
+        //     .WithMany(x => x.Assets)
+        //     .HasForeignKey(x => x.MaintenanceConfigId);
         
         builder.HasOne(x => x.Model)
             .WithMany(x => x.Assets)
