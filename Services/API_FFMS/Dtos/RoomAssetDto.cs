@@ -8,9 +8,9 @@ namespace API_FFMS.Dtos
 
     public class RoomAssetBaseDto : BaseDto
     {
-        public Guid? RoomId { get; set; }
-        public Guid? AssetId { get; set; }
-        public AssetStatus? Status { get; set; }
+        public Guid RoomId { get; set; }
+        public Guid AssetId { get; set; }
+        public AssetStatus Status { get; set; }
         [JsonConverter(typeof(LocalTimeZoneDateTimeConverter))]
         public DateTime? FromDate { get; set; }
         [JsonConverter(typeof(LocalTimeZoneDateTimeConverter))]
