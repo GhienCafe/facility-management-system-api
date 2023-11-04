@@ -138,6 +138,9 @@ namespace API_FFMS.Services
 
             existingModel.ModelName = updateDto.ModelName ?? existingModel.ModelName;
             existingModel.Description = updateDto.Description ?? existingModel.Description;
+            existingModel.MaintenancePeriodTime =
+                updateDto.MaintenancePeriodTime ?? existingModel.MaintenancePeriodTime;
+            existingModel.BrandId = updateDto.BrandId ?? existingModel.BrandId;
 
             if (!await MainUnitOfWork.ModelRepository.UpdateAsync(existingModel, AccountId, CurrentDate))
             {
