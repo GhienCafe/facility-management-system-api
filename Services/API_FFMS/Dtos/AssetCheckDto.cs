@@ -2,7 +2,7 @@
 
 public class AssetCheckDto : BaseRequestDto
 {
-    public bool IsVerified { get; set; }
+    public bool? IsVerified { get; set; }
     public AssetBaseDto? Asset { get; set; }
     public RoomBaseDto? Location { get; set; }
     public UserBaseDto? AssignTo { get; set; }

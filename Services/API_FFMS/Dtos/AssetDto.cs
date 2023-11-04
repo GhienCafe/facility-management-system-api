@@ -36,7 +36,7 @@ namespace API_FFMS.Dtos
     {
         public string AssetName { get; set; } = null!;
         public string? AssetCode { get; set; }
-        public bool IsMovable { get; set; }
+        public bool? IsMovable { get; set; }
         public AssetStatus? Status { get; set; }
         public EnumValue? StatusObj { get; set; }
         public int? ManufacturingYear { get; set; }
@@ -59,7 +59,7 @@ namespace API_FFMS.Dtos
     {
         public string AssetName { get; set; } = null!;
         public string? AssetCode { get; set; }
-        public bool IsMovable { get; set; }
+        public bool? IsMovable { get; set; }
         public AssetStatus? Status { get; set; }
         public EnumValue? StatusObj { get; set; }
         public int? ManufacturingYear { get; set; }
