@@ -98,5 +98,12 @@ namespace API_FFMS.Controllers
         {
             return await _assetService.AssetReplacementTracking(id, queryDto);
         }
+        
+        [HttpGet("upto-maintenance-time")]
+        [SwaggerOperation("Get assets upto maintenance time")]
+        public async Task<ApiResponses<AssetMaintenanceDto>> AssetUptoMaintenance([FromQuery] AssetQueryDto queryDto)
+        {
+            return await _assetService.AssetUptoMaintenanceTime(queryDto);
+        }
     }
 }

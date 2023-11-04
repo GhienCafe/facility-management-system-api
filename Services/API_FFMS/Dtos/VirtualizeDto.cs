@@ -47,3 +47,12 @@ public class VirtualizeRoomQueryDto : BaseQueryDto
 public class VirtualizeQueryDto : BaseQueryDto
 {
 }
+
+public class VirtualDashboard
+{
+    public int TotalBuilding { get; set; }
+    public int TotalRoom { get; set; }
+    public int TotalUser { get; set; }
+    public int TotalAsset { get; set; }
+    
+}

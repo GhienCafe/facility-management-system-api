@@ -104,16 +104,17 @@ namespace API_FFMS.Services
             {
                 modelDataSet = modelDataSet.Where(x => x.ModelName!.ToLower().Contains(keyword));
             }
-            
+
             var totalCount = modelDataSet.Count();
 
             modelDataSet = modelDataSet.Skip(queryDto.Skip()).Take(queryDto.PageSize);
-            
-            var models = await modelDataSet.Select(x => new ModelDto 
+
+            var models = await modelDataSet.Select(x => new ModelDto
             {
                 Id = x!.Id,
                 ModelName = x.ModelName,
                 Description = x.Description,
+                ImageUrl = x.ImageUrl,
                 CreatedAt = x.CreatedAt,
                 EditedAt = x.EditedAt,
                 CreatorId = x.CreatorId ?? Guid.Empty,
@@ -146,6 +147,7 @@ namespace API_FFMS.Services
                 Id = x!.Id,
                 ModelName = x.ModelName,
                 Description = x.Description,
+                ImageUrl = x.ImageUrl,
                 CreatedAt = x.CreatedAt,
                 EditedAt = x.EditedAt,
                 EditorId = x.EditorId ?? Guid.Empty,
@@ -153,7 +155,7 @@ namespace API_FFMS.Services
             }).ToList();
 
             models = await _mapperRepository.MapCreator(models);
-            
+
             return ApiResponses<ModelDto>.Success(models);
         }
 
@@ -167,6 +169,9 @@ namespace API_FFMS.Services
 
             existingModel.ModelName = updateDto.ModelName ?? existingModel.ModelName;
             existingModel.Description = updateDto.Description ?? existingModel.Description;
+            existingModel.MaintenancePeriodTime =
+                updateDto.MaintenancePeriodTime ?? existingModel.MaintenancePeriodTime;
+            existingModel.ImageUrl = updateDto.ImageUrl ?? existingModel.ImageUrl;
             existingModel.BrandId = updateDto.BrandId ?? existingModel.BrandId;
 
             if (!await MainUnitOfWork.ModelRepository.UpdateAsync(existingModel, AccountId, CurrentDate))

@@ -96,7 +96,7 @@ public class BaseRequestConfig : IEntityTypeConfiguration<BaseRequest>
         builder.Property(a => a.Result).IsRequired(false);
         builder.Property(a => a.Checkin).IsRequired(false);
         builder.Property(a => a.Checkout).IsRequired(false);
-        builder.Property(a => a.Priority).IsRequired(false).HasDefaultValue(0);
+        builder.Property(a => a.Priority).IsRequired(false).HasDefaultValue(3);
 
         builder.HasIndex(a => a.RequestCode).IsUnique();
     }

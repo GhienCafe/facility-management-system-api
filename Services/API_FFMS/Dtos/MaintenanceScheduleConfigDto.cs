@@ -26,7 +26,6 @@ public class AssetMaintenanceDto : BaseDto
     [JsonConverter(typeof(LocalTimeZoneDateTimeConverter))]
     public DateTime? StartDateOfUse { get; set; }
     public string? ImageUrl { get; set; }
-    public Guid? MaintenanceConfigId { get; set; }
     [JsonConverter(typeof(LocalTimeZoneDateTimeConverter))]
     public DateTime? NextMaintenanceDate { get; set; }
 }

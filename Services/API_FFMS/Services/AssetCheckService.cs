@@ -224,7 +224,7 @@ public class AssetCheckService : BaseService, IAssetCheckService
 
         var assetChecks = await joinTables.Select(x => new AssetCheckDto
         {
-            //RequestId = x.AssetCheck.Id,
+            Id = x.AssetCheck.Id,
             IsVerified = x.AssetCheck.IsVerified,
             AssetId = x.AssetCheck.AssetId,
             Description = x.AssetCheck.Description,

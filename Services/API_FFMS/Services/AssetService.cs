@@ -24,6 +24,7 @@ public interface IAssetService : IBaseService
     Task<ApiResponses<AssetRepairationTrackingDto>> AssetRepairationTracking(Guid id, AssetTaskCheckQueryDto queryDto);
     Task<ApiResponses<AssetTransportationTrackingDto>> AssetTransportationTracking(Guid id, AssetTaskCheckQueryDto queryDto);
     Task<ApiResponses<AssetReplacementTrackingDto>> AssetReplacementTracking(Guid id, AssetTaskCheckQueryDto queryDto);
+    Task<ApiResponses<AssetMaintenanceDto>> AssetUptoMaintenanceTime(AssetQueryDto queryDto);
 }
 
 public class AssetService : BaseService, IAssetService
@@ -126,7 +127,7 @@ public class AssetService : BaseService, IAssetService
             ManufacturingYear = x.ManufacturingYear,
             ModelId = x.ModelId,
             SerialNumber = x.SerialNumber,
-            ImageUrl = x.ImageUrl,
+            ImageUrl = x.ImageUrl ?? x.Model!.ImageUrl,
             TypeId = x.TypeId,
             LastMaintenanceTime = x.LastMaintenanceTime,
             CreatedAt = x.CreatedAt,
@@ -214,6 +215,10 @@ public class AssetService : BaseService, IAssetService
                 x => !x.DeletedAt.HasValue,
                 x => x.Id == existingAsset.ModelId
             });
+        if(existingAsset.ImageUrl == null && existingAsset.Model != null)
+        {
+            existingAsset.ImageUrl = existingAsset.Model.ImageUrl;
+        }
 
         existingAsset.Type = await MainUnitOfWork.AssetTypeRepository.FindOneAsync<AssetTypeDto>(
                 new Expression<Func<AssetType, bool>>[]
@@ -870,5 +875,87 @@ public class AssetService : BaseService, IAssetService
                 queryDto.PageSize,
                 queryDto.Page,
                 (int)Math.Ceiling(totalCount / (double)queryDto.PageSize));
+    }
+
+    public async Task<ApiResponses<AssetMaintenanceDto>> AssetUptoMaintenanceTime(AssetQueryDto queryDto)
+    {
+         var keyword = queryDto.Keyword?.Trim().ToLower();
+
+         var assetsQueryable = MainUnitOfWork.AssetRepository.GetQuery();
+         var modelsQueryable = MainUnitOfWork.ModelRepository.GetQuery();
+
+         var maintenanceItems = (from asset in assetsQueryable
+             join model in modelsQueryable
+                 on asset.ModelId equals model.Id into modelsGroup
+             from model in modelsGroup.DefaultIfEmpty()
+             select new AssetMaintenanceDto
+             {
+                 // Map other properties from your entities to the DTO
+                 Id = asset.Id,
+                 AssetName = asset.AssetName,
+                 AssetCode = asset.AssetCode,
+                 IsMovable = asset.IsMovable,
+                 Status = asset.Status,
+                 StatusObj = asset.Status.GetValue(),
+                 ManufacturingYear = asset.ManufacturingYear,
+                 SerialNumber = asset.SerialNumber,
+                 Quantity = asset.Quantity,
+                 Description = asset.Description,
+                 LastMaintenanceTime = asset.LastMaintenanceTime,
+                 LastCheckedDate = asset.LastCheckedDate,
+                 TypeId = asset.TypeId,
+                 ModelId = asset.ModelId,
+                 IsRented = asset.IsRented,
+                 StartDateOfUse = asset.StartDateOfUse,
+                 ImageUrl = asset.ImageUrl,
+                 // Calculate the NextMaintenanceDate
+                 NextMaintenanceDate = model.MaintenancePeriodTime != null ? (asset.LastMaintenanceTime != null
+                     ? asset.LastMaintenanceTime.Value.AddMonths((int)model.MaintenancePeriodTime)
+                     : asset.StartDateOfUse.Value.AddMonths((int)model.MaintenancePeriodTime)) : null 
+             });
+
+         maintenanceItems = maintenanceItems.Where(x => x.NextMaintenanceDate >= CurrentDate);
+
+         if (!string.IsNullOrEmpty(keyword))
+         {
+             maintenanceItems = maintenanceItems.Where(x => x.AssetName.ToLower().Contains(keyword)
+                                                            || x.AssetCode.Contains(keyword)
+                                                            || x.Description.Contains(keyword));
+         }
+
+         if (queryDto.TypeId != null)
+         {
+             maintenanceItems = maintenanceItems.Where(x => x.TypeId == queryDto.TypeId);
+         }
+
+         if (queryDto.Status != null)
+         {
+             maintenanceItems = maintenanceItems.Where(x => x.Status == queryDto.Status);
+         }
+
+         if (queryDto.ModelId != null)
+         {
+             maintenanceItems = maintenanceItems.Where(x => x.ModelId == queryDto.ModelId);
+         }
+
+         if (queryDto.IsMovable != null)
+         {
+             maintenanceItems = maintenanceItems.Where(x => x.IsMovable == queryDto.IsMovable);
+         }
+
+         var totalCount = await maintenanceItems.CountAsync();
+         maintenanceItems = maintenanceItems.Skip(queryDto.Skip()).Take(queryDto.PageSize);
+
+         var items = await maintenanceItems.ToListAsync();
+
+         items = await _mapperRepository.MapCreator(items);
+
+         return ApiResponses<AssetMaintenanceDto>.Success(
+             items,
+             totalCount,
+             queryDto.PageSize,
+             queryDto.Page,
+             (int)Math.Ceiling(totalCount / (double)queryDto.PageSize)
+         );
     }
 }

@@ -83,6 +83,7 @@ namespace API_FFMS.Repositories
                         }
                         assetCheck.Result = mediaFiles.First().Content;
                         assetCheck.Checkout = now.Value;
+                       // assetCheck.IsVerified = mediaFil
                         _context.Entry(assetCheck).State = EntityState.Modified;
 
                         if (assetCheck.IsVerified == true)

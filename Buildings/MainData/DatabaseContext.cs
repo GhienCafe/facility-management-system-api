@@ -20,7 +20,7 @@ public class DatabaseContext : DbContext
     public DbSet<AssetType> AssetTypes { get; set; }
     
     public DbSet<Maintenance> Maintenances { get; set; }
-    public DbSet<MaintenanceScheduleConfig> MaintenanceScheduleConfigs { get; set; }
+    //public DbSet<MaintenanceScheduleConfig> MaintenanceScheduleConfigs { get; set; }
     public DbSet<RoomStatus> RoomStatus { get; set; }
     public DbSet<RoomType> RoomTypes { get; set; }
     
@@ -60,7 +60,7 @@ public class DatabaseContext : DbContext
         modelBuilder.ApplyConfiguration(new RoomStatusConfig());
         modelBuilder.ApplyConfiguration(new MediaFileConfig());
         
-        modelBuilder.ApplyConfiguration(new MaintenanceScheduleConfigConfig());
+        //modelBuilder.ApplyConfiguration(new MaintenanceScheduleConfigConfig());
         
         modelBuilder.ApplyConfiguration(new ReplacementConfig());
         modelBuilder.ApplyConfiguration(new NotificationConfig());
