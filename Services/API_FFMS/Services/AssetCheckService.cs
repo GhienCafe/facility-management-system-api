@@ -19,6 +19,8 @@ public interface IAssetCheckService : IBaseService
     Task<ApiResponse<AssetCheckDto>> GetAssetCheck(Guid id);
     Task<ApiResponse> Update(Guid id, AssetCheckUpdateDto updateDto);
     Task<ApiResponse> UpdateStatus(Guid id, AssetCheckUpdateStatusDto requestStatus);
+    Task<ApiResponse> CreateItems(List<AssetCheckCreateDto> createDtos);
+
 }
 
 public class AssetCheckService : BaseService, IAssetCheckService
@@ -357,5 +359,28 @@ public class AssetCheckService : BaseService, IAssetCheckService
             }
         }
         return newRequestCode;
+    }
+
+    public async Task<ApiResponse> CreateItems(List<AssetCheckCreateDto> createDtos)
+    {
+        var assets = await MainUnitOfWork.AssetRepository.FindAsync(
+                new Expression<Func<Asset, bool>>[]
+                {
+                    x => !x!.DeletedAt.HasValue,
+                    x => createDtos.Select(dto => dto.AssetId).Contains(x.Id)
+                }, null);
+
+        if (assets.Any(asset => asset!.Status != AssetStatus.Operational))
+        {
+            throw new ApiException("Trang thiết bị đang trong một yêu cầu khác", StatusCode.SERVER_ERROR);
+        }
+
+        var assetChecks = createDtos.Select(dto => dto.ProjectTo<AssetCheckCreateDto, AssetCheck>())
+                                         .ToList();
+
+        if (!await _assetcheckRepository.InsertAssetChecks(assetChecks, AccountId, CurrentDate))
+            throw new ApiException("Tạo yêu cầu thất bại", StatusCode.SERVER_ERROR);
+
+        return ApiResponse.Created("Gửi yêu cầu thành công");
     }
 }
