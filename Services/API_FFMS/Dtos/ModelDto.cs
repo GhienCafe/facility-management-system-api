@@ -8,6 +8,7 @@ public class ModelDto : BaseDto
     public string? Description { get; set; }
     public int? MaintenancePeriodTime { get; set; }
     public Guid? BrandId { get; set; }
+    public BrandDto? Brand { get; set; }
 }
 
 public class ModelCreateDto

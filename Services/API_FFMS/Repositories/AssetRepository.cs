@@ -6,6 +6,7 @@ namespace API_FFMS.Repositories
     public interface IAssetRepository
     {
         Task<bool> InsertAsset(Asset asset, Guid? creatorId, DateTime? now = null);
+        Task<bool> DeleteAssets(List<Asset?> assets, Guid? deleterId, DateTime? now = null);
     }
     public class AssetRepository : IAssetRepository
     {
@@ -58,6 +59,11 @@ namespace API_FFMS.Repositories
         {
             var wareHouse = _context.Rooms.FirstOrDefault(x => x.RoomName!.Trim().Equals(roomName.Trim()));
             return wareHouse;
+        }
+
+        public Task<bool> DeleteAssets(List<Asset?> assets, Guid? deleterId, DateTime? now = null)
+        {
+            throw new NotImplementedException();
         }
     }
 
