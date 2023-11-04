@@ -227,7 +227,7 @@ namespace API_FFMS.Services
                     StatusObj = x.Asset.Status.GetValue(),
                     ManufacturingYear = x.Asset.ManufacturingYear,
                     SerialNumber = x.Asset.SerialNumber,
-                    Quantity = (double)x.RoomAsset.Quantity,
+                    Quantity = x.RoomAsset.Quantity,
                     Description = x.Asset.Description,
                     TypeId = x.Asset.TypeId,
                     ModelId = x.Asset.ModelId,

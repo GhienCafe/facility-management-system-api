@@ -18,7 +18,7 @@ public class BaseRequestDto : BaseDto
     public string? Description { get; set; }
     public string? Notes { get; set; }
     public string? Result { get; set; }
-    public bool IsInternal { get; set; }
+    public bool? IsInternal { get; set; }
     [JsonConverter(typeof(LocalTimeZoneDateTimeConverter))]
     public DateTime? Checkin { get; set; }
     [JsonConverter(typeof(LocalTimeZoneDateTimeConverter))]

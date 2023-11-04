@@ -62,7 +62,7 @@ public class AssetService : BaseService, IAssetService
     public async Task<ApiResponses<AssetDto>> GetAssets(AssetQueryDto queryDto)
     {
         var keyword = queryDto.Keyword?.Trim().ToLower();
-        var assetDataSet = MainUnitOfWork.AssetRepository.GetQuery().Include(x => x.Model)
+        var assetDataSet = MainUnitOfWork.AssetRepository.GetQuery().Include(x => x!.Model)
                           .Include(x => x.Type).ThenInclude(t => t.Category)
                           .Include(x => x.RoomAssets).ThenInclude(ra => ra.Room)
                           .Where(x => !x!.DeletedAt.HasValue);

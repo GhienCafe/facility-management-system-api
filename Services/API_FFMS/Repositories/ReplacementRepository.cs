@@ -97,7 +97,7 @@ namespace API_FFMS.Repositories
             {
                 foreach (var replacement in replacements)
                 {
-                    replacement.DeletedAt = now.Value;
+                    replacement!.DeletedAt = now.Value;
                     replacement.DeleterId = deleterId;
                     _context.Entry(replacement).State = EntityState.Modified;
 

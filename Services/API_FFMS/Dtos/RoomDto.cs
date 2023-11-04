@@ -13,8 +13,8 @@ public class RoomDto : BaseDto
    // public EnumValue? RoomType { get; set; }
     public Guid? RoomTypeId { get; set; }
     public int? Capacity { get; set; }
-    public Guid StatusId { get; set; }
-    public Guid FloorId { get; set; }
+    public Guid? StatusId { get; set; }
+    public Guid? FloorId { get; set; }
     public string? Description { get; set; }
     public RoomStatusDto? Status { get; set; }
     public RoomTypeDto? RoomType { get; set; }
@@ -28,8 +28,8 @@ public class RoomBaseDto : BaseDto
     public string RoomCode { get; set; } = null!;
     public Guid? RoomTypeId { get; set; }
     public int? Capacity { get; set; }
-    public Guid StatusId { get; set; }
-    public Guid FloorId { get; set; }
+    public Guid? StatusId { get; set; }
+    public Guid? FloorId { get; set; }
     public string? Description { get; set; }
 }
 
@@ -43,8 +43,8 @@ public class RoomDetailDto : BaseDto
     //public RoomTypeEnum RoomType { get; set; }
     public Guid? RoomTypeId { get; set; }
     public int? Capacity { get; set; }
-    public Guid StatusId { get; set; }
-    public Guid FloorId { get; set; }
+    public Guid? StatusId { get; set; }
+    public Guid? FloorId { get; set; }
     public RoomStatusDto? Status { get; set; }
     public RoomTypeDto? RoomType { get; set; }
 }

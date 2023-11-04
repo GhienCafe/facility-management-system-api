@@ -22,7 +22,7 @@ public class TransportDto : BaseDto
     public string? Result { get; set; }
     public string? Description { get; set; }
     public string? Notes { get; set; } // Results
-    public bool IsInternal { get; set; }
+    public bool? IsInternal { get; set; }
     public int? Quantity { get; set; }
     public DateTime? Checkin { get; set; }
     public DateTime? Checkout { get; set; }
