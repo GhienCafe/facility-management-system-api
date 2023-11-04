@@ -124,6 +124,8 @@ public static class ExportHelperList<T>
             currentRow++;
         }
 
+        worksheet.Columns().AdjustToContents(6, 15, 40);
+
         var stream = new MemoryStream();
         workbook.SaveAs(stream);
         workbook.Dispose();
@@ -356,6 +358,7 @@ public static class ExportHelperList<T>
                     }
                     currentRow++;
                 }
+                worksheet.Columns().AdjustToContents(6, 15, 40);
             }
             workbook.SaveAs(stream);
         }
