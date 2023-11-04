@@ -38,9 +38,9 @@ public class AssetCheckController : BaseController
 
     [HttpDelete]
     [SwaggerOperation("Delete list asset check")]
-    public async Task<ApiResponse> DeleteAssetChecks(List<Guid> ids)
+    public async Task<ApiResponse> DeleteAssetChecks(DeleteMutilDto deleteDto)
     {
-        return await _assetCheckService.DeleteAssetChecks(ids);
+        return await _assetCheckService.DeleteAssetChecks(deleteDto);
     }
 
     [HttpPost]

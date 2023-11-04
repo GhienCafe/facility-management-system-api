@@ -88,7 +88,7 @@ public class AssetConfig : IEntityTypeConfiguration<Asset>
         builder.Property(a => a.AssetCode).IsRequired(false);
         builder.Property(a => a.StartDateOfUse).IsRequired(false);
         builder.Property(a => a.Status).IsRequired();
-        builder.Property(a => a.ImageUrl).IsRequired();
+        builder.Property(a => a.ImageUrl).IsRequired(false);
         builder.Property(a => a.IsMovable).IsRequired();
         builder.Property(a => a.ManufacturingYear).IsRequired(false);
         builder.Property(a => a.SerialNumber).IsRequired(false);

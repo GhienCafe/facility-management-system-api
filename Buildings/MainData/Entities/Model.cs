@@ -8,9 +8,11 @@ public class Model : BaseEntity
 {
     public string? ModelName { get; set; }
     public string? Description { get; set; }
+    public Guid? BrandId { get; set; }
     
     //
-    public IEnumerable<Asset>? Assets { get; set; }
+    public virtual IEnumerable<Asset>? Assets { get; set; }
+    public virtual Brand? Brand { get; set; }
 }
 
 public class ModelConfig : IEntityTypeConfiguration<Model>
@@ -26,5 +28,9 @@ public class ModelConfig : IEntityTypeConfiguration<Model>
         builder.HasMany(x => x.Assets)
             .WithOne(x => x.Model)
             .HasForeignKey(x => x.ModelId);
+
+        builder.HasOne(x => x.Brand)
+            .WithMany(x => x.Models)
+            .HasForeignKey(x => x.BrandId);
     }
 }   

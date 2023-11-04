@@ -52,8 +52,8 @@ public class RoomController : BaseController
 
     [HttpDelete]
     [SwaggerOperation("Delete list room")]
-    public async Task<ApiResponse> DeleteRooms(List<Guid> ids)
+    public async Task<ApiResponse> DeleteRooms(DeleteMutilDto deleteDto)
     {
-        return await _service.DeleteRooms(ids);
+        return await _service.DeleteRooms(deleteDto);
     }
 }

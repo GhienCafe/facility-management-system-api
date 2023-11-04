@@ -14,7 +14,7 @@ namespace API_FFMS.Services
         Task<ApiResponse<ModelDto>> GetModel(Guid id);
         public Task<ApiResponse> Update(Guid id, ModelUpdateDto updateDto);
         Task<ApiResponse> Delete(Guid id);
-        Task<ApiResponse> DeleteModels(List<Guid> ids);
+        Task<ApiResponse> DeleteModels(DeleteMutilDto deleteDto);
         Task<ApiResponses<ModelDto>> GetModels(ModelQueryDto queryDto);
         Task<ApiResponses<ModelDto>> GetModels();
     }
@@ -40,7 +40,7 @@ namespace API_FFMS.Services
             var existingModel = await MainUnitOfWork.ModelRepository.FindOneAsync(id);
             if (existingModel == null)
             {
-                throw new ApiException("Không tìm thấy nhãn hiệu", StatusCode.NOT_FOUND);
+                throw new ApiException("Không tìm thấy dòng sản phẩm", StatusCode.NOT_FOUND);
             }
 
             if (!await MainUnitOfWork.ModelRepository.DeleteAsync(existingModel, AccountId, CurrentDate))
@@ -51,18 +51,14 @@ namespace API_FFMS.Services
             return ApiResponse.Success();
         }
 
-        public async Task<ApiResponse> DeleteModels(List<Guid> ids)
+        public async Task<ApiResponse> DeleteModels(DeleteMutilDto deleteDto)
         {
-            var modelDeleteds = new List<Model>();
-            foreach (var id in ids)
+            var modelDeleteds = await MainUnitOfWork.ModelRepository.FindAsync(
+            new Expression<Func<Model, bool>>[]
             {
-                var existingModel = await MainUnitOfWork.ModelRepository.FindOneAsync(id);
-                if (existingModel == null)
-                {
-                    throw new ApiException("Không tìm thấy nhãn hiệu", StatusCode.NOT_FOUND);
-                }
-                modelDeleteds.Add(existingModel);
-            }
+                x => !x.DeletedAt.HasValue,
+                x => deleteDto.ListId!.Contains(x.Id)
+            }, null);
 
             if (!await MainUnitOfWork.ModelRepository.DeleteAsync(modelDeleteds, AccountId, CurrentDate))
             {
@@ -83,7 +79,7 @@ namespace API_FFMS.Services
 
             if (model == null)
             {
-                throw new ApiException("Không tìm thấy nhãn hiệu", StatusCode.NOT_FOUND);
+                throw new ApiException("Không tìm thấy dòng sản phẩm", StatusCode.NOT_FOUND);
             }
 
             model = await _mapperRepository.MapCreator(model);
@@ -137,7 +133,7 @@ namespace API_FFMS.Services
             var existingModel = await MainUnitOfWork.ModelRepository.FindOneAsync(id);
             if (existingModel == null)
             {
-                throw new ApiException("Không tìm thấy nhãn hiệu", StatusCode.NOT_FOUND);
+                throw new ApiException("Không tìm thấy Dòng sản phẩm", StatusCode.NOT_FOUND);
             }
 
             existingModel.ModelName = updateDto.ModelName ?? existingModel.ModelName;

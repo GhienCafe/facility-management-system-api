@@ -17,6 +17,8 @@ public interface IMaintenanceService : IBaseService
     Task<ApiResponse> CreateItem(MaintenanceCreateDto createDto);
     Task<ApiResponse> CreateItems(List<MaintenanceCreateDto> createDtos);
     Task<ApiResponse> UpdateItem(Guid id, MaintenanceUpdateDto updateDto);
+    Task<ApiResponse> DeleteItem(Guid id);
+    Task<ApiResponse> DeleteItems(DeleteMutilDto deleteDto);
 }
 
 public class MaintenanceService : BaseService, IMaintenanceService
@@ -232,11 +234,12 @@ public class MaintenanceService : BaseService, IMaintenanceService
     public async Task<ApiResponse> CreateItem(MaintenanceCreateDto createDto)
     {
         var asset = await MainUnitOfWork.AssetRepository.FindOneAsync(createDto.AssetId);
+        var assetType = await MainUnitOfWork.AssetTypeRepository.FindOneAsync((Guid)createDto.AssetTypeId!);
 
         if (asset == null)
             throw new ApiException("Không cần tồn tại trang thiết bị", StatusCode.NOT_FOUND);
 
-        if (asset.Status != AssetStatus.Operational)
+        if (assetType!.Unit == Unit.Individual &&  asset.Status != AssetStatus.Operational)
             throw new ApiException("Trang thiết bị đang trong một yêu cầu khác", StatusCode.BAD_REQUEST);
 
         var maintenance = createDto.ProjectTo<MaintenanceCreateDto, Maintenance>();
@@ -281,22 +284,13 @@ public class MaintenanceService : BaseService, IMaintenanceService
                     x => createDtos.Select(dto => dto.AssetId).Contains(x.Id)
                 }, null);
 
-        foreach (var asset in assets)
+        if (assets.Any(asset => asset!.Status != AssetStatus.Operational))
         {
-            if (asset!.Status != AssetStatus.Operational)
-            {
-                throw new ApiException("Trang thiết bị đang trong một yêu cầu khác", StatusCode.SERVER_ERROR);
-            }
+            throw new ApiException("Trang thiết bị đang trong một yêu cầu khác", StatusCode.SERVER_ERROR);
         }
 
-        var maintenances = new List<Maintenance>();
-
-        foreach (var item in createDtos)
-        {
-            var maintenance = item.ProjectTo<MaintenanceCreateDto, Maintenance>();
-            //maintenance.RequestCode = GenerateRequestCode();
-            maintenances.Add(maintenance);
-        }
+        var maintenances = createDtos.Select(dto => dto.ProjectTo<MaintenanceCreateDto, Maintenance>())
+                                     .ToList();
 
         if (!await _maintenanceRepository.InsertMaintenances(maintenances, AccountId, CurrentDate))
             throw new ApiException("Tạo yêu cầu thất bại", StatusCode.SERVER_ERROR);
@@ -326,5 +320,42 @@ public class MaintenanceService : BaseService, IMaintenanceService
             }
         }
         return newRequestCode;
+    }
+
+    public async Task<ApiResponse> DeleteItem(Guid id)
+    {
+        var existingMaintenance = await MainUnitOfWork.MaintenanceRepository.FindOneAsync(
+                new Expression<Func<Maintenance, bool>>[]
+                {
+                    x => !x.DeletedAt.HasValue,
+                    x => x.Id == id
+                });
+        if (existingMaintenance == null)
+        {
+            throw new ApiException("Không tìm thấy yêu cầu bảo trì này", StatusCode.NOT_FOUND);
+        }
+
+        if (!await _maintenanceRepository.DeleteMaintenance(existingMaintenance, AccountId, CurrentDate))
+        {
+            throw new ApiException("Xóa thất bại", StatusCode.SERVER_ERROR);
+        }
+        return ApiResponse.Success();
+    }
+
+    public async Task<ApiResponse> DeleteItems(DeleteMutilDto deleteDto)
+    {
+        var maintenDeleteds = await MainUnitOfWork.MaintenanceRepository.FindAsync(
+            new Expression<Func<Maintenance, bool>>[]
+            {
+                x => !x.DeletedAt.HasValue,
+                x => deleteDto.ListId!.Contains(x.Id)
+            }, null);
+
+        var maintenances = maintenDeleteds.Where(m => m != null).ToList();
+        if (!await _maintenanceRepository.DeleteMaintenances(maintenances, AccountId, CurrentDate))
+        {
+            throw new ApiException("Xóa thất bại", StatusCode.SERVER_ERROR);
+        }
+        return ApiResponse.Success();
     }
 }

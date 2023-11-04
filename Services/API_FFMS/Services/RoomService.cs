@@ -15,7 +15,7 @@ public interface IRoomService : IBaseService
     public Task<ApiResponse> Insert(RoomCreateDto addRoomDto);
     public Task<ApiResponse> Update(Guid id, RoomUpdateDto floorUpdate);
     Task<ApiResponse> Delete(Guid id);
-    Task<ApiResponse> DeleteRooms(List<Guid> ids);
+    Task<ApiResponse> DeleteRooms(DeleteMutilDto deleteDto);
 
 }
 public class RoomService : BaseService, IRoomService
@@ -200,13 +200,13 @@ public class RoomService : BaseService, IRoomService
         return ApiResponse.Success("Xóa thành công");
     }
 
-    public async Task<ApiResponse> DeleteRooms(List<Guid> ids)
+    public async Task<ApiResponse> DeleteRooms(DeleteMutilDto deleteDto)
     {
         var roomDeleteds = await MainUnitOfWork.RoomRepository.FindAsync(
             new Expression<Func<Room, bool>>[]
             {
                 x => !x.DeletedAt.HasValue,
-                x => ids.Contains(x.Id)
+                x => deleteDto.ListId!.Contains(x.Id)
             }, null);
 
         if (!await MainUnitOfWork.RoomRepository.DeleteAsync(roomDeleteds, AccountId, CurrentDate))

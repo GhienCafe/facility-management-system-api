@@ -59,9 +59,9 @@ namespace API_FFMS.Controllers
 
         [HttpDelete]
         [SwaggerOperation("Delete a repairation")]
-        public async Task<ApiResponse> DeleteReplairations(List<Guid> ids)
+        public async Task<ApiResponse> DeleteReplairations(DeleteMutilDto deleteDto)
         {
-            return await _service.DeleteReplairations(ids);
+            return await _service.DeleteReplairations(deleteDto);
         }
 
         [HttpPut("status-update/{id:guid}")]

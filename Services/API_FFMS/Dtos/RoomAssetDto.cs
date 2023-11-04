@@ -8,9 +8,9 @@ namespace API_FFMS.Dtos
 
     public class RoomAssetBaseDto : BaseDto
     {
-        public Guid RoomId { get; set; }
-        public Guid AssetId { get; set; }
-        public AssetStatus Status { get; set; }
+        public Guid? RoomId { get; set; }
+        public Guid? AssetId { get; set; }
+        public AssetStatus? Status { get; set; }
         [JsonConverter(typeof(LocalTimeZoneDateTimeConverter))]
         public DateTime? FromDate { get; set; }
         [JsonConverter(typeof(LocalTimeZoneDateTimeConverter))]
@@ -23,8 +23,8 @@ namespace API_FFMS.Dtos
     public class RoomAssetCreateBaseDto 
     {
         public Guid RoomId { get; set; }
-        public Guid AssetId { get; set; }
-        public AssetStatus Status { get; set; }
+        public Guid? AssetId { get; set; }
+        public AssetStatus? Status { get; set; }
         public DateTime? FromDate { get; set; }
         public DateTime? ToDate { get; set; }
         public double? Quantity { get; set; }
@@ -42,8 +42,8 @@ namespace API_FFMS.Dtos
     
     public class RoomAssetDetailDto : BaseDto
     {
-        public Guid RoomId { get; set; }
-        public Guid AssetId { get; set; }
+        public Guid? RoomId { get; set; }
+        public Guid? AssetId { get; set; }
         public AssetStatus Status { get; set; }
         [JsonConverter(typeof(LocalTimeZoneDateTimeConverter))]
         public DateTime? FromDate { get; set; }
@@ -56,7 +56,7 @@ namespace API_FFMS.Dtos
     
     public class AssetTrackingDto : BaseDto
     {
-        public AssetStatus Status { get; set; }
+        public AssetStatus? Status { get; set; }
         [JsonConverter(typeof(LocalTimeZoneDateTimeConverter))]
         public DateTime? FromDate { get; set; }
         [JsonConverter(typeof(LocalTimeZoneDateTimeConverter))]
@@ -67,8 +67,8 @@ namespace API_FFMS.Dtos
 
     public class RoomTrackingDto
     {
-        public Guid RoomId { get; set; }
-        public AssetStatus Status { get; set; }
+        public Guid? RoomId { get; set; }
+        public AssetStatus? Status { get; set; }
         public DateTime? FromDate { get; set; }
         public DateTime? ToDate { get; set; }
 
@@ -83,9 +83,9 @@ namespace API_FFMS.Dtos
 
     public class RoomAssetCreateDto
     {
-        public Guid RoomId { get; set; }
-        public Guid AssetId { get; set; }
-        public AssetStatus Status { get; set; }
+        public Guid? RoomId { get; set; }
+        public Guid? AssetId { get; set; }
+        public AssetStatus? Status { get; set; }
         public DateTime? FromDate { get; set; }
         public DateTime? ToDate { get; set; }
     }

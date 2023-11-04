@@ -14,7 +14,7 @@ public class FloorDto : BaseDto
 {
     public string? FloorMap { get; set; }
     public string? FloorName { get; set; }
-    public int FloorNumber { get; set; }
+    public int? FloorNumber { get; set; }
     public string? Description { get; set; }
     public double? TotalArea { get; set; }
     public int? TotalRooms { get; set; }
@@ -32,10 +32,10 @@ public class FloorDetailDto : BaseDto
 {
     public string? FloorName { get; set; }
     public string? FloorMap { get; set; }
-    public int FloorNumber { get; set; }
+    public int? FloorNumber { get; set; }
     public string? Description { get; set; }
     public double? TotalArea { get; set; }
-    public Guid BuildingId { get; set; }
+    public Guid? BuildingId { get; set; }
     public int? TotalRoom {  get; set; }
     public BuildingBaseDto? Building { get; set; }
 }

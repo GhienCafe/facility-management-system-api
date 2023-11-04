@@ -52,9 +52,9 @@ namespace API_FFMS.Controllers
 
         [HttpDelete]
         [SwaggerOperation("Delete list team")]
-        public async Task<ApiResponse> DeleteTeams(List<Guid> ids)
+        public async Task<ApiResponse> DeleteTeams(DeleteMutilDto deleteDto)
         {
-            return await _service.DeleteTeams(ids);
+            return await _service.DeleteTeams(deleteDto);
         }
     }
 }

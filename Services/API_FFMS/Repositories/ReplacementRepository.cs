@@ -9,6 +9,8 @@ namespace API_FFMS.Repositories
     {
         Task<bool> InsertReplacement(Replacement replacement, Guid? creatorId, DateTime? now = null);
         Task<bool> UpdateStatus(Replacement replacement, RequestStatus? statusUpdate, Guid? editorId, DateTime? now = null);
+        Task<bool> DeleteReplacement(Replacement replacement, Guid? deleterId, DateTime? now = null);
+        Task<bool> DeleteReplacements(List<Replacement?> replacements, Guid? deleterId, DateTime? now = null);
     }
     public class ReplacementRepository : IReplacementRepository
     {
@@ -18,6 +20,145 @@ namespace API_FFMS.Repositories
         {
             _context = context;
         }
+
+        public async Task<bool> DeleteReplacement(Replacement replacement, Guid? deleterId, DateTime? now = null)
+        {
+            await _context.Database.BeginTransactionAsync();
+            now ??= DateTime.UtcNow;
+            try
+            {
+                replacement.DeletedAt = now.Value;
+                replacement.DeleterId = deleterId;
+                _context.Entry(replacement).State = EntityState.Modified;
+
+                //ASSET
+                var asset = await _context.Assets.FindAsync(replacement.AssetId);
+                var newAsset = await _context.Assets.FindAsync(replacement.NewAssetId);
+
+                //ROOMASSET
+                var roomAsset = await _context.RoomAssets
+                                    .FirstOrDefaultAsync(x => x.AssetId == asset!.Id && x.ToDate == null);
+                var roomAssetNew = await _context.RoomAssets
+                                .FirstOrDefaultAsync(x => x.AssetId == newAsset!.Id && x.ToDate == null);
+
+                //LOCATION
+                var assetLocation = await _context.Rooms
+                                .FirstOrDefaultAsync(x => x.Id == roomAsset!.RoomId && roomAsset.AssetId == asset!.Id);
+
+                var newAssetLocation = await _context.Rooms
+                                .FirstOrDefaultAsync(x => x.Id == roomAssetNew!.RoomId && roomAssetNew.AssetId == newAsset!.Id);
+
+                asset!.Status = AssetStatus.Operational;
+                asset.EditedAt = now.Value;
+                asset.EditorId = deleterId;
+                _context.Entry(asset).State = EntityState.Modified;
+
+                newAsset!.Status = AssetStatus.Operational;
+                newAsset.EditedAt = now.Value;
+                newAsset.EditorId = deleterId;
+                _context.Entry(newAsset).State = EntityState.Modified;
+
+                roomAsset!.Status = AssetStatus.Operational;
+                roomAsset.EditorId = deleterId;
+                roomAsset.EditedAt = now.Value;
+                _context.Entry(roomAsset).State = EntityState.Modified;
+
+                roomAssetNew!.Status = AssetStatus.Operational;
+                roomAssetNew.EditorId = deleterId;
+                roomAssetNew.EditedAt = now.Value;
+                _context.Entry(roomAssetNew).State = EntityState.Modified;
+
+                assetLocation!.State = RoomState.Operational;
+                assetLocation.EditedAt = now.Value;
+                assetLocation.EditorId = deleterId;
+                _context.Entry(assetLocation).State = EntityState.Modified;
+
+                newAssetLocation!.State = RoomState.Operational;
+                newAssetLocation.EditedAt = now.Value;
+                newAssetLocation.EditorId = deleterId;
+                _context.Entry(newAssetLocation).State = EntityState.Modified;
+
+                await _context.SaveChangesAsync();
+                await _context.Database.CommitTransactionAsync();
+                return true;
+            }
+            catch
+            {
+                await _context.Database.RollbackTransactionAsync();
+                return false;
+            }
+        }
+
+        public async Task<bool> DeleteReplacements(List<Replacement?> replacements, Guid? deleterId, DateTime? now = null)
+        {
+            await _context.Database.BeginTransactionAsync();
+            now ??= DateTime.UtcNow;
+            try
+            {
+                foreach (var replacement in replacements)
+                {
+                    replacement!.DeletedAt = now.Value;
+                    replacement.DeleterId = deleterId;
+                    _context.Entry(replacement).State = EntityState.Modified;
+
+                    //ASSET
+                    var asset = await _context.Assets.FindAsync(replacement.AssetId);
+                    var newAsset = await _context.Assets.FindAsync(replacement.NewAssetId);
+
+                    //ROOMASSET
+                    var roomAsset = await _context.RoomAssets
+                                        .FirstOrDefaultAsync(x => x.AssetId == asset!.Id && x.ToDate == null);
+                    var roomAssetNew = await _context.RoomAssets
+                                    .FirstOrDefaultAsync(x => x.AssetId == newAsset!.Id && x.ToDate == null);
+
+                    //LOCATION
+                    var assetLocation = await _context.Rooms
+                                    .FirstOrDefaultAsync(x => x.Id == roomAsset!.RoomId && roomAsset.AssetId == asset!.Id);
+
+                    var newAssetLocation = await _context.Rooms
+                                    .FirstOrDefaultAsync(x => x.Id == roomAssetNew!.RoomId && roomAssetNew.AssetId == newAsset!.Id);
+
+                    asset!.Status = AssetStatus.Operational;
+                    asset.EditedAt = now.Value;
+                    asset.EditorId = deleterId;
+                    _context.Entry(asset).State = EntityState.Modified;
+
+                    newAsset!.Status = AssetStatus.Operational;
+                    newAsset.EditedAt = now.Value;
+                    newAsset.EditorId = deleterId;
+                    _context.Entry(newAsset).State = EntityState.Modified;
+
+                    roomAsset!.Status = AssetStatus.Operational;
+                    roomAsset.EditorId = deleterId;
+                    roomAsset.EditedAt = now.Value;
+                    _context.Entry(roomAsset).State = EntityState.Modified;
+
+                    roomAssetNew!.Status = AssetStatus.Operational;
+                    roomAssetNew.EditorId = deleterId;
+                    roomAssetNew.EditedAt = now.Value;
+                    _context.Entry(roomAssetNew).State = EntityState.Modified;
+
+                    assetLocation!.State = RoomState.Operational;
+                    assetLocation.EditedAt = now.Value;
+                    assetLocation.EditorId = deleterId;
+                    _context.Entry(assetLocation).State = EntityState.Modified;
+
+                    newAssetLocation!.State = RoomState.Operational;
+                    newAssetLocation.EditedAt = now.Value;
+                    newAssetLocation.EditorId = deleterId;
+                    _context.Entry(newAssetLocation).State = EntityState.Modified;
+                }
+                await _context.SaveChangesAsync();
+                await _context.Database.CommitTransactionAsync();
+                return true;
+            }
+            catch
+            {
+                await _context.Database.RollbackTransactionAsync();
+                return false;
+            }
+        }
+
         public async Task<bool> InsertReplacement(Replacement replacement, Guid? creatorId, DateTime? now = null)
         {
             await _context.Database.BeginTransactionAsync();

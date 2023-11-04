@@ -17,7 +17,7 @@ public interface IAssetService : IBaseService
     Task<ApiResponse> Create(AssetCreateDto createDto);
     Task<ApiResponse> Update(Guid id, AssetUpdateDto updateDto);
     Task<ApiResponse> Delete(Guid id);
-    Task<ApiResponse> DeleteAssets(List<Guid> ids);
+    Task<ApiResponse> DeleteAssets(DeleteMutilDto deleteDto);
     Task<ApiResponses<RoomAssetDto>> GetAssetsInRoom(Guid roomId, RoomAssetQueryDto queryDto);
     Task<ApiResponses<AssetCheckTrackingDto>> AssetCheckTracking(Guid id, AssetTaskCheckQueryDto queryDto);
     Task<ApiResponses<AssetMaintenanceTrackingDto>> AssetMaintenanceTracking(Guid id, AssetTaskCheckQueryDto queryDto);
@@ -62,7 +62,7 @@ public class AssetService : BaseService, IAssetService
     public async Task<ApiResponses<AssetDto>> GetAssets(AssetQueryDto queryDto)
     {
         var keyword = queryDto.Keyword?.Trim().ToLower();
-        var assetDataSet = MainUnitOfWork.AssetRepository.GetQuery().Include(x => x.Model)
+        var assetDataSet = MainUnitOfWork.AssetRepository.GetQuery().Include(x => x!.Model)
                           .Include(x => x.Type).ThenInclude(t => t.Category)
                           .Include(x => x.RoomAssets).ThenInclude(ra => ra.Room)
                           .Where(x => !x!.DeletedAt.HasValue);
@@ -133,9 +133,9 @@ public class AssetService : BaseService, IAssetService
             EditedAt = x.EditedAt,
             CreatorId = x.CreatorId ?? Guid.Empty,
             EditorId = x.EditorId ?? Guid.Empty,
-            Type = x.Type !=null ? new AssetTypeDto
+            Type = x.Type != null ? new AssetTypeDto
             {
-                Id = x.Type!.Id,
+                Id = x.Type.Id,
                 Description = x.Type.Description,
                 TypeCode = x.Type.TypeCode,
                 TypeName = x.Type.TypeName,
@@ -149,7 +149,7 @@ public class AssetService : BaseService, IAssetService
             } : null,
             Category = x.Type!.Category != null ?  new CategoryDto
             {
-                Id = x.Type!.Category!.Id,
+                Id = x.Type.Category.Id,
                 Description = x.Type.Category.Description,
                 CategoryName = x.Type.Category.CategoryName,
                 CreatedAt = x.Type.Category.CreatedAt,
@@ -159,7 +159,7 @@ public class AssetService : BaseService, IAssetService
             } : null,
             Model = x.Model != null ? new ModelDto
             {
-                Id = x.Model!.Id,
+                Id = x.Model.Id,
                 Description = x.Model.Description,
                 ModelName = x.Model.ModelName,
                 CreatedAt = x.Model.CreatedAt,
@@ -167,7 +167,7 @@ public class AssetService : BaseService, IAssetService
                 CreatorId = x.Model.CreatorId ?? Guid.Empty,
                 EditorId = x.Model.EditorId ?? Guid.Empty
             } : null,
-            Room =x.RoomAssets!.Select(ra => new RoomBaseDto
+            Room = x.RoomAssets!.Select(ra => new RoomBaseDto
             {
                 Id = ra.RoomId,
                 RoomName = ra.Room!.RoomName,
@@ -356,7 +356,7 @@ public class AssetService : BaseService, IAssetService
                 Description = x.Asset.Description,
                 AssetCode = x.Asset.AssetCode,
                 AssetName = x.Asset.AssetName,
-                Quantity = x.Asset.Quantity,
+                Quantity = x.RoomAsset.Quantity,
                 IsMovable = x.Asset.IsMovable,
                 IsRented = x.Asset.IsRented,
                 ManufacturingYear = x.Asset.ManufacturingYear,
@@ -390,12 +390,12 @@ public class AssetService : BaseService, IAssetService
         );
     }
 
-    public async Task<ApiResponse> DeleteAssets(List<Guid> ids)
+    public async Task<ApiResponse> DeleteAssets(DeleteMutilDto deleteDto)
     {
         var assets = await MainUnitOfWork.AssetRepository.FindAsync(new Expression<Func<Asset, bool>>[]
         {
             x => !x.DeletedAt.HasValue,
-            x => ids.Contains(x.Id)
+            x => deleteDto.ListId!.Contains(x.Id)
         }, null);
 
         if (!await MainUnitOfWork.AssetRepository.DeleteAsync(assets, AccountId, CurrentDate))

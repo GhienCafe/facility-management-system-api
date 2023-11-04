@@ -14,7 +14,7 @@ public class AssetMaintenanceDto : BaseDto
     public EnumValue? StatusObj { get; set; }
     public int? ManufacturingYear { get; set; }
     public string? SerialNumber { get; set; }
-    public double Quantity { get; set; }
+    public double? Quantity { get; set; }
     public string? Description { get; set; }
     [JsonConverter(typeof(LocalTimeZoneDateTimeConverter))]
     public DateTime? LastMaintenanceTime { get; set; }
@@ -34,7 +34,7 @@ public class AssetMaintenanceDto : BaseDto
 public class MaintenanceScheduleConfigDto : BaseDto
 {
     public string? Code { get; set; }
-    public int RepeatIntervalInMonths { get; set; } 
+    public int? RepeatIntervalInMonths { get; set; } 
     public string? Description { get; set; }
 }
 
@@ -62,7 +62,7 @@ public class MaintenanceScheduleConfigUpdateDto
 public class MaintenanceScheduleConfigDetailDto : BaseDto
 {
     public string? Code { get; set; }
-    public int RepeatIntervalInMonths { get; set; } 
+    public int? RepeatIntervalInMonths { get; set; } 
     public string? Description { get; set; }
     
     public IEnumerable<AssetBaseDto>? Assets { get; set; }

@@ -2,6 +2,7 @@
 using AppCore.Models;
 using MainData.Entities;
 using Newtonsoft.Json;
+using System.ComponentModel.DataAnnotations;
 
 namespace API_FFMS.Dtos;
 
@@ -21,7 +22,7 @@ public class TransportDto : BaseDto
     public string? Result { get; set; }
     public string? Description { get; set; }
     public string? Notes { get; set; } // Results
-    public bool IsInternal { get; set; }
+    public bool? IsInternal { get; set; }
     public int? Quantity { get; set; }
     public DateTime? Checkin { get; set; }
     public DateTime? Checkout { get; set; }
@@ -43,18 +44,23 @@ public class FromRoomAssetDto
 
 public class TransportCreateDto
 {
-    public List<AssetTransportDto>? Assets { get; set; }
+    public required List<AssetTransportDto> Assets { get; set; }
     public string? Description { get; set; }
     public string? Notes { get; set; }
     public bool IsInternal { get; set; }
-    public Priority Priority { get; set; }
-    public Guid? AssignedTo { get; set; }
-    public Guid? ToRoomId { get; set; }
+    public Priority Priority { get; set; } = Priority.Medium;
+
+    [Required(ErrorMessage = "Vui lòng người phụ trách")]
+    public required Guid AssignedTo { get; set; }
+
+    [Required(ErrorMessage = "Vui lòng chọn phòng muốn vận chuyển đến")]
+    public required Guid ToRoomId { get; set; }
 }
 
 public class AssetTransportDto
 {
-    public Guid AssetId { get; set; }
+    [Required(ErrorMessage = "Yêu cầu điền thiết bị")]
+    public required Guid AssetId { get; set; }
     public string? AssetName { get; set; }
     public string? AssetCode { get; set; }
     public string? AssetType { get; set; }

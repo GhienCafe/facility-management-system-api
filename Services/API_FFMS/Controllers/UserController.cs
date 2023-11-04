@@ -57,8 +57,8 @@ public class UserController : BaseController
 
     [HttpDelete]
     [SwaggerOperation("Delete list users")]
-    public async Task<ApiResponse> DeleteUsers(List<Guid> ids)
+    public async Task<ApiResponse> DeleteUsers(DeleteMutilDto deleteDto)
     {
-        return await _service.DeleteUsers(ids);
+        return await _service.DeleteUsers(deleteDto);
     }
 }

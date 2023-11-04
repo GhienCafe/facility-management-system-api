@@ -5,6 +5,7 @@ using MainData;
 using MainData.Entities;
 using MainData.Repositories;
 using Microsoft.EntityFrameworkCore;
+using System.Linq.Expressions;
 
 namespace API_FFMS.Services
 {
@@ -16,7 +17,7 @@ namespace API_FFMS.Services
         Task<ApiResponse> Create(AssetTypeCreateDto createDto);
         public Task<ApiResponse> Update(Guid id, AssetTypeUpdateDto updateDto);
         Task<ApiResponse> Delete(Guid id);
-        Task<ApiResponse> DeleteAssetTypes(List<Guid> ids);
+        Task<ApiResponse> DeleteAssetTypes(DeleteMutilDto deleteDto);
     }
 
     public class AssetTypeService : BaseService, IAssetTypeService
@@ -164,19 +165,15 @@ namespace API_FFMS.Services
             return ApiResponse.Success("Cập nhật thành công");
         }
 
-        public async Task<ApiResponse> DeleteAssetTypes(List<Guid> ids)
+        public async Task<ApiResponse> DeleteAssetTypes(DeleteMutilDto deleteDto)
         {
-            var assetTypeDeleteds = new List<AssetType>();
-            foreach (var id in ids)
+            var assetTypeDeleteds = await MainUnitOfWork.AssetTypeRepository.FindAsync(
+            new Expression<Func<AssetType, bool>>[]
             {
-                var existingType = await MainUnitOfWork.AssetTypeRepository.FindOneAsync(id);
+                x => !x.DeletedAt.HasValue,
+                x => deleteDto.ListId!.Contains(x.Id)
+            }, null);
 
-                if (existingType == null)
-                {
-                    throw new ApiException("Không tìm thấy loại trang thiết bị", StatusCode.NOT_FOUND);
-                }
-                assetTypeDeleteds.Add(existingType);
-            }
             if (await MainUnitOfWork.AssetTypeRepository.DeleteAsync(assetTypeDeleteds, AccountId, CurrentDate))
             {
                 throw new ApiException("Xóa thất bại", StatusCode.SERVER_ERROR);
