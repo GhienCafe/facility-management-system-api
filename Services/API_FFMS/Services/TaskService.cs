@@ -41,7 +41,6 @@ public class TaskService : BaseService, ITaskService
         if (assetCheckReport != null)
         {
             createDto.ItemId = assetCheckReport.Id;
-            assetCheckReport.IsVerified = createDto.IsVerified ?? assetCheckReport.IsVerified;
         }
 
         //TRANSPORTATION
@@ -112,7 +111,8 @@ public class TaskService : BaseService, ITaskService
                 Extensions = createDto.Extensions!,
                 FileType = createDto.FileType!,
                 Content = createDto.Content!,
-                ItemId = createDto.ItemId
+                ItemId = createDto.ItemId,
+                IsVerified = createDto.IsVerified ?? false
             };
             mediaFiles.Add(newMediaFile);
         }
