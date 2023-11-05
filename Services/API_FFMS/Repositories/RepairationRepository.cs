@@ -36,24 +36,21 @@ public class RepairationRepository : IRepairationRepository
             repair.RequestDate = now.Value;
             await _context.Repairations.AddAsync(repair);
 
-            if (repair.IsInternal)
+            var notification = new Notification
             {
-                var notification = new Notification
-                {
-                    CreatedAt = now.Value,
-                    EditedAt = now.Value,
-                    Status = NotificationStatus.Waiting,
-                    Content = repair.Description,
-                    Title = RequestType.Repairation.GetDisplayName(),
-                    Type = NotificationType.Task,
-                    CreatorId = creatorId,
-                    IsRead = false,
-                    ItemId = repair.Id,
-                    UserId = repair.AssignedTo
-                };
+                CreatedAt = now.Value,
+                EditedAt = now.Value,
+                Status = NotificationStatus.Waiting,
+                Content = repair.Description,
+                Title = RequestType.Repairation.GetDisplayName(),
+                Type = NotificationType.Task,
+                CreatorId = creatorId,
+                IsRead = false,
+                ItemId = repair.Id,
+                UserId = repair.AssignedTo
+            };
 
-                await _context.Notifications.AddAsync(notification);
-            }
+            await _context.Notifications.AddAsync(notification);
 
             await _context.SaveChangesAsync();
             await _context.Database.CommitTransactionAsync();
@@ -167,42 +164,88 @@ public class RepairationRepository : IRepairationRepository
 
             var roomAsset = await _context.RoomAssets.FirstOrDefaultAsync(x => x.AssetId == asset!.Id && x.ToDate == null);
             var location = await _context.Rooms.FirstOrDefaultAsync(x => x.Id == roomAsset!.RoomId && roomAsset.AssetId == asset!.Id);
-            if (statusUpdate == RequestStatus.Done)
+            if (repair.IsInternal == true)
             {
-                repair.CompletionDate = now.Value;
-                _context.Entry(repair).State = EntityState.Modified;
+                if (statusUpdate == RequestStatus.Done)
+                {
+                    repair.CompletionDate = now.Value;
+                    _context.Entry(repair).State = EntityState.Modified;
 
-                asset!.Status = AssetStatus.Operational;
-                asset.EditedAt = now.Value;
-                asset.EditorId = editorId;
-                _context.Entry(asset).State = EntityState.Modified;
+                    asset!.Status = AssetStatus.Operational;
+                    asset.EditedAt = now.Value;
+                    asset.EditorId = editorId;
+                    _context.Entry(asset).State = EntityState.Modified;
 
-                roomAsset!.Status = AssetStatus.Operational;
-                roomAsset.EditedAt = now.Value;
-                roomAsset.EditorId = editorId;
-                _context.Entry(roomAsset).State = EntityState.Modified;
+                    roomAsset!.Status = AssetStatus.Operational;
+                    roomAsset.EditedAt = now.Value;
+                    roomAsset.EditorId = editorId;
+                    _context.Entry(roomAsset).State = EntityState.Modified;
 
-                location!.State = RoomState.Operational;
-                location.EditedAt = now.Value;
-                location.EditorId = editorId;
-                _context.Entry(location).State = EntityState.Modified;
+                    location!.State = RoomState.Operational;
+                    location.EditedAt = now.Value;
+                    location.EditorId = editorId;
+                    _context.Entry(location).State = EntityState.Modified;
+                }
+                else if (statusUpdate == RequestStatus.Cancelled)
+                {
+                    asset!.Status = AssetStatus.Operational;
+                    asset.EditedAt = now.Value;
+                    asset.EditorId = editorId;
+                    _context.Entry(asset).State = EntityState.Modified;
+
+                    roomAsset!.Status = AssetStatus.Operational;
+                    roomAsset.EditedAt = now.Value;
+                    roomAsset.EditorId = editorId;
+                    _context.Entry(roomAsset).State = EntityState.Modified;
+
+                    location!.State = RoomState.Operational;
+                    location.EditedAt = now.Value;
+                    location.EditorId = editorId;
+                    _context.Entry(location).State = EntityState.Modified;
+                }
             }
-            else if (statusUpdate == RequestStatus.Cancelled)
+            else if (repair.IsInternal == false)
             {
-                asset!.Status = AssetStatus.Operational;
-                asset.EditedAt = now.Value;
-                asset.EditorId = editorId;
-                _context.Entry(asset).State = EntityState.Modified;
+                if (statusUpdate == RequestStatus.Done)
+                {
+                    repair.CompletionDate = now.Value;
+                    _context.Entry(repair).State = EntityState.Modified;
 
-                roomAsset!.Status = AssetStatus.Operational;
-                roomAsset.EditedAt = now.Value;
-                roomAsset.EditorId = editorId;
-                _context.Entry(roomAsset).State = EntityState.Modified;
+                    asset!.Status = AssetStatus.Operational;
+                    asset.EditedAt = now.Value;
+                    asset.EditorId = editorId;
+                    _context.Entry(asset).State = EntityState.Modified;
 
-                location!.State = RoomState.Operational;
-                location.EditedAt = now.Value;
-                location.EditorId = editorId;
-                _context.Entry(location).State = EntityState.Modified;
+                    var addRoomAsset = new RoomAsset
+                    {
+                        FromDate = now.Value,
+                        AssetId = asset.Id,
+                        RoomId = GetWareHouse("Kho")!.Id,
+                        Status = AssetStatus.Operational,
+                        ToDate = null,
+                        EditedAt = now.Value,
+                        CreatedAt = now.Value,
+                        CreatorId = editorId,
+                    };
+                    await _context.RoomAssets.AddAsync(addRoomAsset);
+                }
+                else if (statusUpdate == RequestStatus.Cancelled)
+                {
+                    asset!.Status = AssetStatus.Operational;
+                    asset.EditedAt = now.Value;
+                    asset.EditorId = editorId;
+                    _context.Entry(asset).State = EntityState.Modified;
+
+                    roomAsset!.Status = AssetStatus.Operational;
+                    roomAsset.EditedAt = now.Value;
+                    roomAsset.EditorId = editorId;
+                    _context.Entry(roomAsset).State = EntityState.Modified;
+
+                    location!.State = RoomState.Operational;
+                    location.EditedAt = now.Value;
+                    location.EditorId = editorId;
+                    _context.Entry(location).State = EntityState.Modified;
+                }
             }
             await _context.SaveChangesAsync();
             await _context.Database.CommitTransactionAsync();
@@ -325,5 +368,11 @@ public class RepairationRepository : IRepairationRepository
             await _context.Database.RollbackTransactionAsync();
             return false;
         }
+    }
+
+    public Room? GetWareHouse(string roomName)
+    {
+        var wareHouse = _context.Rooms.FirstOrDefault(x => x.RoomName!.Trim().Equals(roomName.Trim()));
+        return wareHouse;
     }
 }

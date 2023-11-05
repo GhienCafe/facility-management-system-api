@@ -11,7 +11,7 @@ public class MediaFile : BaseEntity
     public string RawUri { get; set; } = null!;
     public string Uri { get; set; } = null!;
     public string Extensions { get; set; } = null!;
-    public bool? IsVerified { get; set; }
+    public bool IsVerified { get; set; }
     public FileType FileType { get; set; }
     public string Content { get; set; } = null!;
     

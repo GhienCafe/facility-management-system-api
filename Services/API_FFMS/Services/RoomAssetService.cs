@@ -153,106 +153,115 @@ namespace API_FFMS.Services
 
         public async Task<ApiResponses<RoomAssetBaseDto>> GetItems(RoomAssetQueryDto queryDto)
         {
-            var keyword = queryDto.Keyword?.Trim().ToLower();
+            try
+            {
+                var keyword = queryDto.Keyword?.Trim().ToLower();
 
-            var roomAssetDataset = MainUnitOfWork.RoomAssetRepository.GetQuery()
-                .Where(x => !x!.DeletedAt.HasValue);
-            var roomDataset = MainUnitOfWork.RoomRepository.GetQuery()
-                .Where(x => !x!.DeletedAt.HasValue);;
-            var assetDataset = MainUnitOfWork.AssetRepository.GetQuery()
-                .Where(x => !x!.DeletedAt.HasValue);;
+                var roomAssetDataset = MainUnitOfWork.RoomAssetRepository.GetQuery()
+                    .Where(x => !x!.DeletedAt.HasValue);
+                var roomDataset = MainUnitOfWork.RoomRepository.GetQuery()
+                    .Where(x => !x!.DeletedAt.HasValue); ;
+                var assetDataset = MainUnitOfWork.AssetRepository.GetQuery()
+                    .Where(x => !x!.DeletedAt.HasValue); ;
 
-            var joinedRooms = from roomAsset in roomAssetDataset
-                join room in roomDataset on roomAsset.RoomId equals room.Id into roomGroup
-                from room in roomGroup.DefaultIfEmpty() 
-                join assets in assetDataset on roomAsset.AssetId equals assets.Id into assetGroup
-                from assets in assetGroup.DefaultIfEmpty() 
-                select new
+                var joinedRooms = from roomAsset in roomAssetDataset
+                                  join room in roomDataset on roomAsset.RoomId equals room.Id into roomGroup
+                                  from room in roomGroup.DefaultIfEmpty()
+                                  join assets in assetDataset on roomAsset.AssetId equals assets.Id into assetGroup
+                                  from assets in assetGroup.DefaultIfEmpty()
+                                  select new
+                                  {
+                                      RoomAsset = roomAsset,
+                                      Room = room,
+                                      Asset = assets
+                                  };
+
+                if (!string.IsNullOrEmpty(keyword))
                 {
-                    RoomAsset = roomAsset,
-                    Room = room,
-                    Asset = assets
-                };
-
-            if (!string.IsNullOrEmpty(keyword))
-            {
-                joinedRooms = joinedRooms.Where(x => x.Asset.AssetCode!.ToLower().Contains(keyword)
-                                                     || x.Asset.AssetName.ToLower().Contains(keyword)
-                                                     || x.Room.RoomName!.ToLower().Contains(keyword)
-                                                     || x.Room.RoomCode.ToLower().Contains(keyword));
-            }
-
-            if (queryDto.IsInCurrent != null)
-            {
-                joinedRooms = joinedRooms.Where(x => x!.RoomAsset.ToDate == null);
-            } else if(queryDto.ToDate != null)
-            {
-                joinedRooms = joinedRooms.Where(x => x!.RoomAsset.ToDate <= queryDto.ToDate);
-            }
-
-            if(queryDto.FromDate != null)
-            {
-                joinedRooms = joinedRooms.Where(x => x!.RoomAsset.FromDate >= queryDto.FromDate);
-            }
-
-            if (queryDto.Status != null)
-            {
-                joinedRooms = joinedRooms.Where(x => x.RoomAsset.Status == queryDto.Status);
-            }
-
-            var totalCount = await joinedRooms.CountAsync();
-
-            joinedRooms = joinedRooms.Skip(queryDto.Skip()).Take(queryDto.PageSize);
-
-            var items = await joinedRooms.Select(x => new RoomAssetBaseDto
-            {
-                RoomId = x.RoomAsset.RoomId,
-                AssetId = x.RoomAsset.AssetId,
-                FromDate = x.RoomAsset.FromDate,
-                ToDate = x.RoomAsset.ToDate,
-                Id = x.RoomAsset.Id,
-                Status = x.RoomAsset.Status,
-                CreatedAt = x.RoomAsset.CreatedAt,
-                EditedAt = x.RoomAsset.EditedAt,
-                CreatorId = x.RoomAsset.CreatorId ?? Guid.Empty,
-                EditorId = x.RoomAsset.EditorId ?? Guid.Empty,
-                Room = x.Room.ProjectTo<Room, RoomBaseDto>(),
-                Asset = new AssetBaseDto
-                {
-                    Id = x.Asset.Id,
-                    AssetName = x.Asset.AssetName,
-                    AssetCode = x.Asset.AssetCode,
-                    IsMovable = x.Asset.IsMovable,
-                    Status = x.Asset.Status,
-                    StatusObj = x.Asset.Status.GetValue(),
-                    ManufacturingYear = x.Asset.ManufacturingYear,
-                    SerialNumber = x.Asset.SerialNumber,
-                    Quantity = x.RoomAsset.Quantity,
-                    Description = x.Asset.Description,
-                    TypeId = x.Asset.TypeId,
-                    ModelId = x.Asset.ModelId,
-                    IsRented = x.Asset.IsRented,
-                    StartDateOfUse = x.Asset.StartDateOfUse
+                    joinedRooms = joinedRooms.Where(x => x.Asset.AssetCode!.ToLower().Contains(keyword)
+                                                         || x.Asset.AssetName.ToLower().Contains(keyword)
+                                                         || x.Room.RoomName!.ToLower().Contains(keyword)
+                                                         || x.Room.RoomCode.ToLower().Contains(keyword));
                 }
-            }).ToListAsync();
-            
-            items.ForEach(x =>
-            {
-                if (x.Asset != null)
-                {
-                    x.Asset.StatusObj = x.Asset.Status?.GetValue();
-                }
-            });
 
-            items = await _mapperRepository.MapCreator(items);
+                if (queryDto.IsInCurrent != null)
+                {
+                    joinedRooms = joinedRooms.Where(x => x!.RoomAsset.ToDate == null);
+                }
+                else if (queryDto.ToDate != null)
+                {
+                    joinedRooms = joinedRooms.Where(x => x!.RoomAsset.ToDate <= queryDto.ToDate);
+                }
+
+                if (queryDto.FromDate != null)
+                {
+                    joinedRooms = joinedRooms.Where(x => x!.RoomAsset.FromDate >= queryDto.FromDate);
+                }
+
+                if (queryDto.Status != null)
+                {
+                    joinedRooms = joinedRooms.Where(x => x.RoomAsset.Status == queryDto.Status);
+                }
+
+                var totalCount = await joinedRooms.CountAsync();
+
+                joinedRooms = joinedRooms.Skip(queryDto.Skip()).Take(queryDto.PageSize);
+
+                var items = await joinedRooms.Select(x => new RoomAssetBaseDto
+                {
+                    RoomId = x.RoomAsset.RoomId,
+                    AssetId = x.RoomAsset.AssetId,
+                    FromDate = x.RoomAsset.FromDate,
+                    ToDate = x.RoomAsset.ToDate,
+                    Id = x.RoomAsset.Id,
+                    Status = x.RoomAsset.Status,
+                    CreatedAt = x.RoomAsset.CreatedAt,
+                    EditedAt = x.RoomAsset.EditedAt,
+                    CreatorId = x.RoomAsset.CreatorId ?? Guid.Empty,
+                    EditorId = x.RoomAsset.EditorId ?? Guid.Empty,
+                    Room = x.Room.ProjectTo<Room, RoomBaseDto>(),
+                    Asset = new AssetBaseDto
+                    {
+                        Id = x.Asset.Id,
+                        AssetName = x.Asset.AssetName,
+                        AssetCode = x.Asset.AssetCode,
+                        IsMovable = x.Asset.IsMovable,
+                        Status = x.Asset.Status,
+                        StatusObj = x.Asset.Status.GetValue(),
+                        ManufacturingYear = x.Asset.ManufacturingYear,
+                        SerialNumber = x.Asset.SerialNumber,
+                        Quantity = x.RoomAsset.Quantity,
+                        Description = x.Asset.Description,
+                        TypeId = x.Asset.TypeId,
+                        ModelId = x.Asset.ModelId,
+                        IsRented = x.Asset.IsRented,
+                        StartDateOfUse = x.Asset.StartDateOfUse
+                    }
+                }).ToListAsync();
+
+                items.ForEach(x =>
+                {
+                    if (x.Asset != null)
+                    {
+                        x.Asset.StatusObj = x.Asset.Status?.GetValue();
+                    }
+                });
+
+                items = await _mapperRepository.MapCreator(items);
+                // Return data
+                return ApiResponses<RoomAssetBaseDto>.Success(
+                    items,
+                    totalCount,
+                    queryDto.PageSize,
+                    queryDto.Page,
+                    (int)Math.Ceiling(totalCount / (double)queryDto.PageSize));
+            }
+            catch(Exception ex)
+            {
+                throw new Exception(ex.Message);
+            }
             
-            // Return data
-            return ApiResponses<RoomAssetBaseDto>.Success(
-                items,
-                totalCount,
-                queryDto.PageSize,
-                queryDto.Page,
-                (int)Math.Ceiling(totalCount / (double)queryDto.PageSize));
+            
         }
 
         public async Task<ApiResponse<RoomAssetDetailDto>> GetItem(Guid id)

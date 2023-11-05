@@ -83,7 +83,7 @@ namespace API_FFMS.Repositories
                         }
                         assetCheck.Result = mediaFiles.First().Content;
                         assetCheck.Checkout = now.Value;
-                       // assetCheck.IsVerified = mediaFil
+                        assetCheck.IsVerified = mediaFiles.First().IsVerified;
                         _context.Entry(assetCheck).State = EntityState.Modified;
 
                         if (assetCheck.IsVerified == true)
@@ -234,7 +234,7 @@ namespace API_FFMS.Repositories
                 var repairation = await _context.Repairations
                                 .Include(x => x.Asset)
                                 .FirstOrDefaultAsync(x => x.Id == mediaFiles.First().ItemId);
-                if (repairation != null)
+                if (repairation != null && repairation.IsInternal == true)
                 {
                     repairation.EditedAt = now.Value;
                     repairation.EditorId = editorId;
@@ -252,7 +252,7 @@ namespace API_FFMS.Repositories
                     {
                         if (roomAsset != null)
                         {
-                            roomAsset!.Status = AssetStatus.Repair;
+                            roomAsset.Status = AssetStatus.Repair;
                             roomAsset.EditedAt = now.Value;
                             roomAsset.EditorId = editorId;
                             _context.Entry(roomAsset).State = EntityState.Modified;
@@ -263,7 +263,101 @@ namespace API_FFMS.Repositories
                         asset.EditorId = editorId;
                         _context.Entry(asset).State = EntityState.Modified;
 
-                        location!.State = RoomState.Repair;
+                        if (asset.IsMovable == false)
+                        {
+                            location!.State = RoomState.Repair;
+                            location.EditedAt = now.Value;
+                            location.EditorId = editorId;
+                            _context.Entry(location).State = EntityState.Modified;
+                        }
+                        else if (asset.IsMovable == true)
+                        {
+                            location!.State = RoomState.MissingAsset;
+                            location.EditedAt = now.Value;
+                            location.EditorId = editorId;
+                            _context.Entry(location).State = EntityState.Modified;
+                        }
+
+                        repairation.Checkin = now.Value;
+                        _context.Entry(repairation).State = EntityState.Modified;
+                    }
+                    else if (statusUpdate == RequestStatus.Reported)
+                    {
+                        foreach (var mediaFile in mediaFiles)
+                        {
+                            var newMediaFile = new MediaFile
+                            {
+                                Id = Guid.NewGuid(),
+                                CreatedAt = now.Value,
+                                CreatorId = editorId,
+                                EditedAt = now.Value,
+                                EditorId = editorId,
+                                FileName = mediaFile.FileName,
+                                Key = mediaFile.Key,
+                                RawUri = mediaFile.RawUri,
+                                Uri = mediaFile.Uri,
+                                Extensions = mediaFile.Extensions,
+                                FileType = mediaFile.FileType,
+                                Content = mediaFile.Content,
+                                ItemId = repairation.Id,
+                                RepairationId = repairation.Id
+                            };
+                            _context.MediaFiles.Add(newMediaFile);
+                        }
+                        repairation.Result = mediaFiles.First().Content;
+                        repairation.Checkout = now.Value;
+                        _context.Entry(repairation).State = EntityState.Modified;
+
+                        var notification = new Notification
+                        {
+                            CreatedAt = now.Value,
+                            EditedAt = now.Value,
+                            Status = NotificationStatus.Waiting,
+                            Content = repairation.Description,
+                            Title = RequestType.Repairation.GetDisplayName(),
+                            Type = NotificationType.Task,
+                            CreatorId = editorId,
+                            IsRead = false,
+                            ItemId = repairation.Id,
+                            UserId = repairation.AssignedTo
+                        };
+                        await _context.Notifications.AddAsync(notification);
+                    }
+
+                    await _context.SaveChangesAsync();
+                    await _context.Database.CommitTransactionAsync();
+                    return true;
+                }
+                else if (repairation != null && repairation.IsInternal == false)
+                {
+                    repairation.EditedAt = now.Value;
+                    repairation.EditorId = editorId;
+                    repairation.Status = statusUpdate;
+                    _context.Entry(repairation).State = EntityState.Modified;
+
+                    var asset = await _context.Assets
+                            .Include(a => a.Type)
+                            .Where(a => a.Id == repairation.AssetId)
+                            .FirstOrDefaultAsync();
+
+                    var roomAsset = await _context.RoomAssets.FirstOrDefaultAsync(x => x.AssetId == asset!.Id && x.ToDate == null);
+                    var location = await _context.Rooms.FirstOrDefaultAsync(x => x.Id == roomAsset!.RoomId && roomAsset.AssetId == asset!.Id);
+                    if (statusUpdate == RequestStatus.InProgress)
+                    {
+                        if (roomAsset != null)
+                        {
+                            roomAsset.Status = AssetStatus.Repair;
+                            roomAsset.EditedAt = now.Value;
+                            roomAsset.EditorId = editorId;
+                            _context.Entry(roomAsset).State = EntityState.Modified;
+                        }
+
+                        asset!.Status = AssetStatus.Repair;
+                        asset.EditedAt = now.Value;
+                        asset.EditorId = editorId;
+                        _context.Entry(asset).State = EntityState.Modified;
+
+                        location!.State = RoomState.MissingAsset;
                         location.EditedAt = now.Value;
                         location.EditorId = editorId;
                         _context.Entry(location).State = EntityState.Modified;
@@ -423,7 +517,7 @@ namespace API_FFMS.Repositories
                 var maintenance = await _context.Maintenances
                                   .Include(x => x.Asset)
                                   .FirstOrDefaultAsync(x => x.Id == mediaFiles.First().ItemId);
-                if (maintenance != null)
+                if (maintenance != null && maintenance.IsInternal == true)
                 {
                     maintenance.EditedAt = now.Value;
                     maintenance.EditorId = editorId;
@@ -456,6 +550,100 @@ namespace API_FFMS.Repositories
                         location.EditedAt = now.Value;
                         location.EditorId = editorId;
                         _context.Entry(location).State = EntityState.Modified;
+
+                        maintenance.Checkin = now.Value;
+                        _context.Entry(maintenance).State = EntityState.Modified;
+                    }
+                    else if (statusUpdate == RequestStatus.Reported)
+                    {
+                        foreach (var mediaFile in mediaFiles)
+                        {
+                            var newMediaFile = new MediaFile
+                            {
+                                Id = Guid.NewGuid(),
+                                CreatedAt = now.Value,
+                                CreatorId = editorId,
+                                EditedAt = now.Value,
+                                EditorId = editorId,
+                                FileName = mediaFile.FileName,
+                                Key = mediaFile.Key,
+                                RawUri = mediaFile.RawUri,
+                                Uri = mediaFile.Uri,
+                                Extensions = mediaFile.Extensions,
+                                FileType = mediaFile.FileType,
+                                Content = mediaFile.Content,
+                                ItemId = maintenance.Id,
+                                MaintenanceId = maintenance.Id
+                            };
+                            _context.MediaFiles.Add(newMediaFile);
+                        }
+                        maintenance.Result = mediaFiles.First().Content;
+                        maintenance.Checkout = now.Value;
+                        _context.Entry(maintenance).State = EntityState.Modified;
+
+                        var notification = new Notification
+                        {
+                            CreatedAt = now.Value,
+                            EditedAt = now.Value,
+                            Status = NotificationStatus.Waiting,
+                            Content = maintenance.Description,
+                            Title = RequestType.Repairation.GetDisplayName(),
+                            Type = NotificationType.Task,
+                            CreatorId = editorId,
+                            IsRead = false,
+                            ItemId = maintenance.Id,
+                            UserId = maintenance.AssignedTo
+                        };
+                        await _context.Notifications.AddAsync(notification);
+                    }
+
+                    await _context.SaveChangesAsync();
+                    await _context.Database.CommitTransactionAsync();
+                    return true;
+                }
+                else if (maintenance != null && maintenance.IsInternal == true)
+                {
+                    maintenance.EditedAt = now.Value;
+                    maintenance.EditorId = editorId;
+                    maintenance.Status = statusUpdate;
+                    _context.Entry(maintenance).State = EntityState.Modified;
+
+                    var asset = await _context.Assets
+                            .Include(a => a.Type)
+                            .Where(a => a.Id == maintenance.AssetId)
+                            .FirstOrDefaultAsync();
+
+                    var roomAsset = await _context.RoomAssets.FirstOrDefaultAsync(x => x.AssetId == asset!.Id && x.ToDate == null);
+                    var location = await _context.Rooms.FirstOrDefaultAsync(x => x.Id == roomAsset!.RoomId && roomAsset.AssetId == asset!.Id);
+                    if (statusUpdate == RequestStatus.InProgress)
+                    {
+                        if (roomAsset != null)
+                        {
+                            roomAsset!.Status = AssetStatus.Maintenance;
+                            roomAsset.EditedAt = now.Value;
+                            roomAsset.EditorId = editorId;
+                            _context.Entry(roomAsset).State = EntityState.Modified;
+                        }
+
+                        asset!.Status = AssetStatus.Maintenance;
+                        asset.EditedAt = now.Value;
+                        asset.EditorId = editorId;
+                        _context.Entry(asset).State = EntityState.Modified;
+
+                        if (asset.IsMovable == false)
+                        {
+                            location!.State = RoomState.Maintenance;
+                            location.EditedAt = now.Value;
+                            location.EditorId = editorId;
+                            _context.Entry(location).State = EntityState.Modified;
+                        }
+                        else if (asset.IsMovable == true)
+                        {
+                            location!.State = RoomState.MissingAsset;
+                            location.EditedAt = now.Value;
+                            location.EditorId = editorId;
+                            _context.Entry(location).State = EntityState.Modified;
+                        }
 
                         maintenance.Checkin = now.Value;
                         _context.Entry(maintenance).State = EntityState.Modified;
