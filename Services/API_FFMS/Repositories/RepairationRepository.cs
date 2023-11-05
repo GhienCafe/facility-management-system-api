@@ -240,11 +240,6 @@ public class RepairationRepository : IRepairationRepository
                     roomAsset.EditedAt = now.Value;
                     roomAsset.EditorId = editorId;
                     _context.Entry(roomAsset).State = EntityState.Modified;
-
-                    location!.State = RoomState.Operational;
-                    location.EditedAt = now.Value;
-                    location.EditorId = editorId;
-                    _context.Entry(location).State = EntityState.Modified;
                 }
             }
             await _context.SaveChangesAsync();
