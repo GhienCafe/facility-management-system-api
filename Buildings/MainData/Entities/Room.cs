@@ -52,7 +52,7 @@ public enum RoomState
     [Display(Name = "Phòng có thiết đang bị hư hại")]
     Damaged = 8,
 
-    [Display(Name = "Phòng thiếu trang thiết bị cần thiết")]
+    [Display(Name = "Cần bổ sung trang thiết bị")]
     MissingAsset = 9
 }
 
