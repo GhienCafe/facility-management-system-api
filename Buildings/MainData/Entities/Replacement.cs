@@ -30,7 +30,7 @@ public class ReplacementConfig : IEntityTypeConfiguration<Replacement>
         
         builder.HasMany(x => x.MediaFiles)
             .WithOne(x => x.Replacement)
-            .HasForeignKey(i => i.RepairationId);
+            .HasForeignKey(i => i.RepairId);
         
     }
 }

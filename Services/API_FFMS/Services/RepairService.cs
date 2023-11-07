@@ -43,7 +43,7 @@ namespace API_FFMS.Services
                 if (asset.Status != AssetStatus.Operational)
                     throw new ApiException("Trang thiết bị đang trong một yêu cầu khác", StatusCode.BAD_REQUEST);
 
-                var repairation = createDto.ProjectTo<RepairCreateDto, Repairation>();
+                var repairation = createDto.ProjectTo<RepairCreateDto, Repair>();
                 repairation.RequestCode = GenerateRequestCode();
 
                 var mediaFiles = new List<MediaFile>();
@@ -86,7 +86,7 @@ namespace API_FFMS.Services
                 throw new ApiException("Trang thiết bị đang trong một yêu cầu khác", StatusCode.SERVER_ERROR);
             }
 
-            var repairs = createDtos.Select(dto => dto.ProjectTo<RepairCreateDto, Repairation>())
+            var repairs = createDtos.Select(dto => dto.ProjectTo<RepairCreateDto, Repair>())
                                          .ToList();
 
             if (!await _repairRepository.InsertRepairs(repairs, AccountId, CurrentDate))
@@ -97,8 +97,8 @@ namespace API_FFMS.Services
 
         public async Task<ApiResponse> Delete(Guid id)
         {
-            var existingRepair = await MainUnitOfWork.RepairationRepository.FindOneAsync(
-                new Expression<Func<Repairation, bool>>[]
+            var existingRepair = await MainUnitOfWork.RepairRepository.FindOneAsync(
+                new Expression<Func<Repair, bool>>[]
                 {
                     x => !x.DeletedAt.HasValue,
                     x => x.Id == id
@@ -117,8 +117,8 @@ namespace API_FFMS.Services
 
         public async Task<ApiResponse> DeleteRepairs(DeleteMutilDto deleteDto)
         {
-            var replairDeleteds = await MainUnitOfWork.RepairationRepository.FindAsync(
-                new Expression<Func<Repairation, bool>>[]
+            var replairDeleteds = await MainUnitOfWork.RepairRepository.FindAsync(
+                new Expression<Func<Repair, bool>>[]
                 {
                     x => !x.DeletedAt.HasValue,
                     x => deleteDto.ListId!.Contains(x.Id)
@@ -135,8 +135,8 @@ namespace API_FFMS.Services
 
         public async Task<ApiResponse<RepairDto>> GetRepair(Guid id)
         {
-            var repairation = await MainUnitOfWork.RepairationRepository.FindOneAsync<RepairDto>(
-                new Expression<Func<Repairation, bool>>[]
+            var repairation = await MainUnitOfWork.RepairRepository.FindOneAsync<RepairDto>(
+                new Expression<Func<Repair, bool>>[]
                 {
                     x => !x.DeletedAt.HasValue,
                     x => x.Id == id
@@ -191,7 +191,7 @@ namespace API_FFMS.Services
         {
             var keyword = queryDto.Keyword?.Trim().ToLower();
 
-            var repairQuery = MainUnitOfWork.RepairationRepository.GetQuery()
+            var repairQuery = MainUnitOfWork.RepairRepository.GetQuery()
                               .Where(x => !x!.DeletedAt.HasValue);
 
             if (queryDto.IsInternal != null)
@@ -322,7 +322,7 @@ namespace API_FFMS.Services
 
         public async Task<ApiResponse> Update(Guid id, BaseRequestUpdateDto updateDto)
         {
-            var existingRepair = await MainUnitOfWork.RepairationRepository.FindOneAsync(id);
+            var existingRepair = await MainUnitOfWork.RepairRepository.FindOneAsync(id);
             if (existingRepair == null)
             {
                 throw new ApiException("Không tìm thấy yêu cầu", StatusCode.NOT_FOUND);
@@ -337,7 +337,7 @@ namespace API_FFMS.Services
             existingRepair.Notes = updateDto.Notes ?? existingRepair.Notes;
             existingRepair.Priority = updateDto.Priority ?? existingRepair.Priority;
 
-            if (!await MainUnitOfWork.RepairationRepository.UpdateAsync(existingRepair, AccountId, CurrentDate))
+            if (!await MainUnitOfWork.RepairRepository.UpdateAsync(existingRepair, AccountId, CurrentDate))
             {
                 throw new ApiException("Cập nhật thông tin yêu cầu thất bại", StatusCode.SERVER_ERROR);
             }
@@ -347,7 +347,7 @@ namespace API_FFMS.Services
 
         public async Task<ApiResponse> UpdateStatus(Guid id, BaseUpdateStatusDto requestStatus)
         {
-            var existingRepair = MainUnitOfWork.RepairationRepository.GetQuery()
+            var existingRepair = MainUnitOfWork.RepairRepository.GetQuery()
                                     .Include(t => t!.Asset)
                                     .Where(t => t!.Id == id)
                                     .FirstOrDefault();
@@ -368,7 +368,7 @@ namespace API_FFMS.Services
 
         public string GenerateRequestCode()
         {
-            var requests = MainUnitOfWork.RepairationRepository.GetQueryAll().ToList();
+            var requests = MainUnitOfWork.RepairRepository.GetQueryAll().ToList();
 
             var numbers = new List<int>();
             foreach (var t in requests)
