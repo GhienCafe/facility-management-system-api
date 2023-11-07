@@ -35,17 +35,39 @@ public class AssetCheckService : BaseService, IAssetCheckService
 
     public async Task<ApiResponse> Create(AssetCheckCreateDto createDto)
     {
-        var assetCheck = createDto.ProjectTo<AssetCheckCreateDto, AssetCheck>();
-
-        assetCheck.RequestCode = GenerateRequestCode();
-        assetCheck.Priority = assetCheck.Priority != null ? assetCheck.Priority : Priority.Medium;
-
-        if (!await _assetcheckRepository.InsertAssetCheck(assetCheck, AccountId, CurrentDate))
+        try
         {
-            throw new ApiException("Thêm mới thất bại", StatusCode.SERVER_ERROR);
-        }
+            var assetCheck = createDto.ProjectTo<AssetCheckCreateDto, AssetCheck>();
 
-        return ApiResponse.Created("Thêm mới thành công");
+            assetCheck.RequestCode = GenerateRequestCode();
+            assetCheck.Priority = assetCheck.Priority != null ? assetCheck.Priority : Priority.Medium;
+
+            var mediaFiles = new List<MediaFile>();
+            if (createDto.RelatedFile != null)
+            {
+                foreach (var uri in createDto.RelatedFile.Uri!)
+                {
+                    var newMediaFile = new MediaFile
+                    {
+                        FileName = createDto.RelatedFile.FileName!,
+                        Uri = uri,
+                        FileType = createDto.RelatedFile.FileType!
+                    };
+                    mediaFiles.Add(newMediaFile);
+                }
+            }
+
+            if (!await _assetcheckRepository.InsertAssetCheckV2(assetCheck, mediaFiles, AccountId, CurrentDate))
+            {
+                throw new ApiException("Thêm mới thất bại", StatusCode.SERVER_ERROR);
+            }
+
+            return ApiResponse.Created("Thêm mới thành công");
+        }
+        catch (Exception ex)
+        {
+            throw new Exception(ex.Message);
+        }
     }
 
     public async Task<ApiResponse> Delete(Guid id)
@@ -131,7 +153,7 @@ public class AssetCheckService : BaseService, IAssetCheckService
                     x => !x.DeletedAt.HasValue,
                     x => x.Id == assetCheck.Asset.TypeId
                 });
-            if(assetCheck.AssetType != null)
+            if (assetCheck.AssetType != null)
             {
                 assetCheck.Category = await MainUnitOfWork.CategoryRepository.FindOneAsync<CategoryDto>(
                     new Expression<Func<Category, bool>>[]
@@ -327,7 +349,7 @@ public class AssetCheckService : BaseService, IAssetCheckService
         }
 
         existingAssetCheck.Status = requestStatus.Status ?? existingAssetCheck.Status;
-        existingAssetCheck.IsVerified = requestStatus.IsVerified ?? existingAssetCheck.IsVerified; 
+        existingAssetCheck.IsVerified = requestStatus.IsVerified ?? existingAssetCheck.IsVerified;
 
         if (!await _assetcheckRepository.UpdateStatus(existingAssetCheck, requestStatus.Status, AccountId, CurrentDate))
         {

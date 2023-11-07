@@ -22,6 +22,7 @@ public class AssetLocation
 public class ReplaceCreateDto : BaseRequestCreateDto
 {
     public Guid NewAssetId { get; set; }
+    public MediaFileCreateDto? RelatedFile { get; set; }
 }
 
 public class ReplacementQueryDto : BaseRequestQueryDto { }

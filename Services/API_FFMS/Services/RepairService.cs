@@ -33,36 +33,43 @@ namespace API_FFMS.Services
 
         public async Task<ApiResponse> CreateRepair(RepairCreateDto createDto)
         {
-            var asset = await MainUnitOfWork.AssetRepository.FindOneAsync(createDto.AssetId);
-
-            if (asset == null)
-                throw new ApiException("Không cần tồn tại trang thiết bị", StatusCode.NOT_FOUND);
-
-            if (asset.Status != AssetStatus.Operational)
-                throw new ApiException("Trang thiết bị đang trong một yêu cầu khác", StatusCode.BAD_REQUEST);
-
-            var repairation = createDto.ProjectTo<RepairCreateDto, Repairation>();
-            repairation.RequestCode = GenerateRequestCode();
-
-            var mediaFiles = new List<MediaFile>();
-            if (createDto.RelatedFile != null)
+            try
             {
-                foreach (var uri in createDto.RelatedFile.Uri!)
+                var asset = await MainUnitOfWork.AssetRepository.FindOneAsync(createDto.AssetId);
+
+                if (asset == null)
+                    throw new ApiException("Không cần tồn tại trang thiết bị", StatusCode.NOT_FOUND);
+
+                if (asset.Status != AssetStatus.Operational)
+                    throw new ApiException("Trang thiết bị đang trong một yêu cầu khác", StatusCode.BAD_REQUEST);
+
+                var repairation = createDto.ProjectTo<RepairCreateDto, Repairation>();
+                repairation.RequestCode = GenerateRequestCode();
+
+                var mediaFiles = new List<MediaFile>();
+                if (createDto.RelatedFile != null)
                 {
-                    var newMediaFile = new MediaFile
+                    foreach (var uri in createDto.RelatedFile.Uri!)
                     {
-                        FileName = createDto.RelatedFile.FileName!,
-                        Uri = uri,
-                        FileType = createDto.RelatedFile.FileType!
-                    };
-                    mediaFiles.Add(newMediaFile);
+                        var newMediaFile = new MediaFile
+                        {
+                            FileName = createDto.RelatedFile.FileName!,
+                            Uri = uri,
+                            FileType = createDto.RelatedFile.FileType!
+                        };
+                        mediaFiles.Add(newMediaFile);
+                    }
                 }
+
+                if (!await _repairRepository.InsertRepairV2(repairation, mediaFiles, AccountId, CurrentDate))
+                    throw new ApiException("Tạo yêu cầu thất bại", StatusCode.SERVER_ERROR);
+
+                return ApiResponse.Created("Gửi yêu cầu thành công");
             }
-
-            if (!await _repairRepository.InsertRepairV2(repairation, mediaFiles, AccountId, CurrentDate))
-                throw new ApiException("Tạo yêu cầu thất bại", StatusCode.SERVER_ERROR);
-
-            return ApiResponse.Created("Gửi yêu cầu thành công");
+            catch(Exception ex)
+            {
+                throw new Exception(ex.Message);
+            }
         }
 
         public async Task<ApiResponse> CreateRepairs(List<RepairCreateDto> createDtos)

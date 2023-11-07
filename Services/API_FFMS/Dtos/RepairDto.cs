@@ -13,7 +13,7 @@ public class RepairDto : BaseRequestDto
 
 public class RepairCreateDto : BaseRequestCreateDto 
 {
-    public MediaFileCreateDto? RelatedFile {  get; set; } 
+    public MediaFileCreateDto? RelatedFile {  get; set; }
 }
 
 public class RepairQueryDto : BaseRequestQueryDto { }

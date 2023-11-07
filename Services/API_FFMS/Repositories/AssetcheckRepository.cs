@@ -8,6 +8,7 @@ namespace API_FFMS.Repositories;
 public interface IAssetcheckRepository
 {
     Task<bool> InsertAssetCheck(AssetCheck assetCheck, Guid? creatorId, DateTime? now = null);
+    Task<bool> InsertAssetCheckV2(AssetCheck assetCheck, List<MediaFile> mediaFiles, Guid? creatorId, DateTime? now = null);
     Task<bool> InsertAssetChecks(List<AssetCheck> assetChecks, Guid? creatorId, DateTime? now = null);
     Task<bool> UpdateStatus(AssetCheck assetCheck, RequestStatus? statusUpdate, Guid? editorId, DateTime? now = null);
     Task<bool> DeleteAssetCheck(AssetCheck assetCheck, Guid? deleterId, DateTime? now = null);
@@ -299,6 +300,64 @@ public class AssetcheckRepository : IAssetcheckRepository
                     _context.Entry(roomAsset).State = EntityState.Modified;
                 }
             }
+            await _context.SaveChangesAsync();
+            await _context.Database.CommitTransactionAsync();
+            return true;
+        }
+        catch
+        {
+            await _context.Database.RollbackTransactionAsync();
+            return false;
+        }
+    }
+
+    public async Task<bool> InsertAssetCheckV2(AssetCheck assetCheck, List<MediaFile> mediaFiles, Guid? creatorId, DateTime? now = null)
+    {
+        await _context.Database.BeginTransactionAsync();
+        now ??= DateTime.UtcNow;
+        try
+        {
+            assetCheck.Id = Guid.NewGuid();
+            assetCheck.CreatorId = creatorId;
+            assetCheck.CreatedAt = now.Value;
+            assetCheck.EditedAt = now.Value;
+            assetCheck.Status = RequestStatus.NotStart;
+            assetCheck.IsVerified = false;
+            assetCheck.RequestDate = now.Value;
+            await _context.AssetChecks.AddAsync(assetCheck);
+
+            var notification = new Notification
+            {
+                CreatedAt = now.Value,
+                EditedAt = now.Value,
+                Status = NotificationStatus.Waiting,
+                Content = assetCheck.Description,
+                Title = RequestType.Repairation.GetDisplayName(),
+                Type = NotificationType.Task,
+                CreatorId = creatorId,
+                IsRead = false,
+                ItemId = assetCheck.Id,
+                UserId = assetCheck.AssignedTo
+            };
+            await _context.Notifications.AddAsync(notification);
+
+            foreach (var mediaFile in mediaFiles)
+            {
+                var newMediaFile = new MediaFile
+                {
+                    Id = Guid.NewGuid(),
+                    CreatedAt = now.Value,
+                    CreatorId = creatorId,
+                    EditedAt = now.Value,
+                    EditorId = creatorId,
+                    FileName = mediaFile.FileName,
+                    Uri = mediaFile.Uri,
+                    FileType = mediaFile.FileType,
+                    ItemId = assetCheck.Id
+                };
+                _context.MediaFiles.Add(newMediaFile);
+            }
+
             await _context.SaveChangesAsync();
             await _context.Database.CommitTransactionAsync();
             return true;

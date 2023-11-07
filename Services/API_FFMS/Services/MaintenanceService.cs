@@ -233,22 +233,44 @@ public class MaintenanceService : BaseService, IMaintenanceService
 
     public async Task<ApiResponse> CreateItem(MaintenanceCreateDto createDto)
     {
-        var asset = await MainUnitOfWork.AssetRepository.FindOneAsync(createDto.AssetId);
-        var assetType = await MainUnitOfWork.AssetTypeRepository.FindOneAsync((Guid)createDto.AssetTypeId!);
+        try
+        {
+            var asset = await MainUnitOfWork.AssetRepository.FindOneAsync(createDto.AssetId);
+            var assetType = await MainUnitOfWork.AssetTypeRepository.FindOneAsync((Guid)createDto.AssetTypeId!);
 
-        if (asset == null)
-            throw new ApiException("Không cần tồn tại trang thiết bị", StatusCode.NOT_FOUND);
+            if (asset == null)
+                throw new ApiException("Không cần tồn tại trang thiết bị", StatusCode.NOT_FOUND);
 
-        if (assetType!.Unit == Unit.Individual &&  asset.Status != AssetStatus.Operational)
-            throw new ApiException("Trang thiết bị đang trong một yêu cầu khác", StatusCode.BAD_REQUEST);
+            if (assetType!.Unit == Unit.Individual && asset.Status != AssetStatus.Operational)
+                throw new ApiException("Trang thiết bị đang trong một yêu cầu khác", StatusCode.BAD_REQUEST);
 
-        var maintenance = createDto.ProjectTo<MaintenanceCreateDto, Maintenance>();
-        maintenance.RequestCode = GenerateRequestCode();
+            var maintenance = createDto.ProjectTo<MaintenanceCreateDto, Maintenance>();
+            maintenance.RequestCode = GenerateRequestCode();
 
-        if (!await _maintenanceRepository.InsertMaintenance(maintenance, AccountId, CurrentDate))
-            throw new ApiException("Tạo yêu cầu thất bại", StatusCode.SERVER_ERROR);
+            var mediaFiles = new List<MediaFile>();
+            if (createDto.RelatedFile != null)
+            {
+                foreach (var uri in createDto.RelatedFile.Uri!)
+                {
+                    var newMediaFile = new MediaFile
+                    {
+                        FileName = createDto.RelatedFile.FileName!,
+                        Uri = uri,
+                        FileType = createDto.RelatedFile.FileType!
+                    };
+                    mediaFiles.Add(newMediaFile);
+                }
+            }
 
-        return ApiResponse.Created("Gửi yêu cầu thành công");
+            if (!await _maintenanceRepository.InsertMaintenanceV2(maintenance, mediaFiles , AccountId, CurrentDate))
+                throw new ApiException("Tạo yêu cầu thất bại", StatusCode.SERVER_ERROR);
+
+            return ApiResponse.Created("Gửi yêu cầu thành công");
+        }
+        catch (Exception ex)
+        {
+            throw new Exception(ex.Message);
+        }
     }
 
     public async Task<ApiResponse> UpdateItem(Guid id, MaintenanceUpdateDto updateDto)
