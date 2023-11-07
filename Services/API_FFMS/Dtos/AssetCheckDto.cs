@@ -13,7 +13,10 @@ public class AssetCheckDto : BaseRequestDto
 
 public class AssetCheckQueryDto : BaseRequestQueryDto { }
 
-public class AssetCheckCreateDto : BaseRequestCreateDto { }
+public class AssetCheckCreateDto : BaseRequestCreateDto 
+{
+    public MediaFileCreateDto? RelatedFile { get; set; }
+}
 
 public class AssetCheckUpdateDto : BaseRequestUpdateDto { }
 

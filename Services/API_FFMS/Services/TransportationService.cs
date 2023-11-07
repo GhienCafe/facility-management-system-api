@@ -98,7 +98,22 @@ namespace API_FFMS.Services
                 ToRoomId = createDto.ToRoomId
             };
 
-            if (!await _transportationRepository.InsertTransportations(transportation, assets, AccountId, CurrentDate))
+            var mediaFiles = new List<MediaFile>();
+            if (createDto.RelatedFile != null)
+            {
+                foreach (var uri in createDto.RelatedFile.Uri!)
+                {
+                    var newMediaFile = new MediaFile
+                    {
+                        FileName = createDto.RelatedFile.FileName!,
+                        Uri = uri,
+                        FileType = createDto.RelatedFile.FileType!
+                    };
+                    mediaFiles.Add(newMediaFile);
+                }
+            }
+
+            if (!await _transportationRepository.InsertTransportationV2(transportation, assets, mediaFiles, AccountId, CurrentDate))
             {
                 throw new ApiException("Tạo yêu cầu thất bại", StatusCode.SERVER_ERROR);
             }
