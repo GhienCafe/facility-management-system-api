@@ -30,7 +30,7 @@ public class User : BaseEntity
     
     public virtual IEnumerable<AssetCheck>? AssetChecks { get; set; }
     public virtual IEnumerable<Replacement>? Replacements { get; set; }
-    public virtual IEnumerable<Repairation>? Repairations { get; set; }
+    public virtual IEnumerable<Repair>? Repairs { get; set; }
     public virtual IEnumerable<Maintenance>? Maintenances { get; set; }
     public virtual IEnumerable<Transportation>? Transportations { get; set; }
     public virtual IEnumerable<InventoryCheck>? InventoryChecks { get; set; }
@@ -107,7 +107,7 @@ public class UserConfig : IEntityTypeConfiguration<User>
             .WithOne(x => x.User)
             .HasForeignKey(x => x.AssignedTo);
         
-        builder.HasMany(x => x.Repairations)
+        builder.HasMany(x => x.Repairs)
             .WithOne(x => x.User)
             .HasForeignKey(x => x.AssignedTo);
         

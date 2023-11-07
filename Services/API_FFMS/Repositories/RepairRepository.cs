@@ -8,12 +8,12 @@ namespace API_FFMS.Repositories;
 
 public interface IRepairRepository
 {
-    Task<bool> InsertRepair(Repairation repair, Guid? creatorId, DateTime? now = null);
-    Task<bool> InsertRepairV2(Repairation repair, List<MediaFile> mediaFiles, Guid? creatorId, DateTime? now = null);
-    Task<bool> InsertRepairs(List<Repairation> repairs, Guid? creatorId, DateTime? now = null);
-    Task<bool> UpdateStatus(Repairation repair, RequestStatus? statusUpdate, Guid? editorId, DateTime? now = null);
-    Task<bool> DeleteRepair(Repairation repair, Guid? deleterId, DateTime? now = null);
-    Task<bool> DeleteRepairs(List<Repairation?> repairs, Guid? deleterId, DateTime? now = null);
+    Task<bool> InsertRepair(Repair repair, Guid? creatorId, DateTime? now = null);
+    Task<bool> InsertRepairV2(Repair repair, List<MediaFile> mediaFiles, Guid? creatorId, DateTime? now = null);
+    Task<bool> InsertRepairs(List<Repair> repairs, Guid? creatorId, DateTime? now = null);
+    Task<bool> UpdateStatus(Repair repair, RequestStatus? statusUpdate, Guid? editorId, DateTime? now = null);
+    Task<bool> DeleteRepair(Repair repair, Guid? deleterId, DateTime? now = null);
+    Task<bool> DeleteRepairs(List<Repair?> repairs, Guid? deleterId, DateTime? now = null);
 }
 public class RepairRepository : IRepairRepository
 {
@@ -24,7 +24,7 @@ public class RepairRepository : IRepairRepository
         _context = context;
     }
 
-    public async Task<bool> InsertRepair(Repairation repair, Guid? creatorId, DateTime? now = null)
+    public async Task<bool> InsertRepair(Repair repair, Guid? creatorId, DateTime? now = null)
     {
         await _context.Database.BeginTransactionAsync();
         now ??= DateTime.UtcNow;
@@ -36,7 +36,7 @@ public class RepairRepository : IRepairRepository
             repair.CreatorId = creatorId;
             repair.Status = RequestStatus.NotStart;
             repair.RequestDate = now.Value;
-            await _context.Repairations.AddAsync(repair);
+            await _context.Repairs.AddAsync(repair);
 
             var notification = new Notification
             {
@@ -65,7 +65,7 @@ public class RepairRepository : IRepairRepository
         }
     }
 
-    public async Task<bool> InsertRepairs(List<Repairation> entities, Guid? creatorId, DateTime? now = null)
+    public async Task<bool> InsertRepairs(List<Repair> entities, Guid? creatorId, DateTime? now = null)
     {
         await _context.Database.BeginTransactionAsync();
         now ??= DateTime.UtcNow;
@@ -84,7 +84,7 @@ public class RepairRepository : IRepairRepository
                 entity.Status = RequestStatus.NotStart;
                 entity.RequestDate = now.Value;
                 entity.RequestCode = "REP" + GenerateRequestCode(ref numbers);
-                await _context.Repairations.AddAsync(entity);
+                await _context.Repairs.AddAsync(entity);
 
                 var asset = await _context.Assets.FindAsync(entity.AssetId);
                 asset!.Status = AssetStatus.Repair;
@@ -142,13 +142,13 @@ public class RepairRepository : IRepairRepository
 
     private List<string> GetRequestCodes()
     {
-        var requests = _context.Repairations.Where(x => x.RequestCode.StartsWith("REP"))
+        var requests = _context.Repairs.Where(x => x.RequestCode.StartsWith("REP"))
                                             .Select(x => x.RequestCode)
                                             .ToList();
         return requests;
     }
 
-    public async Task<bool> UpdateStatus(Repairation repair, RequestStatus? statusUpdate, Guid? editorId, DateTime? now = null)
+    public async Task<bool> UpdateStatus(Repair repair, RequestStatus? statusUpdate, Guid? editorId, DateTime? now = null)
     {
         await _context.Database.BeginTransactionAsync();
         now ??= DateTime.UtcNow;
@@ -256,7 +256,7 @@ public class RepairRepository : IRepairRepository
 
     }
 
-    public async Task<bool> DeleteRepair(Repairation repair, Guid? deleterId, DateTime? now = null)
+    public async Task<bool> DeleteRepair(Repair repair, Guid? deleterId, DateTime? now = null)
     {
         await _context.Database.BeginTransactionAsync();
         now ??= DateTime.UtcNow;
@@ -309,7 +309,7 @@ public class RepairRepository : IRepairRepository
         }
     }
 
-    public async Task<bool> DeleteRepairs(List<Repairation?> repairs, Guid? deleterId, DateTime? now = null)
+    public async Task<bool> DeleteRepairs(List<Repair?> repairs, Guid? deleterId, DateTime? now = null)
     {
         await _context.Database.BeginTransactionAsync();
         now ??= DateTime.UtcNow;
@@ -373,7 +373,7 @@ public class RepairRepository : IRepairRepository
         return wareHouse;
     }
 
-    public async Task<bool> InsertRepairV2(Repairation repair, List<MediaFile> mediaFiles, Guid? creatorId, DateTime? now = null)
+    public async Task<bool> InsertRepairV2(Repair repair, List<MediaFile> mediaFiles, Guid? creatorId, DateTime? now = null)
     {
         await _context.Database.BeginTransactionAsync();
         now ??= DateTime.UtcNow;
@@ -385,7 +385,7 @@ public class RepairRepository : IRepairRepository
             repair.CreatorId = creatorId;
             repair.Status = RequestStatus.NotStart;
             repair.RequestDate = now.Value;
-            await _context.Repairations.AddAsync(repair);
+            await _context.Repairs.AddAsync(repair);
 
             var notification = new Notification
             {

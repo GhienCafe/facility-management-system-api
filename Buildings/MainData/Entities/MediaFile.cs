@@ -16,14 +16,14 @@ public class MediaFile : BaseEntity
     public Guid? MaintenanceId { get; set; }
     public Guid? ReplacementId { get; set; }
     public Guid? AssetCheckId { get; set; }
-    public Guid? RepairationId { get; set; }
+    public Guid? RepairId { get; set; }
     public Guid? TransportationId { get; set; }
     public Guid? InventoryCheckId { get; set; }
     public Guid? ItemId { get; set; }
 
     // Relationship
     public Maintenance? Maintenance { get; set; }
-    public Repairation? Repairation { get; set; }
+    public Repair? Repair { get; set; }
     public AssetCheck? AssetCheck { get; set; }
     public Transportation? Transportation { get; set; }
     public Replacement? Replacement { get; set; }
@@ -53,7 +53,7 @@ public class MediaFileConfig : IEntityTypeConfiguration<MediaFile>
 
         builder.Property(a => a.MaintenanceId).IsRequired(false);
         builder.Property(a => a.ReplacementId).IsRequired(false);
-        builder.Property(a => a.RepairationId).IsRequired(false);
+        builder.Property(a => a.RepairId).IsRequired(false);
         builder.Property(a => a.TransportationId).IsRequired(false);
         builder.Property(a => a.AssetCheckId).IsRequired(false);
 
@@ -74,9 +74,9 @@ public class MediaFileConfig : IEntityTypeConfiguration<MediaFile>
             .WithMany(x => x.MediaFiles)
             .HasForeignKey(i => i.TransportationId);
 
-        builder.HasOne(x => x.Repairation)
+        builder.HasOne(x => x.Repair)
             .WithMany(x => x.MediaFiles)
-            .HasForeignKey(i => i.RepairationId);
+            .HasForeignKey(i => i.RepairId);
 
         builder.HasOne(x => x.InventoryCheck)
             .WithMany(x => x.MediaFiles)
