@@ -34,6 +34,7 @@ public class Asset : BaseEntity
     public virtual ICollection<TransportationDetail>? TransportationDetails { get; set; }
     public virtual IEnumerable<Repairation>? Repairations { get; set; }
     public virtual IEnumerable<AssetCheck>? AssetChecks { get; set; }
+    public virtual IEnumerable<InventoryCheckDetail>? InventoryCheckDetails { get; set; }
 }
 
 public enum AssetStatus
@@ -138,6 +139,10 @@ public class AssetConfig : IEntityTypeConfiguration<Asset>
             .HasForeignKey(x => x.AssetId);
         
         builder.HasMany(x => x.AssetChecks)
+            .WithOne(x => x.Asset)
+            .HasForeignKey(x => x.AssetId);
+        
+        builder.HasMany(x => x.InventoryCheckDetails)
             .WithOne(x => x.Asset)
             .HasForeignKey(x => x.AssetId);
     }
