@@ -72,8 +72,8 @@ public class TaskService : BaseService, ITaskService
         }
 
         //REPAIRATION
-        var repairReport = await MainUnitOfWork.RepairationRepository.FindOneAsync(
-            new Expression<Func<Repairation, bool>>[]
+        var repairReport = await MainUnitOfWork.RepairRepository.FindOneAsync(
+            new Expression<Func<Repair, bool>>[]
             {
                 x => !x.DeletedAt.HasValue,
                 x => x.AssignedTo == AccountId,
@@ -340,8 +340,8 @@ public class TaskService : BaseService, ITaskService
         }
 
         //REPAIRATION
-        var repairation = await MainUnitOfWork.RepairationRepository.FindOneAsync<TaskDetailDto>(
-                new Expression<Func<Repairation, bool>>[]
+        var repairation = await MainUnitOfWork.RepairRepository.FindOneAsync<TaskDetailDto>(
+                new Expression<Func<Repair, bool>>[]
                 {
                     x => !x.DeletedAt.HasValue,
                     x => x.AssignedTo == AccountId,
@@ -535,7 +535,7 @@ public class TaskService : BaseService, ITaskService
             });
 
         // Retrieve tasks from the Replair table
-        var repairationTasks = MainUnitOfWork.RepairationRepository.GetQuery()
+        var repairationTasks = MainUnitOfWork.RepairRepository.GetQuery()
             .Where(t => !t!.DeletedAt.HasValue && t.AssignedTo == AccountId)
             .Select(t => new TaskBaseDto
             {

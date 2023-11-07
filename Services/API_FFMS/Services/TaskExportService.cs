@@ -92,7 +92,7 @@ public class TaskExportService : BaseService, ITaskExportService
         var sheetNames = new List<string>();
         var titles = new List<string>();
         //REPAIRATION
-        var repairQuery = MainUnitOfWork.RepairationRepository.GetQuery()
+        var repairQuery = MainUnitOfWork.RepairRepository.GetQuery()
                               .Where(x => !x!.DeletedAt.HasValue);
         var joinRepairTable = from repair in repairQuery
                                 join user in MainUnitOfWork.UserRepository.GetQuery() on repair.AssignedTo equals user.Id

@@ -227,7 +227,7 @@ namespace API_FFMS.Repositories
                 }
 
                 //REPAIRATION
-                var repairation = await _context.Repairations
+                var repairation = await _context.Repairs
                                 .Include(x => x.Asset)
                                 .FirstOrDefaultAsync(x => x.Id == mediaFiles.First().ItemId);
                 if (repairation != null && repairation.IsInternal == true)
@@ -295,7 +295,7 @@ namespace API_FFMS.Repositories
                                 FileType = mediaFile.FileType,
                                 Content = mediaFile.Content,
                                 ItemId = repairation.Id,
-                                RepairationId = repairation.Id
+                                RepairId = repairation.Id
                             };
                             _context.MediaFiles.Add(newMediaFile);
                         }
@@ -377,7 +377,7 @@ namespace API_FFMS.Repositories
                                 FileType = mediaFile.FileType,
                                 Content = mediaFile.Content,
                                 ItemId = repairation.Id,
-                                RepairationId = repairation.Id
+                                RepairId = repairation.Id
                             };
                             _context.MediaFiles.Add(newMediaFile);
                         }

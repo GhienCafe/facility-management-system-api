@@ -30,7 +30,7 @@ public class DatabaseContext : DbContext
     
     public DbSet<Notification> Notifications { get; set; }
     public DbSet<Transportation> Transportations { get; set; }
-    public DbSet<Repairation> Repairations { get; set; }
+    public DbSet<Repair> Repairs { get; set; }
     public DbSet<AssetCheck> AssetChecks { get; set; }
     
     public DbSet<Category> Categories { get; set; }
@@ -68,7 +68,7 @@ public class DatabaseContext : DbContext
         modelBuilder.ApplyConfiguration(new ReplacementConfig());
         modelBuilder.ApplyConfiguration(new NotificationConfig());
         modelBuilder.ApplyConfiguration(new TransportationConfig());
-        modelBuilder.ApplyConfiguration(new RepairationConfig());
+        modelBuilder.ApplyConfiguration(new RepairConfig());
         modelBuilder.ApplyConfiguration(new AssetCheckConfig());
         
         modelBuilder.ApplyConfiguration(new TeamConfig());
