@@ -1,28 +1,30 @@
 ﻿using AppCore.Extensions;
+using DocumentFormat.OpenXml.Bibliography;
 using MainData;
 using MainData.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace API_FFMS.Repositories;
 
-public interface IRepairationRepository
+public interface IRepairRepository
 {
-    Task<bool> InsertRepairation(Repairation repair, Guid? creatorId, DateTime? now = null);
-    Task<bool> InsertRepairations(List<Repairation> repairs, Guid? creatorId, DateTime? now = null);
+    Task<bool> InsertRepair(Repairation repair, Guid? creatorId, DateTime? now = null);
+    Task<bool> InsertRepairV2(Repairation repair, List<MediaFile> mediaFiles, Guid? creatorId, DateTime? now = null);
+    Task<bool> InsertRepairs(List<Repairation> repairs, Guid? creatorId, DateTime? now = null);
     Task<bool> UpdateStatus(Repairation repair, RequestStatus? statusUpdate, Guid? editorId, DateTime? now = null);
     Task<bool> DeleteRepair(Repairation repair, Guid? deleterId, DateTime? now = null);
     Task<bool> DeleteRepairs(List<Repairation?> repairs, Guid? deleterId, DateTime? now = null);
 }
-public class RepairationRepository : IRepairationRepository
+public class RepairRepository : IRepairRepository
 {
     private readonly DatabaseContext _context;
 
-    public RepairationRepository(DatabaseContext context)
+    public RepairRepository(DatabaseContext context)
     {
         _context = context;
     }
 
-    public async Task<bool> InsertRepairation(Repairation repair, Guid? creatorId, DateTime? now = null)
+    public async Task<bool> InsertRepair(Repairation repair, Guid? creatorId, DateTime? now = null)
     {
         await _context.Database.BeginTransactionAsync();
         now ??= DateTime.UtcNow;
@@ -63,7 +65,7 @@ public class RepairationRepository : IRepairationRepository
         }
     }
 
-    public async Task<bool> InsertRepairations(List<Repairation> entities, Guid? creatorId, DateTime? now = null)
+    public async Task<bool> InsertRepairs(List<Repairation> entities, Guid? creatorId, DateTime? now = null)
     {
         await _context.Database.BeginTransactionAsync();
         now ??= DateTime.UtcNow;
@@ -369,5 +371,62 @@ public class RepairationRepository : IRepairationRepository
     {
         var wareHouse = _context.Rooms.FirstOrDefault(x => x.RoomName!.Trim().Equals(roomName.Trim()));
         return wareHouse;
+    }
+
+    public async Task<bool> InsertRepairV2(Repairation repair, List<MediaFile> mediaFiles, Guid? creatorId, DateTime? now = null)
+    {
+        await _context.Database.BeginTransactionAsync();
+        now ??= DateTime.UtcNow;
+        try
+        {
+            repair.Id = Guid.NewGuid();
+            repair.CreatedAt = now.Value;
+            repair.EditedAt = now.Value;
+            repair.CreatorId = creatorId;
+            repair.Status = RequestStatus.NotStart;
+            repair.RequestDate = now.Value;
+            await _context.Repairations.AddAsync(repair);
+
+            var notification = new Notification
+            {
+                CreatedAt = now.Value,
+                EditedAt = now.Value,
+                Status = NotificationStatus.Waiting,
+                Content = repair.Description,
+                Title = RequestType.Repairation.GetDisplayName(),
+                Type = NotificationType.Task,
+                CreatorId = creatorId,
+                IsRead = false,
+                ItemId = repair.Id,
+                UserId = repair.AssignedTo
+            };
+            await _context.Notifications.AddAsync(notification);
+
+            foreach(var mediaFile in mediaFiles)
+            {
+                var newMediaFile = new MediaFile
+                {
+                    Id = Guid.NewGuid(),
+                    CreatedAt = now.Value,
+                    CreatorId = creatorId,
+                    EditedAt = now.Value,
+                    EditorId = creatorId,
+                    FileName = mediaFile.FileName,
+                    Uri = mediaFile.Uri,
+                    FileType = mediaFile.FileType,
+                    ItemId = repair.Id
+                };
+                _context.MediaFiles.Add(newMediaFile);
+            }
+
+            await _context.SaveChangesAsync();
+            await _context.Database.CommitTransactionAsync();
+            return true;
+        }
+        catch
+        {
+            await _context.Database.RollbackTransactionAsync();
+            return false;
+        }
     }
 }
