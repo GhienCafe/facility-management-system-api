@@ -2,7 +2,8 @@
 
 namespace API_FFMS.Dtos;
 
-public class MaintenanceDto : BaseRequestDto {
+public class RepairDto : BaseRequestDto
+{
     public AssetBaseDto? Asset { get; set; }
     public UserBaseDto? User { get; set; }
     public AssetTypeDto? AssetType { get; set; }
@@ -10,15 +11,9 @@ public class MaintenanceDto : BaseRequestDto {
     public MediaFileDto? MediaFile { get; set; }
 }
 
-public class MaintenanceQueryDto : BaseRequestQueryDto
+public class RepairCreateDto : BaseRequestCreateDto 
 {
+    public MediaFileCreateDto? RelatedFile {  get; set; }
 }
 
-public class MaintenanceCreateDto : BaseRequestCreateDto
-{
-    public MediaFileCreateDto? RelatedFile { get; set; }
-}
-
-public class MaintenanceUpdateDto : BaseRequestUpdateDto
-{
-}
+public class RepairQueryDto : BaseRequestQueryDto { }

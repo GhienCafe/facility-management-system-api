@@ -8,6 +8,7 @@ namespace API_FFMS.Repositories
     public interface IReplacementRepository
     {
         Task<bool> InsertReplacement(Replacement replacement, Guid? creatorId, DateTime? now = null);
+        Task<bool> InsertReplacementV2(Replacement replacement, List<MediaFile> mediaFiles, Guid? creatorId, DateTime? now = null);
         Task<bool> UpdateStatus(Replacement replacement, RequestStatus? statusUpdate, Guid? editorId, DateTime? now = null);
         Task<bool> DeleteReplacement(Replacement replacement, Guid? deleterId, DateTime? now = null);
         Task<bool> DeleteReplacements(List<Replacement?> replacements, Guid? deleterId, DateTime? now = null);
@@ -189,6 +190,63 @@ namespace API_FFMS.Repositories
                         UserId = replacement.AssignedTo
                     };
                     await _context.Notifications.AddAsync(notification);
+                }
+
+                await _context.SaveChangesAsync();
+                await _context.Database.CommitTransactionAsync();
+                return true;
+            }
+            catch
+            {
+                await _context.Database.RollbackTransactionAsync();
+                return false;
+            }
+        }
+
+        public async Task<bool> InsertReplacementV2(Replacement replacement, List<MediaFile> mediaFiles, Guid? creatorId, DateTime? now = null)
+        {
+            await _context.Database.BeginTransactionAsync();
+            now ??= DateTime.UtcNow;
+            try
+            {
+                replacement.Id = Guid.NewGuid();
+                replacement.CreatedAt = now.Value;
+                replacement.EditedAt = now.Value;
+                replacement.CreatorId = creatorId;
+                replacement.Status = RequestStatus.NotStart;
+                replacement.RequestDate = now.Value;
+                await _context.Replacements.AddAsync(replacement);
+
+                var notification = new Notification
+                {
+                    CreatedAt = now.Value,
+                    EditedAt = now.Value,
+                    Status = NotificationStatus.Waiting,
+                    Content = replacement.Description,
+                    Title = RequestType.Replacement.GetDisplayName(),
+                    Type = NotificationType.Task,
+                    CreatorId = creatorId,
+                    IsRead = false,
+                    ItemId = replacement.Id,
+                    UserId = replacement.AssignedTo
+                };
+                await _context.Notifications.AddAsync(notification);
+
+                foreach (var mediaFile in mediaFiles)
+                {
+                    var newMediaFile = new MediaFile
+                    {
+                        Id = Guid.NewGuid(),
+                        CreatedAt = now.Value,
+                        CreatorId = creatorId,
+                        EditedAt = now.Value,
+                        EditorId = creatorId,
+                        FileName = mediaFile.FileName,
+                        Uri = mediaFile.Uri,
+                        FileType = mediaFile.FileType,
+                        ItemId = replacement.Id
+                    };
+                    _context.MediaFiles.Add(newMediaFile);
                 }
 
                 await _context.SaveChangesAsync();
