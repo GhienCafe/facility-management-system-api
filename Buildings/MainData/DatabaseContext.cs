@@ -40,7 +40,10 @@ public class DatabaseContext : DbContext
     public DbSet<TeamMember> TeamMembers { get; set; }
     public DbSet<TransportationDetail> TransportationDetails { get; set; }
     public DbSet<Brand> Brands { get; set; }
-
+    
+    public DbSet<InventoryCheck> InventoryChecks { get; set; }
+    public DbSet<InventoryCheckDetail> InventoryCheckDetails { get; set; }
+    public DbSet<InventoryCheckConfig> InventoryCheckConfigs { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -76,5 +79,9 @@ public class DatabaseContext : DbContext
         modelBuilder.ApplyConfiguration(new TeamMemberConfig());
         modelBuilder.ApplyConfiguration(new TransportationDetailConfig());
         modelBuilder.ApplyConfiguration(new BrandConfig());
+        
+        modelBuilder.ApplyConfiguration(new InventoryCheckDbConfig());
+        modelBuilder.ApplyConfiguration(new InventoryCheckConfigConfig());
+        modelBuilder.ApplyConfiguration(new InventoryCheckDetailConfig());
     }
 }

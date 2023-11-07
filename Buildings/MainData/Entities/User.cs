@@ -33,6 +33,7 @@ public class User : BaseEntity
     public virtual IEnumerable<Repairation>? Repairations { get; set; }
     public virtual IEnumerable<Maintenance>? Maintenances { get; set; }
     public virtual IEnumerable<Transportation>? Transportations { get; set; }
+    public virtual IEnumerable<InventoryCheck>? InventoryChecks { get; set; }
 }
 
 public enum UserRole
@@ -111,6 +112,10 @@ public class UserConfig : IEntityTypeConfiguration<User>
             .HasForeignKey(x => x.AssignedTo);
         
         builder.HasMany(x => x.Transportations)
+            .WithOne(x => x.User)
+            .HasForeignKey(x => x.AssignedTo);
+        
+        builder.HasMany(x => x.InventoryChecks)
             .WithOne(x => x.User)
             .HasForeignKey(x => x.AssignedTo);
     }
