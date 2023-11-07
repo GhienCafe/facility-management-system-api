@@ -40,6 +40,9 @@ public class MainUnitOfWork : IDisposable
     public BaseRepository<TransportationDetail> TransportationDetailRepository => new(_context);
     public BaseRepository<MediaFile> MediaFileRepository => new(_context);
     public BaseRepository<Brand> BrandRepository => new(_context);
+    public BaseRepository<InventoryCheck> InventoryCheckRepository => new(_context);
+    public BaseRepository<InventoryCheckDetail> InventoryCheckDetailRepository => new(_context);
+    public BaseRepository<InventoryCheckConfig> InventoryCheckConfigRepository => new(_context);
     public void Dispose()
     {
     }

@@ -105,10 +105,8 @@ public class TaskService : BaseService, ITaskService
             var newMediaFile = new MediaFile
             {
                 FileName = createDto.FileName!,
-                Key = createDto.Key!,
                 RawUri = createDto.RawUri!,
                 Uri = uri,
-                Extensions = createDto.Extensions!,
                 FileType = createDto.FileType!,
                 Content = createDto.Content!,
                 ItemId = createDto.ItemId,
