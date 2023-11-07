@@ -8,6 +8,7 @@ public class InventoryCheckDetail : BaseEntity
 {
     public Guid AssetId { get; set; }
     public Guid InventoryCheckId { get; set; }
+    public Guid RoomId { get; set; }
     public AssetStatus Status { get; set; }
     
     //Relationship
@@ -22,6 +23,7 @@ public class InventoryCheckDetailConfig : IEntityTypeConfiguration<InventoryChec
         builder.ToTable("InventoryCheckDetails");
         builder.Property(x => x.AssetId).IsRequired();
         builder.Property(x => x.InventoryCheckId).IsRequired();
+        builder.Property(x => x.RoomId).IsRequired();
         builder.Property(x => x.Status).IsRequired();
 
         //Relationship
