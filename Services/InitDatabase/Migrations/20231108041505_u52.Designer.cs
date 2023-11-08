@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace InitDatabase.Migrations
 {
     [DbContext(typeof(DatabaseContext))]
-    [Migration("20231107180454_u52")]
+    [Migration("20231108041505_u52")]
     partial class u52
     {
         /// <inheritdoc />
@@ -634,6 +634,8 @@ namespace InitDatabase.Migrations
 
                     b.HasIndex("AssetId");
 
+                    b.HasIndex("InventoryCheckId");
+
                     b.ToTable("InventoryCheckDetails", (string)null);
                 });
 
@@ -785,6 +787,8 @@ namespace InitDatabase.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("AssetCheckId");
+
+                    b.HasIndex("InventoryCheckId");
 
                     b.HasIndex("MaintenanceId");
 
@@ -1722,7 +1726,7 @@ namespace InitDatabase.Migrations
 
                     b.HasOne("MainData.Entities.InventoryCheck", "InventoryCheck")
                         .WithMany("InventoryCheckDetails")
-                        .HasForeignKey("AssetId")
+                        .HasForeignKey("InventoryCheckId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -1756,7 +1760,7 @@ namespace InitDatabase.Migrations
 
                     b.HasOne("MainData.Entities.InventoryCheck", "InventoryCheck")
                         .WithMany("MediaFiles")
-                        .HasForeignKey("MaintenanceId");
+                        .HasForeignKey("InventoryCheckId");
 
                     b.HasOne("MainData.Entities.Maintenance", "Maintenance")
                         .WithMany("MediaFiles")

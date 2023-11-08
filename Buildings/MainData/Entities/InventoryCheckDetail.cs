@@ -34,6 +34,6 @@ public class InventoryCheckDetailConfig : IEntityTypeConfiguration<InventoryChec
         
         builder.HasOne(x => x.InventoryCheck)
             .WithMany(x => x.InventoryCheckDetails)
-            .HasForeignKey(i => i.AssetId);
+            .HasForeignKey(i => i.InventoryCheckId);
     }
 }

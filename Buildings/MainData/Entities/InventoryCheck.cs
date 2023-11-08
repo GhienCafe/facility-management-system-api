@@ -39,7 +39,7 @@ public class InventoryCheckDbConfig : IEntityTypeConfiguration<InventoryCheck>
 
         builder.HasMany(x => x.MediaFiles)
             .WithOne(x => x.InventoryCheck)
-            .HasForeignKey(i => i.MaintenanceId);
+            .HasForeignKey(i => i.InventoryCheckId);
 
         builder.HasOne(x => x.Room)
             .WithMany(x => x.InventoryChecks)

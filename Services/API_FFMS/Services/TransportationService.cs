@@ -88,7 +88,6 @@ namespace API_FFMS.Services
             var transportation = new Transportation
             {
                 RequestCode = GenerateRequestCode(),
-                RequestDate = CurrentDate,
                 Description = createDto.Description,
                 Notes = createDto.Notes,
                 Priority = createDto.Priority,
@@ -397,11 +396,13 @@ namespace API_FFMS.Services
 
             if (existingTransport.Status != RequestStatus.InProgress)
             {
-                throw new ApiException("Chỉ được cập nhật các yêu cầu chưa hoàn thành", StatusCode.NOT_FOUND);
+                throw new ApiException("Chỉ được cập nhật các yêu cầu chưa được tiếp nhận", StatusCode.NOT_FOUND);
             }
             existingTransport.Description = updateDto.Description ?? existingTransport.Description;
             existingTransport.Notes = updateDto.Notes ?? existingTransport.Notes;
             existingTransport.Priority = updateDto.Priority ?? existingTransport.Priority;
+            existingTransport.AssignedTo = updateDto.AssignedTo ?? existingTransport.AssignedTo;
+            existingTransport.IsInternal = updateDto.IsInternal ?? existingTransport.IsInternal;
 
             if (!await MainUnitOfWork.TransportationRepository.UpdateAsync(existingTransport, AccountId, CurrentDate))
             {
