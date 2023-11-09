@@ -55,7 +55,9 @@ public enum RequestType
     [Display(Name = "Thay thế")]
     Replacement = 4,
     [Display(Name = "Điều chuyển")]
-    Transportation = 5
+    Transportation = 5,
+    [Display(Name = "Kiểm kê tài sản")]
+    InventoryCheck = 6
 }
 
 public enum Priority

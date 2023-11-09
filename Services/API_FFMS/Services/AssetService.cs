@@ -583,7 +583,7 @@ public class AssetService : BaseService, IAssetService
             throw new ApiException("Không tìm thấy thiết bị", StatusCode.NOT_FOUND);
         }
 
-        var assetRepairQuery = MainUnitOfWork.RepairationRepository.GetQueryAll().Where(x => x!.AssetId == id);
+        var assetRepairQuery = MainUnitOfWork.RepairRepository.GetQueryAll().Where(x => x!.AssetId == id);
 
         if (keyword != null)
         {

@@ -10,47 +10,69 @@ using System.Linq.Expressions;
 
 namespace API_FFMS.Services
 {
-    public interface IRepairationService : IBaseService
+    public interface IRepairService : IBaseService
     {
-        Task<ApiResponses<RepairationDto>> GetRepairations(RepairationQueryDto queryDto);
-        Task<ApiResponse> CreateRepairation(RepairationCreateDto createDto);
-        Task<ApiResponse> CreateRepairations(List<RepairationCreateDto> createDtos);
-        Task<ApiResponse<RepairationDto>> GetRepairation(Guid id);
+        Task<ApiResponses<RepairDto>> GetRepairs(RepairQueryDto queryDto);
+        Task<ApiResponse> CreateRepair(RepairCreateDto createDto);
+        Task<ApiResponse> CreateRepairs(List<RepairCreateDto> createDtos);
+        Task<ApiResponse<RepairDto>> GetRepair(Guid id);
         Task<ApiResponse> Update(Guid id, BaseRequestUpdateDto updateDto);
         Task<ApiResponse> Delete(Guid id);
-        Task<ApiResponse> DeleteReplairations(DeleteMutilDto deleteDto);
+        Task<ApiResponse> DeleteRepairs(DeleteMutilDto deleteDto);
         Task<ApiResponse> UpdateStatus(Guid id, BaseUpdateStatusDto updateStatusDto);
     }
-    public class RepairationService : BaseService, IRepairationService
+    public class RepairService : BaseService, IRepairService
     {
-        private readonly IRepairationRepository _repairationRepository;
-        public RepairationService(MainUnitOfWork mainUnitOfWork, IHttpContextAccessor httpContextAccessor,
-                                 IMapperRepository mapperRepository, IRepairationRepository repairationRepository)
+        private readonly IRepairRepository _repairRepository;
+        public RepairService(MainUnitOfWork mainUnitOfWork, IHttpContextAccessor httpContextAccessor,
+                                 IMapperRepository mapperRepository, IRepairRepository repairationRepository)
                                  : base(mainUnitOfWork, httpContextAccessor, mapperRepository)
         {
-            _repairationRepository = repairationRepository;
+            _repairRepository = repairationRepository;
         }
 
-        public async Task<ApiResponse> CreateRepairation(RepairationCreateDto createDto)
+        public async Task<ApiResponse> CreateRepair(RepairCreateDto createDto)
         {
-            var asset = await MainUnitOfWork.AssetRepository.FindOneAsync(createDto.AssetId);
+            try
+            {
+                var asset = await MainUnitOfWork.AssetRepository.FindOneAsync(createDto.AssetId);
 
-            if (asset == null)
-                throw new ApiException("Không cần tồn tại trang thiết bị", StatusCode.NOT_FOUND);
+                if (asset == null)
+                    throw new ApiException("Không cần tồn tại trang thiết bị", StatusCode.NOT_FOUND);
 
-            if (asset.Status != AssetStatus.Operational)
-                throw new ApiException("Trang thiết bị đang trong một yêu cầu khác", StatusCode.BAD_REQUEST);
+                if (asset.Status != AssetStatus.Operational)
+                    throw new ApiException("Trang thiết bị đang trong một yêu cầu khác", StatusCode.BAD_REQUEST);
 
-            var repairation = createDto.ProjectTo<RepairationCreateDto, Repairation>();
-            repairation.RequestCode = GenerateRequestCode();
+                var repairation = createDto.ProjectTo<RepairCreateDto, Repair>();
+                repairation.RequestCode = GenerateRequestCode();
 
-            if (!await _repairationRepository.InsertRepairation(repairation, AccountId, CurrentDate))
-                throw new ApiException("Tạo yêu cầu thất bại", StatusCode.SERVER_ERROR);
+                var mediaFiles = new List<MediaFile>();
+                if (createDto.RelatedFile != null)
+                {
+                    foreach (var uri in createDto.RelatedFile.Uri!)
+                    {
+                        var newMediaFile = new MediaFile
+                        {
+                            FileName = createDto.RelatedFile.FileName!,
+                            Uri = uri,
+                            FileType = createDto.RelatedFile.FileType!
+                        };
+                        mediaFiles.Add(newMediaFile);
+                    }
+                }
 
-            return ApiResponse.Created("Gửi yêu cầu thành công");
+                if (!await _repairRepository.InsertRepairV2(repairation, mediaFiles, AccountId, CurrentDate))
+                    throw new ApiException("Tạo yêu cầu thất bại", StatusCode.SERVER_ERROR);
+
+                return ApiResponse.Created("Gửi yêu cầu thành công");
+            }
+            catch(Exception ex)
+            {
+                throw new Exception(ex.Message);
+            }
         }
 
-        public async Task<ApiResponse> CreateRepairations(List<RepairationCreateDto> createDtos)
+        public async Task<ApiResponse> CreateRepairs(List<RepairCreateDto> createDtos)
         {
             var assets = await MainUnitOfWork.AssetRepository.FindAsync(
                 new Expression<Func<Asset, bool>>[]
@@ -64,10 +86,10 @@ namespace API_FFMS.Services
                 throw new ApiException("Trang thiết bị đang trong một yêu cầu khác", StatusCode.SERVER_ERROR);
             }
 
-            var repairs = createDtos.Select(dto => dto.ProjectTo<RepairationCreateDto, Repairation>())
+            var repairs = createDtos.Select(dto => dto.ProjectTo<RepairCreateDto, Repair>())
                                          .ToList();
 
-            if (!await _repairationRepository.InsertRepairations(repairs, AccountId, CurrentDate))
+            if (!await _repairRepository.InsertRepairs(repairs, AccountId, CurrentDate))
                 throw new ApiException("Tạo yêu cầu thất bại", StatusCode.SERVER_ERROR);
 
             return ApiResponse.Created("Gửi yêu cầu thành công");
@@ -75,8 +97,8 @@ namespace API_FFMS.Services
 
         public async Task<ApiResponse> Delete(Guid id)
         {
-            var existingRepair = await MainUnitOfWork.RepairationRepository.FindOneAsync(
-                new Expression<Func<Repairation, bool>>[]
+            var existingRepair = await MainUnitOfWork.RepairRepository.FindOneAsync(
+                new Expression<Func<Repair, bool>>[]
                 {
                     x => !x.DeletedAt.HasValue,
                     x => x.Id == id
@@ -86,17 +108,17 @@ namespace API_FFMS.Services
                 throw new ApiException("Không tìm thấy yêu cầu sửa chữa này", StatusCode.NOT_FOUND);
             }
 
-            if (!await _repairationRepository.DeleteRepair(existingRepair, AccountId, CurrentDate))
+            if (!await _repairRepository.DeleteRepair(existingRepair, AccountId, CurrentDate))
             {
                 throw new ApiException("Xóa thất bại", StatusCode.SERVER_ERROR);
             }
             return ApiResponse.Success();
         }
 
-        public async Task<ApiResponse> DeleteReplairations(DeleteMutilDto deleteDto)
+        public async Task<ApiResponse> DeleteRepairs(DeleteMutilDto deleteDto)
         {
-            var replairDeleteds = await MainUnitOfWork.RepairationRepository.FindAsync(
-                new Expression<Func<Repairation, bool>>[]
+            var replairDeleteds = await MainUnitOfWork.RepairRepository.FindAsync(
+                new Expression<Func<Repair, bool>>[]
                 {
                     x => !x.DeletedAt.HasValue,
                     x => deleteDto.ListId!.Contains(x.Id)
@@ -104,17 +126,17 @@ namespace API_FFMS.Services
 
             var repairs = replairDeleteds.Where(r => r != null).ToList();
 
-            if (!await _repairationRepository.DeleteRepairs(repairs, AccountId, CurrentDate))
+            if (!await _repairRepository.DeleteRepairs(repairs, AccountId, CurrentDate))
             {
                 throw new ApiException("Xóa thất bại", StatusCode.SERVER_ERROR);
             }
             return ApiResponse.Success();
         }
 
-        public async Task<ApiResponse<RepairationDto>> GetRepairation(Guid id)
+        public async Task<ApiResponse<RepairDto>> GetRepair(Guid id)
         {
-            var repairation = await MainUnitOfWork.RepairationRepository.FindOneAsync<RepairationDto>(
-                new Expression<Func<Repairation, bool>>[]
+            var repairation = await MainUnitOfWork.RepairRepository.FindOneAsync<RepairDto>(
+                new Expression<Func<Repair, bool>>[]
                 {
                     x => !x.DeletedAt.HasValue,
                     x => x.Id == id
@@ -162,14 +184,14 @@ namespace API_FFMS.Services
 
             repairation = await _mapperRepository.MapCreator(repairation);
 
-            return ApiResponse<RepairationDto>.Success(repairation);
+            return ApiResponse<RepairDto>.Success(repairation);
         }
 
-        public async Task<ApiResponses<RepairationDto>> GetRepairations(RepairationQueryDto queryDto)
+        public async Task<ApiResponses<RepairDto>> GetRepairs(RepairQueryDto queryDto)
         {
             var keyword = queryDto.Keyword?.Trim().ToLower();
 
-            var repairQuery = MainUnitOfWork.RepairationRepository.GetQuery()
+            var repairQuery = MainUnitOfWork.RepairRepository.GetQuery()
                               .Where(x => !x!.DeletedAt.HasValue);
 
             if (queryDto.IsInternal != null)
@@ -226,7 +248,7 @@ namespace API_FFMS.Services
 
             joinTable = joinTable.Skip(queryDto.Skip()).Take(queryDto.PageSize);
 
-            var repairations = await joinTable.Select(x => new RepairationDto
+            var repairations = await joinTable.Select(x => new RepairDto
             {
                 Id = x.Repairation.Id,
                 RequestCode = x.Repairation.RequestCode,
@@ -290,7 +312,7 @@ namespace API_FFMS.Services
 
             repairations = await _mapperRepository.MapCreator(repairations);
 
-            return ApiResponses<RepairationDto>.Success(
+            return ApiResponses<RepairDto>.Success(
                 repairations,
                 totalCount,
                 queryDto.PageSize,
@@ -300,7 +322,7 @@ namespace API_FFMS.Services
 
         public async Task<ApiResponse> Update(Guid id, BaseRequestUpdateDto updateDto)
         {
-            var existingRepair = await MainUnitOfWork.RepairationRepository.FindOneAsync(id);
+            var existingRepair = await MainUnitOfWork.RepairRepository.FindOneAsync(id);
             if (existingRepair == null)
             {
                 throw new ApiException("Không tìm thấy yêu cầu", StatusCode.NOT_FOUND);
@@ -315,7 +337,7 @@ namespace API_FFMS.Services
             existingRepair.Notes = updateDto.Notes ?? existingRepair.Notes;
             existingRepair.Priority = updateDto.Priority ?? existingRepair.Priority;
 
-            if (!await MainUnitOfWork.RepairationRepository.UpdateAsync(existingRepair, AccountId, CurrentDate))
+            if (!await MainUnitOfWork.RepairRepository.UpdateAsync(existingRepair, AccountId, CurrentDate))
             {
                 throw new ApiException("Cập nhật thông tin yêu cầu thất bại", StatusCode.SERVER_ERROR);
             }
@@ -325,7 +347,7 @@ namespace API_FFMS.Services
 
         public async Task<ApiResponse> UpdateStatus(Guid id, BaseUpdateStatusDto requestStatus)
         {
-            var existingRepair = MainUnitOfWork.RepairationRepository.GetQuery()
+            var existingRepair = MainUnitOfWork.RepairRepository.GetQuery()
                                     .Include(t => t!.Asset)
                                     .Where(t => t!.Id == id)
                                     .FirstOrDefault();
@@ -336,7 +358,7 @@ namespace API_FFMS.Services
 
             existingRepair.Status = requestStatus.Status ?? existingRepair.Status;
 
-            if (!await _repairationRepository.UpdateStatus(existingRepair, requestStatus.Status, AccountId, CurrentDate))
+            if (!await _repairRepository.UpdateStatus(existingRepair, requestStatus.Status, AccountId, CurrentDate))
             {
                 throw new ApiException("Cập nhật trạng thái yêu cầu thất bại", StatusCode.SERVER_ERROR);
             }
@@ -346,7 +368,7 @@ namespace API_FFMS.Services
 
         public string GenerateRequestCode()
         {
-            var requests = MainUnitOfWork.RepairationRepository.GetQueryAll().ToList();
+            var requests = MainUnitOfWork.RepairRepository.GetQueryAll().ToList();
 
             var numbers = new List<int>();
             foreach (var t in requests)

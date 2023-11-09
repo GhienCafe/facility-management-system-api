@@ -8,6 +8,7 @@ namespace API_FFMS.Repositories
     public interface IReplacementRepository
     {
         Task<bool> InsertReplacement(Replacement replacement, Guid? creatorId, DateTime? now = null);
+        Task<bool> InsertReplacementV2(Replacement replacement, List<MediaFile> mediaFiles, Guid? creatorId, DateTime? now = null);
         Task<bool> UpdateStatus(Replacement replacement, RequestStatus? statusUpdate, Guid? editorId, DateTime? now = null);
         Task<bool> DeleteReplacement(Replacement replacement, Guid? deleterId, DateTime? now = null);
         Task<bool> DeleteReplacements(List<Replacement?> replacements, Guid? deleterId, DateTime? now = null);
@@ -48,35 +49,61 @@ namespace API_FFMS.Repositories
                 var newAssetLocation = await _context.Rooms
                                 .FirstOrDefaultAsync(x => x.Id == roomAssetNew!.RoomId && roomAssetNew.AssetId == newAsset!.Id);
 
-                asset!.Status = AssetStatus.Operational;
-                asset.EditedAt = now.Value;
-                asset.EditorId = deleterId;
-                _context.Entry(asset).State = EntityState.Modified;
+                var notification = await _context.Notifications.FirstOrDefaultAsync(x => x.ItemId == replacement.Id);
+                if (notification != null)
+                {
+                    notification.DeletedAt = now.Value;
+                    notification.DeleterId = deleterId;
+                    _context.Entry(notification).State = EntityState.Modified;
+                }
 
-                newAsset!.Status = AssetStatus.Operational;
-                newAsset.EditedAt = now.Value;
-                newAsset.EditorId = deleterId;
-                _context.Entry(newAsset).State = EntityState.Modified;
+                if (asset != null)
+                {
+                    asset.Status = AssetStatus.Operational;
+                    asset.EditedAt = now.Value;
+                    asset.EditorId = deleterId;
+                    _context.Entry(asset).State = EntityState.Modified;
+                }
 
-                roomAsset!.Status = AssetStatus.Operational;
-                roomAsset.EditorId = deleterId;
-                roomAsset.EditedAt = now.Value;
-                _context.Entry(roomAsset).State = EntityState.Modified;
+                if (newAsset != null)
+                {
+                    newAsset.Status = AssetStatus.Operational;
+                    newAsset.EditedAt = now.Value;
+                    newAsset.EditorId = deleterId;
+                    _context.Entry(newAsset).State = EntityState.Modified;
+                }
 
-                roomAssetNew!.Status = AssetStatus.Operational;
-                roomAssetNew.EditorId = deleterId;
-                roomAssetNew.EditedAt = now.Value;
-                _context.Entry(roomAssetNew).State = EntityState.Modified;
+                if (roomAsset != null)
+                {
+                    roomAsset.Status = AssetStatus.Operational;
+                    roomAsset.EditorId = deleterId;
+                    roomAsset.EditedAt = now.Value;
+                    _context.Entry(roomAsset).State = EntityState.Modified;
+                }
 
-                assetLocation!.State = RoomState.Operational;
-                assetLocation.EditedAt = now.Value;
-                assetLocation.EditorId = deleterId;
-                _context.Entry(assetLocation).State = EntityState.Modified;
+                if (roomAssetNew != null)
+                {
+                    roomAssetNew.Status = AssetStatus.Operational;
+                    roomAssetNew.EditorId = deleterId;
+                    roomAssetNew.EditedAt = now.Value;
+                    _context.Entry(roomAssetNew).State = EntityState.Modified;
+                }
 
-                newAssetLocation!.State = RoomState.Operational;
-                newAssetLocation.EditedAt = now.Value;
-                newAssetLocation.EditorId = deleterId;
-                _context.Entry(newAssetLocation).State = EntityState.Modified;
+                if (assetLocation != null)
+                {
+                    assetLocation.State = RoomState.Operational;
+                    assetLocation.EditedAt = now.Value;
+                    assetLocation.EditorId = deleterId;
+                    _context.Entry(assetLocation).State = EntityState.Modified;
+                }
+
+                if (newAssetLocation != null)
+                {
+                    newAssetLocation.State = RoomState.Operational;
+                    newAssetLocation.EditedAt = now.Value;
+                    newAssetLocation.EditorId = deleterId;
+                    _context.Entry(newAssetLocation).State = EntityState.Modified;
+                }
 
                 await _context.SaveChangesAsync();
                 await _context.Database.CommitTransactionAsync();
@@ -118,35 +145,61 @@ namespace API_FFMS.Repositories
                     var newAssetLocation = await _context.Rooms
                                     .FirstOrDefaultAsync(x => x.Id == roomAssetNew!.RoomId && roomAssetNew.AssetId == newAsset!.Id);
 
-                    asset!.Status = AssetStatus.Operational;
-                    asset.EditedAt = now.Value;
-                    asset.EditorId = deleterId;
-                    _context.Entry(asset).State = EntityState.Modified;
+                    var notification = await _context.Notifications.FirstOrDefaultAsync(x => x.ItemId == replacement.Id);
+                    if (notification != null)
+                    {
+                        notification.DeletedAt = now.Value;
+                        notification.DeleterId = deleterId;
+                        _context.Entry(notification).State = EntityState.Modified;
+                    }
 
-                    newAsset!.Status = AssetStatus.Operational;
-                    newAsset.EditedAt = now.Value;
-                    newAsset.EditorId = deleterId;
-                    _context.Entry(newAsset).State = EntityState.Modified;
+                    if (asset != null)
+                    {
+                        asset.Status = AssetStatus.Operational;
+                        asset.EditedAt = now.Value;
+                        asset.EditorId = deleterId;
+                        _context.Entry(asset).State = EntityState.Modified;
+                    }
 
-                    roomAsset!.Status = AssetStatus.Operational;
-                    roomAsset.EditorId = deleterId;
-                    roomAsset.EditedAt = now.Value;
-                    _context.Entry(roomAsset).State = EntityState.Modified;
+                    if (newAsset != null)
+                    {
+                        newAsset.Status = AssetStatus.Operational;
+                        newAsset.EditedAt = now.Value;
+                        newAsset.EditorId = deleterId;
+                        _context.Entry(newAsset).State = EntityState.Modified;
+                    }
 
-                    roomAssetNew!.Status = AssetStatus.Operational;
-                    roomAssetNew.EditorId = deleterId;
-                    roomAssetNew.EditedAt = now.Value;
-                    _context.Entry(roomAssetNew).State = EntityState.Modified;
+                    if (roomAsset != null)
+                    {
+                        roomAsset.Status = AssetStatus.Operational;
+                        roomAsset.EditorId = deleterId;
+                        roomAsset.EditedAt = now.Value;
+                        _context.Entry(roomAsset).State = EntityState.Modified;
+                    }
 
-                    assetLocation!.State = RoomState.Operational;
-                    assetLocation.EditedAt = now.Value;
-                    assetLocation.EditorId = deleterId;
-                    _context.Entry(assetLocation).State = EntityState.Modified;
+                    if (roomAssetNew != null)
+                    {
+                        roomAssetNew.Status = AssetStatus.Operational;
+                        roomAssetNew.EditorId = deleterId;
+                        roomAssetNew.EditedAt = now.Value;
+                        _context.Entry(roomAssetNew).State = EntityState.Modified;
+                    }
 
-                    newAssetLocation!.State = RoomState.Operational;
-                    newAssetLocation.EditedAt = now.Value;
-                    newAssetLocation.EditorId = deleterId;
-                    _context.Entry(newAssetLocation).State = EntityState.Modified;
+                    if (assetLocation != null)
+                    {
+                        assetLocation.State = RoomState.Operational;
+                        assetLocation.EditedAt = now.Value;
+                        assetLocation.EditorId = deleterId;
+                        _context.Entry(assetLocation).State = EntityState.Modified;
+                    }
+
+                    if (newAssetLocation != null)
+                    {
+                        newAssetLocation.State = RoomState.Operational;
+                        newAssetLocation.EditedAt = now.Value;
+                        newAssetLocation.EditorId = deleterId;
+                        _context.Entry(newAssetLocation).State = EntityState.Modified;
+                    }
                 }
                 await _context.SaveChangesAsync();
                 await _context.Database.CommitTransactionAsync();
@@ -189,6 +242,63 @@ namespace API_FFMS.Repositories
                         UserId = replacement.AssignedTo
                     };
                     await _context.Notifications.AddAsync(notification);
+                }
+
+                await _context.SaveChangesAsync();
+                await _context.Database.CommitTransactionAsync();
+                return true;
+            }
+            catch
+            {
+                await _context.Database.RollbackTransactionAsync();
+                return false;
+            }
+        }
+
+        public async Task<bool> InsertReplacementV2(Replacement replacement, List<MediaFile> mediaFiles, Guid? creatorId, DateTime? now = null)
+        {
+            await _context.Database.BeginTransactionAsync();
+            now ??= DateTime.UtcNow;
+            try
+            {
+                replacement.Id = Guid.NewGuid();
+                replacement.CreatedAt = now.Value;
+                replacement.EditedAt = now.Value;
+                replacement.CreatorId = creatorId;
+                replacement.Status = RequestStatus.NotStart;
+                replacement.RequestDate = now.Value;
+                await _context.Replacements.AddAsync(replacement);
+
+                var notification = new Notification
+                {
+                    CreatedAt = now.Value,
+                    EditedAt = now.Value,
+                    Status = NotificationStatus.Waiting,
+                    Content = replacement.Description,
+                    Title = RequestType.Replacement.GetDisplayName(),
+                    Type = NotificationType.Task,
+                    CreatorId = creatorId,
+                    IsRead = false,
+                    ItemId = replacement.Id,
+                    UserId = replacement.AssignedTo
+                };
+                await _context.Notifications.AddAsync(notification);
+
+                foreach (var mediaFile in mediaFiles)
+                {
+                    var newMediaFile = new MediaFile
+                    {
+                        Id = Guid.NewGuid(),
+                        CreatedAt = now.Value,
+                        CreatorId = creatorId,
+                        EditedAt = now.Value,
+                        EditorId = creatorId,
+                        FileName = mediaFile.FileName,
+                        Uri = mediaFile.Uri,
+                        FileType = mediaFile.FileType,
+                        ItemId = replacement.Id
+                    };
+                    _context.MediaFiles.Add(newMediaFile);
                 }
 
                 await _context.SaveChangesAsync();

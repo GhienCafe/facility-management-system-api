@@ -1,4 +1,5 @@
 ﻿using AppCore.Extensions;
+using DocumentFormat.OpenXml.Vml.Office;
 using MainData;
 using MainData.Entities;
 using Microsoft.EntityFrameworkCore;
@@ -8,6 +9,7 @@ namespace API_FFMS.Repositories;
 public interface IMaintenanceRepository
 {
     Task<bool> InsertMaintenance(Maintenance maintenance, Guid? creatorId, DateTime? now = null);
+    Task<bool> InsertMaintenanceV2(Maintenance maintenance, List<MediaFile> mediaFiles, Guid? creatorId, DateTime? now = null);
     Task<bool> UpdateStatus(Maintenance maintenance, RequestStatus? statusUpdate, Guid? editorId, DateTime? now = null);
     Task<bool> InsertMaintenances(List<Maintenance> maintenances, Guid? creatorId, DateTime? now = null);
     Task<bool> DeleteMaintenances(List<Maintenance?> maintenances, Guid? deleterId, DateTime? now = null);
@@ -297,6 +299,14 @@ public class MaintenanceRepository : IMaintenanceRepository
                     .FirstOrDefaultAsync(x => x.AssetId == maintenance.AssetId && x.ToDate == null);
                 var location = await _context.Rooms.FirstOrDefaultAsync(x => x.Id == roomAsset!.RoomId && roomAsset.AssetId == asset!.Id);
 
+                var notification = await _context.Notifications.FirstOrDefaultAsync(x => x.ItemId == maintenance.Id);
+                if (notification != null)
+                {
+                    notification.DeletedAt = now.Value;
+                    notification.DeleterId = deleterId;
+                    _context.Entry(notification).State = EntityState.Modified;
+                }
+
                 if (asset != null)
                 {
                     asset.Status = AssetStatus.Operational;
@@ -349,6 +359,14 @@ public class MaintenanceRepository : IMaintenanceRepository
 
             var roomAsset = await _context.RoomAssets.FirstOrDefaultAsync(x => x.AssetId == asset!.Id && x.ToDate == null);
             var location = await _context.Rooms.FirstOrDefaultAsync(x => x.Id == roomAsset!.RoomId && roomAsset.AssetId == asset!.Id);
+            var notification = await _context.Notifications.FirstOrDefaultAsync(x => x.ItemId == maintenance.Id);
+
+            if(notification != null )
+            {
+                notification.DeletedAt = now.Value;
+                notification.DeleterId = deleterId;
+                _context.Entry(notification).State = EntityState.Modified;
+            }
 
             if (asset != null)
             {
@@ -388,5 +406,81 @@ public class MaintenanceRepository : IMaintenanceRepository
     {
         var wareHouse = _context.Rooms.FirstOrDefault(x => x.RoomName!.Trim().Equals(roomName.Trim()));
         return wareHouse;
+    }
+
+    public async Task<bool> InsertMaintenanceV2(Maintenance entity, List<MediaFile> mediaFiles, Guid? creatorId, DateTime? now = null)
+    {
+        await _context.Database.BeginTransactionAsync();
+        now ??= DateTime.UtcNow;
+        try
+        {
+            // Add maintenance
+            entity.Id = Guid.NewGuid();
+            entity.CreatedAt = now.Value;
+            entity.EditedAt = now.Value;
+            entity.CreatorId = creatorId;
+            entity.Status = RequestStatus.NotStart;
+            entity.RequestDate = now.Value;
+            await _context.Maintenances.AddAsync(entity);
+
+            // Update asset status
+            var asset = await _context.Assets.FindAsync(entity.AssetId);
+            asset!.Status = AssetStatus.Maintenance;
+            asset.EditedAt = now.Value;
+            _context.Entry(asset).State = EntityState.Modified;
+
+            // Update room & send notification
+            var roomAsset = await _context.RoomAssets
+                .FirstOrDefaultAsync(x => x.AssetId == entity.AssetId && x.ToDate == null);
+
+            if (roomAsset != null)
+            {
+                roomAsset!.Status = AssetStatus.Maintenance;
+                roomAsset.EditedAt = now.Value;
+                roomAsset.EditorId = creatorId;
+                _context.Entry(roomAsset).State = EntityState.Modified;
+            }
+
+            var notification = new Notification
+            {
+                CreatedAt = now.Value,
+                EditedAt = now.Value,
+                Status = NotificationStatus.Waiting,
+                Content = entity.Description,
+                Title = RequestType.Maintenance.GetDisplayName(),
+                Type = NotificationType.Task,
+                CreatorId = creatorId,
+                IsRead = false,
+                ItemId = entity.Id,
+                UserId = entity.AssignedTo
+            };
+            await _context.Notifications.AddAsync(notification);
+
+            foreach (var mediaFile in mediaFiles)
+            {
+                var newMediaFile = new MediaFile
+                {
+                    Id = Guid.NewGuid(),
+                    CreatedAt = now.Value,
+                    CreatorId = creatorId,
+                    EditedAt = now.Value,
+                    EditorId = creatorId,
+                    FileName = mediaFile.FileName,
+                    Uri = mediaFile.Uri,
+                    FileType = mediaFile.FileType,
+                    ItemId = entity.Id
+                };
+                _context.MediaFiles.Add(newMediaFile);
+            }
+
+            await _context.SaveChangesAsync();
+            await _context.Database.CommitTransactionAsync();
+            return true;
+        }
+        catch
+        {
+            await _context.Database.RollbackTransactionAsync();
+            return false;
+        }
     }
 }

@@ -32,32 +32,54 @@ namespace API_FFMS.Services
 
         public async Task<ApiResponse> Create(ReplaceCreateDto createDto)
         {
-            var asset = await MainUnitOfWork.AssetRepository.FindOneAsync(createDto.AssetId);
-            if (asset == null)
+            try
             {
-                throw new ApiException("Không tìm thấy trang thiết bị cần thay thế", StatusCode.NOT_FOUND);
-            }
+                var asset = await MainUnitOfWork.AssetRepository.FindOneAsync(createDto.AssetId);
+                if (asset == null)
+                {
+                    throw new ApiException("Không tìm thấy trang thiết bị cần thay thế", StatusCode.NOT_FOUND);
+                }
 
-            var newAsset = await MainUnitOfWork.AssetRepository.FindOneAsync(createDto.NewAssetId);
-            if (newAsset == null)
+                var newAsset = await MainUnitOfWork.AssetRepository.FindOneAsync(createDto.NewAssetId);
+                if (newAsset == null)
+                {
+                    throw new ApiException("Không tìm thấy trang thiết bị để thay thế", StatusCode.NOT_FOUND);
+                }
+
+                if (newAsset.Status != AssetStatus.Operational)
+                {
+                    throw new ApiException("Trang thiết bị cần thay thế đang trong một yêu cầu khác", StatusCode.BAD_REQUEST);
+                }
+
+                var replacement = createDto.ProjectTo<ReplaceCreateDto, Replacement>();
+                replacement.RequestCode = GenerateRequestCode();
+
+                var mediaFiles = new List<MediaFile>();
+                if (createDto.RelatedFile != null)
+                {
+                    foreach (var uri in createDto.RelatedFile.Uri!)
+                    {
+                        var newMediaFile = new MediaFile
+                        {
+                            FileName = createDto.RelatedFile.FileName!,
+                            Uri = uri,
+                            FileType = createDto.RelatedFile.FileType!
+                        };
+                        mediaFiles.Add(newMediaFile);
+                    }
+                }
+
+                if (!await _repository.InsertReplacementV2(replacement, mediaFiles, AccountId, CurrentDate))
+                {
+                    throw new ApiException("Tạo yêu cầu thất bại", StatusCode.SERVER_ERROR);
+                }
+
+                return ApiResponse.Created("Gửi yêu cầu thành công");
+            }
+            catch (Exception ex)
             {
-                throw new ApiException("Không tìm thấy trang thiết bị để thay thế", StatusCode.NOT_FOUND);
+                throw new Exception(ex.Message);
             }
-
-            if (newAsset.Status != AssetStatus.Operational)
-            {
-                throw new ApiException("Trang thiết bị cần thay thế đang trong một yêu cầu khác", StatusCode.BAD_REQUEST);
-            }
-
-            var replacement = createDto.ProjectTo<ReplaceCreateDto, Replacement>();
-            replacement.RequestCode = GenerateRequestCode();
-
-            if (!await _repository.InsertReplacement(replacement, AccountId, CurrentDate))
-            {
-                throw new ApiException("Tạo yêu cầu thất bại", StatusCode.SERVER_ERROR);
-            }
-
-            return ApiResponse.Created("Gửi yêu cầu thành công");
         }
 
         public async Task<ApiResponse> Delete(Guid id)
@@ -121,7 +143,7 @@ namespace API_FFMS.Services
                     x => !x.DeletedAt.HasValue,
                     x => x.Id == replacement.AssetId
                 });
-            if(replacement.Asset != null)
+            if (replacement.Asset != null)
             {
                 var location = await MainUnitOfWork.RoomAssetRepository.FindOneAsync<RoomAsset>(
                     new Expression<Func<RoomAsset, bool>>[]

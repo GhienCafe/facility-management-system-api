@@ -11,6 +11,7 @@ public interface ITransportationRepository
     Task<bool> UpdateStatus(Transportation transportation, RequestStatus? statusUpdate, Guid? editorId, DateTime? now = null);
     Task<bool> DeleteTransport(Transportation transportation, Guid? deleterId, DateTime? now = null);
     Task<bool> DeleteTransports(List<Transportation?> transportations, Guid? deleterId, DateTime? now = null);
+    Task<bool> InsertTransportationV2(Transportation transportation, List<Asset?> assets, List<MediaFile> mediaFiles, Guid? creatorId, DateTime? now = null);
 }
 public class TransportationRepository : ITransportationRepository
 {
@@ -38,6 +39,15 @@ public class TransportationRepository : ITransportationRepository
                         .ToListAsync();
 
             var toRoom = await _context.Rooms.FindAsync(transportation.ToRoomId);
+
+            var notification = await _context.Notifications.FirstOrDefaultAsync(x => x.ItemId == transportation.Id);
+            if (notification != null)
+            {
+                notification.DeletedAt = now.Value;
+                notification.DeleterId = deleterId;
+                _context.Entry(notification).State = EntityState.Modified;
+            }
+
             foreach (var asset in assets)
             {
                 var roomAsset = await _context.RoomAssets.FirstOrDefaultAsync(x => x.AssetId == asset.Id && x.ToDate == null);
@@ -110,6 +120,14 @@ public class TransportationRepository : ITransportationRepository
                 var roomAssetQuery = _context.RoomAssets.Where(ra => assetIds!.Contains(ra.AssetId) && ra.ToDate == null);
                 var fromRoomIds = await roomAssetQuery.Select(ra => ra.RoomId).ToListAsync();
                 var rooms = await _context.Rooms.Where(room => fromRoomIds.Contains(room.Id)).ToListAsync();
+
+                var notification = await _context.Notifications.FirstOrDefaultAsync(x => x.ItemId == transportation.Id);
+                if (notification != null)
+                {
+                    notification.DeletedAt = now.Value;
+                    notification.DeleterId = deleterId;
+                    _context.Entry(notification).State = EntityState.Modified;
+                }
 
                 foreach (var asset in assets)
                 {
@@ -193,6 +211,79 @@ public class TransportationRepository : ITransportationRepository
                     UserId = transportation.AssignedTo
                 };
                 await _context.Notifications.AddAsync(notification);
+            }
+
+            await _context.SaveChangesAsync();
+            await _context.Database.CommitTransactionAsync();
+            return true;
+        }
+        catch
+        {
+            await _context.Database.RollbackTransactionAsync();
+            return false;
+        }
+    }
+
+    public async Task<bool> InsertTransportationV2(Transportation transportation, List<Asset?> assets, List<MediaFile> mediaFiles, Guid? creatorId, DateTime? now = null)
+    {
+        await _context.Database.BeginTransactionAsync();
+        now ??= DateTime.UtcNow;
+        try
+        {
+            transportation.Id = Guid.NewGuid();
+            transportation.CreatedAt = now.Value;
+            transportation.EditedAt = now.Value;
+            transportation.CreatorId = creatorId;
+            transportation.Status = RequestStatus.NotStart;
+            transportation.RequestDate = now.Value;
+            await _context.Transportations.AddAsync(transportation);
+
+            foreach (var asset in assets)
+            {
+                var transpsortDetail = new TransportationDetail
+                {
+                    Id = Guid.NewGuid(),
+                    AssetId = asset!.Id,
+                    TransportationId = transportation.Id,
+                    RequestDate = now.Value,
+                    Quantity = transportation.Quantity,
+                    CreatorId = creatorId,
+                    CreatedAt = now.Value,
+                    EditedAt = now.Value
+                };
+                await _context.TransportationDetails.AddAsync(transpsortDetail);
+            }
+
+            var notification = new Notification
+            {
+                CreatedAt = now.Value,
+                EditedAt = now.Value,
+                Status = NotificationStatus.Waiting,
+                Content = transportation.Description,
+                Title = RequestType.Maintenance.GetDisplayName(),
+                Type = NotificationType.Task,
+                CreatorId = creatorId,
+                IsRead = false,
+                ItemId = transportation.Id,
+                UserId = transportation.AssignedTo
+            };
+            await _context.Notifications.AddAsync(notification);
+
+            foreach (var mediaFile in mediaFiles)
+            {
+                var newMediaFile = new MediaFile
+                {
+                    Id = Guid.NewGuid(),
+                    CreatedAt = now.Value,
+                    CreatorId = creatorId,
+                    EditedAt = now.Value,
+                    EditorId = creatorId,
+                    FileName = mediaFile.FileName,
+                    Uri = mediaFile.Uri,
+                    FileType = mediaFile.FileType,
+                    ItemId = transportation.Id
+                };
+                _context.MediaFiles.Add(newMediaFile);
             }
 
             await _context.SaveChangesAsync();

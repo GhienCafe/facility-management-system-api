@@ -95,6 +95,5 @@ public class RoomConfig : IEntityTypeConfiguration<Room>
         builder.HasMany(x => x.Transportations)
             .WithOne(x => x.ToRoom)
             .HasForeignKey(x => x.ToRoomId);
-        
     }
 }

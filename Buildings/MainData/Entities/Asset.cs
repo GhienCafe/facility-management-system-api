@@ -32,7 +32,7 @@ public class Asset : BaseEntity
     public virtual IEnumerable<Maintenance>? Maintenances { get; set; }
     public virtual IEnumerable<Replacement>? Replacements { get; set; }
     public virtual ICollection<TransportationDetail>? TransportationDetails { get; set; }
-    public virtual IEnumerable<Repairation>? Repairations { get; set; }
+    public virtual IEnumerable<Repair>? Repairations { get; set; }
     public virtual IEnumerable<AssetCheck>? AssetChecks { get; set; }
     public virtual IEnumerable<InventoryCheckDetail>? InventoryCheckDetails { get; set; }
 }

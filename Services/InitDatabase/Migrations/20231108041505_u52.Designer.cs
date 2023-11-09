@@ -4,6 +4,7 @@ using MainData;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace InitDatabase.Migrations
 {
     [DbContext(typeof(DatabaseContext))]
-    partial class DatabaseContextModelSnapshot : ModelSnapshot
+    [Migration("20231108041505_u52")]
+    partial class u52
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -551,6 +554,8 @@ namespace InitDatabase.Migrations
 
                     b.HasIndex("InventoryCheckConfigId");
 
+                    b.HasIndex("RoomId");
+
                     b.ToTable("InventoryChecks", (string)null);
                 });
 
@@ -583,9 +588,6 @@ namespace InitDatabase.Migrations
 
                     b.Property<Guid?>("EditorId")
                         .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime?>("LastCheckedDate")
-                        .HasColumnType("datetime");
 
                     b.HasKey("Id");
 
@@ -1699,9 +1701,17 @@ namespace InitDatabase.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("MainData.Entities.Room", "Room")
+                        .WithMany("InventoryChecks")
+                        .HasForeignKey("RoomId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.Navigation("Asset");
 
                     b.Navigation("InventoryCheckConfig");
+
+                    b.Navigation("Room");
 
                     b.Navigation("User");
                 });
@@ -2033,6 +2043,8 @@ namespace InitDatabase.Migrations
 
             modelBuilder.Entity("MainData.Entities.Room", b =>
                 {
+                    b.Navigation("InventoryChecks");
+
                     b.Navigation("RoomAssets");
 
                     b.Navigation("Transportations");

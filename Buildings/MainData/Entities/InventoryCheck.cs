@@ -7,7 +7,8 @@ public class InventoryCheck : BaseRequest
 {
     //Relationship
     public Guid InventoryCheckConfigId { get; set; }
-    
+    public Guid RoomId { get; set; }
+
     public InventoryCheckConfig? InventoryCheckConfig { get; set; }
     public IEnumerable<InventoryCheckDetail>? InventoryCheckDetails { get; set; }
 }
@@ -18,6 +19,7 @@ public class InventoryCheckDbConfig : IEntityTypeConfiguration<InventoryCheck>
     {
         builder.ToTable("InventoryChecks");
         builder.Property(x => x.InventoryCheckConfigId).IsRequired();
+        builder.Property(x => x.RoomId).IsRequired();
 
         //Relationship
 
@@ -36,6 +38,6 @@ public class InventoryCheckDbConfig : IEntityTypeConfiguration<InventoryCheck>
 
         builder.HasMany(x => x.MediaFiles)
             .WithOne(x => x.InventoryCheck)
-            .HasForeignKey(i => i.MaintenanceId);
+            .HasForeignKey(i => i.InventoryCheckId);
     }
 }
