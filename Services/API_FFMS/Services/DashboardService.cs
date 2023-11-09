@@ -1,14 +1,17 @@
 ﻿using API_FFMS.Dtos;
+using AppCore.Extensions;
 using AppCore.Models;
 using MainData;
 using MainData.Entities;
 using MainData.Repositories;
+using Microsoft.EntityFrameworkCore;
 
 namespace API_FFMS.Services;
 
 public interface IDashboardService : IBaseService
 {
     public Task<ApiResponse<DashboardDto>> GetInformation();
+    public Task<ApiResponse<IEnumerable<AssetDashBoardInformation>>> GetAssetStatusInformation();
 }
 
 public class DashboardService : BaseService, IDashboardService
@@ -61,5 +64,21 @@ public class DashboardService : BaseService, IDashboardService
         };
         await Task.CompletedTask;
         return ApiResponse<DashboardDto>.Success(dashboardDto);
+    }
+
+    public async Task<ApiResponse<IEnumerable<AssetDashBoardInformation>>> GetAssetStatusInformation()
+    {
+        var assetDashboardInfo = await MainUnitOfWork.AssetRepository.GetQuery()
+            .GroupBy(a => new { a!.Status })
+            .Select(g => new AssetDashBoardInformation
+            {
+                Status = g.Key.Status,
+                StatusObj = g.Key.Status.GetValue(),
+                Total = g.Count(),
+                PercentPerTotal = ((double)g.Count() / MainUnitOfWork.AssetRepository.GetQuery().Count()) * 100
+            })
+            .ToListAsync();
+
+        return ApiResponse<IEnumerable<AssetDashBoardInformation>>.Success(assetDashboardInfo);
     }
 }

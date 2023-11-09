@@ -13,6 +13,7 @@ public interface IVirtualizeService : IBaseService
 {
     Task<ApiResponse<VirtualizeFloorDto>> GetVirtualizeFloor(Guid floorId);
     Task<ApiResponse<IEnumerable<VirtualizeRoomDto>>> GetVirtualizeRoom(VirtualizeRoomQueryDto queryDto);
+    Task<ApiResponse<VirtualDashboard>> GetVirtualDashBoard();
 }
 public class VirtualizeService : BaseService, IVirtualizeService
 {
@@ -137,5 +138,18 @@ public class VirtualizeService : BaseService, IVirtualizeService
         var queryResult = await result.ToListAsync();
 
         return ApiResponse<IEnumerable<VirtualizeRoomDto>>.Success(queryResult);
+    }
+
+    public async Task<ApiResponse<VirtualDashboard>> GetVirtualDashBoard()
+    {
+        var virtualDashboard = new VirtualDashboard();
+
+        virtualDashboard.TotalAsset = await MainUnitOfWork.AssetRepository.CountAsync(null);
+        virtualDashboard.TotalFloor = await MainUnitOfWork.FloorRepository.CountAsync(null);
+        virtualDashboard.TotalRoom = await MainUnitOfWork.RoomRepository.CountAsync(null);
+        virtualDashboard.TotalAssetType = await MainUnitOfWork.AssetTypeRepository.CountAsync(null);
+        virtualDashboard.TotalUser = await MainUnitOfWork.UserRepository.CountAsync(null);
+        
+        return ApiResponse<VirtualDashboard>.Success(virtualDashboard);
     }
 }
