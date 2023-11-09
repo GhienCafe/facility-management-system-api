@@ -50,9 +50,9 @@ public class VirtualizeQueryDto : BaseQueryDto
 
 public class VirtualDashboard
 {
-    public int TotalBuilding { get; set; }
+    public int TotalFloor { get; set; }
     public int TotalRoom { get; set; }
     public int TotalUser { get; set; }
     public int TotalAsset { get; set; }
-    
+    public int TotalAssetType { get; set; }
 }
