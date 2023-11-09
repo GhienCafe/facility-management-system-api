@@ -914,7 +914,7 @@ public class AssetService : BaseService, IAssetService
                      : asset.StartDateOfUse.Value.AddMonths((int)model.MaintenancePeriodTime)) : null 
              });
 
-         maintenanceItems = maintenanceItems.Where(x => x.NextMaintenanceDate >= CurrentDate);
+         maintenanceItems = maintenanceItems.Where(x => x.NextMaintenanceDate <= CurrentDate);
 
          if (!string.IsNullOrEmpty(keyword))
          {

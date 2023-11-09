@@ -1,4 +1,5 @@
-﻿using MainData.Entities;
+﻿using AppCore.Models;
+using MainData.Entities;
 
 namespace API_FFMS.Dtos;
 
@@ -30,6 +31,10 @@ public class AssetTypeDashboardDto
     public Double NeedInspection { get; set; }
 }
 
-public class DashboardQueryDto : BaseRequestQueryDto
+public class AssetDashBoardInformation
 {
-}
+    public AssetStatus? Status { get; set; }
+    public EnumValue? StatusObj { get; set; }
+    public int Total { get; set; } 
+    public double PercentPerTotal { get; set; } 
+}  
