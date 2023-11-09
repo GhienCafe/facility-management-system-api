@@ -24,8 +24,8 @@ public class InventoryCheckDto : BaseDto
     public string? Description { get; set; }
     public string? Notes { get; set; }
     public bool? IsInternal { get; set; }
-    public Guid? RoomId { get; set; }
-    public Guid? AssignedToId { get; set; }
+    public Guid RoomId { get; set; }
+    public Guid? AssignedTo { get; set; }
 
     [JsonConverter(typeof(LocalTimeZoneDateTimeConverter))]
     public DateTime? Checkin { get; set; }
@@ -33,27 +33,60 @@ public class InventoryCheckDto : BaseDto
     [JsonConverter(typeof(LocalTimeZoneDateTimeConverter))]
     public DateTime? Checkout { get; set; }
 
-    public List<AssetInventoryCheck>? Assets { get; set; }
-    public RoomBaseDto? Room { get; set; }
+    public AssetInventoryCheck? AssetLocations { get; set; }
+    //public RoomBaseDto? Room { get; set; }
     public MediaFileDto? MediaFile { get; set; }
-    public UserBaseDto? AssignedTo { get; set; }
+    public AssignedInventoryCheckDto? Staff { get; set; }
 }
 
 public class AssetInventoryCheck
 {
+    public RoomInventoryCheckDto? Room { get; set; }
+    public List<AssetInventoryCheckDto>? Assets { get; set; }
+}
+
+public class AssetInventoryCheckDto
+{
+    public Guid Id { get; set; }
     public string? AssetName { get; set; }
     public string? AssetCode { get; set; }
+    //public double? Quantity { get; set; }
     public AssetStatus? Status { get; set; }
     public EnumValue? StatusObj { get; set; }
-    public int? Quantity { get; set; }
 }
+
+public class RoomInventoryCheckDto
+{
+    public Guid? Id { get; set; }
+    public string? RoomName { get; set; }
+    public double? Area { get; set; }
+    public string? RoomCode { get; set; }
+    public Guid FloorId { get; set; }
+    public Guid StatusId { get; set; }
+}
+
+public class AssignedInventoryCheckDto
+{
+    public Guid Id { get; set; }
+    public string? UserCode { get; set; }
+    public string? Fullname { get; set; }
+    public string? Avatar { get; set; }
+    public string? Email { get; set; }
+    public string? PhoneNumber { get; set; }
+    public string? Address { get; set; }
+    public string? PersonalIdentifyNumber { get; set; }
+    public UserRole? Role { get; set; }
+    public EnumValue? RoleObj { get; set; }
+}
+
+
 
 public class InventoryCheckQueryDto : BaseRequestQueryDto { }
 
 public class InventoryCheckCreateDto
 {
     public required Guid InventoryCheckConfigId { get; set; }
-    public required List<Guid> AssetIds { get; set; }
+    //public required List<Guid> AssetIds { get; set; }
     public string? Description { get; set; }
     public string? Notes { get; set; }
     public bool IsInternal { get; set; }
