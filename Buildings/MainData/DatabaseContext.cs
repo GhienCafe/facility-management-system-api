@@ -45,6 +45,9 @@ public class DatabaseContext : DbContext
     public DbSet<InventoryCheckDetail> InventoryCheckDetails { get; set; }
     public DbSet<InventoryCheckConfig> InventoryCheckConfigs { get; set; }
 
+    
+    // ***** VIEW ***** //
+   // public DbSet<TaskView> Tasks { get; set; }
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         //modelBuilder.ApplyConfigurationsFromAssembly(typeof(DatabaseContext).Assembly);

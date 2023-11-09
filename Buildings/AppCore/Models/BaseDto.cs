@@ -10,7 +10,9 @@ public class BaseQueryDto
     public DateTime? CreateAtFrom { get; set; }
     public DateTime? CreateAtTo { get; set; }
 
-    private const int MaxPageCount = 100;
+    private const int MaxPageCount = 10000;
+    
+   // private const int DefaultPageSize = 50;
 
     private int _pageCount = MaxPageCount;
     public int Page { get; set; } = 1;

@@ -29,4 +29,11 @@ public class VirtualizeController : BaseController
         return await _service.GetVirtualizeRoom(queryDto);
     }
     
+    [HttpGet("virtualize-dashboard")]
+    [SwaggerOperation("Get dashboard information")]
+    public async Task<ApiResponse<VirtualDashboard>> GetVirtualizeDashboard()
+    {
+        return await _service.GetVirtualDashBoard();
+    }
+
 }
