@@ -218,6 +218,11 @@ public class RepairRepository : IRepairRepository
                     asset.EditorId = editorId;
                     _context.Entry(asset).State = EntityState.Modified;
 
+                    roomAsset!.Status = AssetStatus.Operational;
+                    roomAsset.EditedAt = now.Value;
+                    roomAsset.EditorId = editorId;
+                    _context.Entry(roomAsset).State = EntityState.Modified;
+
                     var addRoomAsset = new RoomAsset
                     {
                         FromDate = now.Value,
@@ -273,6 +278,14 @@ public class RepairRepository : IRepairRepository
 
             var roomAsset = await _context.RoomAssets.FirstOrDefaultAsync(x => x.AssetId == asset!.Id && x.ToDate == null);
             var location = await _context.Rooms.FirstOrDefaultAsync(x => x.Id == roomAsset!.RoomId && roomAsset.AssetId == asset!.Id);
+            
+            var notification = await _context.Notifications.FirstOrDefaultAsync(x => x.ItemId == repair.Id);
+            if (notification != null)
+            {
+                notification.DeletedAt = now.Value;
+                notification.DeleterId = deleterId;
+                _context.Entry(notification).State = EntityState.Modified;
+            }
 
             if (asset != null)
             {
@@ -330,6 +343,13 @@ public class RepairRepository : IRepairRepository
 
                     var roomAsset = await _context.RoomAssets.FirstOrDefaultAsync(x => x.AssetId == asset!.Id && x.ToDate == null);
                     var location = await _context.Rooms.FirstOrDefaultAsync(x => x.Id == roomAsset!.RoomId && roomAsset.AssetId == asset!.Id);
+                    var notification = await _context.Notifications.FirstOrDefaultAsync(x => x.ItemId == repair.Id);
+                    if (notification != null)
+                    {
+                        notification.DeletedAt = now.Value;
+                        notification.DeleterId = deleterId;
+                        _context.Entry(notification).State = EntityState.Modified;
+                    }
 
                     if (asset != null)
                     {

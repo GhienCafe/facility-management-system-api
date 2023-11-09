@@ -58,7 +58,8 @@ public class InventoryCheckRepository : IInventoryCheckRepository
                     InventoryCheckId = inventoryCheck.Id,
                     CreatorId = creatorId,
                     CreatedAt = now.Value,
-                    RoomId = inventoryCheck.RoomId
+                    RoomId = inventoryCheck.RoomId,
+                    Status = asset.Status
                 };
                 await _context.InventoryCheckDetails.AddAsync(inventoryCheckDetail);
             }

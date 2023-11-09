@@ -22,7 +22,7 @@ public class InventoryCheckDto : BaseDto
     public EnumValue? PriorityObj { get; set; }
     public string? Result { get; set; }
     public string? Description { get; set; }
-    public string? Notes { get; set; } // Results
+    public string? Notes { get; set; }
     public bool? IsInternal { get; set; }
     public Guid? RoomId { get; set; }
     public Guid? AssignedToId { get; set; }
@@ -75,6 +75,12 @@ public class InventoryCheckConfigCreateDto
 {
     public int? CheckPeriod { get; set; }
     public string? Description { get; set; }
+}
+
+public class NextInventoryCheckDto
+{
+    [JsonConverter(typeof(LocalTimeZoneDateTimeConverter))]
+    public DateTime? NextInventoryCheck { get; set; }
 }
 
 public class InventoryCheckConfigUpdateDto

@@ -8,6 +8,7 @@ public class InventoryCheckConfig : BaseEntity
 {
     public int CheckPeriod { get; set; }
     public string? Description { get; set; }
+    public DateTime? LastCheckedDate { get; set; }
     
     //Relationship
     public IEnumerable<InventoryCheck>? InventoryChecks { get; set; }
@@ -20,6 +21,7 @@ public class InventoryCheckConfigConfig : IEntityTypeConfiguration<InventoryChec
         builder.ToTable("InventoryCheckConfigs");
         builder.Property(x => x.CheckPeriod).IsRequired();
         builder.Property(x => x.Description).IsRequired(false);
+        builder.Property(x => x.LastCheckedDate).HasColumnType("datetime").IsRequired(false);
 
         //Relationship
 

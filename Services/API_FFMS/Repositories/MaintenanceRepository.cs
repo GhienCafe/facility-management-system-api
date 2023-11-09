@@ -299,6 +299,14 @@ public class MaintenanceRepository : IMaintenanceRepository
                     .FirstOrDefaultAsync(x => x.AssetId == maintenance.AssetId && x.ToDate == null);
                 var location = await _context.Rooms.FirstOrDefaultAsync(x => x.Id == roomAsset!.RoomId && roomAsset.AssetId == asset!.Id);
 
+                var notification = await _context.Notifications.FirstOrDefaultAsync(x => x.ItemId == maintenance.Id);
+                if (notification != null)
+                {
+                    notification.DeletedAt = now.Value;
+                    notification.DeleterId = deleterId;
+                    _context.Entry(notification).State = EntityState.Modified;
+                }
+
                 if (asset != null)
                 {
                     asset.Status = AssetStatus.Operational;
@@ -351,6 +359,14 @@ public class MaintenanceRepository : IMaintenanceRepository
 
             var roomAsset = await _context.RoomAssets.FirstOrDefaultAsync(x => x.AssetId == asset!.Id && x.ToDate == null);
             var location = await _context.Rooms.FirstOrDefaultAsync(x => x.Id == roomAsset!.RoomId && roomAsset.AssetId == asset!.Id);
+            var notification = await _context.Notifications.FirstOrDefaultAsync(x => x.ItemId == maintenance.Id);
+
+            if(notification != null )
+            {
+                notification.DeletedAt = now.Value;
+                notification.DeleterId = deleterId;
+                _context.Entry(notification).State = EntityState.Modified;
+            }
 
             if (asset != null)
             {
