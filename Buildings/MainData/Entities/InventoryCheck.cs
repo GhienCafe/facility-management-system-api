@@ -9,7 +9,6 @@ public class InventoryCheck : BaseRequest
     public Guid InventoryCheckConfigId { get; set; }
     public Guid RoomId { get; set; }
 
-    public virtual Room? Room { get; set; }
     public InventoryCheckConfig? InventoryCheckConfig { get; set; }
     public IEnumerable<InventoryCheckDetail>? InventoryCheckDetails { get; set; }
 }
@@ -40,9 +39,5 @@ public class InventoryCheckDbConfig : IEntityTypeConfiguration<InventoryCheck>
         builder.HasMany(x => x.MediaFiles)
             .WithOne(x => x.InventoryCheck)
             .HasForeignKey(i => i.InventoryCheckId);
-
-        builder.HasOne(x => x.Room)
-            .WithMany(x => x.InventoryChecks)
-            .HasForeignKey(x => x.RoomId);
     }
 }
