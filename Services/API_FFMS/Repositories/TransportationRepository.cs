@@ -39,6 +39,15 @@ public class TransportationRepository : ITransportationRepository
                         .ToListAsync();
 
             var toRoom = await _context.Rooms.FindAsync(transportation.ToRoomId);
+
+            var notification = await _context.Notifications.FirstOrDefaultAsync(x => x.ItemId == transportation.Id);
+            if (notification != null)
+            {
+                notification.DeletedAt = now.Value;
+                notification.DeleterId = deleterId;
+                _context.Entry(notification).State = EntityState.Modified;
+            }
+
             foreach (var asset in assets)
             {
                 var roomAsset = await _context.RoomAssets.FirstOrDefaultAsync(x => x.AssetId == asset.Id && x.ToDate == null);
@@ -111,6 +120,14 @@ public class TransportationRepository : ITransportationRepository
                 var roomAssetQuery = _context.RoomAssets.Where(ra => assetIds!.Contains(ra.AssetId) && ra.ToDate == null);
                 var fromRoomIds = await roomAssetQuery.Select(ra => ra.RoomId).ToListAsync();
                 var rooms = await _context.Rooms.Where(room => fromRoomIds.Contains(room.Id)).ToListAsync();
+
+                var notification = await _context.Notifications.FirstOrDefaultAsync(x => x.ItemId == transportation.Id);
+                if (notification != null)
+                {
+                    notification.DeletedAt = now.Value;
+                    notification.DeleterId = deleterId;
+                    _context.Entry(notification).State = EntityState.Modified;
+                }
 
                 foreach (var asset in assets)
                 {

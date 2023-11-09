@@ -1,6 +1,8 @@
 ﻿using API_FFMS.Dtos;
 using AppCore.Extensions;
 using AppCore.Models;
+using DocumentFormat.OpenXml.Spreadsheet;
+using FirebaseAdmin.Messaging;
 using MainData;
 using MainData.Entities;
 using MainData.Repositories;
@@ -11,6 +13,7 @@ public interface IInventoryCheckConfigService : IBaseService
 {
     Task<ApiResponse> Create(InventoryCheckConfigCreateDto createDto);
     Task<ApiResponse<InventoryCheckConfigDto>> GetConfig(Guid id);
+    //Task<ApiResponse<NextInventoryCheckDto>> NotiConfig();
     Task<ApiResponses<InventoryCheckConfigDto>> GetConfigs(InventoryCheckConfigQueryDto queryDto);
     Task<ApiResponse> Update(Guid id, InventoryCheckConfigUpdateDto updateDto);
     Task<ApiResponse> Delete(Guid id);
@@ -108,6 +111,46 @@ public class InventoryCheckConfigService : BaseService, IInventoryCheckConfigSer
             (int)Math.Ceiling(response.TotalCount / (double)queryDto.PageSize)
         );
     }
+
+    //public async Task<ApiResponse<NextInventoryCheckDto>> NotiConfig()
+    //{
+    //    var config = MainUnitOfWork.InventoryCheckConfigRepository.GetQuery();
+
+    //    var noti = config.Select(x => new NextInventoryCheckDto
+    //    {
+    //        NextInventoryCheck = x.CheckPeriod != null ?
+    //                            (x.LastCheckedDate != null ? x.LastCheckedDate.Value.AddMonths(x.CheckPeriod)
+    //                            : x.CreatedAt.AddMonths(x.CheckPeriod)) : null
+
+    //    });
+
+    //    var user = MainUnitOfWork.UserRepository.GetQuery().Where(x => x!.Role == UserRole.Manager).FirstOrDefault();
+
+
+    //    noti = noti.Where(x => x.NextInventoryCheck >= CurrentDate);
+
+    //    var notification = new MainData.Entities.Notification
+    //    {
+    //        CreatedAt = CurrentDate,
+    //        EditedAt = CurrentDate,
+    //        Status = NotificationStatus.Waiting,
+    //        Content = config.Select(x => x!.Description).FirstOrDefault(),
+    //        Title = RequestType.InventoryCheck.GetDisplayName(),
+    //        Type = NotificationType.System,
+    //        CreatorId = Guid.Empty,
+    //        IsRead = false,
+    //        ItemId = Guid.Empty,
+    //        UserId = user!.Id
+    //    };
+
+
+    //    if (!await MainUnitOfWork.NotificationRepository.InsertAsync(notification, AccountId, CurrentDate))
+    //    {
+    //        throw new ApiException("Server error for not insert notification", StatusCode.BAD_REQUEST);
+    //    }
+
+    //    return ApiResponse<NextInventoryCheckDto>.Success(notification);
+    //}
 
     public async Task<ApiResponse> Update(Guid id, InventoryCheckConfigUpdateDto updateDto)
     {

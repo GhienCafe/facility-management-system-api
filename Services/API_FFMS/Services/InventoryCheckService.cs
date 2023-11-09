@@ -253,13 +253,13 @@ public class InventoryCheckService : BaseService, IInventoryCheckService
             }).ToList(),
             Room = new RoomBaseDto
             {
-                Id = i.RoomId,
-                RoomCode = i.Room!.RoomCode,
-                RoomName = i.Room.RoomName,
-                StatusId = i.Room.StatusId,
-                FloorId = i.Room.FloorId,
-                CreatedAt = i.Room.CreatedAt,
-                EditedAt = i.Room.EditedAt
+                //Id = i.RoomId,
+                //RoomCode = i.Room!.RoomCode,
+                //RoomName = i.Room.RoomName,
+                //StatusId = i.Room.StatusId,
+                //FloorId = i.Room.FloorId,
+                //CreatedAt = i.Room.CreatedAt,
+                //EditedAt = i.Room.EditedAt
             },
             AssignedTo = new UserBaseDto
             {
