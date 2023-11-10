@@ -37,8 +37,6 @@ public class TaskDetailDto : BaseRequestDto
     //Asset check
     //public AssetBaseDto? Asset { get; set; }
     public RoomBaseDto? CurrentRoom { get; set; }
-
-    public List<AssetInventoryCheck>? AssetLocations { get; set; }
 }
 
 public class TaskQueryDto : BaseRequestQueryDto

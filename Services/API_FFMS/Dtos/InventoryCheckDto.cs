@@ -32,17 +32,16 @@ public class InventoryCheckDto : BaseDto
     [JsonConverter(typeof(LocalTimeZoneDateTimeConverter))]
     public DateTime? Checkout { get; set; }
 
-    public List<AssetInventoryCheck>? AssetLocations { get; set; }
+    public List<RoomInventoryCheckDto>? Rooms { get; set; }
     //public RoomBaseDto? Room { get; set; }
     public MediaFileDto? MediaFile { get; set; }
     public AssignedInventoryCheckDto? Staff { get; set; }
 }
 
-public class AssetInventoryCheck
-{
-    public RoomInventoryCheckDto? Room { get; set; }
-    public List<AssetInventoryCheckDto>? Assets { get; set; }
-}
+//public class RoomInventoryCheckDto
+//{
+//    public RoomInventoryCheckDto? Room { get; set; }
+//}
 
 public class AssetInventoryCheckDto
 {
@@ -62,6 +61,7 @@ public class RoomInventoryCheckDto
     public string? RoomCode { get; set; }
     public Guid FloorId { get; set; }
     public Guid StatusId { get; set; }
+    public List<AssetInventoryCheckDto>? Assets { get; set; }
 }
 
 public class AssignedInventoryCheckDto
