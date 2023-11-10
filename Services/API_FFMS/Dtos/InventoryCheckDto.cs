@@ -24,7 +24,6 @@ public class InventoryCheckDto : BaseDto
     public string? Description { get; set; }
     public string? Notes { get; set; }
     public bool? IsInternal { get; set; }
-    public Guid RoomId { get; set; }
     public Guid? AssignedTo { get; set; }
 
     [JsonConverter(typeof(LocalTimeZoneDateTimeConverter))]
@@ -33,7 +32,7 @@ public class InventoryCheckDto : BaseDto
     [JsonConverter(typeof(LocalTimeZoneDateTimeConverter))]
     public DateTime? Checkout { get; set; }
 
-    public AssetInventoryCheck? AssetLocations { get; set; }
+    public List<AssetInventoryCheck>? AssetLocations { get; set; }
     //public RoomBaseDto? Room { get; set; }
     public MediaFileDto? MediaFile { get; set; }
     public AssignedInventoryCheckDto? Staff { get; set; }
@@ -50,8 +49,8 @@ public class AssetInventoryCheckDto
     public Guid Id { get; set; }
     public string? AssetName { get; set; }
     public string? AssetCode { get; set; }
-    //public double? Quantity { get; set; }
-    public AssetStatus? Status { get; set; }
+    public double? Quantity { get; set; }
+    public AssetStatus Status { get; set; }
     public EnumValue? StatusObj { get; set; }
 }
 
@@ -89,24 +88,7 @@ public class InventoryCheckCreateDto
     public string? Notes { get; set; }
     public bool IsInternal { get; set; }
     public Priority Priority { get; set; } = Priority.Medium;
-
     public required Guid AssignedTo { get; set; }
-
-    public required Guid RoomId { get; set; }
-    //public MediaFileCreateDto? RelatedFile { get; set; }
-}
-
-public class InventoryCheckCreateV2Dto
-{
-    public required Guid InventoryCheckConfigId { get; set; }
-    //public required List<Guid> AssetIds { get; set; }
-    public string? Description { get; set; }
-    public string? Notes { get; set; }
-    public bool IsInternal { get; set; }
-    public Priority Priority { get; set; } = Priority.Medium;
-
-    public required Guid AssignedTo { get; set; }
-
     public required List<Guid> RoomIds { get; set; }
     //public MediaFileCreateDto? RelatedFile { get; set; }
 }

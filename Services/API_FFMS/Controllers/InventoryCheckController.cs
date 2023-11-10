@@ -22,13 +22,6 @@ public class InventoryCheckController : BaseController
         return await _inventoryCheckService.Create(createDto);
     }
 
-    [HttpPost("V2")]
-    [SwaggerOperation("Create new inventory check")]
-    public async Task<ApiResponse> CreateV2([FromBody] InventoryCheckCreateV2Dto createDto)
-    {
-        return await _inventoryCheckService.CreateV2(createDto);
-    }
-
     [HttpGet("{id:guid}")]
     [SwaggerOperation("Get a inventory check")]
     public async Task<ApiResponse<InventoryCheckDto>> GetInventoryCheck(Guid id)
