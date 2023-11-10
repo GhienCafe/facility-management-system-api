@@ -82,7 +82,7 @@ public class InventoryCheckQueryDto : BaseRequestQueryDto { }
 
 public class InventoryCheckCreateDto
 {
-    public required Guid InventoryCheckConfigId { get; set; }
+    public Guid? InventoryCheckConfigId { get; set; }
     //public required List<Guid> AssetIds { get; set; }
     public string? Description { get; set; }
     public string? Notes { get; set; }
