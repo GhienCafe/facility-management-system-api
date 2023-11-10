@@ -7,7 +7,6 @@ public class InventoryCheck : BaseRequest
 {
     //Relationship
     public Guid InventoryCheckConfigId { get; set; }
-    public Guid RoomId { get; set; }
 
     public InventoryCheckConfig? InventoryCheckConfig { get; set; }
     public IEnumerable<InventoryCheckDetail>? InventoryCheckDetails { get; set; }
@@ -19,7 +18,6 @@ public class InventoryCheckDbConfig : IEntityTypeConfiguration<InventoryCheck>
     {
         builder.ToTable("InventoryChecks");
         builder.Property(x => x.InventoryCheckConfigId).IsRequired();
-        builder.Property(x => x.RoomId).IsRequired();
 
         //Relationship
 
