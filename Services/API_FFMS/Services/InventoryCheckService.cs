@@ -12,6 +12,7 @@ namespace API_FFMS.Services;
 public interface IInventoryCheckService : IBaseService
 {
     Task<ApiResponse> Create(InventoryCheckCreateDto createDto);
+    Task<ApiResponse> CreateV2(InventoryCheckCreateV2Dto createDto);
     Task<ApiResponse<InventoryCheckDto>> GetInventoryCheck(Guid id);
     Task<ApiResponses<InventoryCheckDto>> GetInventoryChecks(InventoryCheckQueryDto queryDto);
     Task<ApiResponse> Update(Guid id, BaseRequestUpdateDto updateDto);
@@ -63,8 +64,7 @@ public class InventoryCheckService : BaseService, IInventoryCheckService
                 Notes = createDto.Notes,
                 Priority = createDto.Priority,
                 IsInternal = createDto.IsInternal,
-                AssignedTo = createDto.AssignedTo,
-                RoomId = createDto.RoomId
+                AssignedTo = createDto.AssignedTo
             };
 
             if (!await _repository.InsertInventoryCheck(inventoryCheck, assets, AccountId, CurrentDate))
@@ -75,6 +75,56 @@ public class InventoryCheckService : BaseService, IInventoryCheckService
             return ApiResponse.Created("Gửi yêu cầu thành công");
         }
         catch (Exception ex)
+        {
+            throw new Exception(ex.Message);
+        }
+    }
+
+    public async Task<ApiResponse> CreateV2(InventoryCheckCreateV2Dto createDto)
+    {
+        try
+        {
+            var rooms = await MainUnitOfWork.RoomRepository.FindAsync(
+                new Expression<Func<Room, bool>>[]
+                {
+                    x => !x.DeletedAt.HasValue,
+                    x => createDto.RoomIds.Contains(x.Id)
+                }, null);
+
+            var roomAssets = await MainUnitOfWork.RoomAssetRepository.FindAsync(
+                new Expression<Func<RoomAsset, bool>>[]
+                {
+                    x => !x.DeletedAt.HasValue,
+                    x => rooms.Select(r => r!.Id).Contains(x.RoomId),
+                    x => x.ToDate ==null
+                }, null);
+
+            var assets = await MainUnitOfWork.AssetRepository.FindAsync(
+                new Expression<Func<Asset, bool>>[]
+                {
+                    x => !x.DeletedAt.HasValue,
+                    x => roomAssets.Select(ra => ra!.AssetId).Contains(x.Id)
+                }, null);
+
+            var inventoryCheck = new InventoryCheck
+            {
+                InventoryCheckConfigId = createDto.InventoryCheckConfigId,
+                RequestCode = GenerateRequestCode(),
+                Description = createDto.Description,
+                Notes = createDto.Notes,
+                Priority = createDto.Priority,
+                IsInternal = createDto.IsInternal,
+                AssignedTo = createDto.AssignedTo
+            };
+
+            if (!await _repository.InsertInventoryCheckV2(inventoryCheck, rooms, AccountId, CurrentDate))
+            {
+                throw new ApiException("Tạo yêu cầu thất bại", StatusCode.SERVER_ERROR);
+            }
+
+            return ApiResponse.Created("Gửi yêu cầu thành công");
+        }
+        catch(Exception ex)
         {
             throw new Exception(ex.Message);
         }

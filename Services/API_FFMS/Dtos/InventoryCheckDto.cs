@@ -79,8 +79,6 @@ public class AssignedInventoryCheckDto
     public EnumValue? RoleObj { get; set; }
 }
 
-
-
 public class InventoryCheckQueryDto : BaseRequestQueryDto { }
 
 public class InventoryCheckCreateDto
@@ -95,6 +93,21 @@ public class InventoryCheckCreateDto
     public required Guid AssignedTo { get; set; }
 
     public required Guid RoomId { get; set; }
+    //public MediaFileCreateDto? RelatedFile { get; set; }
+}
+
+public class InventoryCheckCreateV2Dto
+{
+    public required Guid InventoryCheckConfigId { get; set; }
+    //public required List<Guid> AssetIds { get; set; }
+    public string? Description { get; set; }
+    public string? Notes { get; set; }
+    public bool IsInternal { get; set; }
+    public Priority Priority { get; set; } = Priority.Medium;
+
+    public required Guid AssignedTo { get; set; }
+
+    public required List<Guid> RoomIds { get; set; }
     //public MediaFileCreateDto? RelatedFile { get; set; }
 }
 
