@@ -49,7 +49,7 @@ public class InventoryCheckService : BaseService, IInventoryCheckService
                 {
                     x => !x.DeletedAt.HasValue,
                     x => rooms.Select(r => r!.Id).Contains(x.RoomId),
-                    x => x.ToDate ==null
+                    x => x.ToDate == null
                 }, null);
 
             var assets = await MainUnitOfWork.AssetRepository.FindAsync(
