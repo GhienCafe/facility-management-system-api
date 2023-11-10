@@ -557,11 +557,34 @@ public class TaskService : BaseService, ITaskService
                 Status = t.Status,
             });
 
+        var inventoryCheckTask = MainUnitOfWork.InventoryCheckRepository.GetQuery()
+            .Where(t => !t!.DeletedAt.HasValue && t.AssignedTo == AccountId)
+            .Select(t => new TaskBaseDto
+            {
+                Type = RequestType.InventoryCheck,
+                Id = t!.Id,
+                CreatorId = t.CreatorId ?? Guid.Empty,
+                EditorId = t.EditorId ?? Guid.Empty,
+                CreatedAt = t.CreatedAt,
+                EditedAt = t.EditedAt,
+                ToRoomId = null,
+                Quantity = null,
+                AssignedTo = t.AssignedTo,
+                CompletionDate = t.CompletionDate,
+                Description = t.Description,
+                IsInternal = t.IsInternal,
+                Notes = t.Notes,
+                RequestCode = t.RequestCode,
+                RequestDate = t.RequestDate,
+                Status = t.Status,
+            });
+
         // Concatenate the results from both tables
         var combinedTasks = transportationTasks.Union(maintenanceTasks)
                                                .Union(assetCheckTasks)
                                                .Union(replacementTasks)
-                                               .Union(repairationTasks);
+                                               .Union(repairationTasks)
+                                               .Union(inventoryCheckTask);
 
         combinedTasks = combinedTasks.Where(x => x.Status != RequestStatus.Cancelled);
 
