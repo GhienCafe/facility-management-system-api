@@ -127,17 +127,14 @@ public class InventoryCheckService : BaseService, IInventoryCheckService
                              .Where(room => distinctRoomIds.Contains(room!.Id))
                              .ToListAsync();
 
-            inventoryCheck.AssetLocations = distinctRoomIds.Select(roomId => new AssetInventoryCheck
+            inventoryCheck.Rooms = distinctRoomIds.Select(roomId => new RoomInventoryCheckDto
             {
-                Room = new RoomInventoryCheckDto
-                {
-                    Id = roomId,
-                    RoomName = rooms.FirstOrDefault(r => r!.Id == roomId)!.RoomName,
-                    Area = rooms.FirstOrDefault(r => r!.Id == roomId)!.Area,
-                    RoomCode = rooms.FirstOrDefault(r => r!.Id == roomId)!.RoomCode,
-                    FloorId = rooms.FirstOrDefault(r => r!.Id == roomId)!.FloorId,
-                    StatusId = rooms.FirstOrDefault(r => r!.Id == roomId)!.StatusId
-                },
+                Id = roomId,
+                RoomName = rooms.FirstOrDefault(r => r!.Id == roomId)!.RoomName,
+                Area = rooms.FirstOrDefault(r => r!.Id == roomId)!.Area,
+                RoomCode = rooms.FirstOrDefault(r => r!.Id == roomId)!.RoomCode,
+                FloorId = rooms.FirstOrDefault(r => r!.Id == roomId)!.FloorId,
+                StatusId = rooms.FirstOrDefault(r => r!.Id == roomId)!.StatusId,
                 Assets = inventoryCheckDetails
                     .Where(detail => detail!.RoomId == roomId)
                     .Select(detail => new AssetInventoryCheckDto
@@ -148,6 +145,7 @@ public class InventoryCheckService : BaseService, IInventoryCheckService
                         Status = detail.Status,
                         StatusObj = detail.Status.GetValue()
                     }).ToList()
+
             })
             .ToList();
 
@@ -241,19 +239,16 @@ public class InventoryCheckService : BaseService, IInventoryCheckService
                 PriorityObj = i.Priority.GetValue(),
                 Notes = i.Notes,
                 IsInternal = i.IsInternal,
-                AssetLocations = i.InventoryCheckDetails!
+                Rooms = i.InventoryCheckDetails!
                                     .GroupBy(x => x.RoomId)
-                                    .Select(group => new AssetInventoryCheck
+                                    .Select(group => new RoomInventoryCheckDto
                                     {
-                                        Room = new RoomInventoryCheckDto
-                                        {
-                                            Id = group.Key,
-                                            RoomName = roomQuery.FirstOrDefault(r => r!.Id == group.Key)!.RoomName,
-                                            Area = roomQuery.FirstOrDefault(r => r!.Id == group.Key)!.Area,
-                                            RoomCode = roomQuery.FirstOrDefault(r => r!.Id == group.Key)!.RoomCode,
-                                            FloorId = roomQuery.FirstOrDefault(r => r!.Id == group.Key)!.FloorId,
-                                            StatusId = roomQuery.FirstOrDefault(r => r!.Id == group.Key)!.StatusId
-                                        },
+                                        Id = group.Key,
+                                        RoomName = roomQuery.FirstOrDefault(r => r!.Id == group.Key)!.RoomName,
+                                        Area = roomQuery.FirstOrDefault(r => r!.Id == group.Key)!.Area,
+                                        RoomCode = roomQuery.FirstOrDefault(r => r!.Id == group.Key)!.RoomCode,
+                                        FloorId = roomQuery.FirstOrDefault(r => r!.Id == group.Key)!.FloorId,
+                                        StatusId = roomQuery.FirstOrDefault(r => r!.Id == group.Key)!.StatusId,
                                         Assets = group.Select(x => new AssetInventoryCheckDto
                                         {
                                             Id = roomAssetQuery.FirstOrDefault(ra => ra!.AssetId == x.AssetId && ra.RoomId == x.RoomId)!.AssetId,
