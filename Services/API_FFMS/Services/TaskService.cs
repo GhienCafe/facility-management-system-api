@@ -327,6 +327,7 @@ public class TaskService : BaseService, ITaskService
         if (inventoryCheckTask != null)
         {
             inventoryCheckTask.Type = RequestType.InventoryCheck;
+            inventoryCheckTask.TypeObj = inventoryCheckTask.Type.GetValue();
             inventoryCheckTask.PriorityObj = inventoryCheckTask.Priority.GetValue();
             inventoryCheckTask.StatusObj = inventoryCheckTask.Status.GetValue();
 
