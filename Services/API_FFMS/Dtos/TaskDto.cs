@@ -60,7 +60,7 @@ public class ReportCreateDto
 
 public class InventoryCheckReport
 {
-    public Guid RoomId { get; set; }
+    public Guid? RoomId { get; set; }
     public List<AssetInventoryCheckReport>? Assets { get; set; }
 
 }

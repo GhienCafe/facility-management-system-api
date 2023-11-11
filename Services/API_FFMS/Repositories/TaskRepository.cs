@@ -149,8 +149,7 @@ namespace API_FFMS.Repositories
                                 Uri = mediaFile.Uri,
                                 FileType = mediaFile.FileType,
                                 Content = mediaFile.Content,
-                                ItemId = assetCheck.Id,
-                                AssetCheckId = assetCheck.Id,
+                                ItemId = assetCheck.Id
                             };
                             _context.MediaFiles.Add(newMediaFile);
                         }
@@ -271,8 +270,7 @@ namespace API_FFMS.Repositories
                                     Uri = mediaFile.Uri,
                                     FileType = mediaFile.FileType,
                                     Content = mediaFile.Content,
-                                    ItemId = transportation.Id,
-                                    TransportationId = transportation.Id
+                                    ItemId = transportation.Id
                                 };
                                 _context.MediaFiles.Add(newMediaFile);
                             }
@@ -369,8 +367,7 @@ namespace API_FFMS.Repositories
                                 Uri = mediaFile.Uri,
                                 FileType = mediaFile.FileType,
                                 Content = mediaFile.Content,
-                                ItemId = repairation.Id,
-                                RepairId = repairation.Id
+                                ItemId = repairation.Id
                             };
                             _context.MediaFiles.Add(newMediaFile);
                         }
@@ -550,8 +547,7 @@ namespace API_FFMS.Repositories
                                 Uri = mediaFile.Uri,
                                 FileType = mediaFile.FileType,
                                 Content = mediaFile.Content,
-                                ItemId = replacement.Id,
-                                ReplacementId = replacement.Id
+                                ItemId = replacement.Id
                             };
                             _context.MediaFiles.Add(newMediaFile);
                         }
@@ -636,8 +632,7 @@ namespace API_FFMS.Repositories
                                 Uri = mediaFile.Uri,
                                 FileType = mediaFile.FileType,
                                 Content = mediaFile.Content,
-                                ItemId = maintenance.Id,
-                                MaintenanceId = maintenance.Id
+                                ItemId = maintenance.Id
                             };
                             _context.MediaFiles.Add(newMediaFile);
                         }
