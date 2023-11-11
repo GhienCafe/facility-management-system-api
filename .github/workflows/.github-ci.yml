@@ -48,4 +48,6 @@ jobs:
             -e CLIENT_EMAIL="${{ secrets.CLIENT_EMAIL }}" \
             -e ACCOUNT_EMAIL_SYSTEM="${{ secrets.ACCOUNT_EMAIL_SYSTEM }}" \
             -e PASSWORD_EMAIL_PRIVATE="${{ secrets.PASSWORD_EMAIL_PRIVATE }}" \
+            -e REDIS_CACHING_SERVER="${{ secrets.REDIS_CACHING_SERVER }}" \
+            -e REDIS_PWD="${{ secrets.REDIS_PWD }}" \
             ${{ secrets.REGISTRY }}/${{ secrets.DOCKER_IMAGE }}:latest
