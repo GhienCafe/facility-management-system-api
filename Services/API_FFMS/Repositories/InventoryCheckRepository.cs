@@ -1,12 +1,14 @@
 ﻿using AppCore.Extensions;
 using MainData;
 using MainData.Entities;
+using Microsoft.EntityFrameworkCore;
 
 namespace API_FFMS.Repositories;
 
 public interface IInventoryCheckRepository
 {
     Task<bool> InsertInventoryCheck(InventoryCheck inventoryCheck, List<Room?> rooms, Guid? creatorId, DateTime? now = null);
+    Task<bool> UpdateInventoryCheckStatus(InventoryCheck inventoryCheck, RequestStatus? statusUpdate, Guid? editorId, DateTime? now = null);
 
     //Task<bool> UpdateMaintenanceScheduleConfig(MaintenanceScheduleConfig maintenanceScheduleConfig, IEnumerable<Asset>? oldData, IEnumerable<Asset>? newData, Guid? editorId, DateTime? now = null);
 }
@@ -87,6 +89,53 @@ public class InventoryCheckRepository : IInventoryCheckRepository
                 UserId = inventoryCheck.AssignedTo
             };
             await _context.Notifications.AddAsync(notification);
+
+            await _context.SaveChangesAsync();
+            await _context.Database.CommitTransactionAsync();
+            return true;
+        }
+        catch
+        {
+            await _context.Database.RollbackTransactionAsync();
+            return false;
+        }
+    }
+
+    public async Task<bool> UpdateInventoryCheckStatus(InventoryCheck inventoryCheck, RequestStatus? statusUpdate, Guid? editorId, DateTime? now = null)
+    {
+        await _context.Database.BeginTransactionAsync();
+        now ??= DateTime.UtcNow;
+        try
+        {
+            inventoryCheck.EditedAt = now.Value;
+            inventoryCheck.EditorId = editorId;
+            inventoryCheck.Status = statusUpdate;
+            _context.Entry(inventoryCheck).State = EntityState.Modified;
+
+            var inventoryCheckDetails = _context.InventoryCheckDetails
+                                            .Include(x => x.Asset)
+                                            .Where(x => x.InventoryCheckId == inventoryCheck.Id)
+                                            .ToList();
+
+            foreach (var detail in inventoryCheckDetails)
+            {
+                if (statusUpdate == RequestStatus.Done)
+                {
+                    var roomAsset = _context.RoomAssets
+                            .FirstOrDefault(x => x.AssetId == detail.AssetId && x.RoomId == detail.RoomId);
+
+                    if (roomAsset != null)
+                    {
+                        roomAsset.Quantity = detail.Quantity;
+                        roomAsset.Status = detail.Status;
+                        _context.Entry(roomAsset).State = EntityState.Modified;
+                    }
+                }
+                else if (statusUpdate == RequestStatus.Cancelled)
+                {
+
+                }
+            }
 
             await _context.SaveChangesAsync();
             await _context.Database.CommitTransactionAsync();

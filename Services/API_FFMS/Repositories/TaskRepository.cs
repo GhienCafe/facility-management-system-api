@@ -8,6 +8,7 @@ namespace API_FFMS.Repositories
     public interface ITaskRepository
     {
         Task<bool> UpdateStatus(List<MediaFile> mediaFiles, RequestStatus? statusUpdate, Guid? editorId, DateTime? now = null);
+        Task<bool> InventoryCheckReport(List<MediaFile> mediaFiles, List<InventoryCheckDetail>? inventoryCheckDetails, RequestStatus? statusUpdate, Guid? editorId, DateTime? now = null);
     }
     public class TaskRepository : ITaskRepository
     {
@@ -17,6 +18,80 @@ namespace API_FFMS.Repositories
         {
             _context = context;
         }
+
+        public async Task<bool> InventoryCheckReport(List<MediaFile> mediaFiles, List<InventoryCheckDetail>? inventoryCheckDetails, RequestStatus? statusUpdate, Guid? editorId, DateTime? now = null)
+        {
+            await _context.Database.BeginTransactionAsync();
+            now ??= DateTime.UtcNow;
+            try
+            {
+                var inventoryCheck = await _context.InventoryChecks
+                                        .Include(x => x.InventoryCheckDetails)
+                                        .FirstOrDefaultAsync(x => x.Id == mediaFiles.First().ItemId);
+                if (inventoryCheck != null)
+                {
+                    inventoryCheck.EditedAt = now.Value;
+                    inventoryCheck.EditorId = editorId;
+                    inventoryCheck.Status = statusUpdate;
+                    _context.Entry(inventoryCheck).State = EntityState.Modified;
+
+                    if (statusUpdate == RequestStatus.InProgress)
+                    {
+                        inventoryCheck.Checkin = now.Value;
+                        _context.Entry(inventoryCheck).State = EntityState.Modified;
+                    }
+                    else if (statusUpdate == RequestStatus.Reported)
+                    {
+                        if (inventoryCheckDetails != null)
+                        {
+                            foreach (var detail in inventoryCheckDetails)
+                            {
+                                var existingDetail = inventoryCheck.InventoryCheckDetails!
+                                        .FirstOrDefault(x => x.AssetId == detail.AssetId &&
+                                                             x.RoomId == detail.RoomId &&
+                                                             x.InventoryCheckId == inventoryCheck.Id);
+                                if (existingDetail != null)
+                                {
+                                    existingDetail.EditedAt = now.Value;
+                                    existingDetail.EditorId = editorId;
+                                    existingDetail.Status = detail.Status;
+                                    existingDetail.Quantity = detail.Quantity;
+                                    _context.Entry(existingDetail).State = EntityState.Modified;
+                                }
+                            }
+                        }
+
+                        inventoryCheck.Result = mediaFiles.First().Content;
+                        inventoryCheck.Checkout = now.Value;
+                        _context.Entry(inventoryCheck).State = EntityState.Modified;
+                        var notification = new Notification
+                        {
+                            CreatedAt = now.Value,
+                            EditedAt = now.Value,
+                            Status = NotificationStatus.Waiting,
+                            Content = inventoryCheck.Description,
+                            Title = RequestType.Repairation.GetDisplayName(),
+                            Type = NotificationType.Task,
+                            CreatorId = editorId,
+                            IsRead = false,
+                            ItemId = inventoryCheck.Id,
+                            UserId = inventoryCheck.AssignedTo
+                        };
+                        await _context.Notifications.AddAsync(notification);
+                    }
+                }
+
+                await _context.SaveChangesAsync();
+                await _context.Database.CommitTransactionAsync();
+                return true;
+            }
+            catch
+            {
+                await _context.Database.RollbackTransactionAsync();
+                return false;
+            }
+        }
+
         public async Task<bool> UpdateStatus(List<MediaFile> mediaFiles, RequestStatus? statusUpdate, Guid? editorId, DateTime? now = null)
         {
             await _context.Database.BeginTransactionAsync();
@@ -289,7 +364,7 @@ namespace API_FFMS.Repositories
                                 EditedAt = now.Value,
                                 EditorId = editorId,
                                 FileName = mediaFile.FileName,
-                               //Key = mediaFile.Key,
+                                //Key = mediaFile.Key,
                                 RawUri = mediaFile.RawUri,
                                 Uri = mediaFile.Uri,
                                 FileType = mediaFile.FileType,
@@ -682,6 +757,18 @@ namespace API_FFMS.Repositories
                     await _context.SaveChangesAsync();
                     await _context.Database.CommitTransactionAsync();
                     return true;
+                }
+
+                //INVENTORY CHECK
+                var inventoryCheck = await _context.InventoryChecks
+                                    .Include(x => x.InventoryCheckDetails)
+                                    .FirstOrDefaultAsync(x => x.Id == mediaFiles.First().ItemId);
+                if (inventoryCheck != null)
+                {
+                    inventoryCheck.EditedAt = now.Value;
+                    inventoryCheck.EditorId = editorId;
+                    inventoryCheck.Status = statusUpdate;
+                    _context.Entry(inventoryCheck).State = EntityState.Modified;
                 }
 
                 return true;
