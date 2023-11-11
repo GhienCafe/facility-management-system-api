@@ -125,7 +125,7 @@ public class TaskService : BaseService, ITaskService
                             {
                                 AssetId = assetReport.AssetId ?? Guid.Empty,
                                 InventoryCheckId = inventoryCheckReport.Id,
-                                RoomId = room.RoomId,
+                                RoomId = (Guid)room.RoomId,
                                 Status = assetReport.Status,
                                 Quantity = assetReport.Quantity
                             };
