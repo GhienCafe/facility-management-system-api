@@ -337,6 +337,8 @@ public class TaskService : BaseService, ITaskService
                                               .ToListAsync();
             var distinctRoomIds = inventoryCheckDetails.Select(detail => detail!.RoomId).Distinct();
 
+            var roomAssetQuery = MainUnitOfWork.RoomAssetRepository.GetQuery();
+
             var rooms = await MainUnitOfWork.RoomRepository.GetQuery()
                              .Where(room => distinctRoomIds.Contains(room!.Id))
                              .ToListAsync();
@@ -355,6 +357,7 @@ public class TaskService : BaseService, ITaskService
                         Id = detail!.AssetId,
                         AssetName = detail.Asset!.AssetName,
                         AssetCode = detail.Asset.AssetCode,
+                        Quantity = inventoryCheckTask.Status != RequestStatus.Done ? roomAssetQuery.FirstOrDefault(ra => ra!.AssetId == detail.AssetId && ra.RoomId == detail.RoomId)!.Quantity : detail.Quantity,
                         Status = inventoryCheckTask.Status != RequestStatus.Done ? detail.Asset.Status : detail.Status,
                         StatusObj = inventoryCheckTask.Status != RequestStatus.Done ? detail.Asset.Status.GetValue() : detail.Status.GetValue(),
                     }).ToList()
