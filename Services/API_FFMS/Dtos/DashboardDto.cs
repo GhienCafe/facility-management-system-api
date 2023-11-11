@@ -38,3 +38,26 @@ public class AssetDashBoardInformation
     public int Total { get; set; } 
     public double PercentPerTotal { get; set; } 
 }  
+
+public class TaskDashBoardInformation
+{
+    public RequestType? Type { get; set; }
+    public EnumValue? TypeObj { get; set; }
+    public IEnumerable<TaskBasedOnMonthDto>? TaskData { get; set; }
+}
+
+public class TaskDashBoardInformationForBinding
+{
+    public RequestType? Type { get; set; }
+    public EnumValue? TypeObj { get; set; }
+    public int Total { get; set; }
+    public int Month { get; set; }
+    public int Year { get; set; }
+}
+
+public class TaskBasedOnMonthDto
+{
+    public int Total { get; set; }
+    public int Month { get; set; }
+    public int Year { get; set; }
+}

@@ -12,6 +12,7 @@ public interface IDashboardService : IBaseService
 {
     public Task<ApiResponse<DashboardDto>> GetInformation();
     public Task<ApiResponse<IEnumerable<AssetDashBoardInformation>>> GetAssetStatusInformation();
+    public Task<ApiResponse<IEnumerable<TaskDashBoardInformation>>> GetBaseTaskInformation();
 }
 
 public class DashboardService : BaseService, IDashboardService
@@ -81,4 +82,31 @@ public class DashboardService : BaseService, IDashboardService
 
         return ApiResponse<IEnumerable<AssetDashBoardInformation>>.Success(assetDashboardInfo);
     }
+
+    public async Task<ApiResponse<IEnumerable<TaskDashBoardInformation>>> GetBaseTaskInformation()
+    {
+        var currentDate = DateTime.Now;
+        var last12Months = currentDate.AddMonths(-12);
+
+        var query = await MainUnitOfWork.TaskRepository.GetQueryAll()
+            .Where(task => task!.CreatedAt >= last12Months)
+            .GroupBy(task => task!.Type)
+            .Select(group => new TaskDashBoardInformation
+            {
+                Type = group.Key,
+                TypeObj = group.Key.GetValue(),
+                TaskData = group
+                    .GroupBy(t => new { t.CreatedAt.Year, t.CreatedAt.Month })
+                    .Select(monthGroup => new TaskBasedOnMonthDto
+                    {
+                        Total = monthGroup.Count(),
+                        Month = monthGroup.Key.Month,
+                        Year = monthGroup.Key.Year
+                    })
+            })
+            .ToListAsync();
+
+        return ApiResponse<IEnumerable<TaskDashBoardInformation>>.Success(query);
+    }
+
 }

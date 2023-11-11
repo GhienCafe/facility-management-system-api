@@ -38,6 +38,12 @@ public static class EnvironmentExtension
     public static string GetAppConnectionString() =>
         Environment.GetEnvironmentVariable("CONNECTION_STRING") ?? string.Empty;
     
+    public static string GetRedisCachingServer() =>
+        Environment.GetEnvironmentVariable("REDIS_CACHING_SERVER") ?? string.Empty;
+    
+    public static string GetRedisServePassword() =>
+        Environment.GetEnvironmentVariable("REDIS_PWD") ?? string.Empty;
+    
     public static string GetPath() =>
         Environment.GetEnvironmentVariable("DOMAIN_PATH") ?? string.Empty;
     
