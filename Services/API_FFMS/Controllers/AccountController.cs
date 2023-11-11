@@ -9,16 +9,33 @@ namespace API_FFMS.Controllers;
 public class AccountController : BaseController
 {
     private readonly IAccountService _userService;
+    private readonly ICacheService _cacheService;
 
-    public AccountController(IAccountService userService)
+    public AccountController(IAccountService userService, ICacheService cacheService)
     {
         _userService = userService;
+        _cacheService = cacheService;
     }
     [HttpGet("infor")]
     [SwaggerOperation("Get current account information")]
     public async Task<ApiResponse<AccountDto>> GetAccountInformation()
     {
-        return await _userService.GetAccountInformation();
+        var key = "account_infor";
+        
+        // check cache data
+        var cacheData = _cacheService.GetData<AccountDto>(key);
+        if (cacheData != null)
+        {
+            return ApiResponse<AccountDto>.Success(cacheData);
+        }
+
+        var response = await _userService.GetAccountInformation();
+        
+        // Set up the cache data
+        var expiryTime = DateTimeOffset.Now.AddMinutes(5);
+        _cacheService.SetData(key, response.Data, expiryTime);
+        
+        return response;
     }
 
     [HttpPut]

@@ -24,6 +24,8 @@
         "JWT_ISSUER": "facility-management-system-fb",
         "JWT_ACCESS_TOKEN_EXPIRES": "180",
         "JWT_RESET_TOKEN_EXPIRES": "1080",
+        "REDIS_CACHING_SERVER": "localhost:32768",
+        "REDIS_PWD": "redispw",
         "type": "service_account",
         "project_id": "facility-management-system-fb",
         "private_key_id": "asasaasasasasasas",
