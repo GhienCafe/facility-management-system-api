@@ -11,6 +11,10 @@ using System.Linq.Expressions;
 namespace API_FFMS.Services;
 public interface IInventoryCheckService : IBaseService
 {
+    //Task<ApiResponse> Create(InventoryCheckCreateDto createDto);
+    //Task<ApiResponse<InventoryCheckDto>> GetInventoryCheck(Guid id);
+    //Task<ApiResponses<InventoryCheckDto>> GetInventoryChecks(InventoryCheckQueryDto queryDto);
+
     Task<ApiResponse> Create(InventoryCheckCreateDto createDto);
     Task<ApiResponse<InventoryCheckDto>> GetInventoryCheck(Guid id);
     Task<ApiResponses<InventoryCheckDto>> GetInventoryChecks(InventoryCheckQueryDto queryDto);
@@ -31,36 +35,262 @@ public class InventoryCheckService : BaseService, IInventoryCheckService
 
     public async Task<ApiResponse> Create(InventoryCheckCreateDto createDto)
     {
-        var assets = await MainUnitOfWork.AssetRepository.FindAsync(
-                new Expression<Func<Asset, bool>>[]
+        try
+        {
+            var rooms = await MainUnitOfWork.RoomRepository.FindAsync(
+                new Expression<Func<Room, bool>>[]
                 {
-                    x => !x!.DeletedAt.HasValue,
-                    x => createDto.AssetIds.Contains(x.Id)
+                    x => !x.DeletedAt.HasValue,
+                    x => createDto.RoomIds.Contains(x.Id)
                 }, null);
 
-        var inventoryCheck = new InventoryCheck
-        {
-            InventoryCheckConfigId = createDto.InventoryCheckConfigId,
-            RequestCode = GenerateRequestCode(),
-            Description = createDto.Description,
-            Notes = createDto.Notes,
-            Priority = createDto.Priority,
-            IsInternal = createDto.IsInternal,
-            AssignedTo = createDto.AssignedTo,
-            RoomId = createDto.RoomId
-        };
+            var roomAssets = await MainUnitOfWork.RoomAssetRepository.FindAsync(
+                new Expression<Func<RoomAsset, bool>>[]
+                {
+                    x => !x.DeletedAt.HasValue,
+                    x => rooms.Select(r => r!.Id).Contains(x.RoomId),
+                    x => x.ToDate == null
+                }, null);
 
-        if (!await _repository.InsertInventoryCheck(inventoryCheck, assets, AccountId, CurrentDate))
+            var assets = await MainUnitOfWork.AssetRepository.FindAsync(
+                new Expression<Func<Asset, bool>>[]
+                {
+                    x => !x.DeletedAt.HasValue,
+                    x => roomAssets.Select(ra => ra!.AssetId).Contains(x.Id)
+                }, null);
+
+            var inventoryCheck = new InventoryCheck
+            {
+                InventoryCheckConfigId = createDto.InventoryCheckConfigId,
+                RequestCode = GenerateRequestCode(),
+                Description = createDto.Description,
+                Notes = createDto.Notes,
+                Priority = createDto.Priority,
+                IsInternal = createDto.IsInternal,
+                AssignedTo = createDto.AssignedTo
+            };
+
+            if (!await _repository.InsertInventoryCheck(inventoryCheck, rooms, AccountId, CurrentDate))
+            {
+                throw new ApiException("Tạo yêu cầu thất bại", StatusCode.SERVER_ERROR);
+            }
+
+            return ApiResponse.Created("Gửi yêu cầu thành công");
+        }
+        catch (Exception ex)
         {
-            throw new ApiException("Tạo yêu cầu thất bại", StatusCode.SERVER_ERROR);
+            throw new Exception(ex.Message);
+        }
+    }
+
+    public async Task<ApiResponse<InventoryCheckDto>> GetInventoryCheck(Guid id)
+    {
+        try
+        {
+            var inventoryCheck = await MainUnitOfWork.InventoryCheckRepository.FindOneAsync<InventoryCheckDto>(
+                    new Expression<Func<InventoryCheck, bool>>[]
+                    {
+                        x => !x.DeletedAt.HasValue,
+                        x => x.Id == id
+                    });
+            if (inventoryCheck == null)
+            {
+                throw new ApiException("Không tìm thấy yêu cầu này", StatusCode.NOT_FOUND);
+            }
+            inventoryCheck.PriorityObj = inventoryCheck.Priority.GetValue();
+            inventoryCheck.StatusObj = inventoryCheck.Status.GetValue();
+
+            var userQuery = MainUnitOfWork.UserRepository.GetQuery().Where(x => x!.Id == inventoryCheck.AssignedTo);
+            inventoryCheck.Staff = await userQuery.Select(x => new AssignedInventoryCheckDto
+            {
+                Id = x!.Id,
+                UserCode = x.UserCode,
+                Fullname = x.Fullname,
+                RoleObj = x.Role.GetValue(),
+                Avatar = x.Avatar,
+                Email = x.Email,
+                PhoneNumber = x.PhoneNumber,
+                Address = x.Address
+            }).FirstOrDefaultAsync();
+
+            var roomQuery = MainUnitOfWork.RoomRepository.GetQuery();
+            var roomAssetQuery = MainUnitOfWork.RoomAssetRepository.GetQuery();
+
+            var inventoryCheckDetails = await MainUnitOfWork.InventoryCheckDetailRepository.GetQuery()
+                                              .Include(x => x!.Asset)
+                                              .Where(x => x!.InventoryCheckId == inventoryCheck.Id)
+                                              .ToListAsync();
+
+            var distinctRoomIds = inventoryCheckDetails.Select(detail => detail!.RoomId).Distinct();
+
+            var rooms = await MainUnitOfWork.RoomRepository.GetQuery()
+                             .Where(room => distinctRoomIds.Contains(room!.Id))
+                             .ToListAsync();
+
+            inventoryCheck.Rooms = distinctRoomIds.Select(roomId => new RoomInventoryCheckDto
+            {
+                Id = roomId,
+                RoomName = rooms.FirstOrDefault(r => r!.Id == roomId)!.RoomName,
+                Area = rooms.FirstOrDefault(r => r!.Id == roomId)!.Area,
+                RoomCode = rooms.FirstOrDefault(r => r!.Id == roomId)!.RoomCode,
+                FloorId = rooms.FirstOrDefault(r => r!.Id == roomId)!.FloorId,
+                StatusId = rooms.FirstOrDefault(r => r!.Id == roomId)!.StatusId,
+                Assets = inventoryCheckDetails
+                    .Where(detail => detail!.RoomId == roomId)
+                    .Select(detail => new AssetInventoryCheckDto
+                    {
+                        Id = detail!.AssetId,
+                        AssetName = detail.Asset!.AssetName,
+                        AssetCode = detail.Asset.AssetCode,
+                        Status = detail.Status,
+                        StatusObj = detail.Status.GetValue()
+                    }).ToList()
+
+            })
+            .ToList();
+
+            inventoryCheck = await _mapperRepository.MapCreator(inventoryCheck);
+            return ApiResponse<InventoryCheckDto>.Success(inventoryCheck);
+        }
+        catch (Exception ex)
+        {
+            throw new Exception(ex.Message);
+        }
+    }
+
+    public async Task<ApiResponse> Update(Guid id, BaseRequestUpdateDto updateDto)
+    {
+        var existinginventoryCheck = await MainUnitOfWork.InventoryCheckRepository.FindOneAsync(id);
+        if (existinginventoryCheck == null)
+        {
+            throw new ApiException("Không tìm thấy yêu cầunày", StatusCode.NOT_FOUND);
         }
 
-        return ApiResponse.Created("Gửi yêu cầu thành công");
+        if (existinginventoryCheck.Status != RequestStatus.InProgress)
+        {
+            throw new ApiException("Chỉ được cập nhật các yêu cầu chưa được tiếp nhận", StatusCode.NOT_FOUND);
+        }
+
+        existinginventoryCheck.Description = updateDto.Description ?? existinginventoryCheck.Description;
+        existinginventoryCheck.Notes = updateDto.Notes ?? existinginventoryCheck.Notes;
+        existinginventoryCheck.Priority = updateDto.Priority ?? existinginventoryCheck.Priority;
+        existinginventoryCheck.AssignedTo = updateDto.AssignedTo ?? existinginventoryCheck.AssignedTo;
+        existinginventoryCheck.IsInternal = updateDto.IsInternal ?? existinginventoryCheck.IsInternal;
+
+        if (!await MainUnitOfWork.InventoryCheckRepository.UpdateAsync(existinginventoryCheck, AccountId, CurrentDate))
+        {
+            throw new ApiException("Cập nhật thông tin yêu cầu thất bại", StatusCode.SERVER_ERROR);
+        }
+
+        return ApiResponse.Success("Cập nhật yêu cầu thành công");
+    }
+
+    public async Task<ApiResponses<InventoryCheckDto>> GetInventoryChecks(InventoryCheckQueryDto queryDto)
+    {
+        try
+        {
+            var keyword = queryDto.Keyword?.Trim().ToLower();
+            var inventoryCheckQuery = MainUnitOfWork.InventoryCheckRepository.GetQuery()
+                                 .Where(x => !x!.DeletedAt.HasValue);
+
+            if (queryDto.IsInternal != null)
+            {
+                inventoryCheckQuery = inventoryCheckQuery.Where(x => x!.IsInternal == queryDto.IsInternal);
+            }
+
+            if (queryDto.AssignedTo != null)
+            {
+                inventoryCheckQuery = inventoryCheckQuery.Where(x => x!.AssignedTo == queryDto.AssignedTo);
+            }
+
+            if (queryDto.Status != null)
+            {
+                inventoryCheckQuery = inventoryCheckQuery.Where(x => x!.Status == queryDto.Status);
+            }
+
+            if (!string.IsNullOrEmpty(keyword))
+            {
+                inventoryCheckQuery = inventoryCheckQuery.Where(x => x!.Description!.ToLower().Contains(keyword)
+                                                                   || x.Notes!.ToLower().Contains(keyword) ||
+                                                                   x.RequestCode.ToLower().Contains(keyword));
+            }
+
+            inventoryCheckQuery = inventoryCheckQuery.OrderByDescending(x => x!.CreatedAt);
+
+            var totalCount = await inventoryCheckQuery.CountAsync();
+            inventoryCheckQuery = inventoryCheckQuery.Skip(queryDto.Skip()).Take(queryDto.PageSize);
+
+            var roomQuery = MainUnitOfWork.RoomRepository.GetQuery();
+            var roomAssetQuery = MainUnitOfWork.RoomAssetRepository.GetQuery();
+
+            var inventoryChecks = await inventoryCheckQuery.Select(i => new InventoryCheckDto
+            {
+                Id = i!.Id,
+                RequestCode = i.RequestCode,
+                RequestDate = i.RequestDate,
+                CompletionDate = i.CompletionDate,
+                Status = i.Status,
+                StatusObj = i.Status!.GetValue(),
+                Description = i.Description,
+                Checkout = i.Checkout,
+                Checkin = i.Checkout,
+                Result = i.Result,
+                Priority = i.Priority,
+                PriorityObj = i.Priority.GetValue(),
+                Notes = i.Notes,
+                IsInternal = i.IsInternal,
+                Rooms = i.InventoryCheckDetails!
+                                    .GroupBy(x => x.RoomId)
+                                    .Select(group => new RoomInventoryCheckDto
+                                    {
+                                        Id = group.Key,
+                                        RoomName = roomQuery.FirstOrDefault(r => r!.Id == group.Key)!.RoomName,
+                                        Area = roomQuery.FirstOrDefault(r => r!.Id == group.Key)!.Area,
+                                        RoomCode = roomQuery.FirstOrDefault(r => r!.Id == group.Key)!.RoomCode,
+                                        FloorId = roomQuery.FirstOrDefault(r => r!.Id == group.Key)!.FloorId,
+                                        StatusId = roomQuery.FirstOrDefault(r => r!.Id == group.Key)!.StatusId,
+                                        Assets = group.Select(x => new AssetInventoryCheckDto
+                                        {
+                                            Id = roomAssetQuery.FirstOrDefault(ra => ra!.AssetId == x.AssetId && ra.RoomId == x.RoomId)!.AssetId,
+                                            AssetCode = roomAssetQuery.FirstOrDefault(ra => ra!.AssetId == x.AssetId && ra.RoomId == x.RoomId)!.Asset!.AssetCode,
+                                            AssetName = roomAssetQuery.FirstOrDefault(ra => ra!.AssetId == x.AssetId && ra.RoomId == x.RoomId)!.Asset!.AssetName,
+                                            Quantity = roomAssetQuery.FirstOrDefault(ra => ra!.AssetId == x.AssetId && ra.RoomId == x.RoomId)!.Quantity,
+                                            Status = x.Status != null ? x.Status : roomAssetQuery.FirstOrDefault(ra => ra!.AssetId == x.AssetId && ra.RoomId == x.RoomId)!.Status,
+                                            StatusObj = x.Status != null ? x.Status.GetValue() : roomAssetQuery.FirstOrDefault(ra => ra!.AssetId == x.AssetId && ra.RoomId == x.RoomId)!.Status.GetValue()
+                                        }).ToList()
+                                    })
+                                    .ToList(),
+                Staff = new AssignedInventoryCheckDto
+                {
+                    Id = i.User!.Id,
+                    UserCode = i.User.UserCode,
+                    Fullname = i.User.Fullname,
+                    RoleObj = i.User.Role.GetValue(),
+                    Avatar = i.User.Avatar,
+                    Email = i.User.Email,
+                    PhoneNumber = i.User.PhoneNumber,
+                    Address = i.User.Address
+                }
+            }).ToListAsync();
+
+            inventoryChecks = await _mapperRepository.MapCreator(inventoryChecks);
+
+            return ApiResponses<InventoryCheckDto>.Success(
+                    inventoryChecks,
+                    totalCount,
+                    queryDto.PageSize,
+                    queryDto.Page,
+                    (int)Math.Ceiling(totalCount / (double)queryDto.PageSize));
+        }
+        catch (Exception ex)
+        {
+            throw new Exception(ex.Message);
+        }
     }
 
     public async Task<ApiResponse> Delete(Guid id)
     {
-        var existingInventoryCheck= await MainUnitOfWork.InventoryCheckRepository.FindOneAsync(
+        var existingInventoryCheck = await MainUnitOfWork.InventoryCheckRepository.FindOneAsync(
                 new Expression<Func<InventoryCheck, bool>>[]
                 {
                     x => !x.DeletedAt.HasValue,
@@ -102,214 +332,267 @@ public class InventoryCheckService : BaseService, IInventoryCheckService
         return newRequestCode;
     }
 
-    public async Task<ApiResponse<InventoryCheckDto>> GetInventoryCheck(Guid id)
-    {
-        var existingInventoryCheck = await MainUnitOfWork.InventoryCheckRepository.FindOneAsync<InventoryCheckDto>(
-                new Expression<Func<InventoryCheck, bool>>[]
-                {
-                    x => !x.DeletedAt.HasValue,
-                    x => x.Id == id
-                });
+    //public async Task<ApiResponse> Create(InventoryCheckCreateDto createDto)
+    //{
+    //    try
+    //    {
+    //        var room = await MainUnitOfWork.RoomRepository.FindOneAsync(
+    //                new Expression<Func<Room, bool>>[]
+    //                {
+    //                    x => !x!.DeletedAt.HasValue,
+    //                    x => createDto.RoomId == x.Id
+    //                });
 
-        if (existingInventoryCheck == null)
-        {
-            throw new ApiException("Không tìm thấy yêu cầu này", StatusCode.NOT_FOUND);
-        }
+    //        var roomAssets = await MainUnitOfWork.RoomAssetRepository.FindAsync(
+    //                new Expression<Func<RoomAsset, bool>>[]
+    //                {
+    //                    x => !x.DeletedAt.HasValue,
+    //                    x => x.RoomId == room!.Id,
+    //                    x => x.ToDate == null
+    //                }, null);
 
-        var mediaFileQuery = MainUnitOfWork.MediaFileRepository.GetQuery()
-                                                               .Where(m => m!.ItemId == existingInventoryCheck.Id);
-        var mediaFile = new MediaFileDto
-        {
-            FileType = mediaFileQuery.Select(m => m!.FileType).FirstOrDefault(),
-            Uri = mediaFileQuery.Select(m => m!.Uri).ToList(),
-            Content = mediaFileQuery.Select(m => m!.Content).FirstOrDefault()
-        };
+    //        var assets = await MainUnitOfWork.AssetRepository.FindAsync(
+    //            new Expression<Func<Asset, bool>>[]
+    //            {
+    //                x => !x.DeletedAt.HasValue,
+    //                x => roomAssets.Select(ra => ra!.AssetId).Contains(x.Id)
+    //            }, null);
 
-        var roomDataset = MainUnitOfWork.RoomRepository.GetQuery();
-        var room = await roomDataset
-                            .Where(r => r!.Id == existingInventoryCheck.RoomId)
-                            .Select(r => new RoomBaseDto
-                            {
-                                Id = r!.Id,
-                                RoomCode = r.RoomCode,
-                                RoomName = r.RoomName,
-                                StatusId = r.StatusId,
-                                FloorId = r.FloorId,
-                                CreatedAt = r.CreatedAt,
-                                EditedAt = r.EditedAt
-                            }).FirstOrDefaultAsync();
+    //        var inventoryCheck = new InventoryCheck
+    //        {
+    //            InventoryCheckConfigId = createDto.InventoryCheckConfigId,
+    //            RequestCode = GenerateRequestCode(),
+    //            Description = createDto.Description,
+    //            Notes = createDto.Notes,
+    //            Priority = createDto.Priority,
+    //            IsInternal = createDto.IsInternal,
+    //            AssignedTo = createDto.AssignedTo
+    //        };
 
-        var userQuery = MainUnitOfWork.UserRepository.GetQuery();
-        var assignedTo = await userQuery.Where(x => x!.Id == existingInventoryCheck.AssignedToId)
-                        .Select(x => new UserBaseDto
-                        {
-                            UserCode = x!.UserCode,
-                            Fullname = x.Fullname,
-                            RoleObj = x.Role.GetValue(),
-                            Avatar = x.Avatar,
-                            StatusObj = x.Status.GetValue(),
-                            Email = x.Email,
-                            PhoneNumber = x.PhoneNumber,
-                            Address = x.Address,
-                            Gender = x.Gender,
-                            Dob = x.Dob
-                        }).FirstOrDefaultAsync();
+    //        if (!await _repository.InsertInventoryCheck(inventoryCheck, assets, AccountId, CurrentDate))
+    //        {
+    //            throw new ApiException("Tạo yêu cầu thất bại", StatusCode.SERVER_ERROR);
+    //        }
 
-        var inventoryCheckDetails = MainUnitOfWork.InventoryCheckDetailRepository.GetQuery();
-        var assetQuery = MainUnitOfWork.AssetRepository.GetQuery();
-        var assets = await inventoryCheckDetails
-                     .Where(detail => detail!.InventoryCheckId == id)
-                     .Join(assetQuery,
-                            detail => detail!.AssetId,
-                            asset => asset!.Id, (detail, asset) => new AssetInventoryCheck
-                            {
-                                AssetName = asset!.AssetName,
-                                AssetCode = asset.AssetCode,
-                                StatusObj = detail!.Status.GetValue(),
-                                Status = detail.Status,
-                            }).ToListAsync();
+    //        return ApiResponse.Created("Gửi yêu cầu thành công");
+    //    }
+    //    catch (Exception ex)
+    //    {
+    //        throw new Exception(ex.Message);
+    //    }
+    //}
 
-        var inventoryCheck = new InventoryCheckDto
-        {
-            Id = existingInventoryCheck.Id,
-            RequestCode = existingInventoryCheck.RequestCode,
-            Description = existingInventoryCheck.Description,
-            Notes = existingInventoryCheck.Notes,
-            IsInternal = existingInventoryCheck.IsInternal,
-            Status = existingInventoryCheck.Status,
-            StatusObj = existingInventoryCheck.Status.GetValue(),
-            RequestDate = existingInventoryCheck.RequestDate,
-            CompletionDate = existingInventoryCheck.CompletionDate,
-            Priority = existingInventoryCheck.Priority,
-            PriorityObj = existingInventoryCheck.Priority.GetValue(),
-            Checkin = existingInventoryCheck.Checkin,
-            Checkout = existingInventoryCheck.Checkout,
-            Result = existingInventoryCheck.Result,
-            Assets = assets,
-            Room = room,
-            MediaFile = mediaFile,
-            AssignedTo = assignedTo
-        };
 
-        inventoryCheck = await _mapperRepository.MapCreator(inventoryCheck);
-        return ApiResponse<InventoryCheckDto>.Success(inventoryCheck);
-    }
+    //public async Task<ApiResponse<InventoryCheckDto>> GetInventoryCheck(Guid id)
+    //{
+    //    try
+    //    {
+    //        var existingInventoryCheck = await MainUnitOfWork.InventoryCheckRepository.FindOneAsync<InventoryCheckDto>(
+    //                new Expression<Func<InventoryCheck, bool>>[]
+    //                {
+    //                    x => !x.DeletedAt.HasValue,
+    //                    x => x.Id == id
+    //                });
 
-    public async Task<ApiResponses<InventoryCheckDto>> GetInventoryChecks(InventoryCheckQueryDto queryDto)
-    {
-        var keyword = queryDto.Keyword?.Trim().ToLower();
-        var inventoryCheckQuery = MainUnitOfWork.InventoryCheckRepository.GetQuery()
-                             .Where(x => !x!.DeletedAt.HasValue);
+    //        if (existingInventoryCheck == null)
+    //        {
+    //            throw new ApiException("Không tìm thấy yêu cầu này", StatusCode.NOT_FOUND);
+    //        }
+    //        existingInventoryCheck.PriorityObj = existingInventoryCheck.Priority.GetValue();
+    //        existingInventoryCheck.StatusObj = existingInventoryCheck.Status.GetValue();
+    //        //var mediaFileQuery = MainUnitOfWork.MediaFileRepository.GetQuery()
+    //        //                                                       .Where(m => m!.ItemId == existingInventoryCheck.Id);
+    //        //var mediaFile = new MediaFileDto
+    //        //{
+    //        //    FileType = mediaFileQuery.Select(m => m!.FileType).FirstOrDefault(),
+    //        //    Uri = mediaFileQuery.Select(m => m!.Uri).ToList(),
+    //        //    Content = mediaFileQuery.Select(m => m!.Content).FirstOrDefault()
+    //        //};
 
-        if (queryDto.IsInternal != null)
-        {
-            inventoryCheckQuery = inventoryCheckQuery.Where(x => x!.IsInternal == queryDto.IsInternal);
-        }
+    //        var userQuery = MainUnitOfWork.UserRepository.GetQuery().Where(x => x!.Id == existingInventoryCheck.AssignedTo);
+    //        existingInventoryCheck.Staff = await userQuery.Select(x => new AssignedInventoryCheckDto
+    //        {
+    //            Id = x!.Id,
+    //            UserCode = x.UserCode,
+    //            Fullname = x.Fullname,
+    //            RoleObj = x.Role.GetValue(),
+    //            Avatar = x.Avatar,
+    //            Email = x.Email,
+    //            PhoneNumber = x.PhoneNumber,
+    //            Address = x.Address
+    //        }).FirstOrDefaultAsync();
 
-        if (queryDto.AssignedTo != null)
-        {
-            inventoryCheckQuery = inventoryCheckQuery.Where(x => x!.AssignedTo == queryDto.AssignedTo);
-        }
+    //        var roomQuery = MainUnitOfWork.RoomRepository.GetQuery();
+    //        var roomAssetQuery = MainUnitOfWork.RoomAssetRepository.GetQuery();
 
-        if (queryDto.Status != null)
-        {
-            inventoryCheckQuery = inventoryCheckQuery.Where(x => x!.Status == queryDto.Status);
-        }
+    //        var inventoryCheckDetails = MainUnitOfWork.InventoryCheckDetailRepository.GetQuery().Include(x => x!.Asset)
+    //                                    .Where(x => x!.InventoryCheckId == existingInventoryCheck.Id &&
+    //                                                x.RoomId == existingInventoryCheck.RoomId);
 
-        if (!string.IsNullOrEmpty(keyword))
-        {
-            inventoryCheckQuery = inventoryCheckQuery.Where(x => x!.Description!.ToLower().Contains(keyword)
-                                                               || x.Notes!.ToLower().Contains(keyword) ||
-                                                               x.RequestCode.ToLower().Contains(keyword));
-        }
+    //        existingInventoryCheck.AssetLocations = new AssetInventoryCheck
+    //        {
+    //            Room = inventoryCheckDetails.Select(x => new RoomInventoryCheckDto
+    //            {
+    //                Id = roomQuery.FirstOrDefault(r => r!.Id == x!.RoomId)!.Id,
+    //                RoomName = roomQuery.FirstOrDefault(r => r!.Id == x!.RoomId)!.RoomName,
+    //                Area = roomQuery.FirstOrDefault(r => r!.Id == x!.RoomId)!.Area,
+    //                RoomCode = roomQuery.FirstOrDefault(r => r!.Id == x!.RoomId)!.RoomCode,
+    //                FloorId = roomQuery.FirstOrDefault(r => r!.Id == x!.RoomId)!.FloorId,
+    //                StatusId = roomQuery.FirstOrDefault(r => r!.Id == x!.RoomId)!.StatusId
+    //            }).FirstOrDefault(),
+    //            Assets = inventoryCheckDetails.Select(x => new AssetInventoryCheckDto
+    //            {
+    //                Id = roomAssetQuery.FirstOrDefault(ra => ra!.AssetId == x!.AssetId && ra.RoomId == roomQuery.FirstOrDefault(r => r!.Id == x!.RoomId)!.Id)!.AssetId,
+    //                AssetCode = roomAssetQuery.FirstOrDefault(ra => ra!.AssetId == x!.AssetId && ra.RoomId == roomQuery.FirstOrDefault(r => r!.Id == x.RoomId)!.Id)!.Asset!.AssetCode,
+    //                AssetName = roomAssetQuery.FirstOrDefault(ra => ra!.AssetId == x!.AssetId && ra.RoomId == roomQuery.FirstOrDefault(r => r!.Id == x.RoomId)!.Id)!.Asset!.AssetName,
+    //                //Quantity = ra.Quantity,
+    //                Status = x!.Status,
+    //                StatusObj = x.Status.GetValue()!
+    //            }).ToList()
+    //        };
 
-        inventoryCheckQuery = inventoryCheckQuery.OrderByDescending(x => x!.CreatedAt);
+    //        existingInventoryCheck = await _mapperRepository.MapCreator(existingInventoryCheck);
+    //        return ApiResponse<InventoryCheckDto>.Success(existingInventoryCheck);
+    //    }
+    //    catch (Exception ex)
+    //    {
+    //        throw new Exception(ex.Message);
+    //    }
+    //}
 
-        var totalCount = await inventoryCheckQuery.CountAsync();
-        inventoryCheckQuery = inventoryCheckQuery.Skip(queryDto.Skip()).Take(queryDto.PageSize);
+    //public async Task<ApiResponses<InventoryCheckDto>> GetInventoryChecks(InventoryCheckQueryDto queryDto)
+    //{
+    //    try
+    //    {
+    //        var keyword = queryDto.Keyword?.Trim().ToLower();
+    //        var inventoryCheckQuery = MainUnitOfWork.InventoryCheckRepository.GetQuery()
+    //                             .Where(x => !x!.DeletedAt.HasValue);
 
-        var inventoryChecks = await inventoryCheckQuery.Select(i => new InventoryCheckDto
-        {
-            Id = i!.Id,
-            RequestCode = i.RequestCode,
-            RequestDate = i.RequestDate,
-            CompletionDate = i.CompletionDate,
-            Status = i.Status,
-            StatusObj = i.Status!.GetValue(),
-            Description = i.Description,
-            Checkout = i.Checkout,
-            Checkin = i.Checkout,
-            Result = i.Result,
-            Priority = i.Priority,
-            PriorityObj = i.Priority.GetValue(),
-            Notes = i.Notes,
-            IsInternal = i.IsInternal,
-            Assets = i.InventoryCheckDetails!.Select(detail => new AssetInventoryCheck
-            {
-                AssetName = detail.Asset!.AssetName,
-                AssetCode = detail.Asset.AssetCode,
-                StatusObj = detail!.Status.GetValue(),
-                Status = detail.Status,
-            }).ToList(),
-            Room = new RoomBaseDto
-            {
-                //Id = i.RoomId,
-                //RoomCode = i.Room!.RoomCode,
-                //RoomName = i.Room.RoomName,
-                //StatusId = i.Room.StatusId,
-                //FloorId = i.Room.FloorId,
-                //CreatedAt = i.Room.CreatedAt,
-                //EditedAt = i.Room.EditedAt
-            },
-            AssignedTo = new UserBaseDto
-            {
-                UserCode = i.User!.UserCode,
-                Fullname = i.User.Fullname,
-                RoleObj = i.User.Role.GetValue(),
-                Avatar = i.User.Avatar,
-                StatusObj = i.User.Status.GetValue(),
-                Email = i.User.Email,
-                PhoneNumber = i.User.PhoneNumber,
-                Address = i.User.Address,
-                Gender = i.User.Gender,
-                Dob = i.User.Dob
-            }
-        }).ToListAsync();
+    //        if (queryDto.IsInternal != null)
+    //        {
+    //            inventoryCheckQuery = inventoryCheckQuery.Where(x => x!.IsInternal == queryDto.IsInternal);
+    //        }
 
-        inventoryChecks = await _mapperRepository.MapCreator(inventoryChecks);
+    //        if (queryDto.AssignedTo != null)
+    //        {
+    //            inventoryCheckQuery = inventoryCheckQuery.Where(x => x!.AssignedTo == queryDto.AssignedTo);
+    //        }
 
-        return ApiResponses<InventoryCheckDto>.Success(
-                inventoryChecks,
-                totalCount,
-                queryDto.PageSize,
-                queryDto.Page,
-                (int)Math.Ceiling(totalCount / (double)queryDto.PageSize));
-    }
+    //        if (queryDto.Status != null)
+    //        {
+    //            inventoryCheckQuery = inventoryCheckQuery.Where(x => x!.Status == queryDto.Status);
+    //        }
 
-    public async Task<ApiResponse> Update(Guid id, BaseRequestUpdateDto updateDto)
-    {
-        var existinginventoryCheck = await MainUnitOfWork.InventoryCheckRepository.FindOneAsync(id);
-        if (existinginventoryCheck == null)
-        {
-            throw new ApiException("Không tìm thấy yêu cầunày", StatusCode.NOT_FOUND);
-        }
+    //        if (!string.IsNullOrEmpty(keyword))
+    //        {
+    //            inventoryCheckQuery = inventoryCheckQuery.Where(x => x!.Description!.ToLower().Contains(keyword)
+    //                                                               || x.Notes!.ToLower().Contains(keyword) ||
+    //                                                               x.RequestCode.ToLower().Contains(keyword));
+    //        }
 
-        if (existinginventoryCheck.Status != RequestStatus.InProgress)
-        {
-            throw new ApiException("Chỉ được cập nhật các yêu cầu chưa được tiếp nhận", StatusCode.NOT_FOUND);
-        }
+    //        inventoryCheckQuery = inventoryCheckQuery.OrderByDescending(x => x!.CreatedAt);
 
-        existinginventoryCheck.Description = updateDto.Description ?? existinginventoryCheck.Description;
-        existinginventoryCheck.Notes = updateDto.Notes ?? existinginventoryCheck.Notes;
-        existinginventoryCheck.Priority = updateDto.Priority ?? existinginventoryCheck.Priority;
-        existinginventoryCheck.AssignedTo = updateDto.AssignedTo ?? existinginventoryCheck.AssignedTo;
-        existinginventoryCheck.IsInternal = updateDto.IsInternal ?? existinginventoryCheck.IsInternal;
+    //        var totalCount = await inventoryCheckQuery.CountAsync();
+    //        inventoryCheckQuery = inventoryCheckQuery.Skip(queryDto.Skip()).Take(queryDto.PageSize);
 
-        if (!await MainUnitOfWork.InventoryCheckRepository.UpdateAsync(existinginventoryCheck, AccountId, CurrentDate))
-        {
-            throw new ApiException("Cập nhật thông tin yêu cầu thất bại", StatusCode.SERVER_ERROR);
-        }
+    //        var roomQuery = MainUnitOfWork.RoomRepository.GetQuery();
+    //        var roomAssetQuery = MainUnitOfWork.RoomAssetRepository.GetQuery();
 
-        return ApiResponse.Success("Cập nhật yêu cầu thành công");
-    }
+    //        var inventoryChecks = await inventoryCheckQuery.Select(i => new InventoryCheckDto
+    //        {
+    //            Id = i!.Id,
+    //            RequestCode = i.RequestCode,
+    //            RequestDate = i.RequestDate,
+    //            CompletionDate = i.CompletionDate,
+    //            Status = i.Status,
+    //            StatusObj = i.Status!.GetValue(),
+    //            Description = i.Description,
+    //            Checkout = i.Checkout,
+    //            Checkin = i.Checkout,
+    //            Result = i.Result,
+    //            Priority = i.Priority,
+    //            PriorityObj = i.Priority.GetValue(),
+    //            Notes = i.Notes,
+    //            IsInternal = i.IsInternal,
+    //            AssetLocations = new AssetInventoryCheck
+    //            {
+    //                Room = i.InventoryCheckDetails!.Select(x => new RoomInventoryCheckDto
+    //                {
+    //                    Id = roomQuery.FirstOrDefault(r => r!.Id == x!.RoomId)!.Id,
+    //                    RoomName = roomQuery.FirstOrDefault(r => r!.Id == x!.RoomId)!.RoomName,
+    //                    Area = roomQuery.FirstOrDefault(r => r!.Id == x!.RoomId)!.Area,
+    //                    RoomCode = roomQuery.FirstOrDefault(r => r!.Id == x!.RoomId)!.RoomCode,
+    //                    FloorId = roomQuery.FirstOrDefault(r => r!.Id == x!.RoomId)!.FloorId,
+    //                    StatusId = roomQuery.FirstOrDefault(r => r!.Id == x!.RoomId)!.StatusId
+    //                }).FirstOrDefault(),
+    //                Assets = i.InventoryCheckDetails!.Select(x => new AssetInventoryCheckDto
+    //                {
+    //                    Id = roomAssetQuery.FirstOrDefault(ra => ra!.AssetId == x.AssetId && ra.RoomId == roomQuery.FirstOrDefault(r => r!.Id == x.RoomId)!.Id)!.AssetId,
+    //                    AssetCode = roomAssetQuery.FirstOrDefault(ra => ra!.AssetId == x.AssetId && ra.RoomId == roomQuery.FirstOrDefault(r => r!.Id == x.RoomId)!.Id)!.Asset!.AssetCode,
+    //                    AssetName = roomAssetQuery.FirstOrDefault(ra => ra!.AssetId == x.AssetId && ra.RoomId == roomQuery.FirstOrDefault(r => r!.Id == x.RoomId)!.Id)!.Asset!.AssetName,
+    //                    //Quantity = ra.Quantity,
+    //                    Status = x.Status,
+    //                    StatusObj = x.Status.GetValue()
+    //                }).ToList()
+    //            },
+    //            Staff = new AssignedInventoryCheckDto
+    //            {
+    //                Id = i.User!.Id,
+    //                UserCode = i.User.UserCode,
+    //                Fullname = i.User.Fullname,
+    //                RoleObj = i.User.Role.GetValue(),
+    //                Avatar = i.User.Avatar,
+    //                Email = i.User.Email,
+    //                PhoneNumber = i.User.PhoneNumber,
+    //                Address = i.User.Address
+    //            }
+    //        }).ToListAsync();
+
+    //        inventoryChecks = await _mapperRepository.MapCreator(inventoryChecks);
+
+    //        return ApiResponses<InventoryCheckDto>.Success(
+    //                inventoryChecks,
+    //                totalCount,
+    //                queryDto.PageSize,
+    //                queryDto.Page,
+    //                (int)Math.Ceiling(totalCount / (double)queryDto.PageSize));
+    //    }
+    //    catch (Exception ex)
+    //    {
+    //        throw new Exception(ex.Message);
+    //    }
+    //}
+
+
+
+    //private RoomInventoryCheckDto MapRoomDto(IQueryable<Room> roomQuery, Guid roomId)
+    //{
+    //    return roomQuery
+    //        .Where(r => r!.Id == roomId)
+    //        .Select(r => new RoomInventoryCheckDto
+    //        {
+    //            Id = r.Id,
+    //            RoomName = r.RoomName,
+    //            Area = r.Area,
+    //            RoomCode = r.RoomCode,
+    //            FloorId = r.FloorId,
+    //            StatusId = r.StatusId
+    //        })
+    //        .FirstOrDefault();
+    //}
+
+    //private AssetInventoryCheckDto MapAssetDto(IQueryable<RoomAsset>? roomAssetQuery, IQueryable<Room>? roomQuery, InventoryCheckDetail? x)
+    //{
+    //    return roomAssetQuery
+    //        .Where(ra => ra!.AssetId == x.AssetId && ra.RoomId == x.RoomId)
+    //        .Select(ra => new AssetInventoryCheckDto
+    //        {
+    //            Id = ra.AssetId,
+    //            AssetCode = ra.Asset!.AssetCode,
+    //            AssetName = ra.Asset!.AssetName,
+    //            Status = x.Status,
+    //            StatusObj = x.Status!.GetValue()
+    //        })
+    //        .FirstOrDefault();
+    //}
 }

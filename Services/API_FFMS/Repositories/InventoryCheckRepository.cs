@@ -6,7 +6,7 @@ namespace API_FFMS.Repositories;
 
 public interface IInventoryCheckRepository
 {
-    Task<bool> InsertInventoryCheck(InventoryCheck inventoryCheck, List<Asset?> assets, Guid? creatorId, DateTime? now = null);
+    Task<bool> InsertInventoryCheck(InventoryCheck inventoryCheck, List<Room?> rooms, Guid? creatorId, DateTime? now = null);
 
     //Task<bool> UpdateMaintenanceScheduleConfig(MaintenanceScheduleConfig maintenanceScheduleConfig, IEnumerable<Asset>? oldData, IEnumerable<Asset>? newData, Guid? editorId, DateTime? now = null);
 }
@@ -35,7 +35,7 @@ public class InventoryCheckRepository : IInventoryCheckRepository
         return newRequestNumber;
     }
 
-    public async Task<bool> InsertInventoryCheck(InventoryCheck inventoryCheck, List<Asset?> assets, Guid? creatorId, DateTime? now = null)
+    public async Task<bool> InsertInventoryCheck(InventoryCheck inventoryCheck, List<Room?> rooms, Guid? creatorId, DateTime? now = null)
     {
         await _context.Database.BeginTransactionAsync();
         now ??= DateTime.UtcNow;
@@ -49,19 +49,28 @@ public class InventoryCheckRepository : IInventoryCheckRepository
             inventoryCheck.RequestDate = now.Value;
             await _context.InventoryChecks.AddAsync(inventoryCheck);
 
-            foreach (var asset in assets)
+            foreach (var room in rooms)
             {
-                var inventoryCheckDetail = new InventoryCheckDetail
+                var roomAssets = _context.RoomAssets
+                                         .Where(ra => ra.RoomId == room!.Id && ra.ToDate == null)
+                                         .Select(ra => ra.Asset)
+                                         .ToList();
+
+                foreach (var asset in roomAssets)
                 {
-                    Id = Guid.NewGuid(),
-                    AssetId = asset!.Id,
-                    InventoryCheckId = inventoryCheck.Id,
-                    CreatorId = creatorId,
-                    CreatedAt = now.Value,
-                    RoomId = inventoryCheck.RoomId,
-                    Status = asset.Status
-                };
-                await _context.InventoryCheckDetails.AddAsync(inventoryCheckDetail);
+                    var inventoryCheckDetail = new InventoryCheckDetail
+                    {
+                        Id = Guid.NewGuid(),
+                        AssetId = asset!.Id,
+                        InventoryCheckId = inventoryCheck.Id,
+                        CreatorId = creatorId,
+                        CreatedAt = now.Value,
+                        RoomId = room!.Id,
+                        Status = asset.Status
+                    };
+
+                    await _context.InventoryCheckDetails.AddAsync(inventoryCheckDetail);
+                }
             }
 
             var notification = new Notification

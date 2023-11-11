@@ -4,6 +4,7 @@ using MainData;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace InitDatabase.Migrations
 {
     [DbContext(typeof(DatabaseContext))]
-    partial class DatabaseContextModelSnapshot : ModelSnapshot
+    [Migration("20231110052503_u57")]
+    partial class u57
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -515,7 +518,7 @@ namespace InitDatabase.Migrations
                     b.Property<Guid?>("EditorId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid?>("InventoryCheckConfigId")
+                    b.Property<Guid>("InventoryCheckConfigId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<bool>("IsInternal")
@@ -618,9 +621,6 @@ namespace InitDatabase.Migrations
 
                     b.Property<Guid>("InventoryCheckId")
                         .HasColumnType("uniqueidentifier");
-
-                    b.Property<double?>("Quantity")
-                        .HasColumnType("float");
 
                     b.Property<Guid>("RoomId")
                         .HasColumnType("uniqueidentifier");
@@ -1695,7 +1695,9 @@ namespace InitDatabase.Migrations
 
                     b.HasOne("MainData.Entities.InventoryCheckConfig", "InventoryCheckConfig")
                         .WithMany("InventoryChecks")
-                        .HasForeignKey("InventoryCheckConfigId");
+                        .HasForeignKey("InventoryCheckConfigId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("Asset");
 
