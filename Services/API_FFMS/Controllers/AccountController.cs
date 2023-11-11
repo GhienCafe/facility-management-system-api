@@ -20,7 +20,7 @@ public class AccountController : BaseController
     [SwaggerOperation("Get current account information")]
     public async Task<ApiResponse<AccountDto>> GetAccountInformation()
     {
-        var key = "account_infor";
+        var key = "account_infor_";
         
         // check cache data
         var cacheData = _cacheService.GetData<AccountDto>(key);
@@ -31,8 +31,8 @@ public class AccountController : BaseController
 
         var response = await _userService.GetAccountInformation();
         
-        // Set up the cache data
-        var expiryTime = DateTimeOffset.Now.AddMinutes(5);
+        // Leave it null - the default will be 5 minutes
+        var expiryTime = DateTimeOffset.Now.AddMinutes(3);
         _cacheService.SetData(key, response.Data, expiryTime);
         
         return response;
