@@ -38,7 +38,7 @@ public static class AddConfigServiceCollectionExtensions
         redisConfiguration.Password = EnvironmentExtension.GetRedisServePassword();
 
         // Register Redis ConnectionMultiplexer as a Singleton
-        services.AddSingleton<IConnectionMultiplexer>(ConnectionMultiplexer.Connect(redisConfiguration));
+        //services.AddSingleton<IConnectionMultiplexer>(ConnectionMultiplexer.Connect(redisConfiguration));
 
         // Add the Redis distributed cache service
         services.AddStackExchangeRedisCache(options =>

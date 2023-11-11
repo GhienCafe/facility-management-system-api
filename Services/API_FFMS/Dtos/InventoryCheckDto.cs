@@ -38,10 +38,6 @@ public class InventoryCheckDto : BaseDto
     public AssignedInventoryCheckDto? Staff { get; set; }
 }
 
-//public class RoomInventoryCheckDto
-//{
-//    public RoomInventoryCheckDto? Room { get; set; }
-//}
 
 public class AssetInventoryCheckDto
 {
