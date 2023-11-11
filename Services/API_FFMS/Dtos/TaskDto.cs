@@ -37,6 +37,7 @@ public class TaskDetailDto : BaseRequestDto
     //Asset check
     //public AssetBaseDto? Asset { get; set; }
     public RoomBaseDto? CurrentRoom { get; set; }
+    public List<RoomInventoryCheckDto>? Rooms { get; set; }
 }
 
 public class TaskQueryDto : BaseRequestQueryDto
@@ -54,10 +55,19 @@ public class ReportCreateDto
     public Guid? ItemId { get; set; }
     public RequestStatus? Status { get; set; }
     public bool? IsVerified { get; set; }
+    public List<InventoryCheckReport>? Rooms { get; set; }
 }
 
-public class UpdateTaskStatus
+public class InventoryCheckReport
 {
-    public RequestStatus? Status { get; set; }
-    public bool? IsVerified { get; set; }
+    public Guid RoomId { get; set; }
+    public List<AssetInventoryCheckReport>? Assets { get; set; }
+
+}
+
+public class AssetInventoryCheckReport
+{
+    public Guid? AssetId { get; set; }
+    public double? Quantity { get; set; }
+    public AssetStatus Status { get; set; }
 }

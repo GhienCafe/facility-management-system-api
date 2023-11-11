@@ -20,6 +20,7 @@ public interface IInventoryCheckService : IBaseService
     Task<ApiResponses<InventoryCheckDto>> GetInventoryChecks(InventoryCheckQueryDto queryDto);
     Task<ApiResponse> Update(Guid id, BaseRequestUpdateDto updateDto);
     Task<ApiResponse> Delete(Guid id);
+    //Task<ApiResponse> UpdateStatus(Guid id, BaseUpdateStatusDto updateStatusDto);
 }
 
 
@@ -100,6 +101,8 @@ public class InventoryCheckService : BaseService, IInventoryCheckService
             inventoryCheck.PriorityObj = inventoryCheck.Priority.GetValue();
             inventoryCheck.StatusObj = inventoryCheck.Status.GetValue();
 
+            
+
             var userQuery = MainUnitOfWork.UserRepository.GetQuery().Where(x => x!.Id == inventoryCheck.AssignedTo);
             inventoryCheck.Staff = await userQuery.Select(x => new AssignedInventoryCheckDto
             {
@@ -142,8 +145,8 @@ public class InventoryCheckService : BaseService, IInventoryCheckService
                         Id = detail!.AssetId,
                         AssetName = detail.Asset!.AssetName,
                         AssetCode = detail.Asset.AssetCode,
-                        Status = detail.Status,
-                        StatusObj = detail.Status.GetValue()
+                        Status = inventoryCheck.Status != RequestStatus.Done ? detail.Asset.Status : detail.Status,
+                        StatusObj = inventoryCheck.Status != RequestStatus.Done ? detail.Asset.Status.GetValue() : detail.Status.GetValue(),
                     }).ToList()
 
             })
@@ -255,8 +258,8 @@ public class InventoryCheckService : BaseService, IInventoryCheckService
                                             AssetCode = roomAssetQuery.FirstOrDefault(ra => ra!.AssetId == x.AssetId && ra.RoomId == x.RoomId)!.Asset!.AssetCode,
                                             AssetName = roomAssetQuery.FirstOrDefault(ra => ra!.AssetId == x.AssetId && ra.RoomId == x.RoomId)!.Asset!.AssetName,
                                             Quantity = roomAssetQuery.FirstOrDefault(ra => ra!.AssetId == x.AssetId && ra.RoomId == x.RoomId)!.Quantity,
-                                            Status = x.Status != null ? x.Status : roomAssetQuery.FirstOrDefault(ra => ra!.AssetId == x.AssetId && ra.RoomId == x.RoomId)!.Status,
-                                            StatusObj = x.Status != null ? x.Status.GetValue() : roomAssetQuery.FirstOrDefault(ra => ra!.AssetId == x.AssetId && ra.RoomId == x.RoomId)!.Status.GetValue()
+                                            Status = i.Status != RequestStatus.Done ? roomAssetQuery.FirstOrDefault(ra => ra!.AssetId == x.AssetId && ra.RoomId == x.RoomId)!.Status : x.Status,
+                                            StatusObj = i.Status != RequestStatus.Done ? roomAssetQuery.FirstOrDefault(ra => ra!.AssetId == x.AssetId && ra.RoomId == x.RoomId)!.Status.GetValue() : x.Status.GetValue()
                                         }).ToList()
                                     })
                                     .ToList(),
@@ -331,6 +334,22 @@ public class InventoryCheckService : BaseService, IInventoryCheckService
         }
         return newRequestCode;
     }
+
+    //public async Task<ApiResponse> UpdateStatus(Guid id, BaseUpdateStatusDto updateStatusDto)
+    //{
+    //    var existingInventoryCheck = MainUnitOfWork.InventoryCheckRepository.GetQuery()
+    //                                    .Include(x => x.InventoryCheckDetails)
+    //                                    .Where(x => x.Id == id)
+    //                                    .FirstOrDefault();
+    //    if (existingInventoryCheck == null)
+    //    {
+    //        throw new ApiException("Không tìm thấy yêu cầu này", StatusCode.NOT_FOUND);
+    //    }
+
+    //    existingInventoryCheck.Status = updateStatusDto.Status ?? existingInventoryCheck.Status;
+
+
+    //}
 
     //public async Task<ApiResponse> Create(InventoryCheckCreateDto createDto)
     //{

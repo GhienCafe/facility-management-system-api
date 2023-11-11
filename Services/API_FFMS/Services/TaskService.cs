@@ -15,6 +15,7 @@ public interface ITaskService : IBaseService
     Task<ApiResponses<TaskBaseDto>> GetTasks(TaskQueryDto queryDto);
     Task<ApiResponse<TaskDetailDto>> GetTaskDetail(Guid id);
     Task<ApiResponse> UpdateTaskStatus(ReportCreateDto createDto);
+    //Task<ApiResponse> InventoryCheckReport(InventoryCheckReport reportDto);
 }
 
 public class TaskService : BaseService, ITaskService
@@ -99,6 +100,44 @@ public class TaskService : BaseService, ITaskService
             createDto.ItemId = maintenReport.Id;
         }
 
+        //INVENTORY CHECK
+        var inventoryCheckReport = await MainUnitOfWork.InventoryCheckRepository.FindOneAsync(
+            new Expression<Func<InventoryCheck, bool>>[]
+            {
+                x => !x.DeletedAt.HasValue,
+                x => x.AssignedTo == AccountId,
+                x => x.Id == createDto.ItemId,
+                x => x.Status != RequestStatus.Cancelled
+            });
+
+        var inventoryDetails = new List<InventoryCheckDetail>();
+        if (inventoryCheckReport != null)
+        {
+            if (createDto.Rooms != null)
+            {
+                foreach (var room in createDto.Rooms)
+                {
+                    if (room.Assets != null)
+                    {
+                        foreach (var assetReport in room.Assets)
+                        {
+                            var inventoryDetail = new InventoryCheckDetail
+                            {
+                                AssetId = assetReport.AssetId ?? Guid.Empty,
+                                InventoryCheckId = inventoryCheckReport.Id,
+                                RoomId = room.RoomId,
+                                Status = assetReport.Status,
+                                Quantity = assetReport.Quantity
+                            };
+
+                            inventoryDetails.Add(inventoryDetail);
+                        }
+                    }
+                }
+            }
+            createDto.ItemId = inventoryCheckReport.Id;
+        }
+
         var mediaFiles = new List<MediaFile>();
         foreach (var uri in createDto.Uris!)
         {
@@ -115,9 +154,16 @@ public class TaskService : BaseService, ITaskService
             mediaFiles.Add(newMediaFile);
         }
 
-        if (mediaFiles.Count() > 0)
+        if (mediaFiles.Count() > 0 && inventoryCheckReport == null)
         {
             if (!await _taskRepository.UpdateStatus(mediaFiles, createDto.Status, AccountId, CurrentDate))
+            {
+                throw new ApiException("Báo cáo thất bại", StatusCode.SERVER_ERROR);
+            }
+        }
+        else if (mediaFiles.Count() > 0 && inventoryCheckReport != null)
+        {
+            if (!await _taskRepository.InventoryCheckReport(mediaFiles, inventoryDetails, createDto.Status, AccountId, CurrentDate))
             {
                 throw new ApiException("Báo cáo thất bại", StatusCode.SERVER_ERROR);
             }
@@ -269,6 +315,54 @@ public class TaskService : BaseService, ITaskService
             taskDetail = tranportation;
         }
 
+        //INVENTORY CHECK
+        var inventoryCheckTask = await MainUnitOfWork.InventoryCheckRepository.FindOneAsync<TaskDetailDto>(
+            new Expression<Func<InventoryCheck, bool>>[]
+            {
+                x => !x.DeletedAt.HasValue,
+                x => x.AssignedTo == AccountId,
+                x => x.Id == id,
+                x => x.Status != RequestStatus.Cancelled
+            });
+        if (inventoryCheckTask != null)
+        {
+            inventoryCheckTask.Type = RequestType.InventoryCheck;
+            inventoryCheckTask.PriorityObj = inventoryCheckTask.Priority.GetValue();
+            inventoryCheckTask.StatusObj = inventoryCheckTask.Status.GetValue();
+
+            var inventoryCheckDetails = await MainUnitOfWork.InventoryCheckDetailRepository.GetQuery()
+                                              .Include(x => x!.Asset)
+                                              .Where(x => x!.InventoryCheckId == inventoryCheckTask.Id)
+                                              .ToListAsync();
+            var distinctRoomIds = inventoryCheckDetails.Select(detail => detail!.RoomId).Distinct();
+
+            var rooms = await MainUnitOfWork.RoomRepository.GetQuery()
+                             .Where(room => distinctRoomIds.Contains(room!.Id))
+                             .ToListAsync();
+            inventoryCheckTask.Rooms = distinctRoomIds.Select(roomId => new RoomInventoryCheckDto
+            {
+                Id = roomId,
+                RoomName = rooms.FirstOrDefault(r => r!.Id == roomId)!.RoomName,
+                Area = rooms.FirstOrDefault(r => r!.Id == roomId)!.Area,
+                RoomCode = rooms.FirstOrDefault(r => r!.Id == roomId)!.RoomCode,
+                FloorId = rooms.FirstOrDefault(r => r!.Id == roomId)!.FloorId,
+                StatusId = rooms.FirstOrDefault(r => r!.Id == roomId)!.StatusId,
+                Assets = inventoryCheckDetails
+                    .Where(detail => detail!.RoomId == roomId)
+                    .Select(detail => new AssetInventoryCheckDto
+                    {
+                        Id = detail!.AssetId,
+                        AssetName = detail.Asset!.AssetName,
+                        AssetCode = detail.Asset.AssetCode,
+                        Status = inventoryCheckTask.Status != RequestStatus.Done ? detail.Asset.Status : detail.Status,
+                        StatusObj = inventoryCheckTask.Status != RequestStatus.Done ? detail.Asset.Status.GetValue() : detail.Status.GetValue(),
+                    }).ToList()
+            }).ToList();
+
+            taskDetail = inventoryCheckTask;
+        }
+
+
         //REPLACEMENT
         var replacementTask = await MainUnitOfWork.ReplacementRepository.FindOneAsync<TaskDetailDto>(
                 new Expression<Func<Replacement, bool>>[]
@@ -339,7 +433,7 @@ public class TaskService : BaseService, ITaskService
             taskDetail = replacementTask;
         }
 
-        //REPAIRATION
+        //REPAIR
         var repairation = await MainUnitOfWork.RepairRepository.FindOneAsync<TaskDetailDto>(
                 new Expression<Func<Repair, bool>>[]
                 {
@@ -656,4 +750,34 @@ public class TaskService : BaseService, ITaskService
             queryDto.Page,
             (int)Math.Ceiling(totalCount / (double)queryDto.PageSize));
     }
+
+    //public async Task<ApiResponse> InventoryCheckReport(InventoryCheckReport reportDto)
+    //{
+    //    //INVENTORY CHECK
+    //    var inventoryCheckReport = await MainUnitOfWork.InventoryCheckRepository.FindOneAsync(
+    //        new Expression<Func<InventoryCheck, bool>>[]
+    //        {
+    //            x => !x.DeletedAt.HasValue,
+    //            x => x.AssignedTo == AccountId,
+    //            x => x.Id == reportDto.ItemId,
+    //            x => x.Status != RequestStatus.Cancelled
+    //        });
+
+    //    var mediaFiles = new List<MediaFile>();
+    //    foreach (var uri in reportDto.Uris!)
+    //    {
+    //        var newMediaFile = new MediaFile
+    //        {
+    //            FileName = reportDto.FileName!,
+    //            RawUri = reportDto.RawUri!,
+    //            Uri = uri,
+    //            FileType = reportDto.FileType!,
+    //            Content = reportDto.Content!,
+    //            ItemId = reportDto.ItemId
+    //        };
+    //        mediaFiles.Add(newMediaFile);
+    //    }
+
+    //    return ApiResponse.Created("Báo cáo thành công");
+    //}
 }
