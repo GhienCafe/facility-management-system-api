@@ -47,7 +47,7 @@ public class DatabaseContext : DbContext
 
     
     // ***** VIEW ***** //
-   // public DbSet<TaskView> Tasks { get; set; }
+    public DbSet<TaskView> Tasks { get; set; }
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         //modelBuilder.ApplyConfigurationsFromAssembly(typeof(DatabaseContext).Assembly);
@@ -86,5 +86,6 @@ public class DatabaseContext : DbContext
         modelBuilder.ApplyConfiguration(new InventoryCheckDbConfig());
         modelBuilder.ApplyConfiguration(new InventoryCheckConfigConfig());
         modelBuilder.ApplyConfiguration(new InventoryCheckDetailConfig());
+        modelBuilder.ApplyConfiguration(new TaskViewConfig());
     }
 }
