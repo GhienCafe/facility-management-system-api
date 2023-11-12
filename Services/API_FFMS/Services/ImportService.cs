@@ -1,4 +1,5 @@
 ﻿using API_FFMS.Dtos;
+using AppCore.Extensions;
 using AppCore.Models;
 using MainData;
 using MainData.Entities;
@@ -11,6 +12,7 @@ namespace API_FFMS.Services
     {
         Task<ApiResponses<ImportError>> ImportAssets(IFormFile formFile);
         Task<ApiResponses<ImportTransportError>> ImportAssetsTransport(IFormFile formFile);
+        Stream GetTemplate(ImportTemplate importTemplate);
     }
     public class ImportService : BaseService, IImportAssetService
     {
@@ -73,6 +75,19 @@ namespace API_FFMS.Services
                 throw new ApiException(exception.Message);
             }
         }
+
+        public Stream GetTemplate(ImportTemplate importTemplate)
+        {
+            var path = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "TemplateImport", importTemplate.GetDisplayName());
+
+            if (!File.Exists(path))
+                throw new ApiException("File không tồn tại", StatusCode.NOT_FOUND);
+            // Open the file as a stream
+            var fileStream = File.OpenRead(path);
+
+            return fileStream;
+        }
+
         private List<Asset> ValidateAssetTransportImportDto(List<AssetTransportImportDto> assetDtos)
         {
             var assets = new List<Asset>();
@@ -143,7 +158,7 @@ namespace API_FFMS.Services
                     Description = dto.Description,
                     IsRented = IsTrueOrFalse(dto.IsRented!),
                     IsMovable = IsTrueOrFalse(dto.IsMovable!),
-                    Model = GetModelByName(dto.Model!),
+                    Model = GetModelByName(dto.ModelCode!),
                     ImageUrl = "",
                     StartDateOfUse = DateTime.Now,
                     LastCheckedDate = null,
@@ -184,7 +199,7 @@ namespace API_FFMS.Services
                         }).ToList();
 
                         if (!await MainUnitOfWork.RoomAssetRepository.InsertAsync(roomAssets, AccountId, CurrentDate))
-                            throw new ApiException("Import assets to ware house failed", StatusCode.BAD_REQUEST);
+                            throw new ApiException("Import assets failed", StatusCode.SERVER_ERROR);
                     }
 
                     return ApiResponses<ImportError>.Fail(validationErrors, StatusCode.MULTI_STATUS, "Hoàn tất nhập trang thiết bị vui lòng kiểm tra lại");
@@ -243,12 +258,11 @@ namespace API_FFMS.Services
 
         private async Task CheckExistTypeCode(List<Asset> assets)
         {
+            var typeCodes = await MainUnitOfWork.AssetTypeRepository.GetQuery()
+                .Select(x => x!.TypeCode).ToListAsync();
             foreach (var asset in assets)
             {
-                var existingTypeCode = await MainUnitOfWork.AssetTypeRepository.GetQuery()
-                                       .Where(t => t!.TypeCode.Contains(asset.Type!.TypeCode))
-                                       .FirstOrDefaultAsync();
-                if (existingTypeCode == null)
+                if (!typeCodes.Contains(asset.Type!.TypeCode))
                 {
                     var row = assets.IndexOf(asset) + 2;
                     validationErrors.Add(new ImportError
@@ -262,12 +276,11 @@ namespace API_FFMS.Services
 
         private async Task CheckExistModel(List<Asset> assets)
         {
+            var modelCodes = await MainUnitOfWork.ModelRepository.GetQuery()
+                .Select(x => x!.ModelName).ToListAsync();
             foreach (var asset in assets)
             {
-                var existingModel = await MainUnitOfWork.ModelRepository.GetQuery()
-                                         .Where(m => m!.ModelName!.Contains(asset.Model!.ModelName!))
-                                         .FirstOrDefaultAsync();
-                if(existingModel == null)
+                if(!modelCodes.Contains(asset.Model!.ModelName))
                 {
                     var row = assets.IndexOf(asset) + 2;
                     validationErrors.Add(new ImportError
@@ -284,8 +297,7 @@ namespace API_FFMS.Services
             foreach (var assetDto in assetDtos)
             {
                 if (string.IsNullOrWhiteSpace(assetDto.AssetName) ||
-                    string.IsNullOrWhiteSpace(assetDto.AssetCode) ||
-                    string.IsNullOrWhiteSpace(assetDto.TypeCode!.ToString()) ||
+                    string.IsNullOrWhiteSpace(assetDto.TypeCode) ||
                     string.IsNullOrWhiteSpace(assetDto.ManufacturingYear.ToString()) ||
                     string.IsNullOrWhiteSpace(assetDto.Quantity.ToString()))
                 {
@@ -334,13 +346,12 @@ namespace API_FFMS.Services
 
         private async Task CheckUniqueAssetCodesInDatabase(List<Asset> assets)
         {
+            var assetCodes = await MainUnitOfWork.AssetRepository.GetQuery()
+                .Select(x => x!.AssetCode)
+                .ToListAsync();
             foreach (var asset in assets)
             {
-                var existingAsset = await MainUnitOfWork.AssetRepository.GetQuery()
-                                         .Where(a => a!.AssetCode!.Contains(asset.AssetCode))
-                                         .FirstOrDefaultAsync();
-
-                if (existingAsset != null)
+                if (assetCodes.Contains(asset.AssetCode))
                 {
                     var row = assets.IndexOf(asset) + 2;
                     validationErrors.Add(new ImportError

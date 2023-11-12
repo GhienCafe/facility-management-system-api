@@ -3,6 +3,7 @@ using API_FFMS.Services;
 using AppCore.Models;
 using ClosedXML.Excel;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.OpenApi.Extensions;
 using Swashbuckle.AspNetCore.Annotations;
 
 namespace API_FFMS.Controllers
@@ -39,16 +40,17 @@ namespace API_FFMS.Controllers
                 worksheet.Range(1, 1, 1, 10).Style.Font.Bold = true;
                 currentRow++;
 
-                worksheet.Cell(currentRow, 1).Value = "Tên thiết bị";
+                worksheet.Cell(currentRow, 1).Value = "Tên thiết bị*";
                 worksheet.Cell(currentRow, 2).Value = "Mã thiết bị";
-                worksheet.Cell(currentRow, 3).Value = "Nhóm thiết bị";
-                worksheet.Cell(currentRow, 4).Value = "Nhãn hiệu";
+                worksheet.Cell(currentRow, 3).Value = "Loại thiết bị";
+                //worksheet.Cell(currentRow, 4).Value = "Dòng sản phẩm";
+                worksheet.Cell(currentRow, 4).Value = "Dòng sản phẩm";
                 worksheet.Cell(currentRow, 5).Value = "Năm sản xuất";
-                worksheet.Cell(currentRow, 6).Value = "Số định danh";
+                worksheet.Cell(currentRow, 6).Value = "Số Seri";
                 worksheet.Cell(currentRow, 7).Value = "Số lượng";
                 worksheet.Cell(currentRow, 8).Value = "Mô tả";
-                worksheet.Cell(currentRow, 9).Value = "Thuộc sở hữu";
-                worksheet.Cell(currentRow, 10).Value = "Có thể di chuyển";
+                worksheet.Cell(currentRow, 9).Value = "Thuê ngoài(Có/Không)";
+                worksheet.Cell(currentRow, 10).Value = "Có thể di chuyển(Có/Không)";
 
                 var headerRange = worksheet.Range(worksheet.Cell(currentRow, 1), worksheet.Cell(currentRow, 10));
                 headerRange.Style.Font.Bold = true;
@@ -61,7 +63,7 @@ namespace API_FFMS.Controllers
                 var assetTypes = await _assetTypeService.GetAssetTypes();
 
                 //Asset types
-                assetTypesWorksheet.Cell(assetTypesCurrentRow, 1).Value = "Danh sách nhóm thiết bị";
+                assetTypesWorksheet.Cell(assetTypesCurrentRow, 1).Value = "Danh sách loại thiết bị";
                 assetTypesWorksheet.Cell(assetTypesCurrentRow, 1).Style.Font.FontSize = 18;
                 assetTypesWorksheet.Cell(assetTypesCurrentRow, 1).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
                 assetTypesWorksheet.Cell(assetTypesCurrentRow, 1).Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
@@ -115,23 +117,23 @@ namespace API_FFMS.Controllers
                 }
 
                 //Brands
-                assetTypesCurrentRow++;
-
-                assetTypesWorksheet.Cell(assetTypesCurrentRow, 1).Value = "Danh sách nhãn hiệu";
-                assetTypesWorksheet.Cell(assetTypesCurrentRow, 1).Style.Font.FontSize = 18;
-                assetTypesWorksheet.Cell(assetTypesCurrentRow, 1).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
-                assetTypesWorksheet.Cell(assetTypesCurrentRow, 1).Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
-                assetTypesWorksheet.Range(assetTypesCurrentRow, 1, assetTypesCurrentRow, 4).Row(1).Merge();
-                assetTypesWorksheet.Range(assetTypesCurrentRow, 1, assetTypesCurrentRow, 4).Style.Font.Bold = true;
-
-                assetTypesCurrentRow++;
-                assetTypesWorksheet.Cell(assetTypesCurrentRow, 1).Value = "Tên nhãn hiệu";
-                assetTypesWorksheet.Cell(assetTypesCurrentRow, 2).Value = "Mô tả";
-
-                var brandsHeaderRange = assetTypesWorksheet.Range(assetTypesWorksheet.Cell(assetTypesCurrentRow, 1), assetTypesWorksheet.Cell(assetTypesCurrentRow, 4));
-                brandsHeaderRange.Style.Font.Bold = true;
-                brandsHeaderRange.Style.Fill.BackgroundColor = XLColor.LightGray;
-                assetTypesCurrentRow++;
+                // assetTypesCurrentRow++;
+                //
+                // assetTypesWorksheet.Cell(assetTypesCurrentRow, 1).Value = "Danh sách nhãn hiệu";
+                // assetTypesWorksheet.Cell(assetTypesCurrentRow, 1).Style.Font.FontSize = 18;
+                // assetTypesWorksheet.Cell(assetTypesCurrentRow, 1).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                // assetTypesWorksheet.Cell(assetTypesCurrentRow, 1).Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
+                // assetTypesWorksheet.Range(assetTypesCurrentRow, 1, assetTypesCurrentRow, 4).Row(1).Merge();
+                // assetTypesWorksheet.Range(assetTypesCurrentRow, 1, assetTypesCurrentRow, 4).Style.Font.Bold = true;
+                //
+                // assetTypesCurrentRow++;
+                // assetTypesWorksheet.Cell(assetTypesCurrentRow, 1).Value = "Tên nhãn hiệu";
+                // assetTypesWorksheet.Cell(assetTypesCurrentRow, 2).Value = "Mô tả";
+                //
+                // var brandsHeaderRange = assetTypesWorksheet.Range(assetTypesWorksheet.Cell(assetTypesCurrentRow, 1), assetTypesWorksheet.Cell(assetTypesCurrentRow, 4));
+                // brandsHeaderRange.Style.Font.Bold = true;
+                // brandsHeaderRange.Style.Fill.BackgroundColor = XLColor.LightGray;
+                // assetTypesCurrentRow++;
 
                 assetTypesWorksheet.Columns().AdjustToContents();
 
@@ -194,6 +196,17 @@ namespace API_FFMS.Controllers
         public async Task<ApiResponses<ImportTransportError>> ImportAssetTransport(IFormFile file)
         {
             return await _importService.ImportAssetsTransport(file);
+        }
+        
+        [HttpGet("template")]
+        [SwaggerOperation("Get import template")]
+        public IActionResult   GetTemplate([FromQuery]ImportTemplate template)
+        {
+            var fileStream = _importService.GetTemplate(template);
+
+            var contentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+
+            return File(fileStream, contentType, $"{template.GetDisplayName()}.xlsx");
         }
     }
 }

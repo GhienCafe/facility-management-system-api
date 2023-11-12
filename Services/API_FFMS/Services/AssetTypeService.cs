@@ -156,6 +156,7 @@ namespace API_FFMS.Services
             existingTpye.CategoryId = updateDto.CategoryId ?? existingTpye.CategoryId;
             existingTpye.TypeCode = updateDto.TypeCode ?? existingTpye.TypeCode;
             existingTpye.ImageUrl = updateDto.ImageUrl ?? existingTpye.ImageUrl;
+            existingTpye.IsIdentified = updateDto.IsIdentified ?? existingTpye.IsIdentified;
 
             if (!await MainUnitOfWork.AssetTypeRepository.UpdateAsync(existingTpye, AccountId, CurrentDate))
             {
