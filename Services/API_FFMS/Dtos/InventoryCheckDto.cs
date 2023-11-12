@@ -38,10 +38,6 @@ public class InventoryCheckDto : BaseDto
     public AssignedInventoryCheckDto? Staff { get; set; }
 }
 
-//public class RoomInventoryCheckDto
-//{
-//    public RoomInventoryCheckDto? Room { get; set; }
-//}
 
 public class AssetInventoryCheckDto
 {
@@ -61,6 +57,7 @@ public class RoomInventoryCheckDto
     public string? RoomCode { get; set; }
     public Guid FloorId { get; set; }
     public Guid StatusId { get; set; }
+    public RoomStatusInvenDto? Status { get; set; }
     public List<AssetInventoryCheckDto>? Assets { get; set; }
 }
 
@@ -89,8 +86,13 @@ public class InventoryCheckCreateDto
     public bool IsInternal { get; set; }
     public Priority Priority { get; set; } = Priority.Medium;
     public required Guid AssignedTo { get; set; }
-    public required List<Guid> RoomIds { get; set; }
+    public List<RoomInvenCheckCretaeDto>? Rooms { get; set; }
     //public MediaFileCreateDto? RelatedFile { get; set; }
+}
+
+public class RoomInvenCheckCretaeDto
+{
+    public required Guid RoomId { get; set; }
 }
 
 public class InventoryCheckConfigDto : BaseDto
