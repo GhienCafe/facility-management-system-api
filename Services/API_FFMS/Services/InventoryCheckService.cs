@@ -2,6 +2,8 @@
 using API_FFMS.Repositories;
 using AppCore.Extensions;
 using AppCore.Models;
+using DocumentFormat.OpenXml.Drawing.Spreadsheet;
+using DocumentFormat.OpenXml.Wordprocessing;
 using MainData;
 using MainData.Entities;
 using MainData.Repositories;
@@ -102,7 +104,7 @@ public class InventoryCheckService : BaseService, IInventoryCheckService
             inventoryCheck.PriorityObj = inventoryCheck.Priority.GetValue();
             inventoryCheck.StatusObj = inventoryCheck.Status.GetValue();
 
-            
+
 
             var userQuery = MainUnitOfWork.UserRepository.GetQuery().Where(x => x!.Id == inventoryCheck.AssignedTo);
             inventoryCheck.Staff = await userQuery.Select(x => new AssignedInventoryCheckDto
@@ -129,36 +131,42 @@ public class InventoryCheckService : BaseService, IInventoryCheckService
             var distinctRoomIds = inventoryCheckDetails.Select(detail => detail!.RoomId).Distinct();
 
             var rooms = await MainUnitOfWork.RoomRepository.GetQuery()
-                             .Where(room => distinctRoomIds.Contains(room!.Id))
-                             .ToListAsync();
+                            .Where(room => distinctRoomIds.Contains(room!.Id))
+                            .ToListAsync();
 
-            inventoryCheck.Rooms = distinctRoomIds.Select(roomId => new RoomInventoryCheckDto
+            inventoryCheck.Rooms = distinctRoomIds.Select(roomId =>
             {
-                Id = roomId,
-                RoomName = rooms.FirstOrDefault(r => r!.Id == roomId)!.RoomName,
-                Area = rooms.FirstOrDefault(r => r!.Id == roomId)!.Area,
-                RoomCode = rooms.FirstOrDefault(r => r!.Id == roomId)!.RoomCode,
-                FloorId = rooms.FirstOrDefault(r => r!.Id == roomId)!.FloorId,
-                StatusId = rooms.FirstOrDefault(r => r!.Id == roomId)!.StatusId,
-                Status = roomStatusQuery.Where(x => x.Id == rooms.FirstOrDefault(r => r!.Id == roomId)!.StatusId).Select(x => new RoomStatusDto
+                var room = rooms.FirstOrDefault(r => r!.Id == roomId);
+                if (room != null)
                 {
-                    StatusName = x!.StatusName,
-                    Description = x.Description,
-                    Color = x.Color
-                }).FirstOrDefault(),
-                Assets = inventoryCheckDetails
-                    .Where(detail => detail!.RoomId == roomId)
-                    .Select(detail => new AssetInventoryCheckDto
+                    return new RoomInventoryCheckDto
                     {
-                        Id = detail!.AssetId,
-                        AssetName = detail.Asset!.AssetName,
-                        AssetCode = detail.Asset.AssetCode,
-                        Status = inventoryCheck.Status != RequestStatus.Done ? detail.Asset.Status : detail.Status,
-                        StatusObj = inventoryCheck.Status != RequestStatus.Done ? detail.Asset.Status.GetValue() : detail.Status.GetValue(),
-                    }).ToList()
-
-            })
-            .ToList();
+                        Id = room.Id,
+                        RoomName = room.RoomName,
+                        Area = room.Area,
+                        RoomCode = room.RoomCode,
+                        FloorId = room.FloorId,
+                        StatusId = room.StatusId,
+                        Status = roomStatusQuery.Where(x => x!.Id == room.StatusId).Select(x => new RoomStatusInvenDto
+                        {
+                            StatusName = x!.StatusName,
+                            Description = x.Description,
+                            Color = x.Color
+                        }).FirstOrDefault(),
+                        Assets = inventoryCheckDetails
+                            .Where(detail => detail!.RoomId == roomId)
+                            .Select(detail => new AssetInventoryCheckDto
+                            {
+                                Id = detail!.AssetId,
+                                AssetName = detail.Asset!.AssetName,
+                                AssetCode = detail.Asset.AssetCode,
+                                Status = inventoryCheck.Status != RequestStatus.Done ? detail.Asset.Status : detail.Status,
+                                StatusObj = inventoryCheck.Status != RequestStatus.Done ? detail.Asset.Status.GetValue() : detail.Status.GetValue(),
+                            }).ToList()
+                    };
+                }
+                return null;  // Handle the case where room is not found
+            }).ToList();
 
             inventoryCheck = await _mapperRepository.MapCreator(inventoryCheck);
             return ApiResponse<InventoryCheckDto>.Success(inventoryCheck);
@@ -233,6 +241,7 @@ public class InventoryCheckService : BaseService, IInventoryCheckService
 
             var roomQuery = MainUnitOfWork.RoomRepository.GetQuery();
             var roomAssetQuery = MainUnitOfWork.RoomAssetRepository.GetQuery();
+            var roomStatusQuery = MainUnitOfWork.RoomStatusRepository.GetQuery();
 
             var inventoryChecks = await inventoryCheckQuery.Select(i => new InventoryCheckDto
             {
@@ -260,6 +269,12 @@ public class InventoryCheckService : BaseService, IInventoryCheckService
                                         RoomCode = roomQuery.FirstOrDefault(r => r!.Id == group.Key)!.RoomCode,
                                         FloorId = roomQuery.FirstOrDefault(r => r!.Id == group.Key)!.FloorId,
                                         StatusId = roomQuery.FirstOrDefault(r => r!.Id == group.Key)!.StatusId,
+                                        Status = roomStatusQuery.Where(x => x!.Id == roomQuery.FirstOrDefault(r => r!.Id == group.Key)!.StatusId).Select(x => new RoomStatusInvenDto
+                                        {
+                                            StatusName = x!.StatusName,
+                                            Description = x.Description,
+                                            Color = x.Color
+                                        }).FirstOrDefault(),
                                         Assets = group.Select(x => new AssetInventoryCheckDto
                                         {
                                             Id = roomAssetQuery.FirstOrDefault(ra => ra!.AssetId == x.AssetId && ra.RoomId == x.RoomId)!.AssetId,
