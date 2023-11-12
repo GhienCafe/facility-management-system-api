@@ -42,7 +42,7 @@ public class InventoryCheckService : BaseService, IInventoryCheckService
                 new Expression<Func<Room, bool>>[]
                 {
                     x => !x.DeletedAt.HasValue,
-                    x => createDto.RoomIds.Contains(x.Id)
+                    x => createDto.Rooms!.Select(x => x.RoomId).Contains(x.Id)
                 }, null);
 
             var roomAssets = await MainUnitOfWork.RoomAssetRepository.FindAsync(
