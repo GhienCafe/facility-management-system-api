@@ -48,6 +48,7 @@ namespace API_FFMS.Dtos
         public Unit Unit { get; set; }
         public string? ImageUrl { get; set; }
         public Guid? CategoryId { get; set; }
+        public bool? IsIdentified { get; set; } = false;
     }
 
     public class AssetTypeUpdateDto
@@ -58,6 +59,7 @@ namespace API_FFMS.Dtos
         public Unit? Unit { get; set; }
         public string? ImageUrl { get; set; }
         public Guid? CategoryId { get; set; }
+        public bool? IsIdentified { get; set; } 
     }
 
     public class AssetTypeQueryDto : BaseQueryDto
