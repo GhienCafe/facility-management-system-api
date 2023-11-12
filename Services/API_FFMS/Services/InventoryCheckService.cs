@@ -165,7 +165,7 @@ public class InventoryCheckService : BaseService, IInventoryCheckService
                             }).ToList()
                     };
                 }
-                return null;  // Handle the case where room is not found
+                throw new ApiException("Lấy thông tin yêu cầu thất bại", StatusCode.NOT_FOUND);
             }).ToList();
 
             inventoryCheck = await _mapperRepository.MapCreator(inventoryCheck);
