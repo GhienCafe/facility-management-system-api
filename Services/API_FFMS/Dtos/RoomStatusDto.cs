@@ -8,6 +8,13 @@ public class RoomStatusDto : BaseDto
     public string? Description { get; set; }
     public string? Color { get; set; }
 }
+
+public class RoomStatusInvenDto
+{
+    public string StatusName { get; set; } = null!;
+    public string? Description { get; set; }
+    public string? Color { get; set; }
+}
 public class RoomStatusDetailDto : BaseDto
 {
     public string StatusName { get; set; } = null!;
