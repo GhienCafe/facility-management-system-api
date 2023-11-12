@@ -6,6 +6,7 @@ using MainData;
 using MainData.Entities;
 using MainData.Repositories;
 using Microsoft.EntityFrameworkCore;
+using System.Linq;
 using System.Linq.Expressions;
 
 namespace API_FFMS.Services;
@@ -118,6 +119,7 @@ public class InventoryCheckService : BaseService, IInventoryCheckService
 
             var roomQuery = MainUnitOfWork.RoomRepository.GetQuery();
             var roomAssetQuery = MainUnitOfWork.RoomAssetRepository.GetQuery();
+            var roomStatusQuery = MainUnitOfWork.RoomStatusRepository.GetQuery();
 
             var inventoryCheckDetails = await MainUnitOfWork.InventoryCheckDetailRepository.GetQuery()
                                               .Include(x => x!.Asset)
@@ -138,6 +140,12 @@ public class InventoryCheckService : BaseService, IInventoryCheckService
                 RoomCode = rooms.FirstOrDefault(r => r!.Id == roomId)!.RoomCode,
                 FloorId = rooms.FirstOrDefault(r => r!.Id == roomId)!.FloorId,
                 StatusId = rooms.FirstOrDefault(r => r!.Id == roomId)!.StatusId,
+                Status = roomStatusQuery.Where(x => x.Id == rooms.FirstOrDefault(r => r!.Id == roomId)!.StatusId).Select(x => new RoomStatusDto
+                {
+                    StatusName = x!.StatusName,
+                    Description = x.Description,
+                    Color = x.Color
+                }).FirstOrDefault(),
                 Assets = inventoryCheckDetails
                     .Where(detail => detail!.RoomId == roomId)
                     .Select(detail => new AssetInventoryCheckDto

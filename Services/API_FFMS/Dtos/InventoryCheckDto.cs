@@ -57,6 +57,7 @@ public class RoomInventoryCheckDto
     public string? RoomCode { get; set; }
     public Guid FloorId { get; set; }
     public Guid StatusId { get; set; }
+    public RoomStatusDto? Status { get; set; }
     public List<AssetInventoryCheckDto>? Assets { get; set; }
 }
 
