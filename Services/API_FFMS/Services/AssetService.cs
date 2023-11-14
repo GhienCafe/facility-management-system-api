@@ -297,7 +297,7 @@ public class AssetService : BaseService, IAssetService
         if (room == null)
             throw new ApiException("Không tìm thấy phòng", StatusCode.NOT_FOUND);
 
-        var roomAssetDataset = MainUnitOfWork.RoomAssetRepository.GetQuery();
+        var roomAssetDataset = MainUnitOfWork.RoomAssetRepository.GetQuery().Where(x => x!.ToDate == null);
         var assetDataset = MainUnitOfWork.AssetRepository.GetQuery();
 
         var joinedAssets = from roomAsset in roomAssetDataset
