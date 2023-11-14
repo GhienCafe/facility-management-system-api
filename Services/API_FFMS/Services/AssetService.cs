@@ -54,7 +54,7 @@ public class AssetService : BaseService, IAssetService
         if (existingAsset == null)
             throw new ApiException("Không tìm thấy trang thiết bị", StatusCode.NOT_FOUND);
 
-        if (!await MainUnitOfWork.AssetRepository.DeleteAsync(existingAsset, AccountId, CurrentDate))
+        if (!await _assetRepository.DeleteAsset(existingAsset, AccountId, CurrentDate))
             throw new ApiException("Xóa trang thiết bị thất bại", StatusCode.SERVER_ERROR);
 
         return ApiResponse.Success("Xóa trang thiết bị thành công");
@@ -403,7 +403,7 @@ public class AssetService : BaseService, IAssetService
             x => deleteDto.ListId!.Contains(x.Id)
         }, null);
 
-        if (!await MainUnitOfWork.AssetRepository.DeleteAsync(assets, AccountId, CurrentDate))
+        if (!await _assetRepository.DeleteAssets(assets, AccountId, CurrentDate))
         {
             throw new ApiException("Xóa thất bại", StatusCode.SERVER_ERROR);
         }
