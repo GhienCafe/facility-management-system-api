@@ -41,6 +41,12 @@ public class TaskService : BaseService, ITaskService
             });
         if (assetCheckReport != null)
         {
+            var asset = await MainUnitOfWork.AssetRepository.FindOneAsync(assetCheckReport.AssetId);
+            if (asset == null)
+            {
+                throw new ApiException("Không tìm thấy thiết bị của yêu cầu này", StatusCode.NOT_FOUND);
+            }
+
             createDto.ItemId = assetCheckReport.Id;
         }
 
