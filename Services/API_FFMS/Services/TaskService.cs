@@ -125,7 +125,7 @@ public class TaskService : BaseService, ITaskService
                             {
                                 AssetId = assetReport.AssetId ?? Guid.Empty,
                                 InventoryCheckId = inventoryCheckReport.Id,
-                                RoomId = room.RoomId,
+                                RoomId = (Guid)room.RoomId,
                                 Status = assetReport.Status,
                                 Quantity = assetReport.Quantity
                             };
@@ -327,6 +327,7 @@ public class TaskService : BaseService, ITaskService
         if (inventoryCheckTask != null)
         {
             inventoryCheckTask.Type = RequestType.InventoryCheck;
+            inventoryCheckTask.TypeObj = inventoryCheckTask.Type.GetValue();
             inventoryCheckTask.PriorityObj = inventoryCheckTask.Priority.GetValue();
             inventoryCheckTask.StatusObj = inventoryCheckTask.Status.GetValue();
 
@@ -335,6 +336,8 @@ public class TaskService : BaseService, ITaskService
                                               .Where(x => x!.InventoryCheckId == inventoryCheckTask.Id)
                                               .ToListAsync();
             var distinctRoomIds = inventoryCheckDetails.Select(detail => detail!.RoomId).Distinct();
+
+            var roomAssetQuery = MainUnitOfWork.RoomAssetRepository.GetQuery();
 
             var rooms = await MainUnitOfWork.RoomRepository.GetQuery()
                              .Where(room => distinctRoomIds.Contains(room!.Id))
@@ -354,6 +357,7 @@ public class TaskService : BaseService, ITaskService
                         Id = detail!.AssetId,
                         AssetName = detail.Asset!.AssetName,
                         AssetCode = detail.Asset.AssetCode,
+                        Quantity = inventoryCheckTask.Status != RequestStatus.Done ? roomAssetQuery.FirstOrDefault(ra => ra!.AssetId == detail.AssetId && ra.RoomId == detail.RoomId)!.Quantity : detail.Quantity,
                         Status = inventoryCheckTask.Status != RequestStatus.Done ? detail.Asset.Status : detail.Status,
                         StatusObj = inventoryCheckTask.Status != RequestStatus.Done ? detail.Asset.Status.GetValue() : detail.Status.GetValue(),
                     }).ToList()

@@ -133,7 +133,8 @@ public class InventoryCheckRepository : IInventoryCheckRepository
                 }
                 else if (statusUpdate == RequestStatus.Cancelled)
                 {
-
+                    inventoryCheck.Status = RequestStatus.Cancelled;
+                    _context.Entry(inventoryCheck).State = EntityState.Modified;
                 }
             }
 

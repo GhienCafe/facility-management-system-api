@@ -68,6 +68,8 @@ public class NotificationService : BaseService, INotificationService
             notificationQueryable = notificationQueryable.Where(x => x!.Status == queryDto.Status);
         }
 
+        notificationQueryable = notificationQueryable.OrderByDescending(x => x!.CreatedAt);
+
         var totalCount = await notificationQueryable.CountAsync();
 
         notificationQueryable = notificationQueryable.Skip(queryDto.Skip())
