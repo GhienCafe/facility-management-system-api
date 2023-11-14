@@ -1,5 +1,5 @@
 # .github/workflows/deploy.yml
-name: Deploy to Linux Server
+name: Deploy to Linux Server run Worker
 
 on:
   push:
