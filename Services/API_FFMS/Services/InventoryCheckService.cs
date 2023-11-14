@@ -156,6 +156,7 @@ public class InventoryCheckService : BaseService, IInventoryCheckService
                                 Id = detail!.AssetId,
                                 AssetName = detail.Asset!.AssetName,
                                 AssetCode = detail.Asset.AssetCode,
+                                Quantity = inventoryCheck.Status != RequestStatus.Done ? roomAssetQuery.FirstOrDefault(ra => ra!.AssetId == detail.AssetId && ra.RoomId == detail.RoomId)!.Quantity : detail.Quantity,
                                 Status = inventoryCheck.Status != RequestStatus.Done ? detail.Asset.Status : detail.Status,
                                 StatusObj = inventoryCheck.Status != RequestStatus.Done ? detail.Asset.Status.GetValue() : detail.Status.GetValue(),
                             }).ToList()
