@@ -1,10 +1,12 @@
 ﻿using API_FFMS.Dtos;
+using API_FFMS.Repositories;
 using AppCore.Extensions;
 using AppCore.Models;
 using MainData;
 using MainData.Entities;
 using MainData.Repositories;
 using Microsoft.EntityFrameworkCore;
+using System.Linq.Expressions;
 
 namespace API_FFMS.Services
 {
@@ -16,14 +18,17 @@ namespace API_FFMS.Services
     }
     public class ImportService : BaseService, IImportAssetService
     {
+        private readonly IAssetRepository _assetRepository;
         private List<ImportError> validationErrors;
         private List<ImportTransportError> validationAssetErrors;
 
-        public ImportService(MainUnitOfWork mainUnitOfWork, IHttpContextAccessor httpContextAccessor, IMapperRepository mapperRepository)
-            : base(mainUnitOfWork, httpContextAccessor, mapperRepository)
+        public ImportService(MainUnitOfWork mainUnitOfWork, IHttpContextAccessor httpContextAccessor,
+                             IMapperRepository mapperRepository, IAssetRepository assetRepository)
+                             : base(mainUnitOfWork, httpContextAccessor, mapperRepository)
         {
             validationErrors = new List<ImportError>();
             validationAssetErrors = new List<ImportTransportError>();
+            _assetRepository = assetRepository;
         }
 
         public async Task<ApiResponses<ImportTransportError>> ImportAssetsTransport(IFormFile formFile)
@@ -111,7 +116,7 @@ namespace API_FFMS.Services
 
                 if (existingAsset == null)
                 {
-                    var row = assetDtos.IndexOf(assetDto) + 2;
+                    var row = assetDtos.IndexOf(assetDto) + 3;
 
                     validationAssetErrors.Add(new ImportTransportError
                     {
@@ -150,7 +155,7 @@ namespace API_FFMS.Services
                 {
                     AssetName = dto.AssetName,
                     AssetCode = dto.AssetCode,
-                    Type = GetAssetTypeByCode(dto.TypeCode!),
+                    TypeId = GetAssetTypeByCode(dto.TypeCode!),
                     Status = AssetStatus.Operational,
                     ManufacturingYear = dto.ManufacturingYear,
                     SerialNumber = dto.SerialNumber,
@@ -158,7 +163,7 @@ namespace API_FFMS.Services
                     Description = dto.Description,
                     IsRented = IsTrueOrFalse(dto.IsRented!),
                     IsMovable = IsTrueOrFalse(dto.IsMovable!),
-                    Model = GetModelByName(dto.ModelCode!),
+                    ModelId = GetModelByName(dto.ModelCode!),
                     ImageUrl = "",
                     StartDateOfUse = DateTime.Now,
                     LastCheckedDate = null,
@@ -177,29 +182,13 @@ namespace API_FFMS.Services
                 //CheckStatusValueRange(assets);
 
                 // Filter out assets with validation errors
-                var validAssets = assets.Where(a => !validationErrors.Any(e => e.Row == assets.IndexOf(a) + 2)).ToList();
+                var validAssets = assets.Where(a => !validationErrors.Any(e => e.Row == assets.IndexOf(a) + 3)).ToList();
 
                 if (validationErrors.Count >= 0 && validAssets.Count >= 0)
                 {
-                    if (!await MainUnitOfWork.AssetRepository.InsertAsync(validAssets, AccountId, CurrentDate))
+                    if (!await _assetRepository.InsertAssets(validAssets, AccountId, CurrentDate))
                     {
                         throw new ApiException("Import assets failed", StatusCode.SERVER_ERROR);
-                    }
-
-                    var assetIds = validAssets.Select(x => x?.Id);
-                    Guid wareHouseId = GetWareHouse("Kho")!.Id;
-                    if (wareHouseId != Guid.Empty)
-                    {
-                        var roomAssets = assetIds.Select(x => new RoomAsset
-                        {
-                            FromDate = CurrentDate,
-                            AssetId = x!.Value,
-                            RoomId = wareHouseId,
-                            Status = AssetStatus.Operational
-                        }).ToList();
-
-                        if (!await MainUnitOfWork.RoomAssetRepository.InsertAsync(roomAssets, AccountId, CurrentDate))
-                            throw new ApiException("Import assets failed", StatusCode.SERVER_ERROR);
                     }
 
                     return ApiResponses<ImportError>.Fail(validationErrors, StatusCode.MULTI_STATUS, "Hoàn tất nhập trang thiết bị vui lòng kiểm tra lại");
@@ -213,22 +202,32 @@ namespace API_FFMS.Services
             }
         }
 
-        private AssetType? GetAssetTypeByCode(string typeCode)
+        private Guid? GetAssetTypeByCode(string typeCode)
         {
             var assetCategory = MainUnitOfWork.AssetTypeRepository.GetQuery()
                                 .Where(x => x!.TypeCode.Trim().ToLower()
                                 .Contains(typeCode.Trim().ToLower()))
                                 .FirstOrDefault();
-            return assetCategory;
+            if(assetCategory == null)
+            {
+                return Guid.NewGuid();
+            }
+
+            return assetCategory.Id;
+
         }
 
-        private Model? GetModelByName(string modelName)
+        private Guid? GetModelByName(string modelName)
         {
             var model = MainUnitOfWork.ModelRepository.GetQuery()
                                 .Where(x => x!.ModelName!.Trim().ToLower()
                                 .Contains(modelName.Trim().ToLower()))
                                 .FirstOrDefault();
-            return model;
+            if(model == null)
+            {
+                return Guid.NewGuid();
+            }
+            return model.Id;
         }
 
         public Room? GetWareHouse(string roomName)
@@ -259,16 +258,17 @@ namespace API_FFMS.Services
         private async Task CheckExistTypeCode(List<Asset> assets)
         {
             var typeCodes = await MainUnitOfWork.AssetTypeRepository.GetQuery()
-                .Select(x => x!.TypeCode).ToListAsync();
+                .Select(x => x!.Id).ToListAsync();
+
             foreach (var asset in assets)
             {
-                if (!typeCodes.Contains(asset.Type!.TypeCode))
+                if (!typeCodes.Contains((Guid)asset.TypeId))
                 {
-                    var row = assets.IndexOf(asset) + 2;
+                    var row = assets.IndexOf(asset) + 3;
                     validationErrors.Add(new ImportError
                     {
                         Row = row,
-                        ErrorMessage = $"Mã nhóm thiết bị '{asset.Type!.TypeCode}' ở dòng {row} không tồn tại"
+                        ErrorMessage = $"Mã nhóm thiết bị ở dòng {row} không tồn tại"
                     });
                 }
             }
@@ -277,16 +277,17 @@ namespace API_FFMS.Services
         private async Task CheckExistModel(List<Asset> assets)
         {
             var modelCodes = await MainUnitOfWork.ModelRepository.GetQuery()
-                .Select(x => x!.ModelName).ToListAsync();
+                .Select(x => x!.Id).ToListAsync();
+
             foreach (var asset in assets)
             {
-                if(!modelCodes.Contains(asset.Model!.ModelName))
+                if(!modelCodes.Contains((Guid)asset.ModelId))
                 {
-                    var row = assets.IndexOf(asset) + 2;
+                    var row = assets.IndexOf(asset) + 3;
                     validationErrors.Add(new ImportError
                     {
                         Row = row,
-                        ErrorMessage = $"Nhãn hiệu '{asset.Model!.ModelName}' ở dòng {row} không tồn tại"
+                        ErrorMessage = $"Dòng sản phẩm ở dòng {row} không tồn tại"
                     });
                 }
             }
@@ -301,7 +302,7 @@ namespace API_FFMS.Services
                     string.IsNullOrWhiteSpace(assetDto.ManufacturingYear.ToString()) ||
                     string.IsNullOrWhiteSpace(assetDto.Quantity.ToString()))
                 {
-                    var row = assetDtos.IndexOf(assetDto) + 2;
+                    var row = assetDtos.IndexOf(assetDto) + 3;
                     validationErrors.Add(new ImportError
                     {
                         Row = row,
@@ -326,7 +327,7 @@ namespace API_FFMS.Services
                     .Select(a => new
                     {
                         AssetCode = a.AssetCode,
-                        Row = assets.IndexOf(a) + 2 // +2 because Excel rows are 1-based, and we skip the header row
+                        Row = assets.IndexOf(a) + 3 // +2 because Excel rows are 1-based, and we skip the header row
                     })
                     .ToList();
 
@@ -353,7 +354,7 @@ namespace API_FFMS.Services
             {
                 if (assetCodes.Contains(asset.AssetCode))
                 {
-                    var row = assets.IndexOf(asset) + 2;
+                    var row = assets.IndexOf(asset) + 3;
                     validationErrors.Add(new ImportError
                     {
                         Row = row,
@@ -373,7 +374,7 @@ namespace API_FFMS.Services
 
                 if (existingCategory == null)
                 {
-                    var row = assets.IndexOf(asset) + 2;
+                    var row = assets.IndexOf(asset) + 3;
                     validationErrors.Add(new ImportError
                     {
                         Row = row,
@@ -392,7 +393,7 @@ namespace API_FFMS.Services
             {
                 if (!int.TryParse(asset.ManufacturingYear.ToString(), out int manufacturingYear) || manufacturingYear < minManufacturingYear || manufacturingYear > currentDate)
                 {
-                    var row = assets.IndexOf(asset) + 2;
+                    var row = assets.IndexOf(asset) + 3;
                     validationErrors.Add(new ImportError
                     {
                         Row = row,
@@ -409,7 +410,7 @@ namespace API_FFMS.Services
             {
                 if (asset.Quantity <= 0)
                 {
-                    var row = assets.IndexOf(asset) + 2;
+                    var row = assets.IndexOf(asset) + 3;
                     validationErrors.Add(new ImportError
                     {
                         Row = row,
@@ -425,7 +426,7 @@ namespace API_FFMS.Services
             {
                 if (asset.Status is < 0 or > (AssetStatus)11)
                 {
-                    var row = assets.IndexOf(asset) + 2;
+                    var row = assets.IndexOf(asset) + 3;
                     validationErrors.Add(new ImportError
                     {
                         Row = row,

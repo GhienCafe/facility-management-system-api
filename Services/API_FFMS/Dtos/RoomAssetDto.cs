@@ -24,9 +24,6 @@ namespace API_FFMS.Dtos
     {
         public Guid RoomId { get; set; }
         public Guid? AssetId { get; set; }
-        public AssetStatus? Status { get; set; }
-        public DateTime? FromDate { get; set; }
-        public DateTime? ToDate { get; set; }
         public double? Quantity { get; set; }
     }
     

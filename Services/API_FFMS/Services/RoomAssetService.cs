@@ -160,9 +160,9 @@ namespace API_FFMS.Services
                 var roomAssetDataset = MainUnitOfWork.RoomAssetRepository.GetQuery()
                     .Where(x => !x!.DeletedAt.HasValue);
                 var roomDataset = MainUnitOfWork.RoomRepository.GetQuery()
-                    .Where(x => !x!.DeletedAt.HasValue); ;
+                    .Where(x => !x!.DeletedAt.HasValue);
                 var assetDataset = MainUnitOfWork.AssetRepository.GetQuery()
-                    .Where(x => !x!.DeletedAt.HasValue); ;
+                    .Where(x => !x!.DeletedAt.HasValue);
 
                 var joinedRooms = from roomAsset in roomAssetDataset
                                   join room in roomDataset on roomAsset.RoomId equals room.Id into roomGroup

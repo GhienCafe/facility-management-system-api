@@ -59,6 +59,7 @@ builder.Services.AddConfig(new List<string>
 //
 
 var app = builder.Build();
+app.UseCors("CorsPolicy");
 app.UseConfig();
 //
 app.MapControllers();
