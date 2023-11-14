@@ -1,0 +1,54 @@
+# .github/workflows/deploy.yml
+name: Deploy to Linux Server
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "/**"
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Login to Docker Hub
+      run: echo ${{ secrets.DOCKERHUB_TOKEN }} | docker login -u ${{ secrets.DOCKERHUB_USERNAME }} --password-stdin
+   
+    - name: Build and Push Docker image
+      run: |
+        docker build -t ${{ secrets.REGISTRY }}/${{ secrets.WORKER_DOCKER_IMAGE }}:latest .
+        docker push ${{ secrets.REGISTRY }}/worker:latest
+
+    - name: SSH into the server and pull the latest Docker image
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.SERVER_IP }}
+        username: ${{ secrets.SSH_USER }}
+        key: ${{ secrets.SSH_PRIVATE_KEY }}
+        script: |
+          ssh-keyscan ${{ secrets.SERVER_IP }} >> ~/.ssh/known_hosts
+          docker login -u ${{ secrets.DOCKERHUB_USERNAME }} -p ${{ secrets.DOCKERHUB_TOKEN }}
+          docker pull ${{ secrets.REGISTRY }}/${{ secrets.WORKER_DOCKER_IMAGE }}:latest
+          docker stop ${{ secrets.WORKER_DOCKER_CONTAINER }} || true
+          docker rm ${{ secrets.WORKER_DOCKER_CONTAINER }} || true
+          docker run -d --name worker_container \
+            -e CONNECTION_STRING="${{ secrets.CONNECTION_STRING }}" \
+            -e JWT_ACCESS_TOKEN_SECRET="${{ secrets.JWT_ACCESS_TOKEN_SECRET }}" \
+            -e JWT_RESET_TOKEN_SECRET="${{ secrets.JWT_RESET_TOKEN_SECRET }}" \
+            -e JWT_AUDIENCE="${{ secrets.JWT_AUDIENCE }}" \
+            -e JWT_ISSUER="${{ secrets.JWT_ISSUER }}" \
+            -e JWT_ACCESS_TOKEN_EXPIRES="${{ secrets.JWT_ACCESS_TOKEN_EXPIRES }}" \
+            -e JWT_RESET_TOKEN_EXPIRES="${{ secrets.JWT_RESET_TOKEN_EXPIRES }}" \
+            -e TYPE="${{ secrets.TYPE }}" \
+            -e PROJECT_ID="${{ secrets.PROJECT_ID }}" \
+            -e PRIVATE_KEY_ID="${{ secrets.PRIVATE_KEY_ID }}" \
+            -e PRIVATE_KEY="${{ secrets.PRIVATE_KEY }}" \
+            -e CLIENT_EMAIL="${{ secrets.CLIENT_EMAIL }}" \
+            -e ACCOUNT_EMAIL_SYSTEM="${{ secrets.ACCOUNT_EMAIL_SYSTEM }}" \
+            -e PASSWORD_EMAIL_PRIVATE="${{ secrets.PASSWORD_EMAIL_PRIVATE }}" \
+            -e REDIS_CACHING_SERVER="${{ secrets.REDIS_CACHING_SERVER }}" \
+            -e REDIS_PWD="${{ secrets.REDIS_PWD }}" \
+            ${{ secrets.REGISTRY }}/${{ secrets.WORKER_DOCKER_IMAGE }}:latest
