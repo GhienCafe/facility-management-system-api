@@ -16,8 +16,9 @@ FROM mcr.microsoft.com/dotnet/aspnet:7.0 AS runtime
 WORKDIR /app
 
 COPY --from=build /app/Services/API_FFMS/bin/Release/net7.0 Services/API_FFMS
-COPY --from=build /app/Buildings/AppCore/bin/Release/net7.0 Buildings/AppCore
 COPY --from=build /app/Buildings/MainData/bin/Release/net7.0 Buildings/MainData
+COPY --from=build /app/Buildings/AppCore/bin/Release/net7.0 Buildings/AppCore
+
 
 
 
