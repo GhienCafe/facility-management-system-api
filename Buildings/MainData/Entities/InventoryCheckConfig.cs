@@ -24,9 +24,5 @@ public class InventoryCheckConfigConfig : IEntityTypeConfiguration<InventoryChec
         builder.Property(x => x.LastCheckedDate).HasColumnType("datetime").IsRequired(false);
 
         //Relationship
-
-        builder.HasMany(x => x.InventoryChecks)
-            .WithOne(x => x.InventoryCheckConfig)
-            .HasForeignKey(i => i.InventoryCheckConfigId);
     }
 }
