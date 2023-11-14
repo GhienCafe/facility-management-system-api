@@ -18,7 +18,7 @@ WORKDIR /app
 COPY --from=build /app/Services/API_FFMS/bin/Release/net7.0 Services/API_FFMS
 COPY --from=build /app/Buildings/MainData/bin/Release/net7.0 Buildings/MainData
 COPY --from=build /app/Buildings/AppCore/bin/Release/net7.0 Buildings/AppCore
-COPY --from=build /app/Workers/Worker_Notify/bin/Debug/net7.0 Workers/Worker_Notify
+COPY --from=build /app/Workers/Worker_Notify/bin/Release/net7.0 Workers/Worker_Notify
 
 
 
