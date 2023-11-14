@@ -1,5 +1,6 @@
 ﻿using MainData;
 using MainData.Entities;
+using Microsoft.EntityFrameworkCore;
 
 namespace API_FFMS.Repositories;
 
@@ -8,6 +9,7 @@ public interface IAssetRepository
     Task<bool> InsertAsset(Asset asset, Guid? creatorId, DateTime? now = null);
     Task<bool> InsertAssets(List<Asset> assets, Guid? creatorId, DateTime? now = null);
     Task<bool> DeleteAssets(List<Asset?> assets, Guid? deleterId, DateTime? now = null);
+    Task<bool> DeleteAsset(Asset asset, Guid? deleterId, DateTime? now = null);
 }
 public class AssetRepository : IAssetRepository
 {
@@ -103,8 +105,60 @@ public class AssetRepository : IAssetRepository
         return wareHouse;
     }
 
-    public Task<bool> DeleteAssets(List<Asset?> assets, Guid? deleterId, DateTime? now = null)
+    public async Task<bool> DeleteAssets(List<Asset?> assets, Guid? deleterId, DateTime? now = null)
     {
-        throw new NotImplementedException();
+        await _context.Database.BeginTransactionAsync();
+        now ??= DateTime.UtcNow;
+        try
+        {
+            foreach (var asset in assets)
+            {
+                asset!.DeletedAt = now.Value;
+                asset.DeleterId = deleterId;
+                _context.Entry(asset).State = EntityState.Modified;
+
+                var roomAsset = await _context.RoomAssets.FirstOrDefaultAsync(x => x.AssetId == asset.Id && x.ToDate == null);
+                roomAsset!.EditedAt = now.Value;
+                roomAsset.EditorId = deleterId;
+                roomAsset.ToDate = now.Value;
+                _context.Entry(roomAsset).State = EntityState.Modified;
+            }
+
+            await _context.SaveChangesAsync();
+            await _context.Database.CommitTransactionAsync();
+            return true;
+        }
+        catch
+        {
+            await _context.Database.RollbackTransactionAsync();
+            return false;
+        }
+    }
+
+    public async Task<bool> DeleteAsset(Asset asset, Guid? deleterId, DateTime? now = null)
+    {
+        await _context.Database.BeginTransactionAsync();
+        now ??= DateTime.UtcNow;
+        try
+        {
+            asset.DeletedAt = now.Value;
+            asset.DeleterId = deleterId;
+            _context.Entry(asset).State = EntityState.Modified;
+
+            var roomAsset = await _context.RoomAssets.FirstOrDefaultAsync(x => x.AssetId == asset.Id && x.ToDate == null);
+            roomAsset!.EditedAt = now.Value;
+            roomAsset.EditorId = deleterId;
+            roomAsset.ToDate = now.Value;
+            _context.Entry(roomAsset).State = EntityState.Modified;
+
+            await _context.SaveChangesAsync();
+            await _context.Database.CommitTransactionAsync();
+            return true;
+        }
+        catch
+        {
+            await _context.Database.RollbackTransactionAsync();
+            return false;
+        }
     }
 }
