@@ -2,13 +2,10 @@
 using API_FFMS.Repositories;
 using AppCore.Extensions;
 using AppCore.Models;
-using DocumentFormat.OpenXml.Drawing.Spreadsheet;
-using DocumentFormat.OpenXml.Wordprocessing;
 using MainData;
 using MainData.Entities;
 using MainData.Repositories;
 using Microsoft.EntityFrameworkCore;
-using System.Linq;
 using System.Linq.Expressions;
 
 namespace API_FFMS.Services;
@@ -65,7 +62,6 @@ public class InventoryCheckService : BaseService, IInventoryCheckService
 
             var inventoryCheck = new InventoryCheck
             {
-                InventoryCheckConfigId = createDto.InventoryCheckConfigId,
                 RequestCode = GenerateRequestCode(),
                 Description = createDto.Description,
                 Notes = createDto.Notes,
@@ -284,8 +280,7 @@ public class InventoryCheckService : BaseService, IInventoryCheckService
                                             Status = i.Status != RequestStatus.Done ? roomAssetQuery.FirstOrDefault(ra => ra!.AssetId == x.AssetId && ra.RoomId == x.RoomId)!.Status : x.Status,
                                             StatusObj = i.Status != RequestStatus.Done ? roomAssetQuery.FirstOrDefault(ra => ra!.AssetId == x.AssetId && ra.RoomId == x.RoomId)!.Status.GetValue() : x.Status.GetValue()
                                         }).ToList()
-                                    })
-                                    .ToList(),
+                                    }).ToList(),
                 Staff = new AssignedInventoryCheckDto
                 {
                     Id = i.User!.Id,

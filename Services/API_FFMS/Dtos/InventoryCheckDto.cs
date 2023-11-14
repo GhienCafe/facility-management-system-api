@@ -79,8 +79,6 @@ public class InventoryCheckQueryDto : BaseRequestQueryDto { }
 
 public class InventoryCheckCreateDto
 {
-    public Guid? InventoryCheckConfigId { get; set; }
-    //public required List<Guid> AssetIds { get; set; }
     public string? Description { get; set; }
     public string? Notes { get; set; }
     public bool IsInternal { get; set; }

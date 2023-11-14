@@ -253,6 +253,7 @@ public class AssetCheckService : BaseService, IAssetCheckService
             RequestCode = x.AssetCheck.RequestCode,
             RequestDate = x.AssetCheck.RequestDate,
             CompletionDate = x.AssetCheck.CompletionDate,
+            IsInternal = x.AssetCheck.IsInternal,
             Status = x.AssetCheck.Status,
             StatusObj = x.AssetCheck.Status.GetValue(),
             PriorityObj = x.AssetCheck.Priority.GetValue(),

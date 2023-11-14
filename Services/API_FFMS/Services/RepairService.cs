@@ -40,7 +40,7 @@ namespace API_FFMS.Services
                 if (asset == null)
                     throw new ApiException("Không cần tồn tại trang thiết bị", StatusCode.NOT_FOUND);
 
-                if (asset.Status != AssetStatus.Operational)
+                if (asset.Status != AssetStatus.Operational && asset.Status != AssetStatus.Damaged)
                     throw new ApiException("Trang thiết bị đang trong một yêu cầu khác", StatusCode.BAD_REQUEST);
 
                 var repairation = createDto.ProjectTo<RepairCreateDto, Repair>();
