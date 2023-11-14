@@ -62,7 +62,6 @@ public class InventoryCheckService : BaseService, IInventoryCheckService
 
             var inventoryCheck = new InventoryCheck
             {
-                InventoryCheckConfigId = createDto.InventoryCheckConfigId,
                 RequestCode = GenerateRequestCode(),
                 Description = createDto.Description,
                 Notes = createDto.Notes,
