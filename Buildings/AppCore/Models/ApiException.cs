@@ -64,17 +64,16 @@ public enum StatusCode
 
 public class MessageKey
 {
-    public const string InvalidUsernameOrPassword = "system_message_invalid_username_or_password";
-    public const string AccountNotActivated = "system_message_account_not_activated";
-    public const string AccountIsLoggedInOnAnotherDevice = "system_message_account_is_logged_in_on_another_device";
-    public const string Unauthorized = "system_message_unauthorized";
-    public const string Forbidden = "system_message_forbidden";
-    public const string NotActive = "system_message_not_active";
+    public const string InvalidUsernameOrPassword = "Sai tên người dùng hoặc mật khẩu";
+    public const string AccountNotActivated = "Tài khoản chưa được kích hoạt";
+    public const string AccountIsLoggedInOnAnotherDevice = "Tài khoản đang đăng nhập trên thiết bị khác";
+    public const string Unauthorized = "Không xác định được người dùng";
+    public const string Forbidden = "Không có quyền truy cập";
+    public const string NotActive = "Tài khoản chưa được kích hoạt";
 
+    public const string ChooseFile = "Lỗi file";
+    public const string NotFound = "Không tìm thấy nội dung";
 
-    public const string ChooseFile = "system_message_choose_file";
-    public const string NotFound = "system_message_not_found";
-    
-    public const string ServerError = "system_message_server_error";
-    public const string RefreshTokenNotFound = "system_message_refresh_token_not_found";
+    public const string ServerError = "Có lỗi xảy ra";
+    public const string RefreshTokenNotFound = "Không tìm thấy Refresh Token";
 }
