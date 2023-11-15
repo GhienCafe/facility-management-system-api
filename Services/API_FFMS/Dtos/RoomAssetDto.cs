@@ -103,6 +103,8 @@ namespace API_FFMS.Dtos
     public class RoomAssetQueryDto : BaseQueryDto
     {
         public DateTime? FromDate { get; set; }
+        public Guid? RoomId { get; set; }
+        public Guid? AssetId { get; set; }
         public DateTime? ToDate { get; set; }
         public bool? IsInCurrent { get; set; }
         public AssetStatus? Status { get; set; }
