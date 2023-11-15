@@ -33,43 +33,48 @@ namespace API_FFMS.Services
 
         public async Task<ApiResponse> CreateRepair(RepairCreateDto createDto)
         {
-            try
-            {
-                var asset = await MainUnitOfWork.AssetRepository.FindOneAsync(createDto.AssetId);
+            var asset = await MainUnitOfWork.AssetRepository.FindOneAsync(createDto.AssetId);
 
-                if (asset == null)
-                    throw new ApiException("Không cần tồn tại trang thiết bị", StatusCode.NOT_FOUND);
+            if (asset == null)
+                throw new ApiException("Không cần tồn tại trang thiết bị", StatusCode.NOT_FOUND);
 
-                if (asset.Status != AssetStatus.Operational && asset.Status != AssetStatus.Damaged)
-                    throw new ApiException("Trang thiết bị đang trong một yêu cầu khác", StatusCode.BAD_REQUEST);
+            if (asset.Status != AssetStatus.Operational && asset.Status != AssetStatus.Damaged)
+                throw new ApiException("Trang thiết bị đang trong một yêu cầu khác", StatusCode.BAD_REQUEST);
 
-                var repairation = createDto.ProjectTo<RepairCreateDto, Repair>();
-                repairation.RequestCode = GenerateRequestCode();
-
-                var mediaFiles = new List<MediaFile>();
-                if (createDto.RelatedFile != null)
-                {
-                    foreach (var uri in createDto.RelatedFile.Uri!)
+            var checkExist = await MainUnitOfWork.RepairRepository.FindAsync(
+                    new Expression<Func<Repair, bool>>[]
                     {
-                        var newMediaFile = new MediaFile
-                        {
-                            FileName = createDto.RelatedFile.FileName!,
-                            Uri = uri,
-                            FileType = createDto.RelatedFile.FileType!
-                        };
-                        mediaFiles.Add(newMediaFile);
-                    }
-                }
-
-                if (!await _repairRepository.InsertRepairV2(repairation, mediaFiles, AccountId, CurrentDate))
-                    throw new ApiException("Tạo yêu cầu thất bại", StatusCode.SERVER_ERROR);
-
-                return ApiResponse.Created("Gửi yêu cầu thành công");
-            }
-            catch(Exception ex)
+                            x => !x.DeletedAt.HasValue,
+                            x => x.AssetId == createDto.AssetId,
+                            x => x.Status != RequestStatus.Done
+                    }, null);
+            if (checkExist.Any())
             {
-                throw new Exception(ex.Message);
+                throw new ApiException("Đã có yêu cầu sửa chữa cho thiết bị này", StatusCode.ALREADY_EXISTS);
             }
+
+            var repairation = createDto.ProjectTo<RepairCreateDto, Repair>();
+            repairation.RequestCode = GenerateRequestCode();
+
+            var mediaFiles = new List<MediaFile>();
+            if (createDto.RelatedFiles != null)
+            {
+                foreach (var file in createDto.RelatedFiles)
+                {
+                    var newMediaFile = new MediaFile
+                    {
+                        FileName = file.FileName ?? "",
+                        Uri = file.Uri ?? "",
+                        FileType = file.FileType
+                    };
+                    mediaFiles.Add(newMediaFile);
+                }
+            }
+
+            if (!await _repairRepository.InsertRepairV2(repairation, mediaFiles, AccountId, CurrentDate))
+                throw new ApiException("Tạo yêu cầu thất bại", StatusCode.SERVER_ERROR);
+
+            return ApiResponse.Created("Gửi yêu cầu thành công");
         }
 
         public async Task<ApiResponse> CreateRepairs(List<RepairCreateDto> createDtos)

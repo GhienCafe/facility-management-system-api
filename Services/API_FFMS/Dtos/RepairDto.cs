@@ -11,9 +11,6 @@ public class RepairDto : BaseRequestDto
     public MediaFileDto? MediaFile { get; set; }
 }
 
-public class RepairCreateDto : BaseRequestCreateDto 
-{
-    public MediaFileCreateDto? RelatedFile {  get; set; }
-}
+public class RepairCreateDto : BaseRequestCreateDto { }
 
 public class RepairQueryDto : BaseRequestQueryDto { }
