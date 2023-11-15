@@ -40,31 +40,31 @@ public class Asset : BaseEntity
 public enum AssetStatus
 {
     [Display(Name = "Hoạt động bình thường")]
-    [Color("#00FF00")] // Green color
+    [Color("#1e8239")] // Green color
     Operational = 1,
 
     [Display(Name = "Không thể sử dụng")]
-    [Color("#FF0000")] // Red color
+    [Color("#962612")] // Red color
     Inactive = 2,
 
     [Display(Name = "Đang bảo dưỡng")]
-    [Color("#FFFF00")] // Yellow color
+    [Color("#967508")] // Yellow color
     Maintenance = 3,
 
     [Display(Name = "Đang sửa chữa")]
-    [Color("#FFA500")] // Orange color
+    [Color("#d98f1a")] // Orange color
     Repair = 4,
 
     [Display(Name = "Đang chờ kiểm tra")]
-    [Color("#0000FF")] // Blue color
+    [Color("#040e91")] // Blue color
     NeedInspection = 5,
 
     [Display(Name = "Đang chờ thay thế")]
-    [Color("#800080")] // Purple color
+    [Color("#4a0982")] // Purple color
     Replacement = 6,
 
     [Display(Name = "Đang được điều chuyển")]
-    [Color("#008080")] // Teal color
+    [Color("#1a4e61")] // Teal color
     Transportation = 7,
 
     [Display(Name = "Hư hại")]
@@ -72,7 +72,7 @@ public enum AssetStatus
     Damaged = 8,
 
     [Display(Name = "Khác")]
-    [Color("#808080")] // Gray color
+    [Color("#4d4d4d")] // Gray color
     Others = 9,
 }
 
