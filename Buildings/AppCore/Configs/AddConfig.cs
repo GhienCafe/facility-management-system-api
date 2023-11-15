@@ -1,5 +1,6 @@
 using System.Net.Mime;
 using System.Text.Json.Serialization;
+using AppCore.Data.Hubs;
 using AppCore.Extensions;
 using AppCore.Middlewares;
 using AppCore.Models;
@@ -45,13 +46,15 @@ public static class AddConfigServiceCollectionExtensions
         {
             options.Configuration = redisConfiguration.ToString();
         });
-        
+
         services.AddTransient<IDatabase>(provider =>
         {
             var connectionMultiplexer = provider.GetRequiredService<IConnectionMultiplexer>();
             return connectionMultiplexer.GetDatabase();
         });
-
+        
+        // Config SignalR
+        services.AddSignalR();
 
         // Service Other
         services.AddControllers(options =>
@@ -85,6 +88,10 @@ public static class AddConfigServiceCollectionExtensions
             return next();
         });
         app.UseCors(MyAllowAllOrigins);
+        
+        app.UseRouting();
+        app.UseRouting()
+
         app.UseConfigSwagger();
         app.UseAuthentication();
         app.UseMiddleware<HandleResponseMiddleware>();

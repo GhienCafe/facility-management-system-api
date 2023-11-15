@@ -10,17 +10,17 @@ using AspNetCore.Firebase.Authentication.Extensions;
 var builder = WebApplication.CreateBuilder(args);
 
 // Clear existing providers and add Console Logger
-builder.Logging.ClearProviders();
-builder.Logging.AddConsole();
-
-// Get the ILoggerFactory from the services
-var loggerFactory = builder.Services.BuildServiceProvider().GetService<ILoggerFactory>();
-
-// Create a logger
-var logger = loggerFactory.CreateLogger<Program>();
+// builder.Logging.ClearProviders();
+// builder.Logging.AddConsole();
+//
+// // Get the ILoggerFactory from the services
+// var loggerFactory = builder.Services.BuildServiceProvider().GetService<ILoggerFactory>();
+//
+// // Create a logger
+// var logger = loggerFactory.CreateLogger<Program>();
 
 // Log a message when the application starts
-logger.LogInformation($"The connection String is: {EnvironmentExtension.GetJwtAudience()}" );
+//logger.LogInformation($"The connection String is: {EnvironmentExtension.GetJwtAudience()}" );
 
 //Add DbContext
 builder.Services.AddDbContext<DatabaseContext>(options =>
