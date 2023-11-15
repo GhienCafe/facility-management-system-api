@@ -105,8 +105,7 @@ namespace API_FFMS.Services
                     var newMediaFile = new MediaFile
                     {
                         FileName = file.FileName ?? "",
-                        Uri = file.Uri ?? "",
-                        FileType = file.FileType
+                        Uri = file.Uri ?? ""
                     };
                     mediaFiles.Add(newMediaFile);
                 }

@@ -467,7 +467,7 @@ public class MaintenanceRepository : IMaintenanceRepository
                     EditorId = creatorId,
                     FileName = mediaFile.FileName,
                     Uri = mediaFile.Uri,
-                    FileType = mediaFile.FileType,
+                    FileType = FileType.File,
                     ItemId = entity.Id
                 };
                 _context.MediaFiles.Add(newMediaFile);

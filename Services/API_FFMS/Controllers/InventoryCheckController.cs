@@ -49,4 +49,11 @@ public class InventoryCheckController : BaseController
     {
         return await _inventoryCheckService.Update(id, updateDto);
     }
+
+    [HttpPut("status-update/{id:guid}")]
+    [SwaggerOperation("Update inventory check's status")]
+    public async Task<ApiResponse> UpdateStatus(Guid id, BaseUpdateStatusDto updateDto)
+    {
+        return await _inventoryCheckService.UpdateStatus(id, updateDto);
+    }
 }

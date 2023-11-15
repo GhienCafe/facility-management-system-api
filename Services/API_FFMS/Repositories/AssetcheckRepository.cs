@@ -371,7 +371,7 @@ public class AssetcheckRepository : IAssetcheckRepository
                     EditorId = creatorId,
                     FileName = mediaFile.FileName,
                     Uri = mediaFile.Uri,
-                    FileType = mediaFile.FileType,
+                    FileType = FileType.File,
                     ItemId = assetCheck.Id
                 };
                 _context.MediaFiles.Add(newMediaFile);

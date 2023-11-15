@@ -26,7 +26,25 @@ namespace API_FFMS.Dtos
         public Guid? AssetId { get; set; }
         public double? Quantity { get; set; }
     }
-    
+
+    public class RoomAssetMultiCreateBaseDto
+    {
+        public List<ListRoom> Rooms { get; set; }
+        
+    }
+
+    public class ListRoom
+    {
+        public Guid RoomId { get; set; }
+        public List<ListAsset> Assets { get; set; }
+    }
+
+    public class ListAsset
+    {
+        public Guid AssetId { get; set; }
+        public double? Quantity { get; set; }
+    }
+
     public class RoomAssetUpdateBaseDto
     {
         public Guid? RoomId { get; set; }
