@@ -61,3 +61,16 @@ public class TaskBasedOnMonthDto
     public int Month { get; set; }
     public int Year { get; set; }
 }
+
+public class TaskBasedOnStatusDto
+{
+    public int Count { get; set; }
+    public RequestStatus? Status { get; set; }
+}
+
+public class TaskBasedOnStatusDashboardDto
+{
+    public RequestType Type { get; set; }
+    public EnumValue? TypeObj { get; set; }
+    public IEnumerable<TaskBasedOnStatusDto>? Data { get; set; }
+}
