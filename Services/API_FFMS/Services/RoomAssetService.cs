@@ -183,6 +183,14 @@ namespace API_FFMS.Services
                                                          || x.Room.RoomName!.ToLower().Contains(keyword)
                                                          || x.Room.RoomCode.ToLower().Contains(keyword));
                 }
+                
+                if(queryDto.RoomId != null) {
+                    joinedRooms = joinedRooms.Where(x => x!.RoomAsset.RoomId == queryDto.RoomId);
+                }
+                
+                if(queryDto.AssetId != null) {
+                    joinedRooms = joinedRooms.Where(x => x!.RoomAsset.AssetId == queryDto.AssetId);
+                }
 
                 if (queryDto.IsInCurrent != null)
                 {

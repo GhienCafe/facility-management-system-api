@@ -15,13 +15,6 @@ namespace API_FFMS.Controllers
             _service = service;
         }
 
-        // [HttpGet]
-        // [SwaggerOperation("Tracking asset used in room")]
-        // public async Task<ApiResponses<AssetTrackingDto>> AssetUsedTracking([FromQuery] RoomTrackingQueryDto queryDto, Guid id)
-        // {
-        //     return await _service.AssetUsedTracking(id, queryDto);
-        // }
-
         [HttpGet]
         [SwaggerOperation("Get room assets")]
         public async Task<ApiResponses<RoomAssetBaseDto>> GetItems([FromQuery] RoomAssetQueryDto queryDto)
