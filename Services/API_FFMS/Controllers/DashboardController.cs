@@ -35,4 +35,11 @@ public class DashboardController : BaseController
     {
         return await _dashboardService.GetBaseTaskInformation();
     }
+    
+    [SwaggerOperation("Get base task information base on status")]
+    [HttpGet("analysis-task-status")]
+    public async Task<ApiResponse<IEnumerable<TaskBasedOnStatusDashboardDto>>> GetTaskInformationBasedOnStatus()
+    {
+        return await _dashboardService.GetBaseTaskStatusInformation();
+    }
 }

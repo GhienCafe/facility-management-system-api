@@ -13,6 +13,7 @@ public interface IDashboardService : IBaseService
     public Task<ApiResponse<DashboardDto>> GetInformation();
     public Task<ApiResponse<IEnumerable<AssetDashBoardInformation>>> GetAssetStatusInformation();
     public Task<ApiResponse<IEnumerable<TaskDashBoardInformation>>> GetBaseTaskInformation();
+    public Task<ApiResponse<IEnumerable<TaskBasedOnStatusDashboardDto>>> GetBaseTaskStatusInformation();
 }
 
 public class DashboardService : BaseService, IDashboardService
@@ -109,4 +110,36 @@ public class DashboardService : BaseService, IDashboardService
         return ApiResponse<IEnumerable<TaskDashBoardInformation>>.Success(query);
     }
 
+    public async Task<ApiResponse<IEnumerable<TaskBasedOnStatusDashboardDto>>> GetBaseTaskStatusInformation()
+    {
+        var rawData = await MainUnitOfWork.TaskRepository.GetQueryAll()
+            .GroupBy(t => new { t!.Type, t.Status })
+            .Select(g => new
+            {
+                Type = g.Key.Type,
+                Status = g.Key.Status,
+                TaskCount = g.Count()
+            })
+            .ToListAsync();
+
+        var groupedData = rawData.GroupBy(x => x.Type)
+            .Select(g =>
+            {
+                var totalCount = g.Sum(x => x.TaskCount);
+                return new TaskBasedOnStatusDashboardDto
+                {
+                    Type = g.Key.GetValue(),
+                    Total = totalCount,
+                    Data = g.Select(d => new TaskBasedOnStatusDto
+                    {
+                        Count = d.TaskCount,
+                        Status = d.Status.GetValue(),
+                        Percent = totalCount > 0 ? (float)d.TaskCount / totalCount * 100 : 0
+                    })
+                };
+            });
+
+        var response = groupedData.ToList();
+        return ApiResponse<IEnumerable<TaskBasedOnStatusDashboardDto>>.Success(response);
+    }
 }
