@@ -74,7 +74,7 @@ public class MessageKey
 
     public const string ChooseFile = "system_message_choose_file";
     public const string NotFound = "system_message_not_found";
-    
-    public const string ServerError = "system_message_server_error";
+
+    public const string ServerError = "Có lỗi rồi ní ơi";
     public const string RefreshTokenNotFound = "system_message_refresh_token_not_found";
 }
