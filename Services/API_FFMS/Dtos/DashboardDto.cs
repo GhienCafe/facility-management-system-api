@@ -65,12 +65,13 @@ public class TaskBasedOnMonthDto
 public class TaskBasedOnStatusDto
 {
     public int Count { get; set; }
-    public RequestStatus? Status { get; set; }
+    public float Percent { get; set; }
+    public EnumValue? Status { get; set; }
 }
 
 public class TaskBasedOnStatusDashboardDto
 {
-    public RequestType Type { get; set; }
-    public EnumValue? TypeObj { get; set; }
+    public EnumValue? Type { get; set; }
+    public int Total { get; set; }
     public IEnumerable<TaskBasedOnStatusDto>? Data { get; set; }
 }

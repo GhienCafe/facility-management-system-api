@@ -123,15 +123,20 @@ public class DashboardService : BaseService, IDashboardService
             .ToListAsync();
 
         var groupedData = rawData.GroupBy(x => x.Type)
-            .Select(g => new TaskBasedOnStatusDashboardDto
+            .Select(g =>
             {
-                Type = g.Key,
-                TypeObj = g.Key.GetValue(),
-                Data = g.Select(d => new TaskBasedOnStatusDto
+                var totalCount = g.Sum(x => x.TaskCount);
+                return new TaskBasedOnStatusDashboardDto
                 {
-                    Count = d.TaskCount,
-                    Status = d.Status
-                })
+                    Type = g.Key.GetValue(),
+                    Total = totalCount,
+                    Data = g.Select(d => new TaskBasedOnStatusDto
+                    {
+                        Count = d.TaskCount,
+                        Status = d.Status.GetValue(),
+                        Percent = totalCount > 0 ? (float)d.TaskCount / totalCount * 100 : 0
+                    })
+                };
             });
 
         var response = groupedData.ToList();
