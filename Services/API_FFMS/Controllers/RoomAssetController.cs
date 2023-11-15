@@ -42,7 +42,14 @@ namespace API_FFMS.Controllers
         {
             return await _service.CreateRoomAsset(createBaseDto);
         }
-        
+
+        [HttpPost("nulti")]
+        [SwaggerOperation("Create new room assets")]
+        public async Task<ApiResponse> CreateItems([FromBody] RoomAssetMultiCreateBaseDto createBaseDto)
+        {
+            return await _service.CreateRoomAssets(createBaseDto);
+        }
+
         [HttpPut("{id}")]
         [SwaggerOperation("Update room asset")]
         public async Task<ApiResponse> UpdateItem(Guid id, [FromBody]RoomAssetUpdateBaseDto update)
