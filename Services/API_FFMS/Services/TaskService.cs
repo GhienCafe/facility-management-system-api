@@ -132,8 +132,8 @@ public class TaskService : BaseService, ITaskService
                                 AssetId = assetReport.AssetId ?? Guid.Empty,
                                 InventoryCheckId = inventoryCheckReport.Id,
                                 RoomId = (Guid)room.RoomId,
-                                Status = assetReport.Status,
-                                Quantity = assetReport.Quantity
+                                StatusReported = assetReport.Status,
+                                QuantityReported = assetReport.Quantity
                             };
 
                             inventoryDetails.Add(inventoryDetail);
@@ -363,9 +363,12 @@ public class TaskService : BaseService, ITaskService
                         Id = detail!.AssetId,
                         AssetName = detail.Asset!.AssetName,
                         AssetCode = detail.Asset.AssetCode,
-                        Quantity = inventoryCheckTask.Status != RequestStatus.Done ? roomAssetQuery.FirstOrDefault(ra => ra!.AssetId == detail.AssetId && ra.RoomId == detail.RoomId)!.Quantity : detail.Quantity,
-                        Status = inventoryCheckTask.Status != RequestStatus.Done ? detail.Asset.Status : detail.Status,
-                        StatusObj = inventoryCheckTask.Status != RequestStatus.Done ? detail.Asset.Status.GetValue() : detail.Status.GetValue(),
+                        QuantityBefore = detail.QuantityBefore,
+                        StatusBefore = detail.StatusBefore,
+                        StatusBeforeObj = detail.StatusBefore.GetValue(),
+                        QuantityReported = detail.QuantityReported,
+                        StatusReported = detail.StatusReported,
+                        StatusReportedObj = detail.StatusReported.GetValue()
                     }).ToList()
             }).ToList();
 

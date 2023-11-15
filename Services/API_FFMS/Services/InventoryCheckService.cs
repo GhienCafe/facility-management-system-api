@@ -156,9 +156,12 @@ public class InventoryCheckService : BaseService, IInventoryCheckService
                                 Id = detail!.AssetId,
                                 AssetName = detail.Asset!.AssetName,
                                 AssetCode = detail.Asset.AssetCode,
-                                Quantity = inventoryCheck.Status != RequestStatus.Done ? roomAssetQuery.FirstOrDefault(ra => ra!.AssetId == detail.AssetId && ra.RoomId == detail.RoomId)!.Quantity : detail.Quantity,
-                                Status = inventoryCheck.Status != RequestStatus.Done ? detail.Asset.Status : detail.Status,
-                                StatusObj = inventoryCheck.Status != RequestStatus.Done ? detail.Asset.Status.GetValue() : detail.Status.GetValue(),
+                                QuantityBefore = detail.QuantityBefore,
+                                StatusBefore = detail.StatusBefore,
+                                StatusBeforeObj = detail.StatusBefore.GetValue(),
+                                QuantityReported = detail.QuantityReported,
+                                StatusReported = detail.StatusReported,
+                                StatusReportedObj = detail.StatusReported.GetValue(),
                             }).ToList()
                     };
                 }
@@ -277,9 +280,12 @@ public class InventoryCheckService : BaseService, IInventoryCheckService
                                             Id = roomAssetQuery.FirstOrDefault(ra => ra!.AssetId == x.AssetId && ra.RoomId == x.RoomId)!.AssetId,
                                             AssetCode = roomAssetQuery.FirstOrDefault(ra => ra!.AssetId == x.AssetId && ra.RoomId == x.RoomId)!.Asset!.AssetCode,
                                             AssetName = roomAssetQuery.FirstOrDefault(ra => ra!.AssetId == x.AssetId && ra.RoomId == x.RoomId)!.Asset!.AssetName,
-                                            Quantity = roomAssetQuery.FirstOrDefault(ra => ra!.AssetId == x.AssetId && ra.RoomId == x.RoomId)!.Quantity,
-                                            Status = i.Status != RequestStatus.Done ? roomAssetQuery.FirstOrDefault(ra => ra!.AssetId == x.AssetId && ra.RoomId == x.RoomId)!.Status : x.Status,
-                                            StatusObj = i.Status != RequestStatus.Done ? roomAssetQuery.FirstOrDefault(ra => ra!.AssetId == x.AssetId && ra.RoomId == x.RoomId)!.Status.GetValue() : x.Status.GetValue()
+                                            QuantityBefore = x.QuantityBefore,
+                                            StatusBefore = x.StatusBefore,
+                                            StatusBeforeObj = x.StatusBefore.GetValue(),
+                                            QuantityReported = x.QuantityReported,
+                                            StatusReported = x.StatusReported,
+                                            StatusReportedObj = x.StatusReported.GetValue()
                                         }).ToList()
                                     }).ToList(),
                 Staff = new AssignedInventoryCheckDto
@@ -368,10 +374,10 @@ public class InventoryCheckService : BaseService, IInventoryCheckService
 
         if(!await _repository.UpdateInventoryCheckStatus(existingInventCheck, updateStatusDto.Status, AccountId, CurrentDate))
         {
-            throw new ApiException("Cập nhật trạng thái yêu cầu thất bại", StatusCode.SERVER_ERROR);
+            throw new ApiException("Xác nhận yêu cầu thất bại", StatusCode.SERVER_ERROR);
         }
 
-        return ApiResponse.Success("Cập nhật yêu cầu thành công");
+        return ApiResponse.Success("Xác nhận yêu cầu thành công");
     }
 
     //public async Task<ApiResponse> UpdateStatus(Guid id, BaseUpdateStatusDto updateStatusDto)

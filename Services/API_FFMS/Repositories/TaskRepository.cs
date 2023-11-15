@@ -54,8 +54,8 @@ namespace API_FFMS.Repositories
                                 {
                                     existingDetail.EditedAt = now.Value;
                                     existingDetail.EditorId = editorId;
-                                    existingDetail.Status = detail.Status;
-                                    existingDetail.Quantity = detail.Quantity;
+                                    existingDetail.StatusReported = detail.StatusReported;
+                                    existingDetail.QuantityReported = detail.QuantityReported;
                                     _context.Entry(existingDetail).State = EntityState.Modified;
                                 }
                             }
