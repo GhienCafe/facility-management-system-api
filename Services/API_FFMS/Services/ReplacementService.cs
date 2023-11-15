@@ -32,54 +32,59 @@ namespace API_FFMS.Services
 
         public async Task<ApiResponse> Create(ReplaceCreateDto createDto)
         {
-            try
+            var asset = await MainUnitOfWork.AssetRepository.FindOneAsync(createDto.AssetId);
+            if (asset == null)
             {
-                var asset = await MainUnitOfWork.AssetRepository.FindOneAsync(createDto.AssetId);
-                if (asset == null)
-                {
-                    throw new ApiException("Không tìm thấy trang thiết bị cần thay thế", StatusCode.NOT_FOUND);
-                }
+                throw new ApiException("Không tìm thấy trang thiết bị cần thay thế", StatusCode.NOT_FOUND);
+            }
 
-                var newAsset = await MainUnitOfWork.AssetRepository.FindOneAsync(createDto.NewAssetId);
-                if (newAsset == null)
-                {
-                    throw new ApiException("Không tìm thấy trang thiết bị để thay thế", StatusCode.NOT_FOUND);
-                }
+            var newAsset = await MainUnitOfWork.AssetRepository.FindOneAsync(createDto.NewAssetId);
+            if (newAsset == null)
+            {
+                throw new ApiException("Không tìm thấy trang thiết bị để thay thế", StatusCode.NOT_FOUND);
+            }
 
-                if (newAsset.Status != AssetStatus.Operational)
-                {
-                    throw new ApiException("Trang thiết bị cần thay thế đang trong một yêu cầu khác", StatusCode.BAD_REQUEST);
-                }
+            if (newAsset.Status != AssetStatus.Operational)
+            {
+                throw new ApiException("Trang thiết bị cần thay thế đang trong một yêu cầu khác", StatusCode.BAD_REQUEST);
+            }
 
-                var replacement = createDto.ProjectTo<ReplaceCreateDto, Replacement>();
-                replacement.RequestCode = GenerateRequestCode();
-
-                var mediaFiles = new List<MediaFile>();
-                if (createDto.RelatedFile != null)
+            var checkExist = await MainUnitOfWork.ReplacementRepository.FindAsync(
+                new Expression<Func<Replacement, bool>>[]
                 {
-                    foreach (var uri in createDto.RelatedFile.Uri!)
+                    x => !x.DeletedAt.HasValue,
+                    x => x.AssetId == createDto.AssetId,
+                    x => x.Status != RequestStatus.Done
+                }, null);
+            if (checkExist.Any())
+            {
+                throw new ApiException("Đã có yêu cầu thay thế cho thiết bị này", StatusCode.ALREADY_EXISTS);
+            }
+
+            var replacement = createDto.ProjectTo<ReplaceCreateDto, Replacement>();
+            replacement.RequestCode = GenerateRequestCode();
+
+            var mediaFiles = new List<MediaFile>();
+            if (createDto.RelatedFiles != null)
+            {
+                foreach (var file in createDto.RelatedFiles)
+                {
+                    var newMediaFile = new MediaFile
                     {
-                        var newMediaFile = new MediaFile
-                        {
-                            FileName = createDto.RelatedFile.FileName!,
-                            Uri = uri,
-                            FileType = createDto.RelatedFile.FileType!
-                        };
-                        mediaFiles.Add(newMediaFile);
-                    }
+                        FileName = file.FileName ?? "",
+                        Uri = file.Uri ?? "",
+                        FileType = file.FileType
+                    };
+                    mediaFiles.Add(newMediaFile);
                 }
-
-                if (!await _repository.InsertReplacementV2(replacement, mediaFiles, AccountId, CurrentDate))
-                {
-                    throw new ApiException("Tạo yêu cầu thất bại", StatusCode.SERVER_ERROR);
-                }
-
-                return ApiResponse.Created("Gửi yêu cầu thành công");
             }
-            catch (Exception ex)
+
+            if (!await _repository.InsertReplacementV2(replacement, mediaFiles, AccountId, CurrentDate))
             {
-                throw new Exception(ex.Message);
+                throw new ApiException("Tạo yêu cầu thất bại", StatusCode.SERVER_ERROR);
             }
+
+            return ApiResponse.Created("Gửi yêu cầu thành công");
         }
 
         public async Task<ApiResponse> Delete(Guid id)

@@ -35,39 +35,44 @@ public class AssetCheckService : BaseService, IAssetCheckService
 
     public async Task<ApiResponse> Create(AssetCheckCreateDto createDto)
     {
-        try
-        {
-            var assetCheck = createDto.ProjectTo<AssetCheckCreateDto, AssetCheck>();
-
-            assetCheck.RequestCode = GenerateRequestCode();
-            assetCheck.Priority = assetCheck.Priority != null ? assetCheck.Priority : Priority.Medium;
-
-            var mediaFiles = new List<MediaFile>();
-            if (createDto.RelatedFile != null)
+        var checkExist = await MainUnitOfWork.AssetCheckRepository.FindAsync(
+            new Expression<Func<AssetCheck, bool>>[]
             {
-                foreach (var uri in createDto.RelatedFile.Uri!)
+                    x => !x.DeletedAt.HasValue,
+                    x => x.AssetId == createDto.AssetId,
+                    x => x.Status != RequestStatus.Reported
+            }, null);
+        if (checkExist.Any())
+        {
+            throw new ApiException("Đã có yêu cầu kiểm tra cho thiết bị này", StatusCode.ALREADY_EXISTS);
+        }
+
+        var assetCheck = createDto.ProjectTo<AssetCheckCreateDto, AssetCheck>();
+
+        assetCheck.RequestCode = GenerateRequestCode();
+        assetCheck.Priority = assetCheck.Priority != null ? assetCheck.Priority : Priority.Medium;
+
+        var mediaFiles = new List<MediaFile>();
+        if (createDto.RelatedFiles != null)
+        {
+            foreach (var file in createDto.RelatedFiles)
+            {
+                var newMediaFile = new MediaFile
                 {
-                    var newMediaFile = new MediaFile
-                    {
-                        FileName = createDto.RelatedFile.FileName!,
-                        Uri = uri,
-                        FileType = createDto.RelatedFile.FileType!
-                    };
-                    mediaFiles.Add(newMediaFile);
-                }
+                    FileName = file.FileName ?? "",
+                    Uri = file.Uri ?? "",
+                    FileType = file.FileType
+                };
+                mediaFiles.Add(newMediaFile);
             }
-
-            if (!await _assetcheckRepository.InsertAssetCheckV2(assetCheck, mediaFiles, AccountId, CurrentDate))
-            {
-                throw new ApiException("Thêm mới thất bại", StatusCode.SERVER_ERROR);
-            }
-
-            return ApiResponse.Created("Thêm mới thành công");
         }
-        catch (Exception ex)
+
+        if (!await _assetcheckRepository.InsertAssetCheckV2(assetCheck, mediaFiles, AccountId, CurrentDate))
         {
-            throw new Exception(ex.Message);
+            throw new ApiException("Thêm mới thất bại", StatusCode.SERVER_ERROR);
         }
+
+        return ApiResponse.Created("Thêm mới thành công");
     }
 
     public async Task<ApiResponse> Delete(Guid id)

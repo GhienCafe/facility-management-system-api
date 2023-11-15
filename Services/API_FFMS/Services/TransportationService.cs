@@ -98,15 +98,15 @@ namespace API_FFMS.Services
             };
 
             var mediaFiles = new List<MediaFile>();
-            if (createDto.RelatedFile != null)
+            if (createDto.RelatedFiles != null)
             {
-                foreach (var uri in createDto.RelatedFile.Uri!)
+                foreach (var file in createDto.RelatedFiles)
                 {
                     var newMediaFile = new MediaFile
                     {
-                        FileName = createDto.RelatedFile.FileName!,
-                        Uri = uri,
-                        FileType = createDto.RelatedFile.FileType!
+                        FileName = file.FileName ?? "",
+                        Uri = file.Uri ?? "",
+                        FileType = file.FileType
                     };
                     mediaFiles.Add(newMediaFile);
                 }
