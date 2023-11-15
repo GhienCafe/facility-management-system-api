@@ -9,8 +9,6 @@ public interface IInventoryCheckRepository
 {
     Task<bool> InsertInventoryCheck(InventoryCheck inventoryCheck, List<Room?> rooms, Guid? creatorId, DateTime? now = null);
     Task<bool> UpdateInventoryCheckStatus(InventoryCheck inventoryCheck, RequestStatus? statusUpdate, Guid? editorId, DateTime? now = null);
-
-    //Task<bool> UpdateMaintenanceScheduleConfig(MaintenanceScheduleConfig maintenanceScheduleConfig, IEnumerable<Asset>? oldData, IEnumerable<Asset>? newData, Guid? editorId, DateTime? now = null);
 }
 
 public class InventoryCheckRepository : IInventoryCheckRepository

@@ -20,7 +20,7 @@ public interface IInventoryCheckService : IBaseService
     Task<ApiResponses<InventoryCheckDto>> GetInventoryChecks(InventoryCheckQueryDto queryDto);
     Task<ApiResponse> Update(Guid id, BaseRequestUpdateDto updateDto);
     Task<ApiResponse> Delete(Guid id);
-    //Task<ApiResponse> UpdateStatus(Guid id, BaseUpdateStatusDto updateStatusDto);
+    Task<ApiResponse> UpdateStatus(Guid id, BaseUpdateStatusDto updateStatusDto);
 }
 
 
@@ -179,7 +179,7 @@ public class InventoryCheckService : BaseService, IInventoryCheckService
         var existinginventoryCheck = await MainUnitOfWork.InventoryCheckRepository.FindOneAsync(id);
         if (existinginventoryCheck == null)
         {
-            throw new ApiException("Không tìm thấy yêu cầunày", StatusCode.NOT_FOUND);
+            throw new ApiException("Không tìm thấy yêu cầu này", StatusCode.NOT_FOUND);
         }
 
         if (existinginventoryCheck.Status != RequestStatus.InProgress)
@@ -352,6 +352,26 @@ public class InventoryCheckService : BaseService, IInventoryCheckService
             }
         }
         return newRequestCode;
+    }
+
+    public async Task<ApiResponse> UpdateStatus(Guid id, BaseUpdateStatusDto updateStatusDto)
+    {
+        var existingInventCheck = MainUnitOfWork.InventoryCheckRepository.GetQuery()
+                                    .Where(x => x.Id == id)
+                                    .FirstOrDefault();
+        if (existingInventCheck == null)
+        {
+            throw new ApiException("Không tìm thấy yêu cầu này", StatusCode.NOT_FOUND);
+        }
+
+        existingInventCheck.Status = updateStatusDto.Status ?? existingInventCheck.Status;
+
+        if(!await _repository.UpdateInventoryCheckStatus(existingInventCheck, updateStatusDto.Status, AccountId, CurrentDate))
+        {
+            throw new ApiException("Cập nhật trạng thái yêu cầu thất bại", StatusCode.SERVER_ERROR);
+        }
+
+        return ApiResponse.Success("Cập nhật yêu cầu thành công");
     }
 
     //public async Task<ApiResponse> UpdateStatus(Guid id, BaseUpdateStatusDto updateStatusDto)

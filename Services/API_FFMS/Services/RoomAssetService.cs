@@ -18,6 +18,8 @@ namespace API_FFMS.Services
         Task<ApiResponse<RoomAssetDetailDto>> GetItem(Guid id);
         Task<ApiResponse> DeleteItem(Guid id);
         Task<ApiResponse> UpdateItem(Guid id, RoomAssetUpdateBaseDto updateBaseDto);
+
+        Task<ApiResponse> CreateRoomAssets(RoomAssetMultiCreateBaseDto createBaseDto);
     }
 
     public class RoomAssetService : BaseService, IRoomAssetService
@@ -148,6 +150,31 @@ namespace API_FFMS.Services
             if (!await _roomAssetRepository.AddAssetToRoom(roomAsset, AccountId, CurrentDate))
                 throw new ApiException("Thêm mới trang thiết bị vào phòng thất bại", StatusCode.SERVER_ERROR);
             
+            return ApiResponse.Created("Thêm mới trang thiết bị vào phòng thành công");
+        }
+
+        public async Task<ApiResponse> CreateRoomAssets(RoomAssetMultiCreateBaseDto createBaseDto)
+        {
+            //var room = await MainUnitOfWork.RoomRepository.FindOneAsync(createBaseDto.RoomId);
+
+            var roomAssets = new List<RoomAsset>();
+            foreach(var room in createBaseDto.Rooms)
+            {
+                foreach (var asset in room.Assets)
+                {
+                    var roomAsset = new RoomAsset
+                    {
+                        RoomId = room.RoomId,
+                        AssetId = asset.AssetId,
+                        Quantity = asset.Quantity
+                    };
+                    roomAssets.Add(roomAsset);
+                }
+            }
+            
+            if (!await _roomAssetRepository.AddAssetToRooms(roomAssets, AccountId, CurrentDate))
+                throw new ApiException("Thêm mới trang thiết bị vào phòng thất bại", StatusCode.SERVER_ERROR);
+
             return ApiResponse.Created("Thêm mới trang thiết bị vào phòng thành công");
         }
 

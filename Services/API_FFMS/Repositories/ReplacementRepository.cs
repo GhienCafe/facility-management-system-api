@@ -295,7 +295,7 @@ namespace API_FFMS.Repositories
                         EditorId = creatorId,
                         FileName = mediaFile.FileName,
                         Uri = mediaFile.Uri,
-                        FileType = mediaFile.FileType,
+                        FileType = FileType.File,
                         ItemId = replacement.Id
                     };
                     _context.MediaFiles.Add(newMediaFile);

@@ -754,18 +754,6 @@ namespace API_FFMS.Repositories
                     return true;
                 }
 
-                //INVENTORY CHECK
-                var inventoryCheck = await _context.InventoryChecks
-                                    .Include(x => x.InventoryCheckDetails)
-                                    .FirstOrDefaultAsync(x => x.Id == mediaFiles.First().ItemId);
-                if (inventoryCheck != null)
-                {
-                    inventoryCheck.EditedAt = now.Value;
-                    inventoryCheck.EditorId = editorId;
-                    inventoryCheck.Status = statusUpdate;
-                    _context.Entry(inventoryCheck).State = EntityState.Modified;
-                }
-
                 return true;
             }
             catch
