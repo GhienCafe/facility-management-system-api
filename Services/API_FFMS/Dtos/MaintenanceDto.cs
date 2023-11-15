@@ -14,10 +14,7 @@ public class MaintenanceQueryDto : BaseRequestQueryDto
 {
 }
 
-public class MaintenanceCreateDto : BaseRequestCreateDto
-{
-    public MediaFileCreateDto? RelatedFile { get; set; }
-}
+public class MaintenanceCreateDto : BaseRequestCreateDto { }
 
 public class MaintenanceUpdateDto : BaseRequestUpdateDto
 {

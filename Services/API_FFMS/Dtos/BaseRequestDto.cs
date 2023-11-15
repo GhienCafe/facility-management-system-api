@@ -50,6 +50,7 @@ public class BaseRequestCreateDto
     public Guid? AssignedTo { get; set; }    
     public Guid? AssetTypeId { get; set; }
     public Guid? CategoryId { get; set; }
+    public List<MediaFileCreateDto>? RelatedFiles { get; set; }
 }
 
 public class BaseRequestQueryDto : BaseQueryDto
