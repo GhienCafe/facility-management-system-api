@@ -433,7 +433,7 @@ public class RepairRepository : IRepairRepository
                     EditorId = creatorId,
                     FileName = mediaFile.FileName,
                     Uri = mediaFile.Uri,
-                    FileType = mediaFile.FileType,
+                    FileType = FileType.File,
                     ItemId = repair.Id
                 };
                 _context.MediaFiles.Add(newMediaFile);

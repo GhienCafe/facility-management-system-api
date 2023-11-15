@@ -280,7 +280,7 @@ public class TransportationRepository : ITransportationRepository
                     EditorId = creatorId,
                     FileName = mediaFile.FileName,
                     Uri = mediaFile.Uri,
-                    FileType = mediaFile.FileType,
+                    FileType = FileType.File,
                     ItemId = transportation.Id
                 };
                 _context.MediaFiles.Add(newMediaFile);
