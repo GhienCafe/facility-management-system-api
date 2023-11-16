@@ -46,7 +46,7 @@ namespace API_FFMS.Services
 
             if (newAsset.Status != AssetStatus.Operational)
             {
-                throw new ApiException("Trang thiết bị cần thay thế đang trong một yêu cầu khác", StatusCode.BAD_REQUEST);
+                throw new ApiException("Trang thiết bị dùng để thay thế đang trong một yêu cầu khác", StatusCode.BAD_REQUEST);
             }
 
             var checkExist = await MainUnitOfWork.ReplacementRepository.FindAsync(
@@ -163,6 +163,8 @@ namespace API_FFMS.Services
                                 x => !x.DeletedAt.HasValue,
                                 x => x.Id == location.RoomId
                             });
+                    replacement.StatusBefore = location.Status;
+                    replacement.StatusBeforeObj = location.Status.GetValue();
                 }
             }
 

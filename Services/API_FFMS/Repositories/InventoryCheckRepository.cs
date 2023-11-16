@@ -51,13 +51,16 @@ public class InventoryCheckRepository : IInventoryCheckRepository
 
             foreach (var room in rooms)
             {
-                var roomAssets = _context.RoomAssets
+                var assets = _context.RoomAssets
                                          .Where(ra => ra.RoomId == room!.Id && ra.ToDate == null)
                                          .Select(ra => ra.Asset)
                                          .ToList();
 
-                foreach (var asset in roomAssets)
+                foreach (var asset in assets)
                 {
+                    var roomAssets = _context.RoomAssets
+                                        .Where(ra => ra.RoomId == room!.Id && ra.AssetId == asset!.Id && ra.ToDate == null)
+                                        .FirstOrDefault();
                     var inventoryCheckDetail = new InventoryCheckDetail
                     {
                         Id = Guid.NewGuid(),
@@ -66,7 +69,8 @@ public class InventoryCheckRepository : IInventoryCheckRepository
                         CreatorId = creatorId,
                         CreatedAt = now.Value,
                         RoomId = room!.Id,
-                        Status = asset.Status
+                        StatusBefore = asset.Status,
+                        QuantityBefore = roomAssets!.Quantity
                     };
 
                     await _context.InventoryCheckDetails.AddAsync(inventoryCheckDetail);
@@ -121,11 +125,19 @@ public class InventoryCheckRepository : IInventoryCheckRepository
                 {
                     var roomAsset = _context.RoomAssets
                             .FirstOrDefault(x => x.AssetId == detail.AssetId && x.RoomId == detail.RoomId);
+                    var asset = _context.Assets
+                            .FirstOrDefault(x => x.Id == detail.AssetId);
+
+                    if(asset != null)
+                    {
+                        asset.Status = detail.StatusReported;
+                        _context.Entry(asset).State = EntityState.Modified;
+                    }
 
                     if (roomAsset != null)
                     {
-                        roomAsset.Quantity = detail.Quantity;
-                        roomAsset.Status = detail.Status;
+                        roomAsset.Quantity = detail.QuantityReported;
+                        roomAsset.Status = detail.StatusReported;
                         _context.Entry(roomAsset).State = EntityState.Modified;
                     }
                 }

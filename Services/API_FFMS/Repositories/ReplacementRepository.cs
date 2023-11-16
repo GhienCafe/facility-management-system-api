@@ -354,17 +354,17 @@ namespace API_FFMS.Repositories
                     newAsset.EditorId = editorId;
                     _context.Entry(newAsset).State = EntityState.Modified;
 
-                    roomAsset!.Status = AssetStatus.Operational;
-                    roomAsset.ToDate = now.Value;
-                    roomAsset.EditorId = editorId;
-                    roomAsset.EditedAt = now.Value;
-                    _context.Entry(roomAsset).State = EntityState.Modified;
+                    //roomAsset!.Status = AssetStatus.Operational;
+                    //roomAsset.ToDate = now.Value;
+                    //roomAsset.EditorId = editorId;
+                    //roomAsset.EditedAt = now.Value;
+                    //_context.Entry(roomAsset).State = EntityState.Modified;
 
-                    roomAssetNew!.Status = AssetStatus.Operational;
-                    roomAssetNew.ToDate = now.Value;
-                    roomAssetNew.EditorId = editorId;
-                    roomAssetNew.EditedAt = now.Value;
-                    _context.Entry(roomAssetNew).State = EntityState.Modified;
+                    //roomAssetNew!.Status = AssetStatus.Operational;
+                    //roomAssetNew.ToDate = now.Value;
+                    //roomAssetNew.EditorId = editorId;
+                    //roomAssetNew.EditedAt = now.Value;
+                    //_context.Entry(roomAssetNew).State = EntityState.Modified;
 
                     assetLocation!.State = RoomState.Operational;
                     assetLocation.EditedAt = now.Value;
@@ -381,7 +381,7 @@ namespace API_FFMS.Repositories
                         Id = Guid.NewGuid(),
                         AssetId = replacement.NewAssetId,
                         RoomId = assetLocation!.Id,
-                        Status = AssetStatus.Operational,
+                        Status = roomAsset!.Status,
                         FromDate = now.Value,
                         Quantity = roomAsset.Quantity,
                         ToDate = null,
@@ -395,7 +395,7 @@ namespace API_FFMS.Repositories
                         Id = Guid.NewGuid(),
                         AssetId = replacement.AssetId,
                         RoomId = newAssetLocation!.Id,
-                        Status = AssetStatus.Operational,
+                        Status = roomAssetNew!.Status,
                         FromDate = now.Value,
                         Quantity = roomAssetNew.Quantity,
                         ToDate = null,
@@ -406,25 +406,25 @@ namespace API_FFMS.Repositories
                 }
                 else if (replacement.Status == RequestStatus.Cancelled)
                 {
-                    asset!.Status = AssetStatus.Operational;
+                    asset!.Status = roomAsset!.Status;
                     asset.EditedAt = now.Value;
                     asset.EditorId = editorId;
                     _context.Entry(asset).State = EntityState.Modified;
 
-                    newAsset!.Status = AssetStatus.Operational;
+                    newAsset!.Status = roomAssetNew!.Status;
                     newAsset.EditedAt = now.Value;
                     newAsset.EditorId = editorId;
                     _context.Entry(newAsset).State = EntityState.Modified;
 
-                    roomAsset!.Status = AssetStatus.Operational;
-                    roomAsset.EditorId = editorId;
-                    roomAsset.EditedAt = now.Value;
-                    _context.Entry(roomAsset).State = EntityState.Modified;
+                    //roomAsset!.Status = AssetStatus.Operational;
+                    //roomAsset.EditorId = editorId;
+                    //roomAsset.EditedAt = now.Value;
+                    //_context.Entry(roomAsset).State = EntityState.Modified;
 
-                    roomAssetNew!.Status = AssetStatus.Operational;
-                    roomAssetNew.EditorId = editorId;
-                    roomAssetNew.EditedAt = now.Value;
-                    _context.Entry(roomAssetNew).State = EntityState.Modified;
+                    //roomAssetNew!.Status = AssetStatus.Operational;
+                    //roomAssetNew.EditorId = editorId;
+                    //roomAssetNew.EditedAt = now.Value;
+                    //_context.Entry(roomAssetNew).State = EntityState.Modified;
 
                     assetLocation!.State = RoomState.Operational;
                     assetLocation.EditedAt = now.Value;
