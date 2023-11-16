@@ -20,7 +20,7 @@ public interface IInventoryCheckService : IBaseService
     Task<ApiResponses<InventoryCheckDto>> GetInventoryChecks(InventoryCheckQueryDto queryDto);
     Task<ApiResponse> Update(Guid id, BaseRequestUpdateDto updateDto);
     Task<ApiResponse> Delete(Guid id);
-    //Task<ApiResponse> UpdateStatus(Guid id, BaseUpdateStatusDto updateStatusDto);
+    Task<ApiResponse> UpdateStatus(Guid id, BaseUpdateStatusDto updateStatusDto);
 }
 
 
@@ -156,9 +156,12 @@ public class InventoryCheckService : BaseService, IInventoryCheckService
                                 Id = detail!.AssetId,
                                 AssetName = detail.Asset!.AssetName,
                                 AssetCode = detail.Asset.AssetCode,
-                                Quantity = inventoryCheck.Status != RequestStatus.Done ? roomAssetQuery.FirstOrDefault(ra => ra!.AssetId == detail.AssetId && ra.RoomId == detail.RoomId)!.Quantity : detail.Quantity,
-                                Status = inventoryCheck.Status != RequestStatus.Done ? detail.Asset.Status : detail.Status,
-                                StatusObj = inventoryCheck.Status != RequestStatus.Done ? detail.Asset.Status.GetValue() : detail.Status.GetValue(),
+                                QuantityBefore = detail.QuantityBefore,
+                                StatusBefore = detail.StatusBefore,
+                                StatusBeforeObj = detail.StatusBefore.GetValue(),
+                                QuantityReported = detail.QuantityReported,
+                                StatusReported = detail.StatusReported,
+                                StatusReportedObj = detail.StatusReported.GetValue(),
                             }).ToList()
                     };
                 }
@@ -179,7 +182,7 @@ public class InventoryCheckService : BaseService, IInventoryCheckService
         var existinginventoryCheck = await MainUnitOfWork.InventoryCheckRepository.FindOneAsync(id);
         if (existinginventoryCheck == null)
         {
-            throw new ApiException("Không tìm thấy yêu cầunày", StatusCode.NOT_FOUND);
+            throw new ApiException("Không tìm thấy yêu cầu này", StatusCode.NOT_FOUND);
         }
 
         if (existinginventoryCheck.Status != RequestStatus.InProgress)
@@ -277,9 +280,12 @@ public class InventoryCheckService : BaseService, IInventoryCheckService
                                             Id = roomAssetQuery.FirstOrDefault(ra => ra!.AssetId == x.AssetId && ra.RoomId == x.RoomId)!.AssetId,
                                             AssetCode = roomAssetQuery.FirstOrDefault(ra => ra!.AssetId == x.AssetId && ra.RoomId == x.RoomId)!.Asset!.AssetCode,
                                             AssetName = roomAssetQuery.FirstOrDefault(ra => ra!.AssetId == x.AssetId && ra.RoomId == x.RoomId)!.Asset!.AssetName,
-                                            Quantity = roomAssetQuery.FirstOrDefault(ra => ra!.AssetId == x.AssetId && ra.RoomId == x.RoomId)!.Quantity,
-                                            Status = i.Status != RequestStatus.Done ? roomAssetQuery.FirstOrDefault(ra => ra!.AssetId == x.AssetId && ra.RoomId == x.RoomId)!.Status : x.Status,
-                                            StatusObj = i.Status != RequestStatus.Done ? roomAssetQuery.FirstOrDefault(ra => ra!.AssetId == x.AssetId && ra.RoomId == x.RoomId)!.Status.GetValue() : x.Status.GetValue()
+                                            QuantityBefore = x.QuantityBefore,
+                                            StatusBefore = x.StatusBefore,
+                                            StatusBeforeObj = x.StatusBefore.GetValue(),
+                                            QuantityReported = x.QuantityReported,
+                                            StatusReported = x.StatusReported,
+                                            StatusReportedObj = x.StatusReported.GetValue()
                                         }).ToList()
                                     }).ToList(),
                 Staff = new AssignedInventoryCheckDto
@@ -352,6 +358,26 @@ public class InventoryCheckService : BaseService, IInventoryCheckService
             }
         }
         return newRequestCode;
+    }
+
+    public async Task<ApiResponse> UpdateStatus(Guid id, BaseUpdateStatusDto updateStatusDto)
+    {
+        var existingInventCheck = MainUnitOfWork.InventoryCheckRepository.GetQuery()
+                                    .Where(x => x.Id == id)
+                                    .FirstOrDefault();
+        if (existingInventCheck == null)
+        {
+            throw new ApiException("Không tìm thấy yêu cầu này", StatusCode.NOT_FOUND);
+        }
+
+        existingInventCheck.Status = updateStatusDto.Status ?? existingInventCheck.Status;
+
+        if(!await _repository.UpdateInventoryCheckStatus(existingInventCheck, updateStatusDto.Status, AccountId, CurrentDate))
+        {
+            throw new ApiException("Xác nhận yêu cầu thất bại", StatusCode.SERVER_ERROR);
+        }
+
+        return ApiResponse.Success("Xác nhận yêu cầu thành công");
     }
 
     //public async Task<ApiResponse> UpdateStatus(Guid id, BaseUpdateStatusDto updateStatusDto)

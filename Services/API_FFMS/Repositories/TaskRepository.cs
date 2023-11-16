@@ -54,8 +54,8 @@ namespace API_FFMS.Repositories
                                 {
                                     existingDetail.EditedAt = now.Value;
                                     existingDetail.EditorId = editorId;
-                                    existingDetail.Status = detail.Status;
-                                    existingDetail.Quantity = detail.Quantity;
+                                    existingDetail.StatusReported = detail.StatusReported;
+                                    existingDetail.QuantityReported = detail.QuantityReported;
                                     _context.Entry(existingDetail).State = EntityState.Modified;
                                 }
                             }
@@ -752,18 +752,6 @@ namespace API_FFMS.Repositories
                     await _context.SaveChangesAsync();
                     await _context.Database.CommitTransactionAsync();
                     return true;
-                }
-
-                //INVENTORY CHECK
-                var inventoryCheck = await _context.InventoryChecks
-                                    .Include(x => x.InventoryCheckDetails)
-                                    .FirstOrDefaultAsync(x => x.Id == mediaFiles.First().ItemId);
-                if (inventoryCheck != null)
-                {
-                    inventoryCheck.EditedAt = now.Value;
-                    inventoryCheck.EditorId = editorId;
-                    inventoryCheck.Status = statusUpdate;
-                    _context.Entry(inventoryCheck).State = EntityState.Modified;
                 }
 
                 return true;

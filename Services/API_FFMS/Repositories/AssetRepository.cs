@@ -38,7 +38,7 @@ public class AssetRepository : IAssetRepository
             {
                 FromDate = now.Value,
                 AssetId = asset.Id,
-                RoomId = GetWareHouse("Kho")!.Id,
+                RoomId = GetWareHouse("207")!.Id,
                 Status = AssetStatus.Operational,
                 ToDate = null,
                 Quantity = asset.Quantity,
