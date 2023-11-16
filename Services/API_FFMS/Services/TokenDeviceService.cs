@@ -20,7 +20,7 @@ public class TokenDeviceService :BaseService, ITokenDeviceService
     {
         var user = MainUnitOfWork.UserRepository
             .GetQuery()
-            .SingleOrDefault(x =>x != null && !x.DeletedAt.HasValue && x.Id == AccountId);
+            .SingleOrDefault(x =>x != null && !x!.DeletedAt.HasValue && x.Id == AccountId);
         if (user == null)
         {
             throw new ApiException("User not found", StatusCode.BAD_REQUEST);
@@ -28,7 +28,7 @@ public class TokenDeviceService :BaseService, ITokenDeviceService
 
         var existingToken = MainUnitOfWork.TokenRepository
             .GetQuery()
-            .SingleOrDefault(x => x != null && x.UserId == AccountId && x.Type == TokenType.DeviceToken);
+            .SingleOrDefault(x => !x!.DeletedAt.HasValue && x.UserId == AccountId && x.Type == TokenType.DeviceToken);
 
         if (existingToken != null)
         {
