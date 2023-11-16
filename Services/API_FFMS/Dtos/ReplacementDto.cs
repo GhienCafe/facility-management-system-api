@@ -1,7 +1,5 @@
-﻿using AppCore.Configs;
-using AppCore.Models;
+﻿using AppCore.Models;
 using MainData.Entities;
-using Newtonsoft.Json;
 
 namespace API_FFMS.Dtos;
 
@@ -15,7 +13,7 @@ public class ReplaceDto : BaseRequestDto
     public UserBaseDto? AssignTo { get; set; }
     public AssetTypeDto? AssetType { get; set; }
     public CategoryDto? Category { get; set; }
-    public MediaFileDto? MediaFile { get; set; }
+    public List<MediaFileDetailDto>? RelatedFiles { get; set; }
     public AssetLocation? AssetLocation { get; set; }
     public AssetLocation? NewAssetLocation { get; set; }
 }

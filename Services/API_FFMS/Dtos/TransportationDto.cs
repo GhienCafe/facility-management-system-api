@@ -31,7 +31,7 @@ public class TransportDto : BaseDto
     public Guid? AssignedTo { get; set; }
     public List<FromRoomAssetDto>? Assets { get; set; }
     public RoomBaseDto? ToRoom { get; set; }
-    public MediaFileDto? MediaFile { get; set; }
+    public List<MediaFileDetailDto>? RelatedFiles { get; set; }
     public UserBaseDto? AssignTo { get; set; }
 }
 
