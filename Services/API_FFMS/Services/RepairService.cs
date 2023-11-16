@@ -217,14 +217,13 @@ namespace API_FFMS.Services
                 repairation.User.RoleObj = repairation.User.Role?.GetValue();
             }
 
-            var mediaFileQuery = MainUnitOfWork.MediaFileRepository.GetQuery().Where(m => m!.ItemId == repairation.Id);
+            var mediaFileQuery = MainUnitOfWork.MediaFileRepository.GetQuery().Where(m => m!.ItemId == id);
 
-            repairation.MediaFile = new MediaFileDto
+            repairation.RelatedFiles = mediaFileQuery.Select(x => new MediaFileDetailDto
             {
-                FileType = mediaFileQuery.Select(m => m!.FileType).FirstOrDefault(),
-                Uri = mediaFileQuery.Select(m => m!.Uri).ToList(),
-                Content = mediaFileQuery.Select(m => m!.Content).FirstOrDefault()
-            };
+                FileName = x!.FileName,
+                Uri = x.Uri,
+            }).ToList();
 
             repairation.PriorityObj = repairation.Priority.GetValue();
             repairation.Status = repairation.Status;

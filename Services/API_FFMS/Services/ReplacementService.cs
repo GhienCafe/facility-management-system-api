@@ -229,14 +229,13 @@ namespace API_FFMS.Services
                     x => !x.DeletedAt.HasValue,
                     x => x.Id == replacement.AssetType!.CategoryId
                 });
-            var mediaFileQuery = MainUnitOfWork.MediaFileRepository.GetQuery().Where(m => m!.ItemId == replacement.Id);
 
-            replacement.MediaFile = new MediaFileDto
+            var mediaFileQuery = MainUnitOfWork.MediaFileRepository.GetQuery().Where(m => m!.ItemId == replacement.Id);
+            replacement.RelatedFiles = mediaFileQuery.Select(x => new MediaFileDetailDto
             {
-                FileType = mediaFileQuery.Select(m => m!.FileType).FirstOrDefault(),
-                Uri = mediaFileQuery.Select(m => m!.Uri).ToList(),
-                Content = mediaFileQuery.Select(m => m!.Content).FirstOrDefault()
-            };
+                FileName = x!.FileName,
+                Uri = x.Uri,
+            }).ToList();
 
             replacement.AssignTo = await MainUnitOfWork.UserRepository.FindOneAsync<UserBaseDto>(
             new Expression<Func<User, bool>>[]
