@@ -19,6 +19,7 @@ public interface IMaintenanceService : IBaseService
     Task<ApiResponse> UpdateItem(Guid id, MaintenanceUpdateDto updateDto);
     Task<ApiResponse> DeleteItem(Guid id);
     Task<ApiResponse> DeleteItems(DeleteMutilDto deleteDto);
+    Task<ApiResponse> UpdateStatus(Guid id, BaseUpdateStatusDto updateStatusDto);
 }
 
 public class MaintenanceService : BaseService, IMaintenanceService
@@ -241,7 +242,7 @@ public class MaintenanceService : BaseService, IMaintenanceService
             if (asset == null)
                 throw new ApiException("Không cần tồn tại trang thiết bị", StatusCode.NOT_FOUND);
 
-            if (assetType!.Unit == Unit.Individual && asset.Status != AssetStatus.Operational)
+            if (assetType!.Unit == Unit.Individual && asset.RequestStatus != RequestType.Operational)
                 throw new ApiException("Trang thiết bị đang trong một yêu cầu khác", StatusCode.BAD_REQUEST);
 
             var maintenance = createDto.ProjectTo<MaintenanceCreateDto, Maintenance>();
@@ -261,7 +262,7 @@ public class MaintenanceService : BaseService, IMaintenanceService
                 }
             }
 
-            if (!await _maintenanceRepository.InsertMaintenanceV2(maintenance, mediaFiles , AccountId, CurrentDate))
+            if (!await _maintenanceRepository.InsertMaintenance(maintenance, mediaFiles , AccountId, CurrentDate))
                 throw new ApiException("Tạo yêu cầu thất bại", StatusCode.SERVER_ERROR);
 
             return ApiResponse.Created("Gửi yêu cầu thành công");
@@ -305,7 +306,7 @@ public class MaintenanceService : BaseService, IMaintenanceService
                     x => createDtos.Select(dto => dto.AssetId).Contains(x.Id)
                 }, null);
 
-        if (assets.Any(asset => asset!.Status != AssetStatus.Operational))
+        if (assets.Any(asset => asset!.RequestStatus != RequestType.Operational))
         {
             throw new ApiException("Trang thiết bị đang trong một yêu cầu khác", StatusCode.SERVER_ERROR);
         }
@@ -378,5 +379,26 @@ public class MaintenanceService : BaseService, IMaintenanceService
             throw new ApiException("Xóa thất bại", StatusCode.SERVER_ERROR);
         }
         return ApiResponse.Success();
+    }
+
+    public async Task<ApiResponse> UpdateStatus(Guid id, BaseUpdateStatusDto updateStatusDto)
+    {
+        var existingMainten = MainUnitOfWork.MaintenanceRepository.GetQuery()
+                                    .Include(t => t!.Asset)
+                                    .Where(t => t!.Id == id)
+                                    .FirstOrDefault();
+        if (existingMainten == null)
+        {
+            throw new ApiException("Không tìm thấy yêu cầu bảo trì này", StatusCode.NOT_FOUND);
+        }
+
+        existingMainten.Status = updateStatusDto.Status ?? existingMainten.Status;
+
+        if (!await _maintenanceRepository.UpdateStatus(existingMainten, updateStatusDto.Status, AccountId, CurrentDate))
+        {
+            throw new ApiException("Cập nhật trạng thái yêu cầu thất bại", StatusCode.SERVER_ERROR);
+        }
+
+        return ApiResponse.Success("Cập nhật yêu cầu thành công");
     }
 }

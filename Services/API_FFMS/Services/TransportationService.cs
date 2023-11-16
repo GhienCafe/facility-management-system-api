@@ -56,7 +56,7 @@ namespace API_FFMS.Services
 
             foreach (var a in assetList)
             {
-                    if (a.AssetType.Unit == Unit.Individual && a.Asset.Status != AssetStatus.Operational)
+                    if (a.AssetType.Unit == Unit.Individual && a.Asset.RequestStatus != RequestType.Operational)
                     {
                         throw new ApiException("Trang thiết bị đang trong một yêu cầu khác", StatusCode.SERVER_ERROR);
                     }
@@ -111,7 +111,7 @@ namespace API_FFMS.Services
                 }
             }
 
-            if (!await _transportationRepository.InsertTransportationV2(transportation, assets, mediaFiles, AccountId, CurrentDate))
+            if (!await _transportationRepository.InsertTransportation(transportation, assets, mediaFiles, AccountId, CurrentDate))
             {
                 throw new ApiException("Tạo yêu cầu thất bại", StatusCode.SERVER_ERROR);
             }
@@ -225,6 +225,8 @@ namespace API_FFMS.Services
                                         IsMovable = asset.IsMovable,
                                         IsRented = asset.IsRented,
                                         ManufacturingYear = asset.ManufacturingYear,
+                                        RequestStatusObj = asset.RequestStatus.GetValue(),
+                                        RequestStatus = asset.RequestStatus,
                                         StatusObj = asset.Status.GetValue(),
                                         Status = asset.Status,
                                         StartDateOfUse = asset.StartDateOfUse,
@@ -346,6 +348,8 @@ namespace API_FFMS.Services
                         Quantity = (double)td!.Quantity!,
                         Status = td.Asset.Status,
                         StatusObj = td.Asset.Status.GetValue(),
+                        RequestStatus = td.Asset.RequestStatus,
+                        RequestStatusObj = td.Asset.RequestStatus.GetValue(),
                         IsMovable = td.Asset.IsMovable,
                         Description = td.Asset.Description,
                         IsRented = td.Asset.IsRented,

@@ -38,7 +38,7 @@ namespace API_FFMS.Services
             if (asset == null)
                 throw new ApiException("Không cần tồn tại trang thiết bị", StatusCode.NOT_FOUND);
 
-            if (asset.Status != AssetStatus.Operational && asset.Status != AssetStatus.Damaged)
+            if (asset.RequestStatus != RequestType.Operational)
                 throw new ApiException("Trang thiết bị đang trong một yêu cầu khác", StatusCode.BAD_REQUEST);
 
             var checkExist = await MainUnitOfWork.RepairRepository.FindAsync(
@@ -70,7 +70,7 @@ namespace API_FFMS.Services
                 }
             }
 
-            if (!await _repairRepository.InsertRepairV2(repairation, mediaFiles, AccountId, CurrentDate))
+            if (!await _repairRepository.InsertRepair(repairation, mediaFiles, AccountId, CurrentDate))
                 throw new ApiException("Tạo yêu cầu thất bại", StatusCode.SERVER_ERROR);
 
             return ApiResponse.Created("Gửi yêu cầu thành công");
@@ -85,7 +85,7 @@ namespace API_FFMS.Services
                     x => createDtos.Select(dto => dto.AssetId).Contains(x.Id)
                 }, null);
 
-            if (assets.Any(asset => asset!.Status != AssetStatus.Operational))
+            if (assets.Any(asset => asset!.RequestStatus != RequestType.Operational))
             {
                 throw new ApiException("Trang thiết bị đang trong một yêu cầu khác", StatusCode.SERVER_ERROR);
             }
@@ -159,6 +159,7 @@ namespace API_FFMS.Services
             if (repairation.Asset != null)
             {
                 repairation.Asset.StatusObj = repairation.Asset.Status?.GetValue();
+                repairation.Asset.RequestStatusObj = repairation.Asset.RequestStatus.GetValue();
             }
 
             repairation.User = await MainUnitOfWork.UserRepository.FindOneAsync<UserBaseDto>(
@@ -282,6 +283,8 @@ namespace API_FFMS.Services
                     IsMovable = x.Asset.IsMovable,
                     Status = x.Asset.Status,
                     StatusObj = x.Asset.Status.GetValue(),
+                    RequestStatus = x.Asset.RequestStatus,
+                    RequestStatusObj = x.Asset.RequestStatus.GetValue(),
                     ManufacturingYear = x.Asset.ManufacturingYear,
                     SerialNumber = x.Asset.SerialNumber,
                     Quantity = x.Asset.Quantity,
