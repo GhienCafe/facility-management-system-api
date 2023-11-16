@@ -32,26 +32,28 @@ public static class AddConfigServiceCollectionExtensions
 
         // Service regis service
         services.RegisAllService(projectRegis.ToArray(), ignoreServices.ToArray());
-        
+
         //Configure the connection to Redis
         var redisConfiguration = ConfigurationOptions.Parse(EnvironmentExtension.GetRedisCachingServer());
         redisConfiguration.Password = EnvironmentExtension.GetRedisServePassword();
-        
+
         // Register Redis ConnectionMultiplexer as a Singleton
         services.AddSingleton<IConnectionMultiplexer>(ConnectionMultiplexer.Connect(redisConfiguration));
-        
+
         // Add the Redis distributed cache service
         services.AddStackExchangeRedisCache(options =>
         {
             options.Configuration = redisConfiguration.ToString();
         });
-        
+
         services.AddTransient<IDatabase>(provider =>
         {
             var connectionMultiplexer = provider.GetRequiredService<IConnectionMultiplexer>();
             return connectionMultiplexer.GetDatabase();
         });
 
+        // Config SignalR
+        services.AddSignalR();
 
         // Service Other
         services.AddControllers(options =>
@@ -84,7 +86,11 @@ public static class AddConfigServiceCollectionExtensions
             context.Request.PathBase = EnvironmentExtension.GetPath();
             return next();
         });
+
+        app.UseWebSockets();
+
         app.UseCors(MyAllowAllOrigins);
+
         app.UseConfigSwagger();
         app.UseAuthentication();
         app.UseMiddleware<HandleResponseMiddleware>();

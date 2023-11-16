@@ -23,11 +23,6 @@ namespace Worker_Notify
                 {
                     var appNotificationService = scope.ServiceProvider.GetRequiredService<IShortTermNotificationService>();
                     await Task.Run(() => appNotificationService.SendTask());
-                    
-                    var delay = TimeSpan.FromSeconds(1);
-                    // var delay = TimeSpan.FromDays(30);
-                    var webNotificationService = scope.ServiceProvider.GetRequiredService<IWebNotificationService>();
-                    await Task.Run(() =>  webNotificationService.SendMaintenance(delay));
                 }
                 _logger.LogInformation("Worker running at: {time}", DateTimeOffset.Now);
                 await Task.Delay(1000, stoppingToken);
