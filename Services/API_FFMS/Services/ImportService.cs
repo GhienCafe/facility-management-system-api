@@ -155,7 +155,7 @@ namespace API_FFMS.Services
                 {
                     AssetName = dto.AssetName,
                     AssetCode = dto.AssetCode,
-                    TypeId = GetAssetTypeByCode(dto.TypeCode!),
+                    //Type = dto.TypeCode == null ? null : GetAssetTypeByCode(dto.TypeCode!),
                     Status = AssetStatus.Operational,
                     ManufacturingYear = dto.ManufacturingYear,
                     SerialNumber = dto.SerialNumber,
@@ -163,7 +163,7 @@ namespace API_FFMS.Services
                     Description = dto.Description,
                     IsRented = IsTrueOrFalse(dto.IsRented!),
                     IsMovable = IsTrueOrFalse(dto.IsMovable!),
-                    ModelId = GetModelByName(dto.ModelCode!),
+                    //Model = dto.ModelCode == null ? null : GetModelByName(dto.ModelCode!),
                     ImageUrl = "",
                     StartDateOfUse = DateTime.Now,
                     LastCheckedDate = null,
@@ -208,7 +208,7 @@ namespace API_FFMS.Services
                                 .Where(x => x!.TypeCode.Trim().ToLower()
                                 .Contains(typeCode.Trim().ToLower()))
                                 .FirstOrDefault();
-            if(assetCategory == null)
+            if (assetCategory == null)
             {
                 return Guid.NewGuid();
             }
@@ -223,7 +223,7 @@ namespace API_FFMS.Services
                                 .Where(x => x!.ModelName!.Trim().ToLower()
                                 .Contains(modelName.Trim().ToLower()))
                                 .FirstOrDefault();
-            if(model == null)
+            if (model == null)
             {
                 return Guid.NewGuid();
             }
@@ -281,7 +281,7 @@ namespace API_FFMS.Services
 
             foreach (var asset in assets)
             {
-                if(!modelCodes.Contains((Guid)asset.ModelId))
+                if (!modelCodes.Contains((Guid)asset.ModelId))
                 {
                     var row = assets.IndexOf(asset) + 3;
                     validationErrors.Add(new ImportError
