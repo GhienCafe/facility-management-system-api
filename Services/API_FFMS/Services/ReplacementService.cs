@@ -99,7 +99,14 @@ namespace API_FFMS.Services
                 throw new ApiException("Không tìm thấy yêu cầu thay thế này", StatusCode.NOT_FOUND);
             }
 
-            if (!await _repository.DeleteReplacement(existingReplace, AccountId, CurrentDate))
+            if (existingReplace.Status != RequestStatus.Done ||
+               existingReplace.Status != RequestStatus.NotStart ||
+               existingReplace.Status != RequestStatus.Cancelled)
+            {
+                throw new ApiException($"Không thể xóa yêu cầu đang có trạng thái: {existingReplace.Status?.GetDisplayName()}", StatusCode.NOT_FOUND);
+            }
+
+            if (!await MainUnitOfWork.ReplacementRepository.DeleteAsync(existingReplace, AccountId, CurrentDate))
             {
                 throw new ApiException("Xóa thất bại", StatusCode.SERVER_ERROR);
             }
@@ -116,6 +123,17 @@ namespace API_FFMS.Services
                                     }, null);
 
             var replacements = replaceDeleteds.Where(r => r != null).ToList();
+
+            foreach (var replacement in replacements)
+            {
+                if (replacement!.Status != RequestStatus.Done ||
+                    replacement.Status != RequestStatus.NotStart ||
+                    replacement.Status != RequestStatus.Cancelled)
+                {
+                    throw new ApiException($"Không thể xóa yêu cầu đang có trạng thái: {replacement.Status?.GetDisplayName()}" +
+                                           $"kiểm tra yêu cầu: {replacement.RequestCode}", StatusCode.BAD_REQUEST);
+                }
+            }
 
             if (!await _repository.DeleteReplacements(replaceDeleteds, AccountId, CurrentDate))
             {
@@ -383,9 +401,11 @@ namespace API_FFMS.Services
                 throw new ApiException("Không tìm thấy yêu cầu thay thế này", StatusCode.NOT_FOUND);
             }
 
-            if (existingReplace.Status != RequestStatus.InProgress)
+            if (existingReplace.Status != RequestStatus.Done ||
+               existingReplace.Status != RequestStatus.NotStart ||
+               existingReplace.Status != RequestStatus.Cancelled)
             {
-                throw new ApiException("Chỉ được cập nhật các yêu cầu chưa hoàn thành", StatusCode.NOT_FOUND);
+                throw new ApiException($"Không thể cập nhật yêu cầu đang có trạng thái: {existingReplace.Status?.GetDisplayName()}", StatusCode.BAD_REQUEST);
             }
 
             existingReplace.Description = updateDto.Description ?? existingReplace.Description;

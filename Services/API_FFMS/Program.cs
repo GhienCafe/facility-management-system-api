@@ -31,6 +31,7 @@ builder.Services.AddDbContext<DatabaseContext>(options =>
 
 //
 builder.Services.AddControllers();
+builder.Services.AddSignalR();
 builder.Services.AddFirebaseAuthentication("https://securetoken.google.com/facility-management-system-fb", "facility-management-system-fb");
 builder.Services.AddScoped<MainUnitOfWork>();
 builder.Services.AddConfig(new List<string>
