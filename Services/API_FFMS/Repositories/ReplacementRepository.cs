@@ -7,8 +7,7 @@ namespace API_FFMS.Repositories
 {
     public interface IReplacementRepository
     {
-        Task<bool> InsertReplacement(Replacement replacement, Guid? creatorId, DateTime? now = null);
-        Task<bool> InsertReplacementV2(Replacement replacement, List<MediaFile> mediaFiles, Guid? creatorId, DateTime? now = null);
+        Task<bool> InsertReplacement(Replacement replacement, List<MediaFile> mediaFiles, Guid? creatorId, DateTime? now = null);
         Task<bool> UpdateStatus(Replacement replacement, RequestStatus? statusUpdate, Guid? editorId, DateTime? now = null);
         Task<bool> DeleteReplacement(Replacement replacement, Guid? deleterId, DateTime? now = null);
         Task<bool> DeleteReplacements(List<Replacement?> replacements, Guid? deleterId, DateTime? now = null);
@@ -212,50 +211,7 @@ namespace API_FFMS.Repositories
             }
         }
 
-        public async Task<bool> InsertReplacement(Replacement replacement, Guid? creatorId, DateTime? now = null)
-        {
-            await _context.Database.BeginTransactionAsync();
-            now ??= DateTime.UtcNow;
-            try
-            {
-                replacement.Id = Guid.NewGuid();
-                replacement.CreatedAt = now.Value;
-                replacement.EditedAt = now.Value;
-                replacement.CreatorId = creatorId;
-                replacement.Status = RequestStatus.NotStart;
-                replacement.RequestDate = now.Value;
-                await _context.Replacements.AddAsync(replacement);
-
-                if (replacement.IsInternal)
-                {
-                    var notification = new Notification
-                    {
-                        CreatedAt = now.Value,
-                        EditedAt = now.Value,
-                        Status = NotificationStatus.Waiting,
-                        Content = replacement.Description,
-                        Title = RequestType.Replacement.GetDisplayName(),
-                        Type = NotificationType.Task,
-                        CreatorId = creatorId,
-                        IsRead = false,
-                        ItemId = replacement.Id,
-                        UserId = replacement.AssignedTo
-                    };
-                    await _context.Notifications.AddAsync(notification);
-                }
-
-                await _context.SaveChangesAsync();
-                await _context.Database.CommitTransactionAsync();
-                return true;
-            }
-            catch
-            {
-                await _context.Database.RollbackTransactionAsync();
-                return false;
-            }
-        }
-
-        public async Task<bool> InsertReplacementV2(Replacement replacement, List<MediaFile> mediaFiles, Guid? creatorId, DateTime? now = null)
+        public async Task<bool> InsertReplacement(Replacement replacement, List<MediaFile> mediaFiles, Guid? creatorId, DateTime? now = null)
         {
             await _context.Database.BeginTransactionAsync();
             now ??= DateTime.UtcNow;
@@ -344,27 +300,27 @@ namespace API_FFMS.Repositories
                     replacement.CompletionDate = now.Value;
                     _context.Entry(replacement).State = EntityState.Modified;
 
-                    asset!.Status = AssetStatus.Operational;
+                    asset!.Status = roomAsset!.Status;
+                    asset.RequestStatus = RequestType.Operational;
                     asset.EditedAt = now.Value;
                     asset.EditorId = editorId;
                     _context.Entry(asset).State = EntityState.Modified;
 
-                    newAsset!.Status = AssetStatus.Operational;
+                    newAsset!.Status = roomAssetNew!.Status;
+                    newAsset.RequestStatus = RequestType.Operational;
                     newAsset.EditedAt = now.Value;
                     newAsset.EditorId = editorId;
                     _context.Entry(newAsset).State = EntityState.Modified;
 
-                    //roomAsset!.Status = AssetStatus.Operational;
-                    //roomAsset.ToDate = now.Value;
-                    //roomAsset.EditorId = editorId;
-                    //roomAsset.EditedAt = now.Value;
-                    //_context.Entry(roomAsset).State = EntityState.Modified;
+                    roomAsset.ToDate = now.Value;
+                    roomAsset.EditorId = editorId;
+                    roomAsset.EditedAt = now.Value;
+                    _context.Entry(roomAsset).State = EntityState.Modified;
 
-                    //roomAssetNew!.Status = AssetStatus.Operational;
-                    //roomAssetNew.ToDate = now.Value;
-                    //roomAssetNew.EditorId = editorId;
-                    //roomAssetNew.EditedAt = now.Value;
-                    //_context.Entry(roomAssetNew).State = EntityState.Modified;
+                    roomAssetNew.ToDate = now.Value;
+                    roomAssetNew.EditorId = editorId;
+                    roomAssetNew.EditedAt = now.Value;
+                    _context.Entry(roomAssetNew).State = EntityState.Modified;
 
                     assetLocation!.State = RoomState.Operational;
                     assetLocation.EditedAt = now.Value;
@@ -407,24 +363,16 @@ namespace API_FFMS.Repositories
                 else if (replacement.Status == RequestStatus.Cancelled)
                 {
                     asset!.Status = roomAsset!.Status;
+                    asset.RequestStatus = RequestType.Operational;
                     asset.EditedAt = now.Value;
                     asset.EditorId = editorId;
                     _context.Entry(asset).State = EntityState.Modified;
 
                     newAsset!.Status = roomAssetNew!.Status;
+                    newAsset.RequestStatus = RequestType.Operational;
                     newAsset.EditedAt = now.Value;
                     newAsset.EditorId = editorId;
                     _context.Entry(newAsset).State = EntityState.Modified;
-
-                    //roomAsset!.Status = AssetStatus.Operational;
-                    //roomAsset.EditorId = editorId;
-                    //roomAsset.EditedAt = now.Value;
-                    //_context.Entry(roomAsset).State = EntityState.Modified;
-
-                    //roomAssetNew!.Status = AssetStatus.Operational;
-                    //roomAssetNew.EditorId = editorId;
-                    //roomAssetNew.EditedAt = now.Value;
-                    //_context.Entry(roomAssetNew).State = EntityState.Modified;
 
                     assetLocation!.State = RoomState.Operational;
                     assetLocation.EditedAt = now.Value;

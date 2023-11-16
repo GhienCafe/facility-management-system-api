@@ -43,6 +43,13 @@ public class MaintenanceController : BaseController
         return await _maintenanceService.UpdateItem(id, updateDto);
     }
 
+    [HttpPut("status-update/{id:guid}")]
+    [SwaggerOperation("Update maintenance's status")]
+    public async Task<ApiResponse> UpdateStatus(Guid id, BaseUpdateStatusDto updateDto)
+    {
+        return await _maintenanceService.UpdateStatus(id, updateDto);
+    }
+
     // [HttpDelete("{id}")]
     // [SwaggerOperation("Delete maintenance")]
     // public async Task<ApiResponse> Delete(Guid id)

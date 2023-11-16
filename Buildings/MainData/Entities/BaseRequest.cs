@@ -57,7 +57,9 @@ public enum RequestType
     [Display(Name = "Điều chuyển")]
     Transportation = 5,
     [Display(Name = "Kiểm kê tài sản")]
-    InventoryCheck = 6
+    InventoryCheck = 6,
+    [Display(Name = "Đang không thuộc yêu cầu nào")]
+    Operational = 7
 }
 
 public enum Priority

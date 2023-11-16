@@ -117,7 +117,7 @@ namespace API_FFMS.Repositories
 
                     if (assetCheck.Status == RequestStatus.InProgress)
                     {
-                        asset!.Status = AssetStatus.NeedInspection;
+                        asset!.RequestStatus = RequestType.StatusCheck;
                         asset.EditedAt = now.Value;
                         asset.EditorId = editorId;
                         _context.Entry(asset).State = EntityState.Modified;
@@ -132,9 +132,6 @@ namespace API_FFMS.Repositories
                     }
                     else if (assetCheck.Status == RequestStatus.Reported)
                     {
-                        assetCheck.CompletionDate = now.Value;
-                        _context.Entry(assetCheck).State = EntityState.Modified;
-
                         foreach (var mediaFile in mediaFiles)
                         {
                             var newMediaFile = new MediaFile
@@ -156,14 +153,24 @@ namespace API_FFMS.Repositories
                         assetCheck.Result = mediaFiles.First().Content;
                         assetCheck.Checkout = now.Value;
                         assetCheck.IsVerified = mediaFiles.First().IsVerified;
+                        assetCheck.CompletionDate = now.Value;
                         _context.Entry(assetCheck).State = EntityState.Modified;
 
                         if (assetCheck.IsVerified == true)
                         {
                             asset!.Status = AssetStatus.Damaged;
+                            asset!.RequestStatus = RequestType.Operational;
                             asset.EditedAt = now.Value;
                             asset.EditorId = editorId;
                             _context.Entry(asset).State = EntityState.Modified;
+
+                            if (roomAsset != null)
+                            {
+                                roomAsset.Status = AssetStatus.Damaged;
+                                roomAsset.EditedAt = now.Value;
+                                roomAsset.EditorId = editorId;
+                                _context.Entry(roomAsset).State = EntityState.Modified;
+                            }
 
                             assetLocation!.State = RoomState.Damaged;
                             assetLocation.EditedAt = now.Value;
@@ -173,9 +180,18 @@ namespace API_FFMS.Repositories
                         else if (assetCheck.IsVerified == false)
                         {
                             asset!.Status = AssetStatus.Operational;
+                            asset!.RequestStatus = RequestType.Operational;
                             asset.EditedAt = now.Value;
                             asset.EditorId = editorId;
                             _context.Entry(asset).State = EntityState.Modified;
+
+                            if (roomAsset != null)
+                            {
+                                roomAsset.Status = AssetStatus.Operational;
+                                roomAsset.EditedAt = now.Value;
+                                roomAsset.EditorId = editorId;
+                                _context.Entry(roomAsset).State = EntityState.Modified;
+                            }
 
                             assetLocation!.State = RoomState.Operational;
                             assetLocation.EditedAt = now.Value;
@@ -228,15 +244,7 @@ namespace API_FFMS.Repositories
                         var fromRoom = await _context.Rooms.FirstOrDefaultAsync(x => x.Id == roomAsset!.RoomId && roomAsset.AssetId == asset.Id);
                         if (statusUpdate == RequestStatus.InProgress)
                         {
-                            if (roomAsset != null)
-                            {
-                                roomAsset!.Status = AssetStatus.Transportation;
-                                roomAsset.EditedAt = now.Value;
-                                roomAsset.EditorId = editorId;
-                                _context.Entry(roomAsset).State = EntityState.Modified;
-                            }
-
-                            asset.Status = AssetStatus.Transportation;
+                            asset.RequestStatus = RequestType.Transportation;
                             asset.EditedAt = now.Value;
                             asset.EditorId = editorId;
                             _context.Entry(asset).State = EntityState.Modified;
@@ -319,15 +327,7 @@ namespace API_FFMS.Repositories
                     var location = await _context.Rooms.FirstOrDefaultAsync(x => x.Id == roomAsset!.RoomId && roomAsset.AssetId == asset!.Id);
                     if (statusUpdate == RequestStatus.InProgress)
                     {
-                        if (roomAsset != null)
-                        {
-                            roomAsset.Status = AssetStatus.Repair;
-                            roomAsset.EditedAt = now.Value;
-                            roomAsset.EditorId = editorId;
-                            _context.Entry(roomAsset).State = EntityState.Modified;
-                        }
-
-                        asset!.Status = AssetStatus.Repair;
+                        asset!.RequestStatus = RequestType.Repairation;
                         asset.EditedAt = now.Value;
                         asset.EditorId = editorId;
                         _context.Entry(asset).State = EntityState.Modified;
@@ -362,7 +362,6 @@ namespace API_FFMS.Repositories
                                 EditedAt = now.Value,
                                 EditorId = editorId,
                                 FileName = mediaFile.FileName,
-                                //Key = mediaFile.Key,
                                 RawUri = mediaFile.RawUri,
                                 Uri = mediaFile.Uri,
                                 FileType = mediaFile.FileType,
@@ -411,15 +410,7 @@ namespace API_FFMS.Repositories
                     var location = await _context.Rooms.FirstOrDefaultAsync(x => x.Id == roomAsset!.RoomId && roomAsset.AssetId == asset!.Id);
                     if (statusUpdate == RequestStatus.InProgress)
                     {
-                        if (roomAsset != null)
-                        {
-                            roomAsset.Status = AssetStatus.Repair;
-                            roomAsset.EditedAt = now.Value;
-                            roomAsset.EditorId = editorId;
-                            _context.Entry(roomAsset).State = EntityState.Modified;
-                        }
-
-                        asset!.Status = AssetStatus.Repair;
+                        asset!.RequestStatus = RequestType.Repairation;
                         asset.EditedAt = now.Value;
                         asset.EditorId = editorId;
                         _context.Entry(asset).State = EntityState.Modified;
@@ -508,12 +499,12 @@ namespace API_FFMS.Repositories
 
                     if (replacement.Status == RequestStatus.InProgress)
                     {
-                        asset!.Status = AssetStatus.Replacement;
+                        asset!.RequestStatus = RequestType.Replacement;
                         asset.EditedAt = now.Value;
                         asset.EditorId = editorId;
                         _context.Entry(asset).State = EntityState.Modified;
 
-                        newAsset!.Status = AssetStatus.Replacement;
+                        newAsset!.RequestStatus = RequestType.Replacement;
                         newAsset.EditedAt = now.Value;
                         newAsset.EditorId = editorId;
                         _context.Entry(newAsset).State = EntityState.Modified;
@@ -595,15 +586,7 @@ namespace API_FFMS.Repositories
                     var location = await _context.Rooms.FirstOrDefaultAsync(x => x.Id == roomAsset!.RoomId && roomAsset.AssetId == asset!.Id);
                     if (statusUpdate == RequestStatus.InProgress)
                     {
-                        if (roomAsset != null)
-                        {
-                            roomAsset!.Status = AssetStatus.Maintenance;
-                            roomAsset.EditedAt = now.Value;
-                            roomAsset.EditorId = editorId;
-                            _context.Entry(roomAsset).State = EntityState.Modified;
-                        }
-
-                        asset!.Status = AssetStatus.Maintenance;
+                        asset!.RequestStatus = RequestType.Maintenance;
                         asset.EditedAt = now.Value;
                         asset.EditorId = editorId;
                         _context.Entry(asset).State = EntityState.Modified;
@@ -676,15 +659,7 @@ namespace API_FFMS.Repositories
                     var location = await _context.Rooms.FirstOrDefaultAsync(x => x.Id == roomAsset!.RoomId && roomAsset.AssetId == asset!.Id);
                     if (statusUpdate == RequestStatus.InProgress)
                     {
-                        if (roomAsset != null)
-                        {
-                            roomAsset!.Status = AssetStatus.Maintenance;
-                            roomAsset.EditedAt = now.Value;
-                            roomAsset.EditorId = editorId;
-                            _context.Entry(roomAsset).State = EntityState.Modified;
-                        }
-
-                        asset!.Status = AssetStatus.Maintenance;
+                        asset!.RequestStatus = RequestType.Maintenance;
                         asset.EditedAt = now.Value;
                         asset.EditorId = editorId;
                         _context.Entry(asset).State = EntityState.Modified;

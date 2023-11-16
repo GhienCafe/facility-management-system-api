@@ -7,11 +7,10 @@ namespace API_FFMS.Repositories;
 
 public interface ITransportationRepository
 {
-    Task<bool> InsertTransportations(Transportation transportation, List<Asset?> assets, Guid? creatorId, DateTime? now = null);
     Task<bool> UpdateStatus(Transportation transportation, RequestStatus? statusUpdate, Guid? editorId, DateTime? now = null);
     Task<bool> DeleteTransport(Transportation transportation, Guid? deleterId, DateTime? now = null);
     Task<bool> DeleteTransports(List<Transportation?> transportations, Guid? deleterId, DateTime? now = null);
-    Task<bool> InsertTransportationV2(Transportation transportation, List<Asset?> assets, List<MediaFile> mediaFiles, Guid? creatorId, DateTime? now = null);
+    Task<bool> InsertTransportation(Transportation transportation, List<Asset?> assets, List<MediaFile> mediaFiles, Guid? creatorId, DateTime? now = null);
 }
 public class TransportationRepository : ITransportationRepository
 {
@@ -165,66 +164,7 @@ public class TransportationRepository : ITransportationRepository
         }
     }
 
-    public async Task<bool> InsertTransportations(Transportation transportation, List<Asset?> assets, Guid? creatorId, DateTime? now = null)
-    {
-        await _context.Database.BeginTransactionAsync();
-        now ??= DateTime.UtcNow;
-        try
-        {
-            transportation.Id = Guid.NewGuid();
-            transportation.CreatedAt = now.Value;
-            transportation.EditedAt = now.Value;
-            transportation.CreatorId = creatorId;
-            transportation.Status = RequestStatus.NotStart;
-            transportation.RequestDate = now.Value;
-            await _context.Transportations.AddAsync(transportation);
-
-            if (transportation.IsInternal)
-            {
-                foreach (var asset in assets)
-                {
-                    var transpsortDetail = new TransportationDetail
-                    {
-                        Id = Guid.NewGuid(),
-                        AssetId = asset!.Id,
-                        TransportationId = transportation.Id,
-                        RequestDate = now.Value,
-                        Quantity = transportation.Quantity,
-                        CreatorId = creatorId,
-                        CreatedAt = now.Value,
-                        EditedAt = now.Value
-                    };
-                    await _context.TransportationDetails.AddAsync(transpsortDetail);
-                }
-
-                var notification = new Notification
-                {
-                    CreatedAt = now.Value,
-                    EditedAt = now.Value,
-                    Status = NotificationStatus.Waiting,
-                    Content = transportation.Description,
-                    Title = RequestType.Maintenance.GetDisplayName(),
-                    Type = NotificationType.Task,
-                    CreatorId = creatorId,
-                    IsRead = false,
-                    ItemId = transportation.Id,
-                    UserId = transportation.AssignedTo
-                };
-                await _context.Notifications.AddAsync(notification);
-            }
-
-            await _context.SaveChangesAsync();
-            await _context.Database.CommitTransactionAsync();
-            return true;
-        }
-        catch
-        {
-            await _context.Database.RollbackTransactionAsync();
-            return false;
-        }
-    }
-
-    public async Task<bool> InsertTransportationV2(Transportation transportation, List<Asset?> assets, List<MediaFile> mediaFiles, Guid? creatorId, DateTime? now = null)
+    public async Task<bool> InsertTransportation(Transportation transportation, List<Asset?> assets, List<MediaFile> mediaFiles, Guid? creatorId, DateTime? now = null)
     {
         await _context.Database.BeginTransactionAsync();
         now ??= DateTime.UtcNow;
@@ -324,28 +264,25 @@ public class TransportationRepository : ITransportationRepository
                     transportation.CompletionDate = now.Value;
                     _context.Entry(transportation).State = EntityState.Modified;
 
-                    asset.Status = AssetStatus.Operational;
+                    asset.RequestStatus = RequestType.Operational;
                     asset.EditedAt = now.Value;
                     asset.EditorId = editorId;
                     _context.Entry(asset).State = EntityState.Modified;
 
                     if (roomAsset != null)
                     {
-                        roomAsset.Status = AssetStatus.Operational;
+                        //roomAsset.Status = AssetStatus.Operational;
                         roomAsset.EditedAt = now.Value;
                         roomAsset.ToDate = now.Value;
                         roomAsset.EditorId = editorId;
                         _context.Entry(roomAsset).State = EntityState.Modified;
                     }
 
-                    //var totalAssetInFromRoom = fromRoom!.RoomAssets!.Sum(a => a.Quantity);
                     fromRoom!.State = RoomState.Operational;
                     fromRoom.EditedAt = now.Value;
                     fromRoom.EditorId = editorId;
                     _context.Entry(fromRoom).State = EntityState.Modified;
 
-
-                    //var totalAssetInToRoom = toRoom!.RoomAssets!.Sum(a => a.Quantity);
                     toRoom!.State = RoomState.Operational;
                     toRoom.EditedAt = now.Value;
                     toRoom.EditorId = editorId;
@@ -358,7 +295,7 @@ public class TransportationRepository : ITransportationRepository
                             Id = Guid.NewGuid(),
                             AssetId = asset.Id,
                             RoomId = toRoom.Id,
-                            Status = AssetStatus.Operational,
+                            Status = asset.Status,
                             FromDate = now.Value,
                             Quantity = 1,
                             ToDate = null,
@@ -373,7 +310,7 @@ public class TransportationRepository : ITransportationRepository
                         {
                             AssetId = asset.Id,
                             RoomId = toRoom.Id,
-                            Status = AssetStatus.Operational,
+                            Status = asset.Status,
                             FromDate = now.Value,
                             Quantity = transportation.Quantity,
                             ToDate = null,
@@ -385,7 +322,7 @@ public class TransportationRepository : ITransportationRepository
                 }
                 else if (statusUpdate == RequestStatus.Cancelled)
                 {
-                    asset.Status = AssetStatus.Operational;
+                    asset.RequestStatus = RequestType.Operational;
                     asset.EditedAt = now.Value;
                     asset.EditorId = editorId;
                     _context.Entry(asset).State = EntityState.Modified;
@@ -399,14 +336,6 @@ public class TransportationRepository : ITransportationRepository
                     toRoom.EditedAt = now.Value;
                     toRoom.EditorId = editorId;
                     _context.Entry(toRoom).State = EntityState.Modified;
-
-                    if (roomAsset != null)
-                    {
-                        roomAsset.Status = AssetStatus.Operational;
-                        roomAsset.EditedAt = now.Value;
-                        roomAsset.EditorId = editorId;
-                        _context.Entry(roomAsset).State = EntityState.Modified;
-                    }
                 }
 
             }
