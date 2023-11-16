@@ -1,11 +1,12 @@
-﻿using Microsoft.AspNetCore.SignalR;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.SignalR;
 
 namespace AppCore.Data.Hubs;
 
-public class NotificationHub : Hub
+public sealed class NotificationHub : Hub
 {
-      public async Task SendNotification(string message)
-        {
-            await Clients.All.SendAsync("ReceiveNotification", message);
-        }
+    public override async Task OnConnectedAsync()
+    {
+        await Clients.All.SendAsync("test connect");
+    }
 }

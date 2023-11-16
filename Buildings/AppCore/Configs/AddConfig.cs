@@ -1,6 +1,5 @@
 using System.Net.Mime;
 using System.Text.Json.Serialization;
-using AppCore.Data.Hubs;
 using AppCore.Extensions;
 using AppCore.Middlewares;
 using AppCore.Models;
@@ -33,14 +32,14 @@ public static class AddConfigServiceCollectionExtensions
 
         // Service regis service
         services.RegisAllService(projectRegis.ToArray(), ignoreServices.ToArray());
-        
+
         //Configure the connection to Redis
         var redisConfiguration = ConfigurationOptions.Parse(EnvironmentExtension.GetRedisCachingServer());
         redisConfiguration.Password = EnvironmentExtension.GetRedisServePassword();
-        
+
         // Register Redis ConnectionMultiplexer as a Singleton
         services.AddSingleton<IConnectionMultiplexer>(ConnectionMultiplexer.Connect(redisConfiguration));
-        
+
         // Add the Redis distributed cache service
         services.AddStackExchangeRedisCache(options =>
         {
@@ -52,7 +51,7 @@ public static class AddConfigServiceCollectionExtensions
             var connectionMultiplexer = provider.GetRequiredService<IConnectionMultiplexer>();
             return connectionMultiplexer.GetDatabase();
         });
-        
+
         // Config SignalR
         services.AddSignalR();
 
@@ -87,10 +86,10 @@ public static class AddConfigServiceCollectionExtensions
             context.Request.PathBase = EnvironmentExtension.GetPath();
             return next();
         });
+
+        app.UseWebSockets();
+
         app.UseCors(MyAllowAllOrigins);
-        
-        app.UseRouting();
-        app.UseRouting()
 
         app.UseConfigSwagger();
         app.UseAuthentication();
