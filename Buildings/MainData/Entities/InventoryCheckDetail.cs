@@ -9,9 +9,11 @@ public class InventoryCheckDetail : BaseEntity
     public Guid AssetId { get; set; }
     public Guid InventoryCheckId { get; set; }
     public Guid RoomId { get; set; }
-    public AssetStatus Status { get; set; }
-    public double? Quantity { get; set; }
-    
+    public AssetStatus StatusBefore { get; set; }
+    public AssetStatus StatusReported { get; set; }
+    public double? QuantityBefore { get; set; }
+    public double? QuantityReported { get; set; }
+
     //Relationship
     public Asset? Asset { get; set; }
     public InventoryCheck? InventoryCheck { get; set; }
@@ -25,8 +27,10 @@ public class InventoryCheckDetailConfig : IEntityTypeConfiguration<InventoryChec
         builder.Property(x => x.AssetId).IsRequired();
         builder.Property(x => x.InventoryCheckId).IsRequired();
         builder.Property(x => x.RoomId).IsRequired();
-        builder.Property(x => x.Status).IsRequired();
-        builder.Property(x => x.Quantity).IsRequired(false);
+        builder.Property(x => x.StatusBefore).IsRequired();
+        builder.Property(x => x.QuantityBefore).IsRequired(false);
+        builder.Property(x => x.StatusReported).IsRequired();
+        builder.Property(x => x.QuantityReported).IsRequired(false);
 
         //Relationship
 

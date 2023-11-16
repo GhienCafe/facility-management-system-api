@@ -44,9 +44,12 @@ public class AssetInventoryCheckDto
     public Guid Id { get; set; }
     public string? AssetName { get; set; }
     public string? AssetCode { get; set; }
-    public double? Quantity { get; set; }
-    public AssetStatus Status { get; set; }
-    public EnumValue? StatusObj { get; set; }
+    public double? QuantityReported { get; set; }
+    public double? QuantityBefore { get; set; }
+    public AssetStatus? StatusBefore { get; set; }
+    public EnumValue? StatusBeforeObj { get; set; }
+    public AssetStatus StatusReported { get; set; }
+    public EnumValue? StatusReportedObj { get; set; }
 }
 
 public class RoomInventoryCheckDto
