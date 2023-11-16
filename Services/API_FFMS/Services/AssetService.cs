@@ -54,6 +54,9 @@ public class AssetService : BaseService, IAssetService
         if (existingAsset == null)
             throw new ApiException("Không tìm thấy trang thiết bị", StatusCode.NOT_FOUND);
 
+        if (existingAsset.RequestStatus != RequestType.Operational)
+            throw new ApiException($"Thiết bị {existingAsset.AssetCode} đang trong một yêu cầu nào đó", StatusCode.BAD_REQUEST);
+
         if (!await _assetRepository.DeleteAsset(existingAsset, AccountId, CurrentDate))
             throw new ApiException("Xóa trang thiết bị thất bại", StatusCode.SERVER_ERROR);
 
@@ -220,6 +223,8 @@ public class AssetService : BaseService, IAssetService
                 x => !x.DeletedAt.HasValue,
                 x => x.Id == existingAsset.ModelId
             });
+        existingAsset.StatusObj = existingAsset.Status?.GetValue();
+        existingAsset.RequestStatusObj = existingAsset.RequestStatus?.GetValue();
 
         if (existingAsset.Model != null)
         {
@@ -411,6 +416,12 @@ public class AssetService : BaseService, IAssetService
             x => !x.DeletedAt.HasValue,
             x => deleteDto.ListId!.Contains(x.Id)
         }, null);
+
+        foreach (var asset in assets)
+        {
+            if (asset!.RequestStatus != RequestType.Operational)
+                throw new ApiException($"Thiết bị {asset.AssetCode} đang trong một yêu cầu nào đó", StatusCode.BAD_REQUEST);
+        }
 
         if (!await _assetRepository.DeleteAssets(assets, AccountId, CurrentDate))
         {

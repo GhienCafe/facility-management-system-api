@@ -132,7 +132,14 @@ namespace API_FFMS.Services
                 throw new ApiException("Không tìm thấy yêu cầu vận chuyển này", StatusCode.NOT_FOUND);
             }
 
-            if (!await _transportationRepository.DeleteTransport(existingTransport, AccountId, CurrentDate))
+            if (existingTransport.Status != RequestStatus.Done ||
+               existingTransport.Status != RequestStatus.NotStart ||
+               existingTransport.Status != RequestStatus.Cancelled)
+            {
+                throw new ApiException($"Không thể xóa yêu cầu đang có trạng thái: {existingTransport.Status?.GetDisplayName()}", StatusCode.BAD_REQUEST);
+            }
+
+            if (!await MainUnitOfWork.TransportationRepository.DeleteAsync(existingTransport, AccountId, CurrentDate))
             {
                 throw new ApiException("Xóa thất bại", StatusCode.SERVER_ERROR);
             }
@@ -149,6 +156,18 @@ namespace API_FFMS.Services
                 }, null);
 
             var transportations = transportDeleteds.Where(t => t != null).ToList();
+
+            foreach (var transportation in transportations)
+            {
+                if (transportation!.Status != RequestStatus.Done ||
+                    transportation.Status != RequestStatus.NotStart ||
+                    transportation.Status != RequestStatus.Cancelled)
+                {
+                    throw new ApiException($"Không thể xóa yêu cầu đang có trạng thái: {transportation.Status?.GetDisplayName()}" +
+                                           $"kiểm tra yêu cầu: {transportation.RequestCode}", StatusCode.BAD_REQUEST);
+                }
+            }
+
             if (!await MainUnitOfWork.TransportationRepository.DeleteAsync(transportations, AccountId, CurrentDate))
             {
                 throw new ApiException("Xóa thất bại", StatusCode.SERVER_ERROR);
@@ -397,10 +416,13 @@ namespace API_FFMS.Services
                 throw new ApiException("Không tìm thấy yêu cầu vận chuyển này", StatusCode.NOT_FOUND);
             }
 
-            if (existingTransport.Status != RequestStatus.InProgress)
+            if (existingTransport.Status != RequestStatus.Done ||
+               existingTransport.Status != RequestStatus.NotStart ||
+               existingTransport.Status != RequestStatus.Cancelled)
             {
-                throw new ApiException("Chỉ được cập nhật các yêu cầu chưa được tiếp nhận", StatusCode.NOT_FOUND);
+                throw new ApiException($"Không thể cập nhật yêu cầu đang có trạng thái: {existingTransport.Status?.GetDisplayName()}", StatusCode.BAD_REQUEST);
             }
+
             existingTransport.Description = updateDto.Description ?? existingTransport.Description;
             existingTransport.Notes = updateDto.Notes ?? existingTransport.Notes;
             existingTransport.Priority = updateDto.Priority ?? existingTransport.Priority;

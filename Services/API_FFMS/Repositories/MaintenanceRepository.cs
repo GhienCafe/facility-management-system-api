@@ -9,7 +9,7 @@ public interface IMaintenanceRepository
 {
     Task<bool> InsertMaintenance(Maintenance maintenance, List<MediaFile> mediaFiles, Guid? creatorId, DateTime? now = null);
     Task<bool> UpdateStatus(Maintenance maintenance, RequestStatus? statusUpdate, Guid? editorId, DateTime? now = null);
-    Task<bool> InsertMaintenances(List<Maintenance> maintenances, Guid? creatorId, DateTime? now = null);
+    Task<bool> InsertMaintenances(List<Maintenance> maintenances, List<MediaFile>? mediaFiles, Guid? creatorId, DateTime? now = null);
     Task<bool> DeleteMaintenances(List<Maintenance?> maintenances, Guid? deleterId, DateTime? now = null);
     Task<bool> DeleteMaintenance(Maintenance maintenance, Guid? deleterId, DateTime? now = null);
 }
@@ -23,7 +23,7 @@ public class MaintenanceRepository : IMaintenanceRepository
         _context = context;
     }
 
-    public async Task<bool> InsertMaintenances(List<Maintenance> entities, Guid? creatorId, DateTime? now = null)
+    public async Task<bool> InsertMaintenances(List<Maintenance> entities, List<MediaFile>? mediaFiles, Guid? creatorId, DateTime? now = null)
     {
         await _context.Database.BeginTransactionAsync();
         now ??= DateTime.UtcNow;
@@ -35,49 +35,32 @@ public class MaintenanceRepository : IMaintenanceRepository
         {
             foreach (var entity in entities)
             {
-                entity.Id = Guid.NewGuid();
                 entity.CreatedAt = now.Value;
-                entity.EditedAt = now.Value;
                 entity.CreatorId = creatorId;
                 entity.Status = RequestStatus.NotStart;
                 entity.RequestDate = now.Value;
                 entity.RequestCode = "MTN" + GenerateRequestCode(ref numbers);
                 await _context.Maintenances.AddAsync(entity);
 
-                var asset = await _context.Assets.FindAsync(entity.AssetId);
-                asset!.Status = AssetStatus.Maintenance;
-                asset.EditedAt = now.Value;
-                asset.EditorId = creatorId;
-                _context.Entry(asset).State = EntityState.Modified;
-
-                if (entity.IsInternal)
+                var notification = new Notification
                 {
-                    var roomAsset = await _context.RoomAssets
-                        .FirstOrDefaultAsync(x => x.AssetId == entity.AssetId && x.ToDate == null);
+                    CreatedAt = now.Value,
+                    Status = NotificationStatus.Waiting,
+                    Content = entity.Description,
+                    Title = RequestType.Maintenance.GetDisplayName(),
+                    Type = NotificationType.Task,
+                    CreatorId = creatorId,
+                    IsRead = false,
+                    ItemId = entity.Id,
+                    UserId = entity.AssignedTo
+                };
+                await _context.Notifications.AddAsync(notification);
 
-                    if (roomAsset != null)
-                    {
-                        roomAsset!.Status = AssetStatus.Maintenance;
-                        roomAsset.EditedAt = now.Value;
-                        roomAsset.EditorId = creatorId;
-                        _context.Entry(roomAsset).State = EntityState.Modified;
-                    }
-
-                    var notification = new Notification
-                    {
-                        CreatedAt = now.Value,
-                        EditedAt = now.Value,
-                        Status = NotificationStatus.Waiting,
-                        Content = entity.Description,
-                        Title = RequestType.Maintenance.GetDisplayName(),
-                        Type = NotificationType.Task,
-                        CreatorId = creatorId,
-                        IsRead = false,
-                        ItemId = entity.Id,
-                        UserId = entity.AssignedTo
-                    };
-                    await _context.Notifications.AddAsync(notification);
+                if (mediaFiles != null && mediaFiles.Count > 0)
+                {
+                    await _context.MediaFiles.AddRangeAsync(mediaFiles);
                 }
+
             }
             await _context.SaveChangesAsync();
             await _context.Database.CommitTransactionAsync();
@@ -293,7 +276,7 @@ public class MaintenanceRepository : IMaintenanceRepository
             var location = await _context.Rooms.FirstOrDefaultAsync(x => x.Id == roomAsset!.RoomId && roomAsset.AssetId == asset!.Id);
             var notification = await _context.Notifications.FirstOrDefaultAsync(x => x.ItemId == maintenance.Id);
 
-            if(notification != null )
+            if (notification != null)
             {
                 notification.DeletedAt = now.Value;
                 notification.DeleterId = deleterId;
