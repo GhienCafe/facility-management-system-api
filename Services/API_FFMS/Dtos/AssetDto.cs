@@ -11,6 +11,8 @@ public class AssetDto : BaseDto
     public bool IsMovable { get; set; }
     public AssetStatus? Status { get; set; }
     public EnumValue? StatusObj { get; set; }
+    public RequestType RequestStatus { get; set; }
+    public EnumValue? RequestStatusObj { get; set; }
     public int? ManufacturingYear { get; set; }
     public string? SerialNumber { get; set; }
     public double? Quantity { get; set; }
@@ -38,6 +40,8 @@ public class AssetBaseDto : BaseDto
     public bool? IsMovable { get; set; }
     public AssetStatus? Status { get; set; }
     public EnumValue? StatusObj { get; set; }
+    public RequestType? RequestStatus { get; set; }
+    public EnumValue? RequestStatusObj { get; set; }
     public int? ManufacturingYear { get; set; }
     public string? SerialNumber { get; set; }
     public double? Quantity { get; set; }
@@ -104,6 +108,7 @@ public class AssetUpdateDto
     public string? AssetCode { get; set; }
     public bool? IsMovable { get; set; }
     public AssetStatus? Status { get; set; }
+    public RequestType? RequestStatus { get; set; }
     public int? ManufacturingYear { get; set; }
     public string? SerialNumber { get; set; }
     public double? Quantity { get; set; }
@@ -118,6 +123,7 @@ public class AssetUpdateDto
 
 public class AssetQueryDto : BaseQueryDto
 {
+    public RequestType? RequestStatus { get; set; }
     public AssetStatus? Status { get; set; }
     public bool? IsMovable { get; set; }
     public Guid? TypeId { get; set; }

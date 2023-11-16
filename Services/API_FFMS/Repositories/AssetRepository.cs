@@ -31,7 +31,7 @@ public class AssetRepository : IAssetRepository
             asset.CreatorId = creatorId;
             asset.StartDateOfUse = now.Value;
             asset.Status = AssetStatus.Operational;
-
+            asset.RequestStatus = RequestType.Operational;
             await _context.Assets.AddAsync(asset);
 
             var roomAsset = new RoomAsset
@@ -72,6 +72,7 @@ public class AssetRepository : IAssetRepository
                 asset.CreatorId = creatorId;
                 asset.StartDateOfUse = now.Value;
                 asset.Status = AssetStatus.Operational;
+                asset.RequestStatus = RequestType.Operational;
                 _context.Assets.Add(asset);
 
                 var roomAsset = new RoomAsset

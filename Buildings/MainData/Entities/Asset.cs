@@ -12,6 +12,7 @@ public class Asset : BaseEntity
     public string? AssetCode { get; set; }
     public bool IsMovable { get; set; }
     public AssetStatus Status { get; set; }
+    public RequestType RequestStatus { get; set; }
     public int? ManufacturingYear { get; set; }
     public string? SerialNumber { get; set; }
     public double Quantity { get; set; }
@@ -88,6 +89,7 @@ public class AssetConfig : IEntityTypeConfiguration<Asset>
         builder.Property(a => a.AssetCode).IsRequired(false);
         builder.Property(a => a.StartDateOfUse).IsRequired(false);
         builder.Property(a => a.Status).IsRequired();
+        builder.Property(a => a.RequestStatus).IsRequired();
         builder.Property(a => a.ImageUrl).IsRequired(false);
         builder.Property(a => a.IsMovable).IsRequired();
         builder.Property(a => a.ManufacturingYear).IsRequired(false);

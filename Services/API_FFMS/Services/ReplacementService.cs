@@ -44,7 +44,7 @@ namespace API_FFMS.Services
                 throw new ApiException("Không tìm thấy trang thiết bị để thay thế", StatusCode.NOT_FOUND);
             }
 
-            if (newAsset.Status != AssetStatus.Operational)
+            if (newAsset.RequestStatus != RequestType.Operational)
             {
                 throw new ApiException("Trang thiết bị dùng để thay thế đang trong một yêu cầu khác", StatusCode.BAD_REQUEST);
             }
@@ -78,7 +78,7 @@ namespace API_FFMS.Services
                 }
             }
 
-            if (!await _repository.InsertReplacementV2(replacement, mediaFiles, AccountId, CurrentDate))
+            if (!await _repository.InsertReplacement(replacement, mediaFiles, AccountId, CurrentDate))
             {
                 throw new ApiException("Tạo yêu cầu thất bại", StatusCode.SERVER_ERROR);
             }
@@ -149,6 +149,8 @@ namespace API_FFMS.Services
                 });
             if (replacement.Asset != null)
             {
+                replacement.Asset.StatusObj = replacement.Asset.Status?.GetValue();
+                replacement.Asset.RequestStatusObj = replacement.Asset.RequestStatus.GetValue();
                 var location = await MainUnitOfWork.RoomAssetRepository.FindOneAsync<RoomAsset>(
                     new Expression<Func<RoomAsset, bool>>[]
                     {
@@ -176,6 +178,9 @@ namespace API_FFMS.Services
                 });
             if (replacement.NewAsset != null)
             {
+                replacement.NewAsset.StatusObj = replacement.NewAsset.Status?.GetValue();
+                replacement.NewAsset.RequestStatusObj = replacement.NewAsset.RequestStatus.GetValue();
+
                 var location = await MainUnitOfWork.RoomAssetRepository.FindOneAsync<RoomAsset>(
                     new Expression<Func<RoomAsset, bool>>[]
                     {
@@ -321,6 +326,8 @@ namespace API_FFMS.Services
                     IsMovable = x.Asset.IsMovable,
                     Status = x.Asset.Status,
                     StatusObj = x.Asset.Status.GetValue(),
+                    RequestStatus = x.Asset.RequestStatus,
+                    RequestStatusObj = x.Asset.RequestStatus.GetValue(),
                     ManufacturingYear = x.Asset.ManufacturingYear,
                     SerialNumber = x.Asset.SerialNumber,
                     Quantity = x.Asset.Quantity,
@@ -340,6 +347,8 @@ namespace API_FFMS.Services
                     IsMovable = x.NewAsset.IsMovable,
                     Status = x.NewAsset.Status,
                     StatusObj = x.NewAsset.Status.GetValue(),
+                    RequestStatus = x.NewAsset.RequestStatus,
+                    RequestStatusObj = x.NewAsset.RequestStatus.GetValue(),
                     ManufacturingYear = x.NewAsset.ManufacturingYear,
                     SerialNumber = x.NewAsset.SerialNumber,
                     Quantity = x.NewAsset.Quantity,

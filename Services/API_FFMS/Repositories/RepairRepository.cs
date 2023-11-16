@@ -8,8 +8,7 @@ namespace API_FFMS.Repositories;
 
 public interface IRepairRepository
 {
-    Task<bool> InsertRepair(Repair repair, Guid? creatorId, DateTime? now = null);
-    Task<bool> InsertRepairV2(Repair repair, List<MediaFile> mediaFiles, Guid? creatorId, DateTime? now = null);
+    Task<bool> InsertRepair(Repair repair, List<MediaFile> mediaFiles, Guid? creatorId, DateTime? now = null);
     Task<bool> InsertRepairs(List<Repair> repairs, Guid? creatorId, DateTime? now = null);
     Task<bool> UpdateStatus(Repair repair, RequestStatus? statusUpdate, Guid? editorId, DateTime? now = null);
     Task<bool> DeleteRepair(Repair repair, Guid? deleterId, DateTime? now = null);
@@ -22,47 +21,6 @@ public class RepairRepository : IRepairRepository
     public RepairRepository(DatabaseContext context)
     {
         _context = context;
-    }
-
-    public async Task<bool> InsertRepair(Repair repair, Guid? creatorId, DateTime? now = null)
-    {
-        await _context.Database.BeginTransactionAsync();
-        now ??= DateTime.UtcNow;
-        try
-        {
-            repair.Id = Guid.NewGuid();
-            repair.CreatedAt = now.Value;
-            repair.EditedAt = now.Value;
-            repair.CreatorId = creatorId;
-            repair.Status = RequestStatus.NotStart;
-            repair.RequestDate = now.Value;
-            await _context.Repairs.AddAsync(repair);
-
-            var notification = new Notification
-            {
-                CreatedAt = now.Value,
-                EditedAt = now.Value,
-                Status = NotificationStatus.Waiting,
-                Content = repair.Description,
-                Title = RequestType.Repairation.GetDisplayName(),
-                Type = NotificationType.Task,
-                CreatorId = creatorId,
-                IsRead = false,
-                ItemId = repair.Id,
-                UserId = repair.AssignedTo
-            };
-
-            await _context.Notifications.AddAsync(notification);
-
-            await _context.SaveChangesAsync();
-            await _context.Database.CommitTransactionAsync();
-            return true;
-        }
-        catch
-        {
-            await _context.Database.RollbackTransactionAsync();
-            return false;
-        }
     }
 
     public async Task<bool> InsertRepairs(List<Repair> entities, Guid? creatorId, DateTime? now = null)
@@ -174,6 +132,7 @@ public class RepairRepository : IRepairRepository
                     _context.Entry(repair).State = EntityState.Modified;
 
                     asset!.Status = AssetStatus.Operational;
+                    asset.RequestStatus = RequestType.Operational;
                     asset.EditedAt = now.Value;
                     asset.EditorId = editorId;
                     _context.Entry(asset).State = EntityState.Modified;
@@ -190,15 +149,10 @@ public class RepairRepository : IRepairRepository
                 }
                 else if (statusUpdate == RequestStatus.Cancelled)
                 {
-                    asset!.Status = AssetStatus.Operational;
+                    asset!.RequestStatus = RequestType.Operational;
                     asset.EditedAt = now.Value;
                     asset.EditorId = editorId;
                     _context.Entry(asset).State = EntityState.Modified;
-
-                    roomAsset!.Status = AssetStatus.Operational;
-                    roomAsset.EditedAt = now.Value;
-                    roomAsset.EditorId = editorId;
-                    _context.Entry(roomAsset).State = EntityState.Modified;
 
                     location!.State = RoomState.Operational;
                     location.EditedAt = now.Value;
@@ -214,11 +168,12 @@ public class RepairRepository : IRepairRepository
                     _context.Entry(repair).State = EntityState.Modified;
 
                     asset!.Status = AssetStatus.Operational;
+                    asset.RequestStatus = RequestType.Operational;
                     asset.EditedAt = now.Value;
                     asset.EditorId = editorId;
                     _context.Entry(asset).State = EntityState.Modified;
 
-                    roomAsset!.Status = AssetStatus.Operational;
+                    roomAsset!.ToDate = now.Value;
                     roomAsset.EditedAt = now.Value;
                     roomAsset.EditorId = editorId;
                     _context.Entry(roomAsset).State = EntityState.Modified;
@@ -238,15 +193,10 @@ public class RepairRepository : IRepairRepository
                 }
                 else if (statusUpdate == RequestStatus.Cancelled)
                 {
-                    asset!.Status = AssetStatus.Operational;
+                    asset!.RequestStatus = RequestType.Operational;
                     asset.EditedAt = now.Value;
                     asset.EditorId = editorId;
                     _context.Entry(asset).State = EntityState.Modified;
-
-                    roomAsset!.Status = AssetStatus.Operational;
-                    roomAsset.EditedAt = now.Value;
-                    roomAsset.EditorId = editorId;
-                    _context.Entry(roomAsset).State = EntityState.Modified;
                 }
             }
             await _context.SaveChangesAsync();
@@ -258,7 +208,6 @@ public class RepairRepository : IRepairRepository
             await _context.Database.RollbackTransactionAsync();
             return false;
         }
-
     }
 
     public async Task<bool> DeleteRepair(Repair repair, Guid? deleterId, DateTime? now = null)
@@ -289,18 +238,10 @@ public class RepairRepository : IRepairRepository
 
             if (asset != null)
             {
-                asset.Status = AssetStatus.Operational;
+                asset.RequestStatus = RequestType.Operational;
                 asset.EditedAt = now.Value;
                 asset.EditorId = deleterId;
                 _context.Entry(asset).State = EntityState.Modified;
-            }
-
-            if (roomAsset != null)
-            {
-                roomAsset.Status = AssetStatus.Operational;
-                roomAsset.EditedAt = now.Value;
-                roomAsset.EditorId = deleterId;
-                _context.Entry(roomAsset).State = EntityState.Modified;
             }
 
             if (location != null)
@@ -353,18 +294,10 @@ public class RepairRepository : IRepairRepository
 
                     if (asset != null)
                     {
-                        asset.Status = AssetStatus.Operational;
+                        asset.RequestStatus = RequestType.Operational;
                         asset.EditedAt = now.Value;
                         asset.EditorId = deleterId;
                         _context.Entry(asset).State = EntityState.Modified;
-                    }
-
-                    if (roomAsset != null)
-                    {
-                        roomAsset.Status = AssetStatus.Operational;
-                        roomAsset.EditedAt = now.Value;
-                        roomAsset.EditorId = deleterId;
-                        _context.Entry(roomAsset).State = EntityState.Modified;
                     }
 
                     if (location != null)
@@ -393,7 +326,7 @@ public class RepairRepository : IRepairRepository
         return wareHouse;
     }
 
-    public async Task<bool> InsertRepairV2(Repair repair, List<MediaFile> mediaFiles, Guid? creatorId, DateTime? now = null)
+    public async Task<bool> InsertRepair(Repair repair, List<MediaFile> mediaFiles, Guid? creatorId, DateTime? now = null)
     {
         await _context.Database.BeginTransactionAsync();
         now ??= DateTime.UtcNow;

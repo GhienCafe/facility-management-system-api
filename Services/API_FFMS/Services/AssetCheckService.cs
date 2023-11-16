@@ -35,6 +35,13 @@ public class AssetCheckService : BaseService, IAssetCheckService
 
     public async Task<ApiResponse> Create(AssetCheckCreateDto createDto)
     {
+        var asset = await MainUnitOfWork.AssetRepository.FindOneAsync(createDto.AssetId);
+        if (asset == null)
+            throw new ApiException("Không cần tồn tại trang thiết bị", StatusCode.NOT_FOUND);
+
+        if (asset.RequestStatus != RequestType.Operational)
+            throw new ApiException("Trang thiết bị đang trong một yêu cầu khác", StatusCode.BAD_REQUEST);
+
         var checkExist = await MainUnitOfWork.AssetCheckRepository.FindAsync(
             new Expression<Func<AssetCheck, bool>>[]
             {
@@ -66,7 +73,7 @@ public class AssetCheckService : BaseService, IAssetCheckService
             }
         }
 
-        if (!await _assetcheckRepository.InsertAssetCheckV2(assetCheck, mediaFiles, AccountId, CurrentDate))
+        if (!await _assetcheckRepository.InsertAssetCheck(assetCheck, mediaFiles, AccountId, CurrentDate))
         {
             throw new ApiException("Thêm mới thất bại", StatusCode.SERVER_ERROR);
         }
@@ -133,7 +140,8 @@ public class AssetCheckService : BaseService, IAssetCheckService
 
         if (assetCheck.Asset != null)
         {
-            assetCheck.Asset!.StatusObj = assetCheck.Asset.Status?.GetValue();
+            assetCheck.Asset.StatusObj = assetCheck.Asset.Status.GetValue();
+            assetCheck.Asset.RequestStatusObj = assetCheck.Asset.RequestStatus.GetValue();
             var location = await MainUnitOfWork.RoomAssetRepository.FindOneAsync<RoomAsset>(
                 new Expression<Func<RoomAsset, bool>>[]
                 {
@@ -279,6 +287,8 @@ public class AssetCheckService : BaseService, IAssetCheckService
                 ManufacturingYear = x.Asset.ManufacturingYear,
                 StatusObj = x.Asset.Status.GetValue(),
                 Status = x.Asset.Status,
+                RequestStatusObj = x.Asset.RequestStatus.GetValue(),
+                RequestStatus = x.Asset.RequestStatus,
                 StartDateOfUse = x.Asset.StartDateOfUse,
                 SerialNumber = x.Asset.SerialNumber,
                 LastCheckedDate = x.Asset.LastCheckedDate,

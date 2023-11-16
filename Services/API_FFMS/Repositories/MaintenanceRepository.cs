@@ -1,5 +1,4 @@
 ﻿using AppCore.Extensions;
-using DocumentFormat.OpenXml.Vml.Office;
 using MainData;
 using MainData.Entities;
 using Microsoft.EntityFrameworkCore;
@@ -8,8 +7,7 @@ namespace API_FFMS.Repositories;
 
 public interface IMaintenanceRepository
 {
-    Task<bool> InsertMaintenance(Maintenance maintenance, Guid? creatorId, DateTime? now = null);
-    Task<bool> InsertMaintenanceV2(Maintenance maintenance, List<MediaFile> mediaFiles, Guid? creatorId, DateTime? now = null);
+    Task<bool> InsertMaintenance(Maintenance maintenance, List<MediaFile> mediaFiles, Guid? creatorId, DateTime? now = null);
     Task<bool> UpdateStatus(Maintenance maintenance, RequestStatus? statusUpdate, Guid? editorId, DateTime? now = null);
     Task<bool> InsertMaintenances(List<Maintenance> maintenances, Guid? creatorId, DateTime? now = null);
     Task<bool> DeleteMaintenances(List<Maintenance?> maintenances, Guid? deleterId, DateTime? now = null);
@@ -23,69 +21,6 @@ public class MaintenanceRepository : IMaintenanceRepository
     public MaintenanceRepository(DatabaseContext context)
     {
         _context = context;
-    }
-
-    public async Task<bool> InsertMaintenance(Maintenance entity, Guid? creatorId, DateTime? now = null)
-    {
-        await _context.Database.BeginTransactionAsync();
-        now ??= DateTime.UtcNow;
-        try
-        {
-            // Add maintenance
-            entity.Id = Guid.NewGuid();
-            entity.CreatedAt = now.Value;
-            entity.EditedAt = now.Value;
-            entity.CreatorId = creatorId;
-            entity.Status = RequestStatus.NotStart;
-            entity.RequestDate = now.Value;
-            await _context.Maintenances.AddAsync(entity);
-
-            // Update asset status
-            var asset = await _context.Assets.FindAsync(entity.AssetId);
-            asset!.Status = AssetStatus.Maintenance;
-            asset.EditedAt = now.Value;
-            _context.Entry(asset).State = EntityState.Modified;
-
-            // Update room & send notification
-            if (entity.IsInternal)
-            {
-                var roomAsset = await _context.RoomAssets
-                    .FirstOrDefaultAsync(x => x.AssetId == entity.AssetId && x.ToDate == null);
-
-                if (roomAsset != null)
-                {
-                    roomAsset!.Status = AssetStatus.Maintenance;
-                    roomAsset.EditedAt = now.Value;
-                    roomAsset.EditorId = creatorId;
-                    _context.Entry(roomAsset).State = EntityState.Modified;
-                }
-
-                var notification = new Notification
-                {
-                    CreatedAt = now.Value,
-                    EditedAt = now.Value,
-                    Status = NotificationStatus.Waiting,
-                    Content = entity.Description,
-                    Title = RequestType.Maintenance.GetDisplayName(),
-                    Type = NotificationType.Task,
-                    CreatorId = creatorId,
-                    IsRead = false,
-                    ItemId = entity.Id,
-                    UserId = entity.AssignedTo
-                };
-
-                await _context.Notifications.AddAsync(notification);
-            }
-
-            await _context.SaveChangesAsync();
-            await _context.Database.CommitTransactionAsync();
-            return true;
-        }
-        catch
-        {
-            await _context.Database.RollbackTransactionAsync();
-            return false;
-        }
     }
 
     public async Task<bool> InsertMaintenances(List<Maintenance> entities, Guid? creatorId, DateTime? now = null)
@@ -193,14 +128,14 @@ public class MaintenanceRepository : IMaintenanceRepository
             {
                 if (statusUpdate == RequestStatus.Done)
                 {
-                    asset!.Status = AssetStatus.Operational;
+                    asset!.RequestStatus = RequestType.Operational;
+                    asset.Status = AssetStatus.Operational;
                     asset.EditedAt = now.Value;
                     asset.EditorId = editorId;
                     _context.Entry(asset).State = EntityState.Modified;
 
                     roomAsset!.Status = AssetStatus.Operational;
                     roomAsset.EditedAt = now.Value;
-                    roomAsset.ToDate = now.Value;
                     roomAsset.EditorId = editorId;
                     _context.Entry(roomAsset).State = EntityState.Modified;
 
@@ -211,16 +146,10 @@ public class MaintenanceRepository : IMaintenanceRepository
                 }
                 else if (statusUpdate == RequestStatus.Cancelled)
                 {
-                    asset!.Status = AssetStatus.Operational;
+                    asset!.RequestStatus = RequestType.Operational;
                     asset.EditedAt = now.Value;
                     asset.EditorId = editorId;
                     _context.Entry(asset).State = EntityState.Modified;
-
-                    roomAsset!.Status = AssetStatus.Operational;
-                    roomAsset.EditedAt = now.Value;
-                    roomAsset.ToDate = now.Value;
-                    roomAsset.EditorId = editorId;
-                    _context.Entry(roomAsset).State = EntityState.Modified;
 
                     location!.State = RoomState.Operational;
                     location.EditedAt = now.Value;
@@ -232,10 +161,19 @@ public class MaintenanceRepository : IMaintenanceRepository
             {
                 if (statusUpdate == RequestStatus.Done)
                 {
-                    asset!.Status = AssetStatus.Operational;
+                    maintenance.CompletionDate = now.Value;
+                    _context.Entry(maintenance).State = EntityState.Modified;
+
+                    asset!.RequestStatus = RequestType.Operational;
+                    asset.Status = AssetStatus.Operational;
                     asset.EditedAt = now.Value;
                     asset.EditorId = editorId;
                     _context.Entry(asset).State = EntityState.Modified;
+
+                    roomAsset!.ToDate = now.Value;
+                    roomAsset.EditedAt = now.Value;
+                    roomAsset.EditorId = editorId;
+                    _context.Entry(roomAsset).State = EntityState.Modified;
 
                     var addRoomAsset = new RoomAsset
                     {
@@ -252,16 +190,10 @@ public class MaintenanceRepository : IMaintenanceRepository
                 }
                 else if (statusUpdate == RequestStatus.Cancelled)
                 {
-                    asset!.Status = AssetStatus.Operational;
+                    asset!.RequestStatus = RequestType.Operational;
                     asset.EditedAt = now.Value;
                     asset.EditorId = editorId;
                     _context.Entry(asset).State = EntityState.Modified;
-
-                    roomAsset!.Status = AssetStatus.Operational;
-                    roomAsset.EditedAt = now.Value;
-                    roomAsset.ToDate = now.Value;
-                    roomAsset.EditorId = editorId;
-                    _context.Entry(roomAsset).State = EntityState.Modified;
                 }
             }
             await _context.SaveChangesAsync();
@@ -408,13 +340,12 @@ public class MaintenanceRepository : IMaintenanceRepository
         return wareHouse;
     }
 
-    public async Task<bool> InsertMaintenanceV2(Maintenance entity, List<MediaFile> mediaFiles, Guid? creatorId, DateTime? now = null)
+    public async Task<bool> InsertMaintenance(Maintenance entity, List<MediaFile> mediaFiles, Guid? creatorId, DateTime? now = null)
     {
         await _context.Database.BeginTransactionAsync();
         now ??= DateTime.UtcNow;
         try
         {
-            // Add maintenance
             entity.Id = Guid.NewGuid();
             entity.CreatedAt = now.Value;
             entity.EditedAt = now.Value;
@@ -422,24 +353,6 @@ public class MaintenanceRepository : IMaintenanceRepository
             entity.Status = RequestStatus.NotStart;
             entity.RequestDate = now.Value;
             await _context.Maintenances.AddAsync(entity);
-
-            // Update asset status
-            var asset = await _context.Assets.FindAsync(entity.AssetId);
-            asset!.Status = AssetStatus.Maintenance;
-            asset.EditedAt = now.Value;
-            _context.Entry(asset).State = EntityState.Modified;
-
-            // Update room & send notification
-            var roomAsset = await _context.RoomAssets
-                .FirstOrDefaultAsync(x => x.AssetId == entity.AssetId && x.ToDate == null);
-
-            if (roomAsset != null)
-            {
-                roomAsset!.Status = AssetStatus.Maintenance;
-                roomAsset.EditedAt = now.Value;
-                roomAsset.EditorId = creatorId;
-                _context.Entry(roomAsset).State = EntityState.Modified;
-            }
 
             var notification = new Notification
             {
