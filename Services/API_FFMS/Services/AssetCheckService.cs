@@ -198,13 +198,12 @@ public class AssetCheckService : BaseService, IAssetCheckService
                 x => x.Id == assetCheck.AssignedTo
             });
 
-        var mediaFileQuery = MainUnitOfWork.MediaFileRepository.GetQuery().Where(m => m!.ItemId == assetCheck.Id);
-        assetCheck.MediaFile = new MediaFileDto
+        var mediaFileQuery = MainUnitOfWork.MediaFileRepository.GetQuery().Where(m => m!.ItemId == id);
+        assetCheck.RelatedFiles = mediaFileQuery.Select(x => new MediaFileDetailDto
         {
-            FileType = mediaFileQuery.Select(m => m!.FileType).FirstOrDefault(),
-            Uri = mediaFileQuery.Select(m => m!.Uri).ToList(),
-            Content = mediaFileQuery.Select(m => m!.Content).FirstOrDefault()
-        };
+            FileName = x!.FileName,
+            Uri = x.Uri,
+        }).ToList();
 
         assetCheck.PriorityObj = assetCheck.Priority.GetValue();
         assetCheck.IsVerified = assetCheck.IsVerified;

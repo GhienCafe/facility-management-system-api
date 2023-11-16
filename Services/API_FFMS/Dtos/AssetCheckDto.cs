@@ -8,7 +8,7 @@ public class AssetCheckDto : BaseRequestDto
     public UserBaseDto? AssignTo { get; set; }
     public AssetTypeDto? AssetType { get; set; }
     public CategoryDto? Category { get; set; }
-    public MediaFileDto? MediaFile { get; set; }
+    public List<MediaFileDetailDto>? RelatedFiles { get; set; }
 }
 
 public class AssetCheckQueryDto : BaseRequestQueryDto { }

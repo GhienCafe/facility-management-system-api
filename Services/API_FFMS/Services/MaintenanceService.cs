@@ -221,12 +221,11 @@ public class MaintenanceService : BaseService, IMaintenanceService
 
         var mediaFileQuerys = MainUnitOfWork.MediaFileRepository.GetQuery().Where(m => m!.ItemId == id);
 
-        item!.MediaFile = new MediaFileDto
+        item!.RelatedFiles = mediaFileQuerys.Select(x => new MediaFileDetailDto
         {
-            FileType = mediaFileQuerys.Select(m => m!.FileType).FirstOrDefault(),
-            Uri = mediaFileQuerys.Select(m => m!.Uri).ToList(),
-            Content = mediaFileQuerys.Select(m => m!.Content).FirstOrDefault()
-        };
+            FileName = x!.FileName,
+            Uri = x.Uri,
+        }).ToList();
 
         return ApiResponse<MaintenanceDto>.Success(item);
     }
