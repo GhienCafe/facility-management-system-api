@@ -7,8 +7,7 @@ namespace API_FFMS.Repositories;
 
 public interface IAssetcheckRepository
 {
-    Task<bool> InsertAssetCheck(AssetCheck assetCheck, Guid? creatorId, DateTime? now = null);
-    Task<bool> InsertAssetCheckV2(AssetCheck assetCheck, List<MediaFile> mediaFiles, Guid? creatorId, DateTime? now = null);
+    Task<bool> InsertAssetCheck(AssetCheck assetCheck, List<MediaFile> mediaFiles, Guid? creatorId, DateTime? now = null);
     Task<bool> InsertAssetChecks(List<AssetCheck> assetChecks, Guid? creatorId, DateTime? now = null);
     Task<bool> UpdateStatus(AssetCheck assetCheck, RequestStatus? statusUpdate, Guid? editorId, DateTime? now = null);
     Task<bool> DeleteAssetCheck(AssetCheck assetCheck, Guid? deleterId, DateTime? now = null);
@@ -20,56 +19,6 @@ public class AssetcheckRepository : IAssetcheckRepository
     public AssetcheckRepository(DatabaseContext context)
     {
         _context = context;
-    }
-
-    public async Task<bool> InsertAssetCheck(AssetCheck assetCheck, Guid? creatorId, DateTime? now = null)
-    {
-        await _context.Database.BeginTransactionAsync();
-        now ??= DateTime.UtcNow;
-        try
-        {
-            assetCheck.Id = Guid.NewGuid();
-            assetCheck.CreatorId = creatorId;
-            assetCheck.CreatedAt = now.Value;
-            assetCheck.EditedAt = now.Value;
-            assetCheck.Status = RequestStatus.NotStart;
-            assetCheck.IsVerified = false;
-            assetCheck.RequestDate = now.Value;
-            await _context.AssetChecks.AddAsync(assetCheck);
-
-            var asset = await _context.Assets.FindAsync(assetCheck.AssetId);
-            asset!.Status = AssetStatus.NeedInspection;
-            asset.EditedAt = now.Value;
-            asset.EditorId = creatorId;
-            _context.Entry(asset).State = EntityState.Modified;
-
-            if (assetCheck.IsInternal)
-            {
-                var notification = new Notification
-                {
-                    CreatedAt = now.Value,
-                    EditedAt = now.Value,
-                    Status = NotificationStatus.Waiting,
-                    Content = assetCheck.Description,
-                    Title = RequestType.Repairation.GetDisplayName(),
-                    Type = NotificationType.Task,
-                    CreatorId = creatorId,
-                    IsRead = false,
-                    ItemId = assetCheck.Id,
-                    UserId = assetCheck.AssignedTo
-                };
-                await _context.Notifications.AddAsync(notification);
-            }
-
-            await _context.SaveChangesAsync();
-            await _context.Database.CommitTransactionAsync();
-            return true;
-        }
-        catch
-        {
-            await _context.Database.RollbackTransactionAsync();
-            return false;
-        }
     }
 
     public async Task<bool> InsertAssetChecks(List<AssetCheck> entities, Guid? creatorId, DateTime? now = null)
@@ -237,7 +186,7 @@ public class AssetcheckRepository : IAssetcheckRepository
 
             if (asset != null)
             {
-                asset.Status = AssetStatus.Operational;
+                asset.RequestStatus = RequestType.Operational;
                 asset.EditedAt = now.Value;
                 asset.EditorId = deleterId;
                 _context.Entry(asset).State = EntityState.Modified;
@@ -251,13 +200,6 @@ public class AssetcheckRepository : IAssetcheckRepository
                 _context.Entry(assetLocation).State = EntityState.Modified;
             }
 
-            if (roomAsset != null)
-            {
-                roomAsset.Status = AssetStatus.Operational;
-                roomAsset.EditedAt = now.Value;
-                roomAsset.EditorId = deleterId;
-                _context.Entry(roomAsset).State = EntityState.Modified;
-            }
             await _context.SaveChangesAsync();
             await _context.Database.CommitTransactionAsync();
             return true;
@@ -297,7 +239,7 @@ public class AssetcheckRepository : IAssetcheckRepository
 
                 if (asset != null)
                 {
-                    asset.Status = AssetStatus.Operational;
+                    asset.RequestStatus = RequestType.Operational;
                     asset.EditedAt = now.Value;
                     asset.EditorId = deleterId;
                     _context.Entry(asset).State = EntityState.Modified;
@@ -309,14 +251,6 @@ public class AssetcheckRepository : IAssetcheckRepository
                     assetLocation.EditedAt = now.Value;
                     assetLocation.EditorId = deleterId;
                     _context.Entry(assetLocation).State = EntityState.Modified;
-                }
-
-                if (roomAsset != null)
-                {
-                    roomAsset.Status = AssetStatus.Operational;
-                    roomAsset.EditedAt = now.Value;
-                    roomAsset.EditorId = deleterId;
-                    _context.Entry(roomAsset).State = EntityState.Modified;
                 }
             }
             await _context.SaveChangesAsync();
@@ -330,7 +264,7 @@ public class AssetcheckRepository : IAssetcheckRepository
         }
     }
 
-    public async Task<bool> InsertAssetCheckV2(AssetCheck assetCheck, List<MediaFile> mediaFiles, Guid? creatorId, DateTime? now = null)
+    public async Task<bool> InsertAssetCheck(AssetCheck assetCheck, List<MediaFile> mediaFiles, Guid? creatorId, DateTime? now = null)
     {
         await _context.Database.BeginTransactionAsync();
         now ??= DateTime.UtcNow;

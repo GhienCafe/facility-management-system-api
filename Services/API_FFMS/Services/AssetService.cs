@@ -79,6 +79,9 @@ public class AssetService : BaseService, IAssetService
         if (queryDto.Status != null)
             assetDataSet = assetDataSet.Where(x => x!.Status == queryDto.Status);
 
+        if (queryDto.RequestStatus != null)
+            assetDataSet = assetDataSet.Where(x => x!.RequestStatus == queryDto.RequestStatus);
+
         if (queryDto.IsMovable != null)
             assetDataSet = assetDataSet.Where(x => x!.IsMovable == queryDto.IsMovable);
 
@@ -117,6 +120,8 @@ public class AssetService : BaseService, IAssetService
             Description = x.Description,
             Status = x.Status,
             StatusObj = x.Status.GetValue(),
+            RequestStatus = x.RequestStatus,
+            RequestStatusObj = x.RequestStatus.GetValue(),
             LastCheckedDate = x.LastCheckedDate,
             StartDateOfUse = x.StartDateOfUse,
             AssetCode = x.AssetCode,
@@ -278,6 +283,7 @@ public class AssetService : BaseService, IAssetService
         existingAsset.IsMovable = updateDto.IsMovable ?? existingAsset.IsMovable;
         existingAsset.LastMaintenanceTime = updateDto.LastMaintenanceTime ?? existingAsset.LastMaintenanceTime;
         existingAsset.ImageUrl = updateDto.ImageUrl ?? existingAsset.ImageUrl;
+        existingAsset.RequestStatus = updateDto.RequestStatus ?? existingAsset.RequestStatus;
 
         if (!await MainUnitOfWork.AssetRepository.UpdateAsync(existingAsset, AccountId, CurrentDate))
             throw new ApiException("Cập nhật thông tin trang thiết bị thất bại", StatusCode.SERVER_ERROR);
@@ -368,6 +374,8 @@ public class AssetService : BaseService, IAssetService
                 ManufacturingYear = x.Asset.ManufacturingYear,
                 StatusObj = x.Asset.Status.GetValue(),
                 Status = x.Asset.Status,
+                RequestStatusObj = x.Asset.RequestStatus.GetValue(),
+                RequestStatus = x.Asset.RequestStatus,
                 StartDateOfUse = x.Asset.StartDateOfUse,
                 SerialNumber = x.Asset.SerialNumber,
                 LastCheckedDate = x.Asset.LastCheckedDate,

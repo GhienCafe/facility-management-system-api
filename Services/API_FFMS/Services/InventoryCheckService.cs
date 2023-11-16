@@ -101,7 +101,7 @@ public class InventoryCheckService : BaseService, IInventoryCheckService
             inventoryCheck.StatusObj = inventoryCheck.Status.GetValue();
 
 
-
+             
             var userQuery = MainUnitOfWork.UserRepository.GetQuery().Where(x => x!.Id == inventoryCheck.AssignedTo);
             inventoryCheck.Staff = await userQuery.Select(x => new AssignedInventoryCheckDto
             {
