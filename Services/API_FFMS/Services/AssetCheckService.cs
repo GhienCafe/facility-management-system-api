@@ -94,7 +94,12 @@ public class AssetCheckService : BaseService, IAssetCheckService
             throw new ApiException("Không tìm thấy yêu cầu kiểm tra này", StatusCode.NOT_FOUND);
         }
 
-        if (!await _assetcheckRepository.DeleteAssetCheck(existingAssetcheck, AccountId, CurrentDate))
+        if (existingAssetcheck.Status != RequestStatus.Reported || existingAssetcheck.Status != RequestStatus.NotStart)
+        {
+            throw new ApiException("Chỉ xóa được yêu cầu chưa bắt đầu hoặc đã báo cáo", StatusCode.NOT_FOUND);
+        }
+
+        if (!await MainUnitOfWork.AssetCheckRepository.DeleteAsync(existingAssetcheck, AccountId, CurrentDate))
         {
             throw new ApiException("Xóa thất bại", StatusCode.SERVER_ERROR);
         }
@@ -111,7 +116,17 @@ public class AssetCheckService : BaseService, IAssetCheckService
                                 }, null);
 
         var assetChecks = assetcheckDeleteds.Where(a => a != null).ToList();
-        if (!await _assetcheckRepository.DeleteAssetChecks(assetChecks, AccountId, CurrentDate))
+
+        foreach (var assetCheck in assetChecks)
+        {
+            if (assetCheck!.Status != RequestStatus.Reported || assetCheck.Status != RequestStatus.NotStart)
+            {
+                throw new ApiException($"Chỉ xóa được yêu cầu chưa bắt đầu hoặc đã báo cáo, " +
+                                       $"kiểm tra yêu cầu: {assetCheck.RequestCode}", StatusCode.NOT_FOUND);
+            }
+        }
+
+        if (!await MainUnitOfWork.AssetCheckRepository.DeleteAsync(assetChecks, AccountId, CurrentDate))
         {
             throw new ApiException("Xóa thất bại", StatusCode.SERVER_ERROR);
         }
@@ -334,6 +349,11 @@ public class AssetCheckService : BaseService, IAssetCheckService
         if (existingAssetcheck == null)
         {
             throw new ApiException("Không tìm thấy nội dung", StatusCode.NOT_FOUND);
+        }
+
+        if (existingAssetcheck.Status == RequestStatus.InProgress)
+        {
+            throw new ApiException($"Không thể cập nhật yêu cầu đang có trạng thái: {existingAssetcheck.Status?.GetDisplayName()}", StatusCode.BAD_REQUEST);
         }
 
         existingAssetcheck.Description = updateDto.Description ?? existingAssetcheck.Description;

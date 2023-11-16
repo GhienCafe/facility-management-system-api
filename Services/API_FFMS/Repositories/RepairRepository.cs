@@ -1,5 +1,4 @@
 ﻿using AppCore.Extensions;
-using DocumentFormat.OpenXml.Bibliography;
 using MainData;
 using MainData.Entities;
 using Microsoft.EntityFrameworkCore;
@@ -9,7 +8,7 @@ namespace API_FFMS.Repositories;
 public interface IRepairRepository
 {
     Task<bool> InsertRepair(Repair repair, List<MediaFile> mediaFiles, Guid? creatorId, DateTime? now = null);
-    Task<bool> InsertRepairs(List<Repair> repairs, Guid? creatorId, DateTime? now = null);
+    Task<bool> InsertRepairs(List<Repair> repairs, List<MediaFile>? mediaFiles, Guid? creatorId, DateTime? now = null);
     Task<bool> UpdateStatus(Repair repair, RequestStatus? statusUpdate, Guid? editorId, DateTime? now = null);
     Task<bool> DeleteRepair(Repair repair, Guid? deleterId, DateTime? now = null);
     Task<bool> DeleteRepairs(List<Repair?> repairs, Guid? deleterId, DateTime? now = null);
@@ -23,7 +22,7 @@ public class RepairRepository : IRepairRepository
         _context = context;
     }
 
-    public async Task<bool> InsertRepairs(List<Repair> entities, Guid? creatorId, DateTime? now = null)
+    public async Task<bool> InsertRepairs(List<Repair> entities, List<MediaFile>? mediaFiles, Guid? creatorId, DateTime? now = null)
     {
         await _context.Database.BeginTransactionAsync();
         now ??= DateTime.UtcNow;
@@ -35,47 +34,29 @@ public class RepairRepository : IRepairRepository
         {
             foreach (var entity in entities)
             {
-                entity.Id = Guid.NewGuid();
                 entity.CreatedAt = now.Value;
-                entity.EditedAt = now.Value;
                 entity.CreatorId = creatorId;
                 entity.Status = RequestStatus.NotStart;
                 entity.RequestDate = now.Value;
                 entity.RequestCode = "REP" + GenerateRequestCode(ref numbers);
                 await _context.Repairs.AddAsync(entity);
 
-                var asset = await _context.Assets.FindAsync(entity.AssetId);
-                asset!.Status = AssetStatus.Repair;
-                asset.EditedAt = now.Value;
-                _context.Entry(asset).State = EntityState.Modified;
-
-                if (entity.IsInternal)
+                var notification = new Notification
                 {
-                    var roomAsset = await _context.RoomAssets
-                    .FirstOrDefaultAsync(x => x.AssetId == entity.AssetId && x.ToDate == null);
-
-                    if (roomAsset != null)
-                    {
-                        roomAsset!.Status = AssetStatus.Repair;
-                        roomAsset.EditedAt = now.Value;
-                        roomAsset.EditorId = creatorId;
-                        _context.Entry(roomAsset).State = EntityState.Modified;
-                    }
-
-                    var notification = new Notification
-                    {
-                        CreatedAt = now.Value,
-                        EditedAt = now.Value,
-                        Status = NotificationStatus.Waiting,
-                        Content = entity.Description,
-                        Title = RequestType.Repairation.GetDisplayName(),
-                        Type = NotificationType.Task,
-                        CreatorId = creatorId,
-                        IsRead = false,
-                        ItemId = entity.Id,
-                        UserId = entity.AssignedTo
-                    };
-                    await _context.Notifications.AddAsync(notification);
+                    CreatedAt = now.Value,
+                    Status = NotificationStatus.Waiting,
+                    Content = entity.Description,
+                    Title = RequestType.Repairation.GetDisplayName(),
+                    Type = NotificationType.Task,
+                    CreatorId = creatorId,
+                    IsRead = false,
+                    ItemId = entity.Id,
+                    UserId = entity.AssignedTo
+                };
+                await _context.Notifications.AddAsync(notification);
+                if (mediaFiles != null && mediaFiles.Count > 0)
+                {
+                    await _context.MediaFiles.AddRangeAsync(mediaFiles);
                 }
             }
 
@@ -227,7 +208,7 @@ public class RepairRepository : IRepairRepository
 
             var roomAsset = await _context.RoomAssets.FirstOrDefaultAsync(x => x.AssetId == asset!.Id && x.ToDate == null);
             var location = await _context.Rooms.FirstOrDefaultAsync(x => x.Id == roomAsset!.RoomId && roomAsset.AssetId == asset!.Id);
-            
+
             var notification = await _context.Notifications.FirstOrDefaultAsync(x => x.ItemId == repair.Id);
             if (notification != null)
             {
@@ -355,7 +336,7 @@ public class RepairRepository : IRepairRepository
             };
             await _context.Notifications.AddAsync(notification);
 
-            foreach(var mediaFile in mediaFiles)
+            foreach (var mediaFile in mediaFiles)
             {
                 var newMediaFile = new MediaFile
                 {

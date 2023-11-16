@@ -11,7 +11,7 @@ public class AssetDto : BaseDto
     public bool IsMovable { get; set; }
     public AssetStatus? Status { get; set; }
     public EnumValue? StatusObj { get; set; }
-    public RequestType RequestStatus { get; set; }
+    public RequestType? RequestStatus { get; set; }
     public EnumValue? RequestStatusObj { get; set; }
     public int? ManufacturingYear { get; set; }
     public string? SerialNumber { get; set; }
