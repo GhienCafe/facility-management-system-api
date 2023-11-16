@@ -140,6 +140,9 @@ public class InventoryCheckRepository : IInventoryCheckRepository
                         roomAsset.Status = detail.StatusReported;
                         _context.Entry(roomAsset).State = EntityState.Modified;
                     }
+
+                    inventoryCheck.CompletionDate = now.Value;
+                    _context.Entry(inventoryCheck).State = EntityState.Modified;
                 }
                 else if (statusUpdate == RequestStatus.Cancelled)
                 {
