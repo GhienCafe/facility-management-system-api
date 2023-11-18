@@ -371,38 +371,44 @@ namespace API_FFMS.Services
 
         public async Task<ApiResponse> Update(Guid id, BaseRequestUpdateDto updateDto)
         {
-            var existingRepair = await MainUnitOfWork.RepairRepository.FindOneAsync(id);
-            if (existingRepair == null)
+            try
             {
-                throw new ApiException("Không tìm thấy yêu cầu", StatusCode.NOT_FOUND);
+                var existingRepair = await MainUnitOfWork.RepairRepository.FindOneAsync(id);
+                if (existingRepair == null)
+                {
+                    throw new ApiException("Không tìm thấy yêu cầu", StatusCode.NOT_FOUND);
+                }
+
+                if (existingRepair.Status != RequestStatus.NotStart)
+                {
+                    throw new ApiException("Chỉ được cập nhật yêu cầu đang có trạng thái chưa bắt đầu", StatusCode.NOT_FOUND);
+                }
+
+                existingRepair.Description = updateDto.Description ?? existingRepair.Description;
+                existingRepair.Notes = updateDto.Notes ?? existingRepair.Notes;
+                existingRepair.CategoryId = updateDto.CategoryId ?? existingRepair.CategoryId;
+                existingRepair.IsInternal = updateDto.IsInternal ?? existingRepair.IsInternal;
+                existingRepair.AssetTypeId = updateDto.AssetTypeId ?? existingRepair.AssetTypeId;
+                existingRepair.AssignedTo = updateDto.AssignedTo ?? existingRepair.AssignedTo;
+                existingRepair.Priority = updateDto.Priority ?? existingRepair.Priority;
+                existingRepair.AssetId = updateDto.AssetId ?? existingRepair.AssetId;
+                existingRepair.MediaFiles = updateDto.RelatedFiles.Select(dto => new MediaFile
+                {
+                    FileName = dto.FileName,
+                    Uri = dto.Uri
+                }).ToList() ?? existingRepair.MediaFiles;
+
+                if (!await _repairRepository.UpdateRepair(existingRepair, existingRepair.MediaFiles, AccountId, CurrentDate))
+                {
+                    throw new ApiException("Cập nhật thông tin yêu cầu thất bại", StatusCode.SERVER_ERROR);
+                }
+
+                return ApiResponse.Success("Cập nhật yêu cầu thành công");
             }
-
-            if (existingRepair.Status != RequestStatus.NotStart)
+            catch (Exception ex)
             {
-                throw new ApiException("Chỉ được cập nhật yêu cầu đang có trạng thái chưa bắt đầu", StatusCode.NOT_FOUND);
+                throw new Exception(ex.Message);
             }
-
-            existingRepair.Description = updateDto.Description ?? existingRepair.Description;
-            existingRepair.Notes = updateDto.Notes ?? existingRepair.Notes;
-            existingRepair.CategoryId = updateDto.CategoryId ?? existingRepair.CategoryId;
-            existingRepair.IsInternal = updateDto.IsInternal ?? existingRepair.IsInternal;
-            existingRepair.AssetTypeId = updateDto.AssetTypeId ?? existingRepair.AssetTypeId;
-            existingRepair.AssignedTo = updateDto.AssignedTo ?? existingRepair.AssignedTo;
-            existingRepair.Priority = updateDto.Priority ?? existingRepair.Priority;
-            existingRepair.AssetId = updateDto.AssetId ?? existingRepair.AssetId;
-            existingRepair.MediaFiles = updateDto.RelatedFiles?.Select(dto => new MediaFile
-            {
-                FileName = dto.FileName,
-                Uri = dto.Uri,
-                FileType = FileType.File
-            }).ToList() ?? new List<MediaFile>();
-
-            if (!await MainUnitOfWork.RepairRepository.UpdateAsync(existingRepair, AccountId, CurrentDate))
-            {
-                throw new ApiException("Cập nhật thông tin yêu cầu thất bại", StatusCode.SERVER_ERROR);
-            }
-
-            return ApiResponse.Success("Cập nhật yêu cầu thành công");
         }
 
         public async Task<ApiResponse> UpdateStatus(Guid id, BaseUpdateStatusDto requestStatus)
