@@ -291,7 +291,18 @@ public class MaintenanceService : BaseService, IMaintenanceService
         maintenance.AssignedTo = updateDto.AssignedTo ?? maintenance.AssignedTo;
         maintenance.Priority = updateDto.Priority ?? maintenance.Priority;
 
-        if (!await MainUnitOfWork.MaintenanceRepository.UpdateAsync(maintenance, AccountId, CurrentDate))
+        var mediaFileQuery = MainUnitOfWork.MediaFileRepository.GetQuery().Where(x => x!.ItemId == id).ToList();
+
+        var newMediaFile = updateDto.RelatedFiles.Select(dto => new MediaFile
+        {
+            FileName = dto.FileName,
+            Uri = dto.Uri
+        }).ToList() ?? new List<MediaFile>();
+
+        var additionMediaFiles = newMediaFile.Except(mediaFileQuery).ToList();
+        var removalMediaFiles = mediaFileQuery.Except(newMediaFile).ToList();
+
+        if (!await _maintenanceRepository.UpdateMaintenance(maintenance, additionMediaFiles, removalMediaFiles, AccountId, CurrentDate))
             throw new ApiException("Cập nhật thất bại", StatusCode.SERVER_ERROR);
 
         return ApiResponse.Success("Cập nhật thành công");

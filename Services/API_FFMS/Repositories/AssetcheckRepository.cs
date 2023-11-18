@@ -12,6 +12,7 @@ public interface IAssetcheckRepository
     Task<bool> UpdateStatus(AssetCheck assetCheck, RequestStatus? statusUpdate, Guid? editorId, DateTime? now = null);
     Task<bool> DeleteAssetCheck(AssetCheck assetCheck, Guid? deleterId, DateTime? now = null);
     Task<bool> DeleteAssetChecks(List<AssetCheck?> assetChecks, Guid? deleterId, DateTime? now = null);
+    Task<bool> UpdateAssetCheck(AssetCheck assetCheck, List<MediaFile?> additionMediaFiles, List<MediaFile?> removalMediaFiles, Guid? editorId, DateTime? now = null);
 }
 public class AssetcheckRepository : IAssetcheckRepository
 {
@@ -311,6 +312,60 @@ public class AssetcheckRepository : IAssetcheckRepository
                 _context.MediaFiles.Add(newMediaFile);
             }
 
+            await _context.SaveChangesAsync();
+            await _context.Database.CommitTransactionAsync();
+            return true;
+        }
+        catch
+        {
+            await _context.Database.RollbackTransactionAsync();
+            return false;
+        }
+    }
+
+    public async Task<bool> UpdateAssetCheck(AssetCheck assetCheck, List<MediaFile?> additionMediaFiles,
+                                             List<MediaFile?> removalMediaFiles, Guid? editorId, DateTime? now = null)
+    {
+        await _context.Database.BeginTransactionAsync();
+        now ??= DateTime.UtcNow;
+        try
+        {
+            assetCheck.EditorId = editorId;
+            assetCheck.EditedAt = now.Value;
+            _context.Entry(assetCheck).State = EntityState.Modified;
+
+            var mediaFiles = _context.MediaFiles.AsNoTracking()
+                                                .Where(x => x.ItemId == assetCheck.Id && !x.DeletedAt.HasValue)
+                                                .ToList();
+
+            if (additionMediaFiles.Count > 0)
+            {
+                foreach (var mediaFile in additionMediaFiles)
+                {
+                    var newMediaFile = new MediaFile
+                    {
+                        Id = Guid.NewGuid(),
+                        CreatedAt = now.Value,
+                        CreatorId = editorId,
+                        EditedAt = now.Value,
+                        EditorId = editorId,
+                        FileName = mediaFile.FileName,
+                        Uri = mediaFile.Uri,
+                        FileType = FileType.File,
+                        ItemId = assetCheck.Id
+                    };
+                    _context.MediaFiles.Add(newMediaFile);
+                }
+            }
+
+            if (removalMediaFiles.Count > 0)
+            {
+                foreach (var mediaFile in removalMediaFiles)
+                {
+                    mediaFile!.DeletedAt = now.Value;
+                    _context.Entry(mediaFile).State = EntityState.Modified;
+                }
+            }
             await _context.SaveChangesAsync();
             await _context.Database.CommitTransactionAsync();
             return true;

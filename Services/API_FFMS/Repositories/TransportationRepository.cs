@@ -11,6 +11,7 @@ public interface ITransportationRepository
     Task<bool> DeleteTransport(Transportation transportation, Guid? deleterId, DateTime? now = null);
     Task<bool> DeleteTransports(List<Transportation?> transportations, Guid? deleterId, DateTime? now = null);
     Task<bool> InsertTransportation(Transportation transportation, List<Asset?> assets, List<MediaFile> mediaFiles, Guid? creatorId, DateTime? now = null);
+    Task<bool> UpdateTransportation(Transportation transportation, List<MediaFile?> additionMediaFiles, List<MediaFile?> removalMediaFiles, Guid? editorId, DateTime? now = null);
 }
 public class TransportationRepository : ITransportationRepository
 {
@@ -338,6 +339,60 @@ public class TransportationRepository : ITransportationRepository
                     _context.Entry(toRoom).State = EntityState.Modified;
                 }
 
+            }
+            await _context.SaveChangesAsync();
+            await _context.Database.CommitTransactionAsync();
+            return true;
+        }
+        catch
+        {
+            await _context.Database.RollbackTransactionAsync();
+            return false;
+        }
+    }
+
+    public async Task<bool> UpdateTransportation(Transportation transportation, List<MediaFile?> additionMediaFiles,
+                                                 List<MediaFile?> removalMediaFiles, Guid? editorId, DateTime? now = null)
+    {
+        await _context.Database.BeginTransactionAsync();
+        now ??= DateTime.UtcNow;
+        try
+        {
+            transportation.EditorId = editorId;
+            transportation.EditedAt = now.Value;
+            _context.Entry(transportation).State = EntityState.Modified;
+
+            var mediaFiles = _context.MediaFiles.AsNoTracking()
+                                                .Where(x => x.ItemId == transportation.Id && !x.DeletedAt.HasValue)
+                                                .ToList();
+
+            if (additionMediaFiles.Count > 0)
+            {
+                foreach (var mediaFile in additionMediaFiles)
+                {
+                    var newMediaFile = new MediaFile
+                    {
+                        Id = Guid.NewGuid(),
+                        CreatedAt = now.Value,
+                        CreatorId = editorId,
+                        EditedAt = now.Value,
+                        EditorId = editorId,
+                        FileName = mediaFile.FileName,
+                        Uri = mediaFile.Uri,
+                        FileType = FileType.File,
+                        ItemId = transportation.Id
+                    };
+                    _context.MediaFiles.Add(newMediaFile);
+                }
+            }
+
+            if (removalMediaFiles.Count > 0)
+            {
+                foreach (var mediaFile in removalMediaFiles)
+                {
+                    mediaFile!.DeletedAt = now.Value;
+                    _context.Entry(mediaFile).State = EntityState.Modified;
+                }
             }
             await _context.SaveChangesAsync();
             await _context.Database.CommitTransactionAsync();

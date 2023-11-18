@@ -366,8 +366,21 @@ public class AssetCheckService : BaseService, IAssetCheckService
         existingAssetcheck.AssetTypeId = updateDto.AssetTypeId ?? existingAssetcheck.AssetTypeId;
         existingAssetcheck.AssignedTo = updateDto.AssignedTo ?? existingAssetcheck.AssignedTo;
         existingAssetcheck.Priority = updateDto.Priority ?? existingAssetcheck.Priority;
+        existingAssetcheck.Priority = updateDto.Priority ?? existingAssetcheck.Priority;
+        existingAssetcheck.AssetId = updateDto.AssetId ?? existingAssetcheck.AssetId;
 
-        if (!await MainUnitOfWork.AssetCheckRepository.UpdateAsync(existingAssetcheck, AccountId, CurrentDate))
+        var mediaFileQuery = MainUnitOfWork.MediaFileRepository.GetQuery().Where(x => x!.ItemId == id).ToList();
+
+        var newMediaFile = updateDto.RelatedFiles.Select(dto => new MediaFile
+        {
+            FileName = dto.FileName,
+            Uri = dto.Uri
+        }).ToList() ?? new List<MediaFile>();
+
+        var additionMediaFiles = newMediaFile.Except(mediaFileQuery).ToList();
+        var removalMediaFiles = mediaFileQuery.Except(newMediaFile).ToList();
+
+        if (!await _assetcheckRepository.UpdateAssetCheck(existingAssetcheck, additionMediaFiles, removalMediaFiles, AccountId, CurrentDate))
         {
             throw new ApiException("Cập nhật thất bại", StatusCode.SERVER_ERROR);
         }

@@ -408,7 +408,19 @@ namespace API_FFMS.Services
             existingReplace.Description = updateDto.Description ?? existingReplace.Description;
             existingReplace.Notes = updateDto.Notes ?? existingReplace.Notes;
             existingReplace.Priority = updateDto.Priority ?? existingReplace.Priority;
-            if (!await _repository.UpdateStatus(existingReplace, existingReplace.Status, AccountId, CurrentDate))
+
+            var mediaFileQuery = MainUnitOfWork.MediaFileRepository.GetQuery().Where(x => x!.ItemId == id).ToList();
+
+            var newMediaFile = updateDto.RelatedFiles.Select(dto => new MediaFile
+            {
+                FileName = dto.FileName,
+                Uri = dto.Uri
+            }).ToList() ?? new List<MediaFile>();
+
+            var additionMediaFiles = newMediaFile.Except(mediaFileQuery).ToList();
+            var removalMediaFiles = mediaFileQuery.Except(newMediaFile).ToList();
+
+            if (!await _repository.UpdateReplacement(existingReplace, additionMediaFiles, removalMediaFiles, AccountId, CurrentDate))
             {
                 throw new ApiException("Cập nhật thông tin yêu cầu thất bại", StatusCode.SERVER_ERROR);
             }
