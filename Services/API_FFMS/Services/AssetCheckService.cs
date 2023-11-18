@@ -94,9 +94,11 @@ public class AssetCheckService : BaseService, IAssetCheckService
             throw new ApiException("Không tìm thấy yêu cầu kiểm tra này", StatusCode.NOT_FOUND);
         }
 
-        if (existingAssetcheck.Status != RequestStatus.Reported || existingAssetcheck.Status != RequestStatus.NotStart)
+        if (existingAssetcheck.Status != RequestStatus.Done ||
+            existingAssetcheck.Status != RequestStatus.NotStart ||
+            existingAssetcheck.Status != RequestStatus.Cancelled)
         {
-            throw new ApiException("Chỉ xóa được yêu cầu chưa bắt đầu hoặc đã báo cáo", StatusCode.NOT_FOUND);
+            throw new ApiException($"Không thể xóa yêu cầu đang có trạng thái: {existingAssetcheck.Status?.GetDisplayName()}", StatusCode.BAD_REQUEST);
         }
 
         if (!await MainUnitOfWork.AssetCheckRepository.DeleteAsync(existingAssetcheck, AccountId, CurrentDate))
@@ -119,10 +121,12 @@ public class AssetCheckService : BaseService, IAssetCheckService
 
         foreach (var assetCheck in assetChecks)
         {
-            if (assetCheck!.Status != RequestStatus.Reported || assetCheck.Status != RequestStatus.NotStart)
+            if (assetCheck!.Status != RequestStatus.Done ||
+                assetCheck.Status != RequestStatus.NotStart ||
+                assetCheck.Status != RequestStatus.Cancelled)
             {
-                throw new ApiException($"Chỉ xóa được yêu cầu chưa bắt đầu hoặc đã báo cáo, " +
-                                       $"kiểm tra yêu cầu: {assetCheck.RequestCode}", StatusCode.NOT_FOUND);
+                throw new ApiException($"Không thể xóa yêu cầu đang có trạng thái: {assetCheck.Status?.GetDisplayName()}" +
+                                       $"kiểm tra yêu cầu: {assetCheck.RequestCode}", StatusCode.BAD_REQUEST);
             }
         }
 
