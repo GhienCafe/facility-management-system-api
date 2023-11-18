@@ -10,6 +10,7 @@ public class Replacement : BaseRequest
     public Guid NewAssetId { get; set; }
     public Guid? AssetTypeId { get; set; }
     public Guid? CategoryId { get; set; }
+    public virtual Asset? Asset { get; set; }
 }
 
 public class ReplacementConfig : IEntityTypeConfiguration<Replacement>
@@ -22,15 +23,19 @@ public class ReplacementConfig : IEntityTypeConfiguration<Replacement>
         builder.Property(a => a.CategoryId).IsRequired(false);
         builder.Property(a => a.AssetTypeId).IsRequired(false);
 
-        
+
         // Relationship
         builder.HasOne(x => x.User)
             .WithMany(x => x.Replacements)
             .HasForeignKey(x => x.AssignedTo);
-        
+
+        builder.HasOne(x => x.Asset)
+            .WithMany(x => x.Replacements)
+            .HasForeignKey(x => x.AssetId);
+
         builder.HasMany(x => x.MediaFiles)
             .WithOne(x => x.Replacement)
             .HasForeignKey(i => i.RepairId);
-        
+
     }
 }

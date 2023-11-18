@@ -8,6 +8,7 @@ public class Repair : BaseRequest
     public Guid AssetId { get; set; }
     public Guid? AssetTypeId { get; set; }
     public Guid? CategoryId { get; set; }
+    public virtual Asset? Asset { get; set; }
 }
 
 public class RepairConfig : IEntityTypeConfiguration<Repair>
@@ -18,12 +19,16 @@ public class RepairConfig : IEntityTypeConfiguration<Repair>
         builder.Property(x => x.AssetId).IsRequired();
         builder.Property(a => a.CategoryId).IsRequired(false);
         builder.Property(a => a.AssetTypeId).IsRequired(false);
-        
+
         // Relationship
         builder.HasOne(x => x.User)
             .WithMany(x => x.Repairs)
             .HasForeignKey(x => x.AssignedTo);
-        
+
+        builder.HasOne(x => x.Asset)
+            .WithMany(x => x.Repairations)
+            .HasForeignKey(x => x.AssetId);
+
         builder.HasMany(x => x.MediaFiles)
             .WithOne(x => x.Repair)
             .HasForeignKey(i => i.RepairId);
