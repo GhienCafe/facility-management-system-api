@@ -72,7 +72,7 @@ public class BaseRequestUpdateDto
     public Guid? CategoryId { get; set;}
     public Priority? Priority { get; set; }
     public Guid? AssetId { get; set; }
-    public List<MediaFile>? RelatedFiles { get; set; }
+    public List<MediaFileUpdateDto>? RelatedFiles { get; set; }
 }
 
 public class BaseTransportCreateDto
