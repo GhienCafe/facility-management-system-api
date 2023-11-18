@@ -1,6 +1,7 @@
 ﻿using API_FFMS.Dtos;
 using AppCore.Extensions;
 using AppCore.Models;
+using Azure;
 using MainData;
 using MainData.Entities;
 using MainData.Repositories;
@@ -15,6 +16,7 @@ public interface IDashboardService : IBaseService
     public Task<ApiResponse<IEnumerable<TaskDashBoardInformation>>> GetBaseTaskInformation();
     public Task<ApiResponse<IEnumerable<TaskBasedOnStatusDashboardDto>>> GetBaseTaskStatusInformation();
     public Task<ApiResponse<TaskStatisticDto>> GetTaskStatistic();
+    public Task<ApiResponse<AssetStatisticDto>> GetAssetStatistic(AssetStatisticQueryDto queryDto);
 }
 
 public class DashboardService : BaseService, IDashboardService
@@ -36,10 +38,10 @@ public class DashboardService : BaseService, IDashboardService
             Quantity = assetDataSet
                 .Where(asset => asset!.TypeId == assetType.Id)
                 .Sum(asset => asset!.Quantity),
-            InUsed  = assetDataSet
+            InUsed = assetDataSet
                 .Where(asset => asset!.TypeId == assetType.Id && asset.Status == AssetStatus.Operational)
                 .Sum(asset => asset!.Quantity),
-            NotUsed  = assetDataSet
+            NotUsed = assetDataSet
                 .Where(asset => asset!.TypeId == assetType.Id && asset.Status == AssetStatus.Inactive)
                 .Sum(asset => asset!.Quantity),
             Maintenance = assetDataSet
@@ -190,5 +192,27 @@ public class DashboardService : BaseService, IDashboardService
             };
         }
         return null;
+    }
+
+    public async Task<ApiResponse<AssetStatisticDto>> GetAssetStatistic(AssetStatisticQueryDto queryDto)
+    {
+        var assetQuery = MainUnitOfWork.AssetRepository.GetQuery().Include(x => x!.Type)
+                         .Where(x => !x!.DeletedAt.HasValue);
+
+        assetQuery = assetQuery.Where(x => x!.Type!.Unit == queryDto.Unit);
+
+        var assetStatistc = new AssetStatisticDto
+        {
+            TotalQuantity = assetQuery.Sum(x => x!.Quantity),
+            TotalOperational = assetQuery.Where(x => x!.Status == AssetStatus.Operational).Sum(x => x!.Quantity),
+            TotalNotUsed = assetQuery.Where(x => x!.Status == AssetStatus.Inactive).Sum(x => x!.Quantity),
+            TotalMaintenance = assetQuery.Where(x => x!.RequestStatus == RequestType.Maintenance).Sum(x => x!.Quantity),
+            TotalRepair = assetQuery.Where(x => x!.RequestStatus == RequestType.Repairation).Sum(x => x!.Quantity),
+            TotalTransportation = assetQuery.Where(x => x!.RequestStatus == RequestType.Transportation).Sum(x => x!.Quantity),
+            TotalReplacement = assetQuery.Where(x => x!.RequestStatus == RequestType.Replacement).Sum(x => x!.Quantity),
+            TotalNeedInspection = assetQuery.Where(x => x!.RequestStatus == RequestType.InventoryCheck).Sum(x => x!.Quantity),
+        };
+
+        return ApiResponse<AssetStatisticDto>.Success(assetStatistc);
     }
 }

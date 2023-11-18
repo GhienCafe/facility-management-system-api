@@ -14,7 +14,23 @@ public class DashboardDto
     public Double TotalReplacement { get; set; }= 0;
     public Double TotalNeedInspection { get; set; }=0;
     public List<AssetTypeDashboardDto>? AssetType { get; set; }
-    
+}
+
+public class AssetStatisticDto
+{
+    public double? TotalQuantity { get; set; }
+    public double? TotalOperational { get; set; }
+    public double? TotalNotUsed { get; set; }
+    public double? TotalMaintenance { get; set; }
+    public double? TotalRepair { get; set; }
+    public double? TotalTransportation { get; set; }
+    public double? TotalReplacement { get; set; }
+    public double? TotalNeedInspection { get; set; }
+}
+
+public class AssetStatisticQueryDto
+{
+    public Unit Unit { get; set; } = Unit.Individual;
 }
 
 public class AssetTypeDashboardDto
@@ -75,7 +91,6 @@ public class TaskBasedOnStatusDashboardDto
     public int Total { get; set; }
     public IEnumerable<TaskBasedOnStatusDto>? Data { get; set; }
 }
-
 
 public class TaskStatisticDto
 {
