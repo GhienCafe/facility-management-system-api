@@ -221,7 +221,6 @@ namespace API_FFMS.Repositories
 
                 //TRANSPORTATION
                 var transportation = await _context.Transportations
-                                    .Include(x => x.Asset)
                                     .Include(x => x.TransportationDetails)
                                     .FirstOrDefaultAsync(x => x.Id == mediaFiles.First().ItemId);
                 if (transportation != null)
