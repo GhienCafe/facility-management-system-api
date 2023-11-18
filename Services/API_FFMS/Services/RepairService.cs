@@ -393,8 +393,8 @@ namespace API_FFMS.Services
             existingRepair.MediaFiles = updateDto.RelatedFiles?.Select(dto => new MediaFile
             {
                 FileName = dto.FileName,
-                RawUri = dto.FileType,
-                Uri = dto.Uri
+                Uri = dto.Uri,
+                FileType = FileType.File
             }).ToList() ?? new List<MediaFile>();
 
             if (!await MainUnitOfWork.RepairRepository.UpdateAsync(existingRepair, AccountId, CurrentDate))
