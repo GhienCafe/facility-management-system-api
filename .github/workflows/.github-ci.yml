@@ -50,4 +50,6 @@ jobs:
             -e PASSWORD_EMAIL_PRIVATE="${{ secrets.PASSWORD_EMAIL_PRIVATE }}" \
             -e REDIS_CACHING_SERVER="${{ secrets.REDIS_CACHING_SERVER }}" \
             -e REDIS_PWD="${{ secrets.REDIS_PWD }}" \
+            -e FIREBASE_ISSUER="${{ secrets.FIREBASE_ISSUER }}" \
+            -e FIREBASE_AUDIENCE="${{ secrets.FIREBASE_AUDIENCE }}" \
             ${{ secrets.REGISTRY }}/${{ secrets.DOCKER_IMAGE }}:latest
