@@ -185,11 +185,9 @@ public class InventoryCheckService : BaseService, IInventoryCheckService
             throw new ApiException("Không tìm thấy yêu cầu này", StatusCode.NOT_FOUND);
         }
 
-        if (existinginventoryCheck.Status != RequestStatus.NotStart ||
-            existinginventoryCheck.Status != RequestStatus.Done ||
-            existinginventoryCheck.Status != RequestStatus.Cancelled)
+        if (existinginventoryCheck.Status != RequestStatus.NotStart)
         {
-            throw new ApiException($"Không thể cập nhật yêu cầu đang có trạng thái: {existinginventoryCheck.Status?.GetDisplayName()}", StatusCode.NOT_FOUND);
+            throw new ApiException("Chỉ được cập nhật yêu cầu đang có trạng thái chưa bắt đầu", StatusCode.NOT_FOUND);
         }
 
         existinginventoryCheck.Description = updateDto.Description ?? existinginventoryCheck.Description;
@@ -331,8 +329,8 @@ public class InventoryCheckService : BaseService, IInventoryCheckService
             throw new ApiException("Không tìm thấy yêu cầu này", StatusCode.NOT_FOUND);
         }
 
-        if (existingInventoryCheck.Status != RequestStatus.Done ||
-            existingInventoryCheck.Status != RequestStatus.NotStart ||
+        if (existingInventoryCheck.Status != RequestStatus.Done &&
+            existingInventoryCheck.Status != RequestStatus.NotStart &&
             existingInventoryCheck.Status != RequestStatus.Cancelled)
         {
             throw new ApiException($"Không thể xóa yêu cầu đang có trạng thái: {existingInventoryCheck.Status?.GetDisplayName()}", StatusCode.NOT_FOUND);

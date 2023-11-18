@@ -94,8 +94,8 @@ public class AssetCheckService : BaseService, IAssetCheckService
             throw new ApiException("Không tìm thấy yêu cầu kiểm tra này", StatusCode.NOT_FOUND);
         }
 
-        if (existingAssetcheck.Status != RequestStatus.Done ||
-            existingAssetcheck.Status != RequestStatus.NotStart ||
+        if (existingAssetcheck.Status != RequestStatus.Done &&
+            existingAssetcheck.Status != RequestStatus.NotStart &&
             existingAssetcheck.Status != RequestStatus.Cancelled)
         {
             throw new ApiException($"Không thể xóa yêu cầu đang có trạng thái: {existingAssetcheck.Status?.GetDisplayName()}", StatusCode.BAD_REQUEST);
@@ -121,8 +121,8 @@ public class AssetCheckService : BaseService, IAssetCheckService
 
         foreach (var assetCheck in assetChecks)
         {
-            if (assetCheck!.Status != RequestStatus.Done ||
-                assetCheck.Status != RequestStatus.NotStart ||
+            if (assetCheck!.Status != RequestStatus.Done &&
+                assetCheck.Status != RequestStatus.NotStart &&
                 assetCheck.Status != RequestStatus.Cancelled)
             {
                 throw new ApiException($"Không thể xóa yêu cầu đang có trạng thái: {assetCheck.Status?.GetDisplayName()}" +
@@ -354,9 +354,9 @@ public class AssetCheckService : BaseService, IAssetCheckService
             throw new ApiException("Không tìm thấy nội dung", StatusCode.NOT_FOUND);
         }
 
-        if (existingAssetcheck.Status == RequestStatus.InProgress)
+        if (existingAssetcheck.Status != RequestStatus.NotStart)
         {
-            throw new ApiException($"Không thể cập nhật yêu cầu đang có trạng thái: {existingAssetcheck.Status?.GetDisplayName()}", StatusCode.BAD_REQUEST);
+            throw new ApiException("Chỉ được cập nhật yêu cầu đang có trạng thái chưa bắt đầu", StatusCode.BAD_REQUEST);
         }
 
         existingAssetcheck.Description = updateDto.Description ?? existingAssetcheck.Description;

@@ -135,8 +135,8 @@ namespace API_FFMS.Services
                 throw new ApiException("Không tìm thấy yêu cầu sửa chữa này", StatusCode.NOT_FOUND);
             }
 
-            if(existingRepair.Status != RequestStatus.Done ||
-               existingRepair.Status != RequestStatus.NotStart ||
+            if(existingRepair.Status != RequestStatus.Done &&
+               existingRepair.Status != RequestStatus.NotStart &&
                existingRepair.Status != RequestStatus.Cancelled)
             {
                 throw new ApiException($"Không thể xóa yêu cầu đang có trạng thái: {existingRepair.Status?.GetDisplayName()}", StatusCode.BAD_REQUEST);
@@ -162,8 +162,8 @@ namespace API_FFMS.Services
 
             foreach (var repair in repairs)
             {
-                if (repair!.Status != RequestStatus.Done ||
-                    repair.Status != RequestStatus.NotStart ||
+                if (repair!.Status != RequestStatus.Done &&
+                    repair.Status != RequestStatus.NotStart &&
                     repair.Status != RequestStatus.Cancelled)
                 {
                     throw new ApiException($"Không thể xóa yêu cầu đang có trạng thái: {repair.Status?.GetDisplayName()}" +
@@ -377,9 +377,9 @@ namespace API_FFMS.Services
                 throw new ApiException("Không tìm thấy yêu cầu", StatusCode.NOT_FOUND);
             }
 
-            if (existingRepair.Status != RequestStatus.NotStart || existingRepair.Status != RequestStatus.Done)
+            if (existingRepair.Status != RequestStatus.NotStart)
             {
-                throw new ApiException("Chỉ được cập nhật các yêu cầu chưa bắt đầu thực hiện hoặc đã kết thúc", StatusCode.NOT_FOUND);
+                throw new ApiException("Chỉ được cập nhật yêu cầu đang có trạng thái chưa bắt đầu", StatusCode.NOT_FOUND);
             }
 
             existingRepair.Description = updateDto.Description ?? existingRepair.Description;
@@ -390,7 +390,12 @@ namespace API_FFMS.Services
             existingRepair.AssignedTo = updateDto.AssignedTo ?? existingRepair.AssignedTo;
             existingRepair.Priority = updateDto.Priority ?? existingRepair.Priority;
             existingRepair.AssetId = updateDto.AssetId ?? existingRepair.AssetId;
-            existingRepair.MediaFiles = updateDto.RelatedFiles ?? existingRepair.MediaFiles;
+            existingRepair.MediaFiles = updateDto.RelatedFiles?.Select(dto => new MediaFile
+            {
+                FileName = dto.FileName,
+                RawUri = dto.FileType,
+                Uri = dto.Uri
+            }).ToList() ?? new List<MediaFile>();
 
             if (!await MainUnitOfWork.RepairRepository.UpdateAsync(existingRepair, AccountId, CurrentDate))
             {

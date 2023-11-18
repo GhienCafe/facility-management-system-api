@@ -99,8 +99,8 @@ namespace API_FFMS.Services
                 throw new ApiException("Không tìm thấy yêu cầu thay thế này", StatusCode.NOT_FOUND);
             }
 
-            if (existingReplace.Status != RequestStatus.Done ||
-               existingReplace.Status != RequestStatus.NotStart ||
+            if (existingReplace.Status != RequestStatus.Done &&
+               existingReplace.Status != RequestStatus.NotStart &&
                existingReplace.Status != RequestStatus.Cancelled)
             {
                 throw new ApiException($"Không thể xóa yêu cầu đang có trạng thái: {existingReplace.Status?.GetDisplayName()}", StatusCode.NOT_FOUND);
@@ -400,11 +400,9 @@ namespace API_FFMS.Services
                 throw new ApiException("Không tìm thấy yêu cầu thay thế này", StatusCode.NOT_FOUND);
             }
 
-            if (existingReplace.Status != RequestStatus.Done ||
-               existingReplace.Status != RequestStatus.NotStart ||
-               existingReplace.Status != RequestStatus.Cancelled)
+            if (existingReplace.Status != RequestStatus.NotStart)
             {
-                throw new ApiException($"Không thể cập nhật yêu cầu đang có trạng thái: {existingReplace.Status?.GetDisplayName()}", StatusCode.BAD_REQUEST);
+                throw new ApiException("Chỉ được cập nhật yêu cầu đang có trạng thái chưa bắt đầu", StatusCode.BAD_REQUEST);
             }
 
             existingReplace.Description = updateDto.Description ?? existingReplace.Description;
