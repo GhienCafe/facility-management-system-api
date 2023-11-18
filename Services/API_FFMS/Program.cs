@@ -7,7 +7,6 @@ using MainData.Middlewares;
 using Microsoft.AspNetCore.Mvc.ApiExplorer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
-using AspNetCore.Firebase.Authentication.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -32,7 +31,6 @@ builder.Services.AddDbContext<DatabaseContext>(options =>
 //
 builder.Services.AddControllers();
 builder.Services.AddSignalR();
-builder.Services.AddFirebaseAuthentication("https://securetoken.google.com/facility-management-system-fb", "facility-management-system-fb");
 builder.Services.AddScoped<MainUnitOfWork>();
 builder.Services.AddConfig(new List<string>
 {
@@ -46,14 +44,14 @@ builder.Services.AddConfig(new List<string>
     "IUnitOfWork"
 });
 
-//
-
 var app = builder.Build();
+
+app.UseWebSockets();
+
 app.UseCors("CorsPolicy");
 app.UseConfig();
-//
 app.MapControllers();
-app.MapHub<NotificationHub>("chat-hub");
+app.MapHub<ChatHub>("chat-hub");
 
 app.UseMiddleware<AuthMiddleware>();
 app.Run();

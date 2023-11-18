@@ -68,33 +68,11 @@ public static class EnvironmentExtension
     public static double GetJwtResetTokenExpires() =>
         Convert.ToDouble(Environment.GetEnvironmentVariable("JWT_RESET_TOKEN_EXPIRES") ?? string.Empty);
 
-    // public static string GetS3AccessKey() =>
-    //     Environment.GetEnvironmentVariable("S3_ACCESS_KEY") ?? string.Empty;
-    //
-    // public static string GetS3SecretKey() =>
-    //     Environment.GetEnvironmentVariable("S3_SECRET_KEY") ?? string.Empty;
-    //
-    // public static string GetS3ServiceUrl() =>
-    //     Environment.GetEnvironmentVariable("S3_SERVICE_URL") ?? string.Empty;
-    //
-    // public static string GetBucketName() =>
-    //     Environment.GetEnvironmentVariable("S3_BUCKET_NAME") ?? string.Empty;
-    //
-    // public static string GetS3EndpointUrl() =>
-    //     Environment.GetEnvironmentVariable("S3_ENDPOINT_URL") ?? string.Empty;
-    //
-    // public static string GetApnBundleId() =>
-    //     Environment.GetEnvironmentVariable("APN_BUNDLE_ID") ?? string.Empty;
-    //
-    // public static string GetApnCertFilePath() =>
-    //     Environment.GetEnvironmentVariable("APN_CERT_FILE_PATH") ?? string.Empty;
-    //
-    // public static string GetApnKeyId() =>
-    //     Environment.GetEnvironmentVariable("APN_KEY_ID") ?? string.Empty;
-    //
-    // public static string GetApnTeamId() =>
-    //     Environment.GetEnvironmentVariable("APN_TEAM_ID") ?? string.Empty;
-// Định nghĩa một lớp để đọc tệp launchSettings.json
+     public static string GetFirebaseIssuer() =>
+            Environment.GetEnvironmentVariable("FIREBASE_ISSUER") ?? string.Empty;
+            
+     public static string GetFirebaseAudience() =>
+            Environment.GetEnvironmentVariable("FIREBASE_AUDIENCE") ?? string.Empty;
     
     public static string GetFireBaseCertFilePath()
     {
