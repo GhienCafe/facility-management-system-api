@@ -1,4 +1,5 @@
 ﻿using AppCore.Extensions;
+using DocumentFormat.OpenXml.Vml.Office;
 using MainData;
 using MainData.Entities;
 using Microsoft.EntityFrameworkCore;
@@ -12,6 +13,7 @@ public interface IRepairRepository
     Task<bool> UpdateStatus(Repair repair, RequestStatus? statusUpdate, Guid? editorId, DateTime? now = null);
     Task<bool> DeleteRepair(Repair repair, Guid? deleterId, DateTime? now = null);
     Task<bool> DeleteRepairs(List<Repair?> repairs, Guid? deleterId, DateTime? now = null);
+    Task<bool> UpdateRepair(Repair repair, IEnumerable<MediaFile>? mediaFiles, Guid? creatorId, DateTime? now = null);
 }
 public class RepairRepository : IRepairRepository
 {
@@ -335,6 +337,44 @@ public class RepairRepository : IRepairRepository
                 UserId = repair.AssignedTo
             };
             await _context.Notifications.AddAsync(notification);
+
+            foreach (var mediaFile in mediaFiles)
+            {
+                var newMediaFile = new MediaFile
+                {
+                    Id = Guid.NewGuid(),
+                    CreatedAt = now.Value,
+                    CreatorId = creatorId,
+                    EditedAt = now.Value,
+                    EditorId = creatorId,
+                    FileName = mediaFile.FileName,
+                    Uri = mediaFile.Uri,
+                    FileType = FileType.File,
+                    ItemId = repair.Id
+                };
+                _context.MediaFiles.Add(newMediaFile);
+            }
+
+            await _context.SaveChangesAsync();
+            await _context.Database.CommitTransactionAsync();
+            return true;
+        }
+        catch
+        {
+            await _context.Database.RollbackTransactionAsync();
+            return false;
+        }
+    }
+
+    public async Task<bool> UpdateRepair(Repair repair, IEnumerable<MediaFile>? mediaFiles, Guid? creatorId, DateTime? now = null)
+    {
+        await _context.Database.BeginTransactionAsync();
+        now ??= DateTime.UtcNow;
+        try
+        {
+            repair.EditorId = creatorId;
+            repair.EditedAt = now.Value;
+            _context.Entry(repair).State = EntityState.Modified;
 
             foreach (var mediaFile in mediaFiles)
             {
