@@ -395,6 +395,19 @@ namespace API_FFMS.Services
                     FloorId = t.ToRoom.FloorId,
                     CreatedAt = t.ToRoom.CreatedAt,
                     EditedAt = t.ToRoom.EditedAt
+                },
+                AssignTo = new UserBaseDto
+                {
+                    UserCode = t.User!.UserCode,
+                    Fullname = t.User.Fullname,
+                    RoleObj = t.User.Role.GetValue(),
+                    Avatar = t.User.Avatar,
+                    StatusObj = t.User.Status.GetValue(),
+                    Email = t.User.Email,
+                    PhoneNumber = t.User.PhoneNumber,
+                    Address = t.User.Address,
+                    Gender = t.User.Gender,
+                    Dob = t.User.Dob
                 }
             }).ToListAsync();
             transportations = await _mapperRepository.MapCreator(transportations);

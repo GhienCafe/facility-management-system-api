@@ -389,6 +389,8 @@ namespace API_FFMS.Services
             existingRepair.AssetTypeId = updateDto.AssetTypeId ?? existingRepair.AssetTypeId;
             existingRepair.AssignedTo = updateDto.AssignedTo ?? existingRepair.AssignedTo;
             existingRepair.Priority = updateDto.Priority ?? existingRepair.Priority;
+            existingRepair.AssetId = updateDto.AssetId ?? existingRepair.AssetId;
+            existingRepair.MediaFiles = updateDto.RelatedFiles ?? existingRepair.MediaFiles;
 
             if (!await MainUnitOfWork.RepairRepository.UpdateAsync(existingRepair, AccountId, CurrentDate))
             {
