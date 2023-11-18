@@ -75,3 +75,23 @@ public class TaskBasedOnStatusDashboardDto
     public int Total { get; set; }
     public IEnumerable<TaskBasedOnStatusDto>? Data { get; set; }
 }
+
+
+public class TaskStatisticDto
+{
+    public TaskStatisticDetailDto? AssetCheckTask {  get; set; }
+    public TaskStatisticDetailDto? RepairTask { get; set; }
+    public TaskStatisticDetailDto? ReplaceTask { get; set; }
+    public TaskStatisticDetailDto? TransportTask { get; set; }
+    public TaskStatisticDetailDto? MaintenanceTask { get; set; }
+    public TaskStatisticDetailDto? InventoryCheckTask { get; set; }
+}
+
+public class TaskStatisticDetailDto
+{
+    public int? Total { get; set; }
+    public int? Process { get; set; }
+    public int? Complete { get; set; }
+    public int? Waiting { get; set; }
+    public int? Reported { get; set; }
+}

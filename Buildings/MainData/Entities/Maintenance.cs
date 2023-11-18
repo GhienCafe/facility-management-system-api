@@ -10,6 +10,7 @@ public class Maintenance : BaseRequest
     public Guid AssetId { get; set; }
     public Guid? AssetTypeId { get; set; }
     public Guid? CategoryId { get; set; }
+    public virtual Asset? Asset { get; set; }
 }
 
 public class MaintenanceConfig : IEntityTypeConfiguration<Maintenance>
@@ -30,5 +31,9 @@ public class MaintenanceConfig : IEntityTypeConfiguration<Maintenance>
         builder.HasMany(x => x.MediaFiles)
             .WithOne(x => x.Maintenance)
             .HasForeignKey(i => i.MaintenanceId);
+            
+        builder.HasOne(x => x.Asset)
+            .WithMany(x => x.Maintenances)
+            .HasForeignKey(i => i.AssetId);
     }
 }
