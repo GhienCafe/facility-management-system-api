@@ -196,7 +196,18 @@ public class InventoryCheckService : BaseService, IInventoryCheckService
         existinginventoryCheck.AssignedTo = updateDto.AssignedTo ?? existinginventoryCheck.AssignedTo;
         existinginventoryCheck.IsInternal = updateDto.IsInternal ?? existinginventoryCheck.IsInternal;
 
-        if (!await MainUnitOfWork.InventoryCheckRepository.UpdateAsync(existinginventoryCheck, AccountId, CurrentDate))
+        var mediaFileQuery = MainUnitOfWork.MediaFileRepository.GetQuery().Where(x => x!.ItemId == id).ToList();
+
+        var newMediaFile = updateDto.RelatedFiles.Select(dto => new MediaFile
+        {
+            FileName = dto.FileName,
+            Uri = dto.Uri
+        }).ToList() ?? new List<MediaFile>();
+
+        var additionMediaFiles = newMediaFile.Except(mediaFileQuery).ToList();
+        var removalMediaFiles = mediaFileQuery.Except(newMediaFile).ToList();
+
+        if (!await _repository.UpdateInventoryCheck(existinginventoryCheck, additionMediaFiles, removalMediaFiles, AccountId, CurrentDate))
         {
             throw new ApiException("Cập nhật thông tin yêu cầu thất bại", StatusCode.SERVER_ERROR);
         }

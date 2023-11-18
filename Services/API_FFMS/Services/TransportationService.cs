@@ -439,7 +439,18 @@ namespace API_FFMS.Services
             existingTransport.AssignedTo = updateDto.AssignedTo ?? existingTransport.AssignedTo;
             existingTransport.IsInternal = updateDto.IsInternal ?? existingTransport.IsInternal;
 
-            if (!await MainUnitOfWork.TransportationRepository.UpdateAsync(existingTransport, AccountId, CurrentDate))
+            var mediaFileQuery = MainUnitOfWork.MediaFileRepository.GetQuery().Where(x => x!.ItemId == id).ToList();
+
+            var newMediaFile = updateDto.RelatedFiles.Select(dto => new MediaFile
+            {
+                FileName = dto.FileName,
+                Uri = dto.Uri
+            }).ToList() ?? new List<MediaFile>();
+
+            var additionMediaFiles = newMediaFile.Except(mediaFileQuery).ToList();
+            var removalMediaFiles = mediaFileQuery.Except(newMediaFile).ToList();
+
+            if (!await _transportationRepository.UpdateTransportation(existingTransport, additionMediaFiles, removalMediaFiles, AccountId, CurrentDate))
             {
                 throw new ApiException("Cập nhật thông tin yêu cầu thất bại", StatusCode.SERVER_ERROR);
             }
