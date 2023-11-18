@@ -384,8 +384,6 @@ namespace API_FFMS.Services
                     throw new ApiException("Chỉ được cập nhật yêu cầu đang có trạng thái chưa bắt đầu", StatusCode.NOT_FOUND);
                 }
 
-                
-
                 existingRepair.Description = updateDto.Description ?? existingRepair.Description;
                 existingRepair.Notes = updateDto.Notes ?? existingRepair.Notes;
                 existingRepair.CategoryId = updateDto.CategoryId ?? existingRepair.CategoryId;

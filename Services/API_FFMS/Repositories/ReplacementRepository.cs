@@ -11,6 +11,7 @@ namespace API_FFMS.Repositories
         Task<bool> UpdateStatus(Replacement replacement, RequestStatus? statusUpdate, Guid? editorId, DateTime? now = null);
         Task<bool> DeleteReplacement(Replacement replacement, Guid? deleterId, DateTime? now = null);
         Task<bool> DeleteReplacements(List<Replacement?> replacements, Guid? deleterId, DateTime? now = null);
+        Task<bool> UpdateReplacement(Replacement replacement, List<MediaFile?> additionMediaFiles, List<MediaFile?> removalMediaFiles, Guid? editorId, DateTime? now = null);
     }
     public class ReplacementRepository : IReplacementRepository
     {
@@ -257,6 +258,59 @@ namespace API_FFMS.Repositories
                     _context.MediaFiles.Add(newMediaFile);
                 }
 
+                await _context.SaveChangesAsync();
+                await _context.Database.CommitTransactionAsync();
+                return true;
+            }
+            catch
+            {
+                await _context.Database.RollbackTransactionAsync();
+                return false;
+            }
+        }
+
+        public async Task<bool> UpdateReplacement(Replacement replacement, List<MediaFile?> additionMediaFiles, List<MediaFile?> removalMediaFiles, Guid? editorId, DateTime? now = null)
+        {
+            await _context.Database.BeginTransactionAsync();
+            now ??= DateTime.UtcNow;
+            try
+            {
+                replacement.EditorId = editorId;
+                replacement.EditedAt = now.Value;
+                _context.Entry(replacement).State = EntityState.Modified;
+
+                var mediaFiles = _context.MediaFiles.AsNoTracking()
+                                                    .Where(x => x.ItemId == replacement.Id && !x.DeletedAt.HasValue)
+                                                    .ToList();
+
+                if (additionMediaFiles.Count > 0)
+                {
+                    foreach (var mediaFile in additionMediaFiles)
+                    {
+                        var newMediaFile = new MediaFile
+                        {
+                            Id = Guid.NewGuid(),
+                            CreatedAt = now.Value,
+                            CreatorId = editorId,
+                            EditedAt = now.Value,
+                            EditorId = editorId,
+                            FileName = mediaFile.FileName,
+                            Uri = mediaFile.Uri,
+                            FileType = FileType.File,
+                            ItemId = replacement.Id
+                        };
+                        _context.MediaFiles.Add(newMediaFile);
+                    }
+                }
+
+                if (removalMediaFiles.Count > 0)
+                {
+                    foreach (var mediaFile in removalMediaFiles)
+                    {
+                        mediaFile!.DeletedAt = now.Value;
+                        _context.Entry(mediaFile).State = EntityState.Modified;
+                    }
+                }
                 await _context.SaveChangesAsync();
                 await _context.Database.CommitTransactionAsync();
                 return true;

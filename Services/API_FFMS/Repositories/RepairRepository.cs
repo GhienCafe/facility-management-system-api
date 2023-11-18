@@ -376,7 +376,9 @@ public class RepairRepository : IRepairRepository
             repair.EditedAt = now.Value;
             _context.Entry(repair).State = EntityState.Modified;
 
-            var mediaFiles = _context.MediaFiles.AsNoTracking().Where(x => x.ItemId == repair.Id && !x.DeletedAt.HasValue).ToList();
+            var mediaFiles = _context.MediaFiles.AsNoTracking()
+                                                .Where(x => x.ItemId == repair.Id && !x.DeletedAt.HasValue)
+                                                .ToList();
 
             if(additionMediaFiles.Count > 0 ) 
             {

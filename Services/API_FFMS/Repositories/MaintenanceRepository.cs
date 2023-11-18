@@ -12,6 +12,7 @@ public interface IMaintenanceRepository
     Task<bool> InsertMaintenances(List<Maintenance> maintenances, List<MediaFile>? mediaFiles, Guid? creatorId, DateTime? now = null);
     Task<bool> DeleteMaintenances(List<Maintenance?> maintenances, Guid? deleterId, DateTime? now = null);
     Task<bool> DeleteMaintenance(Maintenance maintenance, Guid? deleterId, DateTime? now = null);
+    Task<bool> UpdateMaintenance(Maintenance maintenance, List<MediaFile?> additionMediaFiles, List<MediaFile?> removalMediaFiles, Guid? editorId, DateTime? now = null);
 }
 
 public class MaintenanceRepository : IMaintenanceRepository
@@ -369,6 +370,59 @@ public class MaintenanceRepository : IMaintenanceRepository
                 _context.MediaFiles.Add(newMediaFile);
             }
 
+            await _context.SaveChangesAsync();
+            await _context.Database.CommitTransactionAsync();
+            return true;
+        }
+        catch
+        {
+            await _context.Database.RollbackTransactionAsync();
+            return false;
+        }
+    }
+
+    public async Task<bool> UpdateMaintenance(Maintenance maintenance, List<MediaFile?> additionMediaFiles, List<MediaFile?> removalMediaFiles, Guid? editorId, DateTime? now = null)
+    {
+        await _context.Database.BeginTransactionAsync();
+        now ??= DateTime.UtcNow;
+        try
+        {
+            maintenance.EditorId = editorId;
+            maintenance.EditedAt = now.Value;
+            _context.Entry(maintenance).State = EntityState.Modified;
+
+            var mediaFiles = _context.MediaFiles.AsNoTracking()
+                                                .Where(x => x.ItemId == maintenance.Id && !x.DeletedAt.HasValue)
+                                                .ToList();
+
+            if (additionMediaFiles.Count > 0)
+            {
+                foreach (var mediaFile in additionMediaFiles)
+                {
+                    var newMediaFile = new MediaFile
+                    {
+                        Id = Guid.NewGuid(),
+                        CreatedAt = now.Value,
+                        CreatorId = editorId,
+                        EditedAt = now.Value,
+                        EditorId = editorId,
+                        FileName = mediaFile.FileName,
+                        Uri = mediaFile.Uri,
+                        FileType = FileType.File,
+                        ItemId = maintenance.Id
+                    };
+                    _context.MediaFiles.Add(newMediaFile);
+                }
+            }
+
+            if (removalMediaFiles.Count > 0)
+            {
+                foreach (var mediaFile in removalMediaFiles)
+                {
+                    mediaFile!.DeletedAt = now.Value;
+                    _context.Entry(mediaFile).State = EntityState.Modified;
+                }
+            }
             await _context.SaveChangesAsync();
             await _context.Database.CommitTransactionAsync();
             return true;

@@ -9,6 +9,7 @@ public interface IInventoryCheckRepository
 {
     Task<bool> InsertInventoryCheck(InventoryCheck inventoryCheck, List<Room?> rooms, Guid? creatorId, DateTime? now = null);
     Task<bool> UpdateInventoryCheckStatus(InventoryCheck inventoryCheck, RequestStatus? statusUpdate, Guid? editorId, DateTime? now = null);
+    Task<bool> UpdateInventoryCheck(InventoryCheck inventoryCheck, List<MediaFile?> additionMediaFiles, List<MediaFile?> removalMediaFiles, Guid? editorId, DateTime? now = null);
 }
 
 public class InventoryCheckRepository : IInventoryCheckRepository
@@ -151,6 +152,59 @@ public class InventoryCheckRepository : IInventoryCheckRepository
                 }
             }
 
+            await _context.SaveChangesAsync();
+            await _context.Database.CommitTransactionAsync();
+            return true;
+        }
+        catch
+        {
+            await _context.Database.RollbackTransactionAsync();
+            return false;
+        }
+    }
+
+    public async Task<bool> UpdateInventoryCheck(InventoryCheck inventoryCheck, List<MediaFile?> additionMediaFiles, List<MediaFile?> removalMediaFiles, Guid? editorId, DateTime? now = null)
+    {
+        await _context.Database.BeginTransactionAsync();
+        now ??= DateTime.UtcNow;
+        try
+        {
+            inventoryCheck.EditorId = editorId;
+            inventoryCheck.EditedAt = now.Value;
+            _context.Entry(inventoryCheck).State = EntityState.Modified;
+
+            var mediaFiles = _context.MediaFiles.AsNoTracking()
+                                                .Where(x => x.ItemId == inventoryCheck.Id && !x.DeletedAt.HasValue)
+                                                .ToList();
+
+            if (additionMediaFiles.Count > 0)
+            {
+                foreach (var mediaFile in additionMediaFiles)
+                {
+                    var newMediaFile = new MediaFile
+                    {
+                        Id = Guid.NewGuid(),
+                        CreatedAt = now.Value,
+                        CreatorId = editorId,
+                        EditedAt = now.Value,
+                        EditorId = editorId,
+                        FileName = mediaFile.FileName,
+                        Uri = mediaFile.Uri,
+                        FileType = FileType.File,
+                        ItemId = inventoryCheck.Id
+                    };
+                    _context.MediaFiles.Add(newMediaFile);
+                }
+            }
+
+            if (removalMediaFiles.Count > 0)
+            {
+                foreach (var mediaFile in removalMediaFiles)
+                {
+                    mediaFile!.DeletedAt = now.Value;
+                    _context.Entry(mediaFile).State = EntityState.Modified;
+                }
+            }
             await _context.SaveChangesAsync();
             await _context.Database.CommitTransactionAsync();
             return true;
