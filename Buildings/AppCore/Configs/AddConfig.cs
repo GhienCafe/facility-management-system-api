@@ -22,8 +22,11 @@ public static class AddConfigServiceCollectionExtensions
         {
             options.AddPolicy(MyAllowAllOrigins, policyBuilder =>
             {
-                policyBuilder.WithOrigins("http://localhost",
+                policyBuilder.WithOrigins(
+                        "http://localhost",
                         "https://localhost",
+                        "http://127.0.0.1:5500",
+                        "https://127.0.0.1:5500",
                         "http://facility-management-system-fb.web.app",
                         "https://facility-management-system-fb.web.app")
                     .AllowAnyMethod()
