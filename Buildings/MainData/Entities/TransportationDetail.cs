@@ -10,8 +10,6 @@ public class TransportationDetail : BaseEntity
     public Guid? TransportationId { get; set; }
     public DateTime? RequestDate { get; set; }
     public int? Quantity { get; set; }
-
-    //
     public virtual Asset? Asset { get; set; }
     public virtual Transportation? Transportation { get; set; }
 }

@@ -22,7 +22,6 @@ public class BaseRequest : BaseEntity
     public DateTime? Checkout { get; set; }
 
     //Relationship
-    public virtual Asset? Asset { get; set; }
     public virtual User? User { get; set; }
     
     public virtual IEnumerable<MediaFile>? MediaFiles { get; set; }
