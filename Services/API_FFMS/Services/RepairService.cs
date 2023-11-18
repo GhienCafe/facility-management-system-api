@@ -384,6 +384,8 @@ namespace API_FFMS.Services
                     throw new ApiException("Chỉ được cập nhật yêu cầu đang có trạng thái chưa bắt đầu", StatusCode.NOT_FOUND);
                 }
 
+                
+
                 existingRepair.Description = updateDto.Description ?? existingRepair.Description;
                 existingRepair.Notes = updateDto.Notes ?? existingRepair.Notes;
                 existingRepair.CategoryId = updateDto.CategoryId ?? existingRepair.CategoryId;
@@ -392,13 +394,19 @@ namespace API_FFMS.Services
                 existingRepair.AssignedTo = updateDto.AssignedTo ?? existingRepair.AssignedTo;
                 existingRepair.Priority = updateDto.Priority ?? existingRepair.Priority;
                 existingRepair.AssetId = updateDto.AssetId ?? existingRepair.AssetId;
-                existingRepair.MediaFiles = updateDto.RelatedFiles.Select(dto => new MediaFile
+
+                var mediaFileQuery = MainUnitOfWork.MediaFileRepository.GetQuery().Where(x => x!.ItemId == id).ToList();
+
+                var newMediaFile = updateDto.RelatedFiles.Select(dto => new MediaFile
                 {
                     FileName = dto.FileName,
                     Uri = dto.Uri
-                }).ToList() ?? existingRepair.MediaFiles;
+                }).ToList() ?? new List<MediaFile>();
 
-                if (!await _repairRepository.UpdateRepair(existingRepair, existingRepair.MediaFiles, AccountId, CurrentDate))
+                var additionMediaFiles = newMediaFile.Except(mediaFileQuery).ToList();
+                var removalMediaFiles = mediaFileQuery.Except(newMediaFile).ToList();
+
+                if (!await _repairRepository.UpdateRepair(existingRepair, additionMediaFiles, removalMediaFiles, AccountId, CurrentDate))
                 {
                     throw new ApiException("Cập nhật thông tin yêu cầu thất bại", StatusCode.SERVER_ERROR);
                 }
