@@ -132,8 +132,8 @@ namespace API_FFMS.Services
                 throw new ApiException("Không tìm thấy yêu cầu vận chuyển này", StatusCode.NOT_FOUND);
             }
 
-            if (existingTransport.Status != RequestStatus.Done ||
-               existingTransport.Status != RequestStatus.NotStart ||
+            if (existingTransport.Status != RequestStatus.Done &&
+               existingTransport.Status != RequestStatus.NotStart &&
                existingTransport.Status != RequestStatus.Cancelled)
             {
                 throw new ApiException($"Không thể xóa yêu cầu đang có trạng thái: {existingTransport.Status?.GetDisplayName()}", StatusCode.BAD_REQUEST);
@@ -159,8 +159,8 @@ namespace API_FFMS.Services
 
             foreach (var transportation in transportations)
             {
-                if (transportation!.Status != RequestStatus.Done ||
-                    transportation.Status != RequestStatus.NotStart ||
+                if (transportation!.Status != RequestStatus.Done &&
+                    transportation.Status != RequestStatus.NotStart &&
                     transportation.Status != RequestStatus.Cancelled)
                 {
                     throw new ApiException($"Không thể xóa yêu cầu đang có trạng thái: {transportation.Status?.GetDisplayName()}" +
@@ -428,11 +428,9 @@ namespace API_FFMS.Services
                 throw new ApiException("Không tìm thấy yêu cầu vận chuyển này", StatusCode.NOT_FOUND);
             }
 
-            if (existingTransport.Status != RequestStatus.Done ||
-               existingTransport.Status != RequestStatus.NotStart ||
-               existingTransport.Status != RequestStatus.Cancelled)
+            if (existingTransport.Status != RequestStatus.NotStart)
             {
-                throw new ApiException($"Không thể cập nhật yêu cầu đang có trạng thái: {existingTransport.Status?.GetDisplayName()}", StatusCode.BAD_REQUEST);
+                throw new ApiException("Chỉ được cập nhật yêu cầu đang có trạng thái chưa bắt đầu", StatusCode.BAD_REQUEST);
             }
 
             existingTransport.Description = updateDto.Description ?? existingTransport.Description;
