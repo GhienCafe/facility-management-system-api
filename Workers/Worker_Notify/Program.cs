@@ -25,7 +25,6 @@ IHost host = Host.CreateDefaultBuilder(args)
         services.AddScoped<MainUnitOfWork>();
 
         services.AddScoped<IShortTermNotificationService, ShortTermNotificationService>();
-        services.AddScoped<IWebNotificationService, WebNotificationService>();
         services.AddScoped<ISendNotification, SendNotification>();
         
         services.AddHostedService<Worker>();

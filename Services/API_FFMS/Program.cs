@@ -1,5 +1,6 @@
 using System.Reflection;
 using AppCore.Configs;
+using AppCore.Data.Hubs;
 using AppCore.Extensions;
 using MainData;
 using MainData.Middlewares;
@@ -7,20 +8,8 @@ using Microsoft.AspNetCore.Mvc.ApiExplorer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using AspNetCore.Firebase.Authentication.Extensions;
+
 var builder = WebApplication.CreateBuilder(args);
-
-// Clear existing providers and add Console Logger
-builder.Logging.ClearProviders();
-builder.Logging.AddConsole();
-
-// Get the ILoggerFactory from the services
-var loggerFactory = builder.Services.BuildServiceProvider().GetService<ILoggerFactory>();
-
-// Create a logger
-var logger = loggerFactory.CreateLogger<Program>();
-
-// Log a message when the application starts
-logger.LogInformation($"The connection String is: {EnvironmentExtension.GetJwtAudience()}" );
 
 //Add DbContext
 builder.Services.AddDbContext<DatabaseContext>(options =>
@@ -42,6 +31,7 @@ builder.Services.AddDbContext<DatabaseContext>(options =>
 
 //
 builder.Services.AddControllers();
+builder.Services.AddSignalR();
 builder.Services.AddFirebaseAuthentication("https://securetoken.google.com/facility-management-system-fb", "facility-management-system-fb");
 builder.Services.AddScoped<MainUnitOfWork>();
 builder.Services.AddConfig(new List<string>
@@ -63,6 +53,7 @@ app.UseCors("CorsPolicy");
 app.UseConfig();
 //
 app.MapControllers();
+app.MapHub<NotificationHub>("chat-hub");
 
 app.UseMiddleware<AuthMiddleware>();
 app.Run();

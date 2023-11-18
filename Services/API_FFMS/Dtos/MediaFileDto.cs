@@ -15,3 +15,9 @@ public class MediaFileCreateDto
     public string? FileName { get; set; }
     public string? Uri { get; set; }
 }
+
+public class MediaFileDetailDto
+{
+    public string? FileName { get; set; }
+    public string? Uri { get; set; }
+}

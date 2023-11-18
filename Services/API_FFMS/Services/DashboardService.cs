@@ -14,6 +14,7 @@ public interface IDashboardService : IBaseService
     public Task<ApiResponse<IEnumerable<AssetDashBoardInformation>>> GetAssetStatusInformation();
     public Task<ApiResponse<IEnumerable<TaskDashBoardInformation>>> GetBaseTaskInformation();
     public Task<ApiResponse<IEnumerable<TaskBasedOnStatusDashboardDto>>> GetBaseTaskStatusInformation();
+    public Task<ApiResponse<TaskStatisticDto>> GetTaskStatistic();
 }
 
 public class DashboardService : BaseService, IDashboardService
@@ -141,5 +142,53 @@ public class DashboardService : BaseService, IDashboardService
 
         var response = groupedData.ToList();
         return ApiResponse<IEnumerable<TaskBasedOnStatusDashboardDto>>.Success(response);
+    }
+
+    public async Task<ApiResponse<TaskStatisticDto>> GetTaskStatistic()
+    {
+        try
+        {
+            var taskQuery = MainUnitOfWork.TaskRepository.GetQueryAll().Where(x => x!.AssignedTo == AccountId);
+
+            var response = new TaskStatisticDto
+            {
+                AssetCheckTask = await GetTaskStatisticDetails(taskQuery, RequestType.StatusCheck),
+                RepairTask = await GetTaskStatisticDetails(taskQuery, RequestType.Repairation),
+                ReplaceTask = await GetTaskStatisticDetails(taskQuery, RequestType.Replacement),
+                TransportTask = await GetTaskStatisticDetails(taskQuery, RequestType.Transportation),
+                MaintenanceTask = await GetTaskStatisticDetails(taskQuery, RequestType.Maintenance),
+                InventoryCheckTask = await GetTaskStatisticDetails(taskQuery, RequestType.InventoryCheck)
+            };
+
+            return ApiResponse<TaskStatisticDto>.Success(response);
+        }
+        catch (Exception ex)
+        {
+            throw new Exception(ex.Message);
+        }
+    }
+
+    private static async Task<TaskStatisticDetailDto?> GetTaskStatisticDetails(IQueryable<TaskView?> taskQuery, RequestType requestType)
+    {
+        var taskSelects = taskQuery.Select(x => new TaskView
+        {
+            Status = x!.Status,
+            AssignedTo = x.AssignedTo,
+            Type = x.Type
+        });
+        var filteredTasks = await taskSelects.Where(x => x!.Type == requestType).ToListAsync();
+
+        if (filteredTasks.Any())
+        {
+            return new TaskStatisticDetailDto
+            {
+                Total = filteredTasks.Count,
+                Process = filteredTasks.Count(t => t!.Status == RequestStatus.InProgress),
+                Complete = filteredTasks.Count(t => t!.Status == RequestStatus.Done),
+                Waiting = filteredTasks.Count(t => t!.Status == RequestStatus.NotStart),
+                Reported = filteredTasks.Count(t => t!.Status == RequestStatus.Reported)
+            };
+        }
+        return null;
     }
 }

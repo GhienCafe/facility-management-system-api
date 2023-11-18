@@ -90,10 +90,33 @@ namespace API_FFMS.Services
                 throw new ApiException("Trang thiết bị đang trong một yêu cầu khác", StatusCode.SERVER_ERROR);
             }
 
-            var repairs = createDtos.Select(dto => dto.ProjectTo<RepairCreateDto, Repair>())
-                                         .ToList();
+            var repairs = new List<Repair>();
+            var relatedFiles = new List<MediaFile>();
 
-            if (!await _repairRepository.InsertRepairs(repairs, AccountId, CurrentDate))
+            foreach (var create in createDtos)
+            {
+                var repair = create.ProjectTo<RepairCreateDto, Repair>();
+                repair.Id = Guid.NewGuid();
+                if (create.RelatedFiles != null)
+                {
+                    foreach (var file in create.RelatedFiles)
+                    {
+                        var relatedFile = new MediaFile
+                        {
+                            Id = Guid.NewGuid(),
+                            FileName = file.FileName ?? "",
+                            Uri = file.Uri ?? "",
+                            CreatedAt = CurrentDate,
+                            CreatorId = AccountId,
+                            ItemId = repair.Id
+                        };
+                        relatedFiles.Add(relatedFile);
+                    }
+                }
+                repairs.Add(repair);
+            }
+
+            if (!await _repairRepository.InsertRepairs(repairs, relatedFiles, AccountId, CurrentDate))
                 throw new ApiException("Tạo yêu cầu thất bại", StatusCode.SERVER_ERROR);
 
             return ApiResponse.Created("Gửi yêu cầu thành công");
@@ -112,7 +135,14 @@ namespace API_FFMS.Services
                 throw new ApiException("Không tìm thấy yêu cầu sửa chữa này", StatusCode.NOT_FOUND);
             }
 
-            if (!await _repairRepository.DeleteRepair(existingRepair, AccountId, CurrentDate))
+            if(existingRepair.Status != RequestStatus.Done ||
+               existingRepair.Status != RequestStatus.NotStart ||
+               existingRepair.Status != RequestStatus.Cancelled)
+            {
+                throw new ApiException($"Không thể xóa yêu cầu đang có trạng thái: {existingRepair.Status?.GetDisplayName()}", StatusCode.BAD_REQUEST);
+            }
+
+            if (!await MainUnitOfWork.RepairRepository.DeleteAsync(existingRepair, AccountId, CurrentDate))
             {
                 throw new ApiException("Xóa thất bại", StatusCode.SERVER_ERROR);
             }
@@ -130,7 +160,18 @@ namespace API_FFMS.Services
 
             var repairs = replairDeleteds.Where(r => r != null).ToList();
 
-            if (!await _repairRepository.DeleteRepairs(repairs, AccountId, CurrentDate))
+            foreach (var repair in repairs)
+            {
+                if (repair!.Status != RequestStatus.Done ||
+                    repair.Status != RequestStatus.NotStart ||
+                    repair.Status != RequestStatus.Cancelled)
+                {
+                    throw new ApiException($"Không thể xóa yêu cầu đang có trạng thái: {repair.Status?.GetDisplayName()}" +
+                                           $"kiểm tra yêu cầu: {repair.RequestCode}", StatusCode.BAD_REQUEST);
+                }
+            }
+
+            if (!await MainUnitOfWork.RepairRepository.DeleteAsync(repairs, AccountId, CurrentDate))
             {
                 throw new ApiException("Xóa thất bại", StatusCode.SERVER_ERROR);
             }
@@ -158,8 +199,10 @@ namespace API_FFMS.Services
                 });
             if (repairation.Asset != null)
             {
+                repairation.Asset.Status= repairation.Asset.Status;
                 repairation.Asset.StatusObj = repairation.Asset.Status?.GetValue();
-                repairation.Asset.RequestStatusObj = repairation.Asset.RequestStatus.GetValue();
+                repairation.Asset.RequestStatus = repairation.Asset.RequestStatus;
+                repairation.Asset.RequestStatusObj = repairation.Asset.RequestStatus?.GetValue();
             }
 
             repairation.User = await MainUnitOfWork.UserRepository.FindOneAsync<UserBaseDto>(
@@ -174,14 +217,13 @@ namespace API_FFMS.Services
                 repairation.User.RoleObj = repairation.User.Role?.GetValue();
             }
 
-            var mediaFileQuery = MainUnitOfWork.MediaFileRepository.GetQuery().Where(m => m!.ItemId == repairation.Id);
+            var mediaFileQuery = MainUnitOfWork.MediaFileRepository.GetQuery().Where(m => m!.ItemId == id);
 
-            repairation.MediaFile = new MediaFileDto
+            repairation.RelatedFiles = mediaFileQuery.Select(x => new MediaFileDetailDto
             {
-                FileType = mediaFileQuery.Select(m => m!.FileType).FirstOrDefault(),
-                Uri = mediaFileQuery.Select(m => m!.Uri).ToList(),
-                Content = mediaFileQuery.Select(m => m!.Content).FirstOrDefault()
-            };
+                FileName = x!.FileName,
+                Uri = x.Uri,
+            }).ToList();
 
             repairation.PriorityObj = repairation.Priority.GetValue();
             repairation.Status = repairation.Status;
@@ -335,13 +377,17 @@ namespace API_FFMS.Services
                 throw new ApiException("Không tìm thấy yêu cầu", StatusCode.NOT_FOUND);
             }
 
-            if (existingRepair.Status != RequestStatus.InProgress)
+            if (existingRepair.Status != RequestStatus.NotStart || existingRepair.Status != RequestStatus.Done)
             {
-                throw new ApiException("Chỉ được cập nhật các yêu cầu chưa hoàn thành", StatusCode.NOT_FOUND);
+                throw new ApiException("Chỉ được cập nhật các yêu cầu chưa bắt đầu thực hiện hoặc đã kết thúc", StatusCode.NOT_FOUND);
             }
 
             existingRepair.Description = updateDto.Description ?? existingRepair.Description;
             existingRepair.Notes = updateDto.Notes ?? existingRepair.Notes;
+            existingRepair.CategoryId = updateDto.CategoryId ?? existingRepair.CategoryId;
+            existingRepair.IsInternal = updateDto.IsInternal ?? existingRepair.IsInternal;
+            existingRepair.AssetTypeId = updateDto.AssetTypeId ?? existingRepair.AssetTypeId;
+            existingRepair.AssignedTo = updateDto.AssignedTo ?? existingRepair.AssignedTo;
             existingRepair.Priority = updateDto.Priority ?? existingRepair.Priority;
 
             if (!await MainUnitOfWork.RepairRepository.UpdateAsync(existingRepair, AccountId, CurrentDate))
@@ -367,10 +413,10 @@ namespace API_FFMS.Services
 
             if (!await _repairRepository.UpdateStatus(existingRepair, requestStatus.Status, AccountId, CurrentDate))
             {
-                throw new ApiException("Cập nhật trạng thái yêu cầu thất bại", StatusCode.SERVER_ERROR);
+                throw new ApiException("Xác nhận trạng thái yêu cầu thất bại", StatusCode.SERVER_ERROR);
             }
 
-            return ApiResponse.Success("Cập nhật yêu cầu thành công");
+            return ApiResponse.Success("Xác nhận yêu cầu thành công");
         }
 
         public string GenerateRequestCode()

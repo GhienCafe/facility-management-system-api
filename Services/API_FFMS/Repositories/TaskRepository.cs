@@ -75,7 +75,7 @@ namespace API_FFMS.Repositories
                             CreatorId = editorId,
                             IsRead = false,
                             ItemId = inventoryCheck.Id,
-                            UserId = inventoryCheck.AssignedTo
+                            UserId = inventoryCheck.CreatorId
                         };
                         await _context.Notifications.AddAsync(notification);
                     }
@@ -210,7 +210,7 @@ namespace API_FFMS.Repositories
                             CreatorId = editorId,
                             IsRead = false,
                             ItemId = assetCheck.Id,
-                            UserId = assetCheck.AssignedTo
+                            UserId = assetCheck.CreatorId
                         };
                         await _context.Notifications.AddAsync(notification);
                     }
@@ -297,7 +297,7 @@ namespace API_FFMS.Repositories
                                 CreatorId = editorId,
                                 IsRead = false,
                                 ItemId = transportation.Id,
-                                UserId = transportation.AssignedTo
+                                UserId = transportation.CreatorId
                             };
                             await _context.Notifications.AddAsync(notification);
                         }
@@ -385,7 +385,7 @@ namespace API_FFMS.Repositories
                             CreatorId = editorId,
                             IsRead = false,
                             ItemId = repairation.Id,
-                            UserId = repairation.AssignedTo
+                            UserId = repairation.CreatorId
                         };
                         await _context.Notifications.AddAsync(notification);
                     }
@@ -459,7 +459,7 @@ namespace API_FFMS.Repositories
                             CreatorId = editorId,
                             IsRead = false,
                             ItemId = repairation.Id,
-                            UserId = repairation.AssignedTo
+                            UserId = repairation.CreatorId
                         };
                         await _context.Notifications.AddAsync(notification);
                     }
@@ -557,7 +557,7 @@ namespace API_FFMS.Repositories
                             CreatorId = editorId,
                             IsRead = false,
                             ItemId = replacement.Id,
-                            UserId = replacement.AssignedTo
+                            UserId = replacement.CreatorId
                         };
                         await _context.Notifications.AddAsync(notification);
                     }
@@ -634,7 +634,7 @@ namespace API_FFMS.Repositories
                             CreatorId = editorId,
                             IsRead = false,
                             ItemId = maintenance.Id,
-                            UserId = maintenance.AssignedTo
+                            UserId = maintenance.CreatorId
                         };
                         await _context.Notifications.AddAsync(notification);
                     }
@@ -719,7 +719,7 @@ namespace API_FFMS.Repositories
                             CreatorId = editorId,
                             IsRead = false,
                             ItemId = maintenance.Id,
-                            UserId = maintenance.AssignedTo
+                            UserId = maintenance.CreatorId
                         };
                         await _context.Notifications.AddAsync(notification);
                     }
