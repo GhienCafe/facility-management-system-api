@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Mvc.ApplicationModels;
 using Microsoft.Extensions.DependencyInjection;
 using StackExchange.Redis;
+using AspNetCore.Firebase.Authentication.Extensions;
 
 namespace AppCore.Configs;
 
@@ -21,14 +22,22 @@ public static class AddConfigServiceCollectionExtensions
         {
             options.AddPolicy(MyAllowAllOrigins, policyBuilder =>
             {
-                policyBuilder.AllowAnyOrigin()
+                policyBuilder.WithOrigins("http://localhost",
+                        "https://localhost",
+                        "http://facility-management-system-fb.web.app",
+                        "https://facility-management-system-fb.web.app")
                     .AllowAnyMethod()
                     .AllowAnyHeader()
+                    .AllowCredentials()
                     .WithExposedHeaders("location", "Content-Disposition", "Link", "X-Total-Count", "X-Limit");
             });
         });
         services.AddConfigSwagger();
         services.AddHttpContextAccessor();
+        
+        // Config firebase
+        services.AddFirebaseAuthentication(EnvironmentExtension.GetFirebaseIssuer(),
+            EnvironmentExtension.GetFirebaseAudience());
 
         // Service regis service
         services.RegisAllService(projectRegis.ToArray(), ignoreServices.ToArray());
