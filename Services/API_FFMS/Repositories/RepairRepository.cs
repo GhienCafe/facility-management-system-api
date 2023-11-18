@@ -13,7 +13,7 @@ public interface IRepairRepository
     Task<bool> UpdateStatus(Repair repair, RequestStatus? statusUpdate, Guid? editorId, DateTime? now = null);
     Task<bool> DeleteRepair(Repair repair, Guid? deleterId, DateTime? now = null);
     Task<bool> DeleteRepairs(List<Repair?> repairs, Guid? deleterId, DateTime? now = null);
-    Task<bool> UpdateRepair(Repair repair, IEnumerable<MediaFile>? mediaFiles, Guid? creatorId, DateTime? now = null);
+    Task<bool> UpdateRepair(Repair repair, List<MediaFile?> additionMediaFiles, List<MediaFile?> removalMediaFiles, Guid? creatorId, DateTime? now = null);
 }
 public class RepairRepository : IRepairRepository
 {
@@ -366,7 +366,7 @@ public class RepairRepository : IRepairRepository
         }
     }
 
-    public async Task<bool> UpdateRepair(Repair repair, IEnumerable<MediaFile>? mediaFiles, Guid? creatorId, DateTime? now = null)
+    public async Task<bool> UpdateRepair(Repair repair, List<MediaFile?> additionMediaFiles, List<MediaFile?> removalMediaFiles, Guid? creatorId, DateTime? now = null)
     {
         await _context.Database.BeginTransactionAsync();
         now ??= DateTime.UtcNow;
@@ -376,21 +376,35 @@ public class RepairRepository : IRepairRepository
             repair.EditedAt = now.Value;
             _context.Entry(repair).State = EntityState.Modified;
 
-            foreach (var mediaFile in mediaFiles)
+            var mediaFiles = _context.MediaFiles.AsNoTracking().Where(x => x.ItemId == repair.Id && !x.DeletedAt.HasValue).ToList();
+
+            if(additionMediaFiles.Count > 0 ) 
             {
-                var newMediaFile = new MediaFile
+                foreach(var mediaFile in additionMediaFiles)
                 {
-                    Id = Guid.NewGuid(),
-                    CreatedAt = now.Value,
-                    CreatorId = creatorId,
-                    EditedAt = now.Value,
-                    EditorId = creatorId,
-                    FileName = mediaFile.FileName,
-                    Uri = mediaFile.Uri,
-                    FileType = FileType.File,
-                    ItemId = repair.Id
-                };
-                _context.MediaFiles.Add(newMediaFile);
+                    var newMediaFile = new MediaFile
+                    {
+                        Id = Guid.NewGuid(),
+                        CreatedAt = now.Value,
+                        CreatorId = creatorId,
+                        EditedAt = now.Value,
+                        EditorId = creatorId,
+                        FileName = mediaFile.FileName,
+                        Uri = mediaFile.Uri,
+                        FileType = FileType.File,
+                        ItemId = repair.Id
+                    };
+                    _context.MediaFiles.Add(newMediaFile);
+                }
+            }
+
+            if (removalMediaFiles.Count > 0)
+            {
+                foreach (var mediaFile in removalMediaFiles)
+                {
+                    mediaFile!.DeletedAt = now.Value;
+                    _context.Entry(mediaFile).State = EntityState.Modified;
+                }
             }
 
             await _context.SaveChangesAsync();
