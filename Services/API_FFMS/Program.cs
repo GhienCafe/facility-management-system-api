@@ -51,8 +51,7 @@ app.UseWebSockets();
 app.UseCors("CorsPolicy");
 app.UseConfig();
 app.MapControllers();
-//app.MapHub<NotificationHub>("notification-hub");
-app.MapHub<TimeHub>("time-hub");
+app.MapHub<NotificationHub>("notification-hub");
 
 app.UseMiddleware<AuthMiddleware>();
 app.Run();
