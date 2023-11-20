@@ -34,13 +34,6 @@ namespace API_FFMS.Services
 
         public async Task<ApiResponse> Create(TransportCreateDto createDto)
         {
-            //var assets = await MainUnitOfWork.AssetRepository.FindAsync(
-            //    new Expression<Func<Asset, bool>>[]
-            //    {
-            //        x => !x!.DeletedAt.HasValue,
-            //        x => createDto.Assets.Select(dto => dto.AssetId).Contains(x.Id)
-            //    }, null);
-
             var assets = MainUnitOfWork.AssetRepository.GetQuery()
                                                        .Include(x => x.Type)
                                                        .Where(x => createDto.Assets.Select(dto => dto.AssetId).Contains(x.Id))
@@ -93,6 +86,7 @@ namespace API_FFMS.Services
 
             var transportation = new Transportation
             {
+                Id = Guid.NewGuid(),
                 RequestCode = GenerateRequestCode(),
                 Description = createDto.Description,
                 Notes = createDto.Notes,
