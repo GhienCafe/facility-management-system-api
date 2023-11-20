@@ -136,13 +136,14 @@ namespace API_FFMS.Services
                 } 
                 else if (asset != null && asset.Type!.Unit == Unit.Quantity)
                 {
+                    var correspondingDto = createDto.Assets!.FirstOrDefault(dto => dto.AssetId == asset.Id);
                     var transpsortDetail = new TransportationDetail
                     {
                         Id = Guid.NewGuid(),
                         AssetId = asset.Id,
                         TransportationId = transportation.Id,
                         RequestDate = CurrentDate,
-                        Quantity = 1,
+                        Quantity = (int?)correspondingDto!.Quantity,
                         CreatorId = AccountId,
                         CreatedAt = CurrentDate
                     };

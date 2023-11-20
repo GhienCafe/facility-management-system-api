@@ -50,7 +50,7 @@ public class DashboardController : BaseController
         return await _dashboardService.GetTaskStatistic();
     }
     [SwaggerOperation("Get statistic model")]
-    [HttpGet("stastic-mdoel")]
+    [HttpGet("stastic-model")]
     public async Task<ApiResponse<IEnumerable<ModelStatisticDto>>> GetModelStatistic()
     {
         return await _dashboardService.GetModelStatistic();
