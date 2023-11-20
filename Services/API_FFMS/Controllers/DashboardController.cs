@@ -49,11 +49,10 @@ public class DashboardController : BaseController
     {
         return await _dashboardService.GetTaskStatistic();
     }
-
-    //[SwaggerOperation("Get statistic asset")]
-    //[HttpGet("stastic-asset")]
-    //public async Task<ApiResponse<AssetStatisticDto>> GetAssetStatistic()
-    //{
-    //    return await _dashboardService.GetAssetStatistic();
-    //}
+    [SwaggerOperation("Get statistic model")]
+    [HttpGet("stastic-mdoel")]
+    public async Task<ApiResponse<IEnumerable<ModelStatisticDto>>> GetModelStatistic()
+    {
+        return await _dashboardService.GetModelStatistic();
+    }
 }

@@ -1,7 +1,6 @@
 ﻿using API_FFMS.Dtos;
 using AppCore.Extensions;
 using AppCore.Models;
-using Azure;
 using MainData;
 using MainData.Entities;
 using MainData.Repositories;
@@ -17,6 +16,7 @@ public interface IDashboardService : IBaseService
     public Task<ApiResponse<IEnumerable<TaskBasedOnStatusDashboardDto>>> GetBaseTaskStatusInformation();
     public Task<ApiResponse<TaskStatisticDto>> GetTaskStatistic();
     public Task<ApiResponse<AssetStatisticDto>> GetAssetStatistic(AssetStatisticQueryDto queryDto);
+    public Task<ApiResponse<IEnumerable<ModelStatisticDto>>> GetModelStatistic();
 }
 
 public class DashboardService : BaseService, IDashboardService
@@ -201,7 +201,7 @@ public class DashboardService : BaseService, IDashboardService
 
         assetQuery = assetQuery.Where(x => x!.Type!.Unit == queryDto.Unit);
 
-        if(queryDto.IsRent != null)
+        if (queryDto.IsRent != null)
         {
             assetQuery = assetQuery.Where(x => x!.IsRented == queryDto.IsRent);
         }
@@ -219,5 +219,38 @@ public class DashboardService : BaseService, IDashboardService
         };
 
         return ApiResponse<AssetStatisticDto>.Success(assetStatistc);
+    }
+
+    public async Task<ApiResponse<IEnumerable<ModelStatisticDto>>> GetModelStatistic()
+    {
+        var modelQuery = MainUnitOfWork.ModelRepository.GetQuery();
+
+        var taskQuery = MainUnitOfWork.TaskRepository.GetQueryAll()
+                                                     .Where(x => x!.Type == RequestType.Repairation &&
+                                                                 x.Status != RequestStatus.NotStart);
+
+        var assetQuery = MainUnitOfWork.AssetRepository.GetQuery()
+                                                       .Include(a => a!.Type)
+                                                       .Where(a => a!.Type!.Unit == Unit.Individual);
+
+        var join = from model in modelQuery
+                   join asset in assetQuery on model.Id equals asset.ModelId into groupAssets
+                   from asset in groupAssets.DefaultIfEmpty()
+                   join task in taskQuery on asset.Id equals task.AssetId into groupTasks
+                   from task in groupTasks.DefaultIfEmpty()
+                   group new { model, asset, task } by new
+                   {
+                       model.Id,
+                       model.ModelName
+                   } into groupData
+                   select new ModelStatisticDto
+                   {
+                       ModelName = groupData.Key.ModelName,
+                       TotalRepair = groupData.Count(item => item.task != null)
+                   };
+
+        var result = await join.ToListAsync();
+
+        return ApiResponse<IEnumerable<ModelStatisticDto>>.Success(result);
     }
 }

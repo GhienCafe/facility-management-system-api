@@ -14,7 +14,7 @@ namespace API_FFMS.Services
     {
         Task<ApiResponse> Create(ReplaceCreateDto createDto);
         Task<ApiResponse<ReplaceDto>> GetReplacement(Guid id);
-        Task<ApiResponse> Update(Guid id, BaseRequestUpdateDto updateDto);
+        Task<ApiResponse> Update(Guid id, ReplaceUpdateDto updateDto);
         Task<ApiResponse> Delete(Guid id);
         Task<ApiResponses<ReplaceDto>> GetReplaces(ReplacementQueryDto queryDto);
         Task<ApiResponse> DeleteReplacements(DeleteMutilDto deleteDto);
@@ -46,7 +46,7 @@ namespace API_FFMS.Services
 
             if (newAsset.RequestStatus != RequestType.Operational)
             {
-                throw new ApiException("Trang thiết bị dùng để thay thế đang trong một yêu cầu khác", StatusCode.BAD_REQUEST);
+                throw new ApiException($"Trang thiết bị {newAsset.AssetCode} đang trong một yêu cầu khác", StatusCode.BAD_REQUEST);
             }
 
             var checkExist = await MainUnitOfWork.ReplacementRepository.FindAsync(
@@ -392,7 +392,7 @@ namespace API_FFMS.Services
         }
 
 
-        public async Task<ApiResponse> Update(Guid id, BaseRequestUpdateDto updateDto)
+        public async Task<ApiResponse> Update(Guid id, ReplaceUpdateDto updateDto)
         {
             var existingReplace = await MainUnitOfWork.ReplacementRepository.FindOneAsync(id);
             if (existingReplace == null)
@@ -408,6 +408,8 @@ namespace API_FFMS.Services
             existingReplace.Description = updateDto.Description ?? existingReplace.Description;
             existingReplace.Notes = updateDto.Notes ?? existingReplace.Notes;
             existingReplace.Priority = updateDto.Priority ?? existingReplace.Priority;
+            existingReplace.AssetId = updateDto.AssetId ?? existingReplace.AssetId;
+            existingReplace.NewAssetId = updateDto.NewAssetId ?? existingReplace.NewAssetId;
 
             var mediaFileQuery = MainUnitOfWork.MediaFileRepository.GetQuery().Where(x => x!.ItemId == id).ToList();
 

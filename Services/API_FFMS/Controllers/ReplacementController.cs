@@ -44,7 +44,7 @@ namespace API_FFMS.Controllers
 
         [HttpPut("{id:guid}")]
         [SwaggerOperation("Update a replacement")]
-        public async Task<ApiResponse> Update(Guid id, BaseRequestUpdateDto updateDto)
+        public async Task<ApiResponse> Update(Guid id, ReplaceUpdateDto updateDto)
         {
             return await _service.Update(id, updateDto);
         }
