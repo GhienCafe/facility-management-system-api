@@ -148,6 +148,7 @@ public class AssetService : BaseService, IAssetService
                 Description = x.Type.Description,
                 TypeCode = x.Type.TypeCode,
                 TypeName = x.Type.TypeName,
+                IsIdentified = x.Type.IsIdentified,
                 Unit = x.Type.Unit,
                 UnitObj = x.Type.Unit.GetValue(),
                 CreatedAt = x.Type.CreatedAt,
@@ -194,7 +195,7 @@ public class AssetService : BaseService, IAssetService
             }).FirstOrDefault()
         }).ToListAsync();
 
-        assets = await _mapperRepository.MapCreator(assets);
+        //assets = await _mapperRepository.MapCreator(assets);
 
         return ApiResponses<AssetDto>.Success(
             assets,
@@ -261,7 +262,7 @@ public class AssetService : BaseService, IAssetService
                 });
         }
 
-        existingAsset = await _mapperRepository.MapCreator(existingAsset);
+        //existingAsset = await _mapperRepository.MapCreator(existingAsset);
 
         return ApiResponse<AssetDto>.Success(existingAsset);
     }
