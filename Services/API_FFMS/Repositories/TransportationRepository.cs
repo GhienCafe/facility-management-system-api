@@ -171,7 +171,6 @@ public class TransportationRepository : ITransportationRepository
         now ??= DateTime.UtcNow;
         try
         {
-            transportation.Id = Guid.NewGuid();
             transportation.CreatedAt = now.Value;
             transportation.EditedAt = now.Value;
             transportation.CreatorId = creatorId;
