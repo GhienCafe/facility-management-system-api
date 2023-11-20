@@ -47,7 +47,7 @@ public class MaintenanceRepository : IMaintenanceRepository
                 {
                     CreatedAt = now.Value,
                     Status = NotificationStatus.Waiting,
-                    Content = entity.Description,
+                    Content = entity.Description ?? "Yêu cầu bảo trì",
                     Title = RequestType.Maintenance.GetDisplayName(),
                     Type = NotificationType.Task,
                     CreatorId = creatorId,
@@ -343,7 +343,7 @@ public class MaintenanceRepository : IMaintenanceRepository
                 CreatedAt = now.Value,
                 EditedAt = now.Value,
                 Status = NotificationStatus.Waiting,
-                Content = entity.Description,
+                Content = entity.Description ?? "Yêu cầu bảo trì",
                 Title = RequestType.Maintenance.GetDisplayName(),
                 Type = NotificationType.Task,
                 CreatorId = creatorId,

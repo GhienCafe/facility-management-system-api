@@ -53,6 +53,9 @@ public class AssetcheckRepository : IAssetcheckRepository
                 {
                     var roomAsset = await _context.RoomAssets
                     .FirstOrDefaultAsync(x => x.AssetId == entity.AssetId && x.ToDate == null);
+                    var location = await _context.Rooms.FirstOrDefaultAsync(x => x.Id == roomAsset!.RoomId &&
+                                                                                 roomAsset.AssetId == asset.Id &&
+                                                                                 roomAsset.ToDate == null);
 
                     if (roomAsset != null)
                     {
@@ -67,7 +70,7 @@ public class AssetcheckRepository : IAssetcheckRepository
                         CreatedAt = now.Value,
                         EditedAt = now.Value,
                         Status = NotificationStatus.Waiting,
-                        Content = entity.Description,
+                        Content = entity.Description ?? "Yêu cầu kiểm tra",
                         Title = RequestType.Repairation.GetDisplayName(),
                         Type = NotificationType.Task,
                         CreatorId = creatorId,

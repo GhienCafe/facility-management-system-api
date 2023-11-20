@@ -191,7 +191,7 @@ public class TransportationRepository : ITransportationRepository
                 CreatedAt = now.Value,
                 EditedAt = now.Value,
                 Status = NotificationStatus.Waiting,
-                Content = transportation.Description,
+                Content = transportation.Description ?? "Yêu cầu vận chuyển",
                 Title = RequestType.Maintenance.GetDisplayName(),
                 Type = NotificationType.Task,
                 CreatorId = creatorId,
