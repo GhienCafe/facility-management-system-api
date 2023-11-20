@@ -23,7 +23,7 @@ namespace API_FFMS.Dtos
     public class RoomAssetCreateBaseDto 
     {
         public Guid RoomId { get; set; }
-        public Guid? AssetId { get; set; }
+        public Guid AssetId { get; set; }
         public double? Quantity { get; set; }
     }
 

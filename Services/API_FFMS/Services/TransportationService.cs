@@ -35,12 +35,14 @@ namespace API_FFMS.Services
         public async Task<ApiResponse> Create(TransportCreateDto createDto)
         {
             var assets = MainUnitOfWork.AssetRepository.GetQuery()
-                                                       .Include(x => x.Type)
-                                                       .Where(x => createDto.Assets.Select(dto => dto.AssetId).Contains(x.Id))
+                                                       .Include(x => x!.Type)
+                                                       .Where(x => createDto.Assets.Select(dto => dto.AssetId)
+                                                                                   .Contains(x!.Id))
                                                        .ToList();
 
             var assetQuery = MainUnitOfWork.AssetRepository.GetQuery()
-                                                            .Where(x => createDto.Assets!.Select(dto => dto.AssetId).Contains(x!.Id));
+                                                           .Where(x => createDto.Assets!.Select(dto => dto.AssetId)
+                                                                                        .Contains(x!.Id));
             var typeQuery = MainUnitOfWork.AssetTypeRepository.GetQuery();
             var joinTable = from asset in assetQuery
                             join type in typeQuery on asset.TypeId equals type.Id into typeGroup
@@ -55,33 +57,37 @@ namespace API_FFMS.Services
 
             foreach (var a in assetList)
             {
-                    if (a.AssetType.Unit == Unit.Individual && a.Asset.RequestStatus != RequestType.Operational)
-                    {
-                        throw new ApiException("Trang thiết bị đang trong một yêu cầu khác", StatusCode.SERVER_ERROR);
-                    }
+                if (a.AssetType.Unit == Unit.Individual && a.Asset.RequestStatus != RequestType.Operational)
+                {
+                    throw new ApiException("Trang thiết bị đang trong một yêu cầu khác", StatusCode.SERVER_ERROR);
+                }
                 var correspondingDto = createDto.Assets!.FirstOrDefault(dto => dto.AssetId == a.Asset.Id);
                 if (correspondingDto != null)
                 {
                     a.Asset.Quantity = correspondingDto.Quantity ?? 0;
                 }
             }
+            var totalQuantity = createDto.Assets?.Sum(assetDto => assetDto.Quantity);
 
             var toRoom = await MainUnitOfWork.RoomRepository.FindOneAsync(createDto.ToRoomId);
-            var roomAssets = await MainUnitOfWork.RoomAssetRepository.FindAsync(
-                new Expression<Func<RoomAsset, bool>>[]
-                {
-                    x => !x.DeletedAt.HasValue,
-                    x => x.RoomId == toRoom!.Id,
-                    x => x.ToDate == null
-                }, null);
-
-            var currentQuantityAssetInRoom = roomAssets.Sum(x => x!.Quantity);
-
-            var totalQuantity = createDto.Assets?.Sum(assetDto => assetDto.Quantity);
-            var checkCapacity = currentQuantityAssetInRoom + totalQuantity;
-            if (checkCapacity > toRoom!.Capacity)
+            if (toRoom != null)
             {
-                throw new ApiException("Số lượng trang thiết bị vượt quá dung tích phòng", StatusCode.UNPROCESSABLE_ENTITY);
+                var roomAssets = await MainUnitOfWork.RoomAssetRepository.FindAsync(
+                    new Expression<Func<RoomAsset, bool>>[]
+                    {
+                        x => !x.DeletedAt.HasValue,
+                        x => x.RoomId == toRoom.Id,
+                        x => x.ToDate == null
+                    }, null);
+
+                var currentQuantityAssetInRoom = roomAssets.Sum(x => x!.Quantity);
+
+
+                var checkCapacity = currentQuantityAssetInRoom + totalQuantity;
+                if (checkCapacity > toRoom.Capacity)
+                {
+                    throw new ApiException("Số lượng trang thiết bị vượt quá dung tích phòng", StatusCode.UNPROCESSABLE_ENTITY);
+                }
             }
 
             var transportation = new Transportation
@@ -97,51 +103,58 @@ namespace API_FFMS.Services
                 ToRoomId = createDto.ToRoomId
             };
 
-            var mediaFiles = new List<MediaFile>();
-            if (createDto.RelatedFiles != null)
-            {
-                foreach (var file in createDto.RelatedFiles)
-                {
-                    var newMediaFile = new MediaFile
-                    {
-                        FileName = file.FileName ?? "",
-                        Uri = file.Uri ?? ""
-                    };
-                    mediaFiles.Add(newMediaFile);
-                }
-            }
+            var mediaFiles = createDto.RelatedFiles?.Select(file => new MediaFile 
+            { 
+                FileName = file.FileName ?? "",
+                Uri = file.Uri ?? "" 
+            }).ToList();
 
             var transportationDetails = new List<TransportationDetail>();
             foreach (var asset in assets)
             {
-                if(asset != null && asset.Type!.Unit == Unit.Individual)
+                if (asset != null)
                 {
-                    var transpsortDetail = new TransportationDetail
+                    if (asset.Type!.IsIdentified == true || asset.Type.Unit == Unit.Individual)
                     {
-                        Id = Guid.NewGuid(),
-                        AssetId = asset.Id,
-                        TransportationId = transportation.Id,
-                        RequestDate = CurrentDate,
-                        Quantity = 1,
-                        CreatorId = AccountId,
-                        CreatedAt = CurrentDate
-                    };
-                    transportationDetails.Add(transpsortDetail);
-                } 
-                else if (asset != null && asset.Type!.Unit == Unit.Quantity)
-                {
-                    var correspondingDto = createDto.Assets!.FirstOrDefault(dto => dto.AssetId == asset.Id);
-                    var transpsortDetail = new TransportationDetail
+                        var roomAsset = await MainUnitOfWork.RoomAssetRepository.FindOneAsync(
+                            new Expression<Func<RoomAsset, bool>>[]
+                            {
+                                x => !x.DeletedAt.HasValue,
+                                x => x.AssetId == asset.Id,
+                                x => x.ToDate == null
+                            });
+                        if (roomAsset != null && roomAsset.RoomId == toRoom!.Id)
+                        {
+                            throw new ApiException($"Thiết bị {asset.AssetCode} đã có trong phòng này", StatusCode.UNPROCESSABLE_ENTITY);
+                        }
+
+                        var transpsortDetail = new TransportationDetail
+                        {
+                            Id = Guid.NewGuid(),
+                            AssetId = asset.Id,
+                            TransportationId = transportation.Id,
+                            RequestDate = CurrentDate,
+                            Quantity = 1,
+                            CreatorId = AccountId,
+                            CreatedAt = CurrentDate
+                        };
+                        transportationDetails.Add(transpsortDetail);
+                    }
+                    else if (asset.Type!.IsIdentified == false || asset.Type.Unit == Unit.Quantity)
                     {
-                        Id = Guid.NewGuid(),
-                        AssetId = asset.Id,
-                        TransportationId = transportation.Id,
-                        RequestDate = CurrentDate,
-                        Quantity = (int?)correspondingDto!.Quantity,
-                        CreatorId = AccountId,
-                        CreatedAt = CurrentDate
-                    };
-                    transportationDetails.Add(transpsortDetail);
+                        var correspondingDto = createDto.Assets!.FirstOrDefault(dto => dto.AssetId == asset.Id);
+                        var transpsortDetail = new TransportationDetail
+                        {
+                            Id = Guid.NewGuid(),
+                            AssetId = asset.Id,
+                            TransportationId = transportation.Id,
+                            RequestDate = CurrentDate,
+                            Quantity = (int?)correspondingDto!.Quantity,
+                            CreatorId = AccountId,
+                            CreatedAt = CurrentDate
+                        };
+                        transportationDetails.Add(transpsortDetail);
+                    }
                 }
             }
 
