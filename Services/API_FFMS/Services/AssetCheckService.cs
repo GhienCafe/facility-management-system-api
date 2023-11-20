@@ -244,6 +244,11 @@ public class AssetCheckService : BaseService, IAssetCheckService
             assetCheckQuery = assetCheckQuery.Where(x => x!.Status == queryDto.Status);
         }
 
+        if(queryDto.Priority != null)
+        {
+            assetCheckQuery = assetCheckQuery.Where(x => x!.Priority == queryDto.Priority);
+        }
+
         if (!string.IsNullOrEmpty(keyword))
         {
             assetCheckQuery = assetCheckQuery.Where(x => x!.Description!.ToLower().Contains(keyword)

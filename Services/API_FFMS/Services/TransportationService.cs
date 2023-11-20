@@ -355,6 +355,11 @@ namespace API_FFMS.Services
                 transportQuery = transportQuery.Where(x => x!.Status == queryDto.Status);
             }
 
+            if (queryDto.Priority != null)
+            {
+                transportQuery = transportQuery.Where(x => x!.Priority == queryDto.Priority);
+            }
+
             if (!string.IsNullOrEmpty(keyword))
             {
                 transportQuery = transportQuery.Where(x => x!.Description!.ToLower().Contains(keyword)
