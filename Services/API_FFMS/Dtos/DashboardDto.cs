@@ -34,6 +34,24 @@ public class AssetStatisticQueryDto
     public bool? IsRent {  get; set; }
 }
 
+public class ModelStatisticQueryDto
+{
+    public int? Month { get; set; } = 6;
+}
+
+public class AssetTypeStatisticDto
+{
+    public string? TypeName { get; set; }
+    public List<ModelStatisticDto>? ModelStatistic { get; set; }
+
+}
+
+public class ModelStatisticDto
+{
+    public string? ModelName { get; set; }
+    public int? TotalRepair { get; set; }
+}
+
 public class AssetTypeDashboardDto
 {
     public Guid? TypeId { get; set; }
