@@ -10,7 +10,7 @@ public interface ITransportationRepository
     Task<bool> UpdateStatus(Transportation transportation, RequestStatus? statusUpdate, Guid? editorId, DateTime? now = null);
     Task<bool> DeleteTransport(Transportation transportation, Guid? deleterId, DateTime? now = null);
     Task<bool> DeleteTransports(List<Transportation?> transportations, Guid? deleterId, DateTime? now = null);
-    Task<bool> InsertTransportation(Transportation transportation, List<TransportationDetail> transportationDetails, List<MediaFile> mediaFiles, Guid? creatorId, DateTime? now = null);
+    Task<bool> InsertTransportation(Transportation transportation, List<TransportationDetail> transportationDetails, List<MediaFile>? mediaFiles, Guid? creatorId, DateTime? now = null);
     Task<bool> UpdateTransportation(Transportation transportation, List<MediaFile?> additionMediaFiles, List<MediaFile?> removalMediaFiles, Guid? editorId, DateTime? now = null);
 }
 public class TransportationRepository : ITransportationRepository
@@ -165,7 +165,7 @@ public class TransportationRepository : ITransportationRepository
         }
     }
 
-    public async Task<bool> InsertTransportation(Transportation transportation, List<TransportationDetail> transportationDetails, List<MediaFile> mediaFiles, Guid? creatorId, DateTime? now = null)
+    public async Task<bool> InsertTransportation(Transportation transportation, List<TransportationDetail> transportationDetails, List<MediaFile>? mediaFiles, Guid? creatorId, DateTime? now = null)
     {
         await _context.Database.BeginTransactionAsync();
         now ??= DateTime.UtcNow;
@@ -180,7 +180,7 @@ public class TransportationRepository : ITransportationRepository
 
             foreach (var transpsortDetail in transportationDetails)
             {
-                if(transpsortDetail != null)
+                if (transpsortDetail != null)
                 {
                     _context.TransportationDetails.Add(transpsortDetail);
                 }
@@ -242,94 +242,104 @@ public class TransportationRepository : ITransportationRepository
 
             var assetIds = transportation.TransportationDetails?.Select(td => td.AssetId).ToList();
             var assets = await _context.Assets
-                        .Include(a => a.Type)
-                        .Where(asset => assetIds!.Contains(asset.Id))
-                        .ToListAsync();
+                            .Include(a => a.Type)
+                            .Where(asset => assetIds!.Contains(asset.Id))
+                            .ToListAsync();
 
             var toRoom = await _context.Rooms.FindAsync(transportation.ToRoomId);
+
             foreach (var asset in assets)
             {
-                var roomAsset = await _context.RoomAssets.FirstOrDefaultAsync(x => x.AssetId == asset.Id && x.ToDate == null);
-                var fromRoom = await _context.Rooms.FirstOrDefaultAsync(x => x.Id == roomAsset!.RoomId && roomAsset.AssetId == asset.Id);
-                if (statusUpdate == RequestStatus.Done)
+                if (asset != null)
                 {
-                    transportation.CompletionDate = now.Value;
-                    _context.Entry(transportation).State = EntityState.Modified;
+                    var roomAsset = await _context.RoomAssets.FirstOrDefaultAsync(x => x.AssetId == asset.Id && x.ToDate == null);
+                    var fromRoom = await _context.Rooms.FirstOrDefaultAsync(x => x.Id == roomAsset!.RoomId);
+                    var transportDetails = await _context.TransportationDetails
+                                                    .FirstOrDefaultAsync(x => x.TransportationId == transportation.Id ||
+                                                                              x.AssetId == asset.Id);
+                    var toRoomAsset = await _context.RoomAssets.FirstOrDefaultAsync(x => x.AssetId == asset.Id &&
+                                                                                x.RoomId == toRoom!.Id &&
+                                                                                x.ToDate == null);
 
-                    asset.RequestStatus = RequestType.Operational;
-                    asset.EditedAt = now.Value;
-                    asset.EditorId = editorId;
-                    _context.Entry(asset).State = EntityState.Modified;
-
-                    if (roomAsset != null)
+                    if (statusUpdate == RequestStatus.Done)
                     {
-                        //roomAsset.Status = AssetStatus.Operational;
-                        roomAsset.EditedAt = now.Value;
-                        roomAsset.ToDate = now.Value;
-                        roomAsset.EditorId = editorId;
-                        _context.Entry(roomAsset).State = EntityState.Modified;
-                    }
+                        transportation.CompletionDate = now.Value;
+                        _context.Entry(transportation).State = EntityState.Modified;
 
-                    fromRoom!.State = RoomState.Operational;
-                    fromRoom.EditedAt = now.Value;
-                    fromRoom.EditorId = editorId;
-                    _context.Entry(fromRoom).State = EntityState.Modified;
-
-                    toRoom!.State = RoomState.Operational;
-                    toRoom.EditedAt = now.Value;
-                    toRoom.EditorId = editorId;
-                    _context.Entry(toRoom).State = EntityState.Modified;
-
-                    if (asset.Type!.Unit == Unit.Individual)
-                    {
-                        var addRoomAsset = new RoomAsset
+                        if (asset.Type!.Unit == Unit.Individual || asset.Type.IsIdentified == true)
                         {
-                            Id = Guid.NewGuid(),
-                            AssetId = asset.Id,
-                            RoomId = toRoom.Id,
-                            Status = asset.Status,
-                            FromDate = now.Value,
-                            Quantity = 1,
-                            ToDate = null,
-                            CreatorId = editorId,
-                            CreatedAt = now.Value,
-                        };
-                        await _context.RoomAssets.AddAsync(addRoomAsset);
-                    }
-                    else if (asset.Type!.Unit == Unit.Quantity)
-                    {
-                        var addRoomAsset = new RoomAsset
+                            asset.RequestStatus = RequestType.Operational;
+                            _context.Entry(asset).State = EntityState.Modified;
+
+                            if (roomAsset != null)
+                            {
+                                roomAsset.ToDate = now.Value;
+                                _context.Entry(roomAsset).State = EntityState.Modified;
+                            }
+
+                            fromRoom!.State = RoomState.Operational;
+                            _context.Entry(fromRoom).State = EntityState.Modified;
+
+                            toRoom!.State = RoomState.Operational;
+                            _context.Entry(toRoom).State = EntityState.Modified;
+
+                            var addRoomAsset = new RoomAsset
+                            {
+                                Id = Guid.NewGuid(),
+                                AssetId = asset.Id,
+                                RoomId = toRoom.Id,
+                                Status = asset.Status,
+                                FromDate = now.Value,
+                                Quantity = 1,
+                                ToDate = null,
+                                CreatorId = editorId,
+                                CreatedAt = now.Value,
+                            };
+                            await _context.RoomAssets.AddAsync(addRoomAsset);
+                        }
+                        else if (asset.Type!.Unit == Unit.Quantity || asset.Type.IsIdentified == false)
                         {
-                            AssetId = asset.Id,
-                            RoomId = toRoom.Id,
-                            Status = asset.Status,
-                            FromDate = now.Value,
-                            Quantity = transportation.Quantity,
-                            ToDate = null,
-                            CreatorId = editorId,
-                            CreatedAt = now.Value,
-                        };
-                        await _context.RoomAssets.AddAsync(addRoomAsset);
+                            if (roomAsset != null)
+                            {
+                                roomAsset.Quantity -= transportDetails!.Quantity;
+                                _context.Entry(roomAsset).State = EntityState.Modified;
+                            }
+
+                            if (toRoomAsset != null)
+                            {
+                                toRoomAsset.Quantity += transportDetails!.Quantity;
+                                _context.Entry(toRoomAsset).State = EntityState.Modified;
+                            }
+                            else
+                            {
+                                var addRoomAsset = new RoomAsset
+                                {
+                                    AssetId = asset.Id,
+                                    RoomId = toRoom!.Id,
+                                    Status = asset.Status,
+                                    FromDate = now.Value,
+                                    Quantity = transportDetails!.Quantity,
+                                    ToDate = null,
+                                    CreatorId = editorId,
+                                    CreatedAt = now.Value,
+                                };
+                                await _context.RoomAssets.AddAsync(addRoomAsset);
+                            }
+                        }
                     }
+                    else if (statusUpdate == RequestStatus.Cancelled)
+                    {
+                        asset.RequestStatus = RequestType.Operational;
+                        _context.Entry(asset).State = EntityState.Modified;
+
+                        fromRoom!.State = RoomState.Operational;
+                        _context.Entry(fromRoom).State = EntityState.Modified;
+
+                        toRoom!.State = RoomState.Operational;
+                        _context.Entry(toRoom).State = EntityState.Modified;
+                    }
+
                 }
-                else if (statusUpdate == RequestStatus.Cancelled)
-                {
-                    asset.RequestStatus = RequestType.Operational;
-                    asset.EditedAt = now.Value;
-                    asset.EditorId = editorId;
-                    _context.Entry(asset).State = EntityState.Modified;
-
-                    fromRoom!.State = RoomState.Operational;
-                    fromRoom.EditedAt = now.Value;
-                    fromRoom.EditorId = editorId;
-                    _context.Entry(fromRoom).State = EntityState.Modified;
-
-                    toRoom!.State = RoomState.Operational;
-                    toRoom.EditedAt = now.Value;
-                    toRoom.EditorId = editorId;
-                    _context.Entry(toRoom).State = EntityState.Modified;
-                }
-
             }
             await _context.SaveChangesAsync();
             await _context.Database.CommitTransactionAsync();
