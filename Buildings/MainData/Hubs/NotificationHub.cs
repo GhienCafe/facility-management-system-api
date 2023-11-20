@@ -38,7 +38,7 @@ namespace MainData.Hubs
                     if (dbContext != null)
                     {
                         var notifications = await dbContext.Notifications
-                            .Where(x => x.UserId == userId)
+                            .Where(x => !x.DeletedAt.HasValue && x.UserId == userId && x.IsRead == false)
                             .ToListAsync();
 
                         await Clients.All.SendAsync("ReceiveNotifications", notifications);
