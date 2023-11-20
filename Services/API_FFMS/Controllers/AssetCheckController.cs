@@ -57,7 +57,7 @@ public class AssetCheckController : BaseController
         return await _assetCheckService.CreateItems(createDtos);
     }
 
-    [HttpPut]
+    [HttpPut("{id:guid}")]
     [SwaggerOperation("Update asset check")]
     public async Task<ApiResponse> Update(Guid id, AssetCheckUpdateDto updateDto)
     {

@@ -201,6 +201,11 @@ public class DashboardService : BaseService, IDashboardService
 
         assetQuery = assetQuery.Where(x => x!.Type!.Unit == queryDto.Unit);
 
+        if(queryDto.IsRent != null)
+        {
+            assetQuery = assetQuery.Where(x => x!.IsRented == queryDto.IsRent);
+        }
+
         var assetStatistc = new AssetStatisticDto
         {
             TotalQuantity = assetQuery.Sum(x => x!.Quantity),
