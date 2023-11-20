@@ -237,6 +237,11 @@ public class InventoryCheckService : BaseService, IInventoryCheckService
                 inventoryCheckQuery = inventoryCheckQuery.Where(x => x!.AssignedTo == queryDto.AssignedTo);
             }
 
+            if (queryDto.Priority != null)
+            {
+                inventoryCheckQuery = inventoryCheckQuery.Where(x => x!.Priority == queryDto.Priority);
+            }
+
             if (queryDto.Status != null)
             {
                 inventoryCheckQuery = inventoryCheckQuery.Where(x => x!.Status == queryDto.Status);

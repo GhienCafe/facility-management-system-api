@@ -279,6 +279,11 @@ namespace API_FFMS.Services
                 replaceQuery = replaceQuery.Where(x => x!.Status == queryDto.Status);
             }
 
+            if (queryDto.Priority != null)
+            {
+                replaceQuery = replaceQuery.Where(x => x!.Priority == queryDto.Priority);
+            }
+
             if (!string.IsNullOrEmpty(keyword))
             {
                 replaceQuery = replaceQuery.Where(x => x!.Description!.ToLower().Contains(keyword)

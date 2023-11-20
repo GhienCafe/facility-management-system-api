@@ -261,6 +261,11 @@ namespace API_FFMS.Services
                 repairQuery = repairQuery.Where(x => x!.Status == queryDto.Status);
             }
 
+            if (queryDto.Priority != null)
+            {
+                repairQuery = repairQuery.Where(x => x!.Priority == queryDto.Priority);
+            }
+
             if (!string.IsNullOrEmpty(keyword))
             {
                 repairQuery = repairQuery.Where(x => x!.Description!.ToLower().Contains(keyword)
