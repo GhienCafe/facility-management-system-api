@@ -50,7 +50,7 @@ namespace API_FFMS.Controllers
             return await _service.Delete(id);
         }
 
-        [HttpPut]
+        [HttpPut("{id:guid}")]
         [SwaggerOperation("Update a repair")]
         public async Task<ApiResponse> Update(Guid id, BaseRequestUpdateDto updateDto)
         {

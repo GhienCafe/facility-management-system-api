@@ -374,7 +374,11 @@ public class AssetCheckService : BaseService, IAssetCheckService
         var newMediaFile = updateDto.RelatedFiles.Select(dto => new MediaFile
         {
             FileName = dto.FileName,
-            Uri = dto.Uri
+            Uri = dto.Uri,
+            CreatedAt = CurrentDate,
+            CreatorId = AccountId,
+            ItemId = id,
+            FileType = FileType.File
         }).ToList() ?? new List<MediaFile>();
 
         var additionMediaFiles = newMediaFile.Except(mediaFileQuery).ToList();
