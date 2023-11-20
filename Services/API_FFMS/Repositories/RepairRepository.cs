@@ -380,23 +380,15 @@ public class RepairRepository : IRepairRepository
                                                 .Where(x => x.ItemId == repair.Id && !x.DeletedAt.HasValue)
                                                 .ToList();
 
-            if(additionMediaFiles.Count > 0 ) 
+            if (additionMediaFiles.Count > 0)
             {
-                foreach(var mediaFile in additionMediaFiles)
+                foreach (var mediaFile in additionMediaFiles)
                 {
-                    var newMediaFile = new MediaFile
+                    if (mediaFile != null)
                     {
-                        Id = Guid.NewGuid(),
-                        CreatedAt = now.Value,
-                        CreatorId = creatorId,
-                        EditedAt = now.Value,
-                        EditorId = creatorId,
-                        FileName = mediaFile.FileName,
-                        Uri = mediaFile.Uri,
-                        FileType = FileType.File,
-                        ItemId = repair.Id
-                    };
-                    _context.MediaFiles.Add(newMediaFile);
+                        _context.MediaFiles.Add(mediaFile);
+                    }
+
                 }
             }
 
@@ -404,8 +396,10 @@ public class RepairRepository : IRepairRepository
             {
                 foreach (var mediaFile in removalMediaFiles)
                 {
-                    mediaFile!.DeletedAt = now.Value;
-                    _context.Entry(mediaFile).State = EntityState.Modified;
+                    if (mediaFile != null)
+                    {
+                        _context.MediaFiles.Remove(mediaFile);
+                    }
                 }
             }
 

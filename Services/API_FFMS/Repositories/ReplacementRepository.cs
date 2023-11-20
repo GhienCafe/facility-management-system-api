@@ -287,19 +287,11 @@ namespace API_FFMS.Repositories
                 {
                     foreach (var mediaFile in additionMediaFiles)
                     {
-                        var newMediaFile = new MediaFile
+                        if (mediaFile != null)
                         {
-                            Id = Guid.NewGuid(),
-                            CreatedAt = now.Value,
-                            CreatorId = editorId,
-                            EditedAt = now.Value,
-                            EditorId = editorId,
-                            FileName = mediaFile.FileName,
-                            Uri = mediaFile.Uri,
-                            FileType = FileType.File,
-                            ItemId = replacement.Id
-                        };
-                        _context.MediaFiles.Add(newMediaFile);
+                            _context.MediaFiles.Add(mediaFile);
+                        }
+
                     }
                 }
 
@@ -307,10 +299,13 @@ namespace API_FFMS.Repositories
                 {
                     foreach (var mediaFile in removalMediaFiles)
                     {
-                        mediaFile!.DeletedAt = now.Value;
-                        _context.Entry(mediaFile).State = EntityState.Modified;
+                        if (mediaFile != null)
+                        {
+                            _context.MediaFiles.Remove(mediaFile);
+                        }
                     }
                 }
+
                 await _context.SaveChangesAsync();
                 await _context.Database.CommitTransactionAsync();
                 return true;

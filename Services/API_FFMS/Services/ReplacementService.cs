@@ -126,8 +126,8 @@ namespace API_FFMS.Services
 
             foreach (var replacement in replacements)
             {
-                if (replacement!.Status != RequestStatus.Done ||
-                    replacement.Status != RequestStatus.NotStart ||
+                if (replacement!.Status != RequestStatus.Done &&
+                    replacement.Status != RequestStatus.NotStart &&
                     replacement.Status != RequestStatus.Cancelled)
                 {
                     throw new ApiException($"Không thể xóa yêu cầu đang có trạng thái: {replacement.Status?.GetDisplayName()}" +
@@ -414,7 +414,11 @@ namespace API_FFMS.Services
             var newMediaFile = updateDto.RelatedFiles.Select(dto => new MediaFile
             {
                 FileName = dto.FileName,
-                Uri = dto.Uri
+                Uri = dto.Uri,
+                CreatedAt = CurrentDate,
+                CreatorId = AccountId,
+                ItemId = id,
+                FileType = FileType.File
             }).ToList() ?? new List<MediaFile>();
 
             var additionMediaFiles = newMediaFile.Except(mediaFileQuery).ToList();

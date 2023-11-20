@@ -278,10 +278,8 @@ public class MaintenanceService : BaseService, IMaintenanceService
         if (maintenance == null)
             throw new ApiException("Không tìm thấy nội dung", StatusCode.NOT_FOUND);
 
-        if (maintenance.Status != RequestStatus.NotStart ||
-            maintenance.Status != RequestStatus.Done ||
-            maintenance.Status != RequestStatus.Cancelled)
-            throw new ApiException($"Không thế cập nhật với quy trình đang có trạng thái: {maintenance.Status?.GetDisplayName()}", StatusCode.BAD_REQUEST);
+        if (maintenance.Status != RequestStatus.NotStart)
+            throw new ApiException("Chỉ được cập nhật yêu cầu đang có trạng thái chưa bắt đầu", StatusCode.BAD_REQUEST);
 
         maintenance.Description = updateDto.Description ?? maintenance.Description;
         maintenance.Notes = updateDto.Notes ?? maintenance.Notes;
@@ -296,7 +294,11 @@ public class MaintenanceService : BaseService, IMaintenanceService
         var newMediaFile = updateDto.RelatedFiles.Select(dto => new MediaFile
         {
             FileName = dto.FileName,
-            Uri = dto.Uri
+            Uri = dto.Uri,
+            CreatedAt = CurrentDate,
+            CreatorId = AccountId,
+            ItemId = id,
+            FileType = FileType.File
         }).ToList() ?? new List<MediaFile>();
 
         var additionMediaFiles = newMediaFile.Except(mediaFileQuery).ToList();
@@ -392,11 +394,11 @@ public class MaintenanceService : BaseService, IMaintenanceService
             throw new ApiException("Không tìm thấy yêu cầu bảo trì này", StatusCode.NOT_FOUND);
         }
 
-        if (existingMaintenance.Status != RequestStatus.Done ||
-            existingMaintenance.Status != RequestStatus.NotStart ||
-            existingMaintenance.Status != RequestStatus.Cancelled)
+        if (existingMaintenance!.Status != RequestStatus.Done &&
+                    existingMaintenance.Status != RequestStatus.NotStart &&
+                    existingMaintenance.Status != RequestStatus.Cancelled)
         {
-            throw new ApiException("Chỉ xóa được yêu cầu chưa bắt đầu hoặc đã kết thúc", StatusCode.NOT_FOUND);
+            throw new ApiException($"Không thể xóa yêu cầu đang có trạng thái: {existingMaintenance.Status?.GetDisplayName()}", StatusCode.BAD_REQUEST);
         }
 
         if (!await MainUnitOfWork.MaintenanceRepository.DeleteAsync(existingMaintenance, AccountId, CurrentDate))
@@ -419,10 +421,12 @@ public class MaintenanceService : BaseService, IMaintenanceService
 
         foreach (var maintenance in maintenances)
         {
-            if (maintenance!.Status != RequestStatus.Done || maintenance.Status != RequestStatus.NotStart)
+            if (maintenance!.Status != RequestStatus.Done &&
+                maintenance.Status != RequestStatus.NotStart &&
+                maintenance.Status != RequestStatus.Cancelled)
             {
-                throw new ApiException($"Chỉ xóa được yêu cầu chưa bắt đầu hoặc đã kết thúc, " +
-                                       $"kiểm tra yêu cầu: {maintenance.RequestCode}", StatusCode.NOT_FOUND);
+                throw new ApiException($"Không thể xóa yêu cầu đang có trạng thái: {maintenance.Status?.GetDisplayName()}" +
+                                       $"kiểm tra yêu cầu: {maintenance.RequestCode}", StatusCode.BAD_REQUEST);
             }
         }
 

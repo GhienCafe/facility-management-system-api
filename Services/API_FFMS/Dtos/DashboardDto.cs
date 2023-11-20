@@ -31,6 +31,7 @@ public class AssetStatisticDto
 public class AssetStatisticQueryDto
 {
     public Unit Unit { get; set; } = Unit.Individual;
+    public bool? IsRent {  get; set; }
 }
 
 public class AssetTypeDashboardDto
