@@ -14,11 +14,8 @@ using Google.Apis.Auth.OAuth2;
 
 public interface INotificationService : IBaseService
 {
-    Task SendSingleMessage(NotificationDto noti, string token);
-    Task SendMultipleMessages(RequestDto request);
     Task<ApiResponse> ReadNotification(Guid id);
     Task<ApiResponse> ReadAllNotification();
-
     Task<ApiResponses<NotifcationBaseDto>> GetNotificationOfAPerson(NotificationQueryDto queryDto);
 }
 public class NotificationService : BaseService, INotificationService
@@ -104,101 +101,7 @@ public class NotificationService : BaseService, INotificationService
             (int)Math.Ceiling((double)totalCount / queryDto.PageSize)
         );
     }
-
-    public async Task SendSingleMessage(NotificationDto noti, string token)
-    {
-        // Khởi tạo Firebase nếu chưa được khởi tạo
-        await InitializeFirebase();
-
-        var message = new Message()
-        {
-            Data = new Dictionary<string, string>()
-            {
-                { "score", "850" },
-                { "time", "1:00" },
-            },
-            Notification = new Notification
-            {
-                Title = noti.Title,
-                Body = noti.Body,
-            },
-            Token = token,
-            Webpush = new WebpushConfig
-            {
-                Notification = new WebpushNotification
-                {
-                    Title = noti.Title,
-                    Body = noti.Body,
-                },
-            },
-        };
-
-        string response = await FirebaseMessaging.DefaultInstance.SendAsync(message).ConfigureAwait(false);
-
-        var notification = new MainData.Entities.Notification()
-        {
-            Title = noti.Title,
-            Content = noti.Body,
-            IsRead = false,
-            UserId = AccountId
-        };
-        if (string.IsNullOrEmpty(response))
-        {
-            throw new ApiException("Server error for not valid sent message", StatusCode.BAD_REQUEST);
-        }
-        if (!await MainUnitOfWork.NotificationRepository.InsertAsync(notification, AccountId, CurrentDate))
-        {
-            throw new ApiException("Server error for not insert notification", StatusCode.BAD_REQUEST);
-        }
-    }
-
-    public async Task SendMultipleMessages(RequestDto request)
-    {
-        // Khởi tạo Firebase nếu chưa được khởi tạo
-        await InitializeFirebase();
-
-        var message = new MulticastMessage()
-        {
-            Tokens = request.ListToken!.Tokens,
-            Notification = new Notification
-            {
-                Title = request.Notification?.Title,
-                Body = request.Notification?.Body,
-            },
-            Data = new Dictionary<string, string>()
-            {
-                { "content_type", "notification" },
-                { "value", "2" }
-            },
-            Webpush = new WebpushConfig
-            {
-                Notification = new WebpushNotification
-                {
-                    Title = request.Notification?.Title,
-                    Body = request.Notification?.Body,
-                },
-            },
-        };
-
-        BatchResponse response = await FirebaseMessaging.DefaultInstance.SendMulticastAsync(message).ConfigureAwait(false);
-
-        if (response.FailureCount > 0)
-        {
-            Console.WriteLine($"Failed to send {response.FailureCount} messages");
-
-            for (int i = 0; i < response.Responses.Count; i++)
-            {
-                if (!response.Responses[i].IsSuccess)
-                {
-                    string errorToken = request.ListToken.Tokens[i];
-                    Console.WriteLine($"Failed to send message to token: {errorToken}");
-                }
-            }
-
-            throw new Exception("Server error for not valid sent message");
-        }
-    }
-
+    
     private static Task InitializeFirebase()
     {
         if (FirebaseApp.DefaultInstance == null)

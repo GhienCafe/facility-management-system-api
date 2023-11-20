@@ -35,21 +35,5 @@ namespace API_FFMS.Controllers
         {
             return await _notificationService.GetNotificationOfAPerson(queryDto);
         }
-
-        [HttpPost("{token}")]
-        [AllowAnonymous]
-        public async Task<IActionResult> SendMessage(string token, [FromBody] NotificationDto fcmNotiMessage)
-        {
-            await _notificationService.SendSingleMessage(fcmNotiMessage, token);
-            return Ok("Message sent successfully");
-        }
-
-        [HttpPost("multicast")]
-        [AllowAnonymous]
-        public async Task<IActionResult> SendMulticastMessage([FromBody] RequestDto request)
-        {
-            await _notificationService.SendMultipleMessages(request);
-            return Ok("Multicast message sent successfully");
-        }
     }
 }

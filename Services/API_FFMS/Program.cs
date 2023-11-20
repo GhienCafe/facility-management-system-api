@@ -1,8 +1,8 @@
 using System.Reflection;
 using AppCore.Configs;
-using AppCore.Data.Hubs;
 using AppCore.Extensions;
 using MainData;
+using MainData.Hubs;
 using MainData.Middlewares;
 using Microsoft.AspNetCore.Mvc.ApiExplorer;
 using Microsoft.EntityFrameworkCore;
@@ -51,7 +51,7 @@ app.UseWebSockets();
 app.UseCors("CorsPolicy");
 app.UseConfig();
 app.MapControllers();
-app.MapHub<ChatHub>("chat-hub");
+app.MapHub<NotificationHub>("notification-hub");
 
 app.UseMiddleware<AuthMiddleware>();
 app.Run();
