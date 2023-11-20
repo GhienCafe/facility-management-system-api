@@ -148,6 +148,7 @@ public class AssetService : BaseService, IAssetService
                 Description = x.Type.Description,
                 TypeCode = x.Type.TypeCode,
                 TypeName = x.Type.TypeName,
+                IsIdentified = x.Type.IsIdentified,
                 Unit = x.Type.Unit,
                 UnitObj = x.Type.Unit.GetValue(),
                 CreatedAt = x.Type.CreatedAt,

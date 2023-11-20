@@ -9,6 +9,7 @@ namespace API_FFMS.Dtos
         public string? TypeCode { get; set; }
         public string? TypeName { get; set; }
         public string? Description { get; set; }
+        public bool? IsIdentified { get; set; }
         public Unit? Unit { get; set; }
         public EnumValue? UnitObj { get; set; }
         public string? ImageUrl { get; set; }
