@@ -47,7 +47,7 @@ public class RepairRepository : IRepairRepository
                 {
                     CreatedAt = now.Value,
                     Status = NotificationStatus.Waiting,
-                    Content = entity.Description,
+                    Content = entity.Description ?? "Yêu cầu sửa chữa",
                     Title = RequestType.Repairation.GetDisplayName(),
                     Type = NotificationType.Task,
                     CreatorId = creatorId,
@@ -328,7 +328,7 @@ public class RepairRepository : IRepairRepository
                 CreatedAt = now.Value,
                 EditedAt = now.Value,
                 Status = NotificationStatus.Waiting,
-                Content = repair.Description,
+                Content = repair.Description ?? "Yêu cầu sửa chữa",
                 Title = RequestType.Repairation.GetDisplayName(),
                 Type = NotificationType.Task,
                 CreatorId = creatorId,

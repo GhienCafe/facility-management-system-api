@@ -231,7 +231,7 @@ namespace API_FFMS.Repositories
                     CreatedAt = now.Value,
                     EditedAt = now.Value,
                     Status = NotificationStatus.Waiting,
-                    Content = replacement.Description,
+                    Content = replacement.Description ?? "Yêu cầu thay thế",
                     Title = RequestType.Replacement.GetDisplayName(),
                     Type = NotificationType.Task,
                     CreatorId = creatorId,
