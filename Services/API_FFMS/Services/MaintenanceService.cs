@@ -56,6 +56,11 @@ public class MaintenanceService : BaseService, IMaintenanceService
             maintenanceQueryable = maintenanceQueryable.Where(x => x!.Status == queryDto.Status);
         }
 
+        if (queryDto.Priority != null)
+        {
+            maintenanceQueryable = maintenanceQueryable.Where(x => x!.Priority == queryDto.Priority);
+        }
+
         if (!string.IsNullOrEmpty(keyword))
         {
             maintenanceQueryable = maintenanceQueryable.Where(x => x!.Description!.ToLower().Contains(keyword)
