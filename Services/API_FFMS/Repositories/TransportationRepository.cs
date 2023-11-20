@@ -10,7 +10,7 @@ public interface ITransportationRepository
     Task<bool> UpdateStatus(Transportation transportation, RequestStatus? statusUpdate, Guid? editorId, DateTime? now = null);
     Task<bool> DeleteTransport(Transportation transportation, Guid? deleterId, DateTime? now = null);
     Task<bool> DeleteTransports(List<Transportation?> transportations, Guid? deleterId, DateTime? now = null);
-    Task<bool> InsertTransportation(Transportation transportation, List<Asset?> assets, List<MediaFile> mediaFiles, Guid? creatorId, DateTime? now = null);
+    Task<bool> InsertTransportation(Transportation transportation, List<TransportationDetail> transportationDetails, List<MediaFile> mediaFiles, Guid? creatorId, DateTime? now = null);
     Task<bool> UpdateTransportation(Transportation transportation, List<MediaFile?> additionMediaFiles, List<MediaFile?> removalMediaFiles, Guid? editorId, DateTime? now = null);
 }
 public class TransportationRepository : ITransportationRepository
@@ -165,7 +165,7 @@ public class TransportationRepository : ITransportationRepository
         }
     }
 
-    public async Task<bool> InsertTransportation(Transportation transportation, List<Asset?> assets, List<MediaFile> mediaFiles, Guid? creatorId, DateTime? now = null)
+    public async Task<bool> InsertTransportation(Transportation transportation, List<TransportationDetail> transportationDetails, List<MediaFile> mediaFiles, Guid? creatorId, DateTime? now = null)
     {
         await _context.Database.BeginTransactionAsync();
         now ??= DateTime.UtcNow;
@@ -179,20 +179,12 @@ public class TransportationRepository : ITransportationRepository
             transportation.RequestDate = now.Value;
             await _context.Transportations.AddAsync(transportation);
 
-            foreach (var asset in assets)
+            foreach (var transpsortDetail in transportationDetails)
             {
-                var transpsortDetail = new TransportationDetail
+                if(transpsortDetail != null)
                 {
-                    Id = Guid.NewGuid(),
-                    AssetId = asset!.Id,
-                    TransportationId = transportation.Id,
-                    RequestDate = now.Value,
-                    Quantity = transportation.Quantity,
-                    CreatorId = creatorId,
-                    CreatedAt = now.Value,
-                    EditedAt = now.Value
-                };
-                await _context.TransportationDetails.AddAsync(transpsortDetail);
+                    _context.TransportationDetails.Add(transpsortDetail);
+                }
             }
 
             var notification = new Notification

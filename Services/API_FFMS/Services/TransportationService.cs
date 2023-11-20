@@ -2,6 +2,7 @@
 using API_FFMS.Repositories;
 using AppCore.Extensions;
 using AppCore.Models;
+using DocumentFormat.OpenXml.Spreadsheet;
 using MainData;
 using MainData.Entities;
 using MainData.Repositories;
@@ -33,12 +34,17 @@ namespace API_FFMS.Services
 
         public async Task<ApiResponse> Create(TransportCreateDto createDto)
         {
-            var assets = await MainUnitOfWork.AssetRepository.FindAsync(
-                new Expression<Func<Asset, bool>>[]
-                {
-                    x => !x!.DeletedAt.HasValue,
-                    x => createDto.Assets.Select(dto => dto.AssetId).Contains(x.Id)
-                }, null);
+            //var assets = await MainUnitOfWork.AssetRepository.FindAsync(
+            //    new Expression<Func<Asset, bool>>[]
+            //    {
+            //        x => !x!.DeletedAt.HasValue,
+            //        x => createDto.Assets.Select(dto => dto.AssetId).Contains(x.Id)
+            //    }, null);
+
+            var assets = MainUnitOfWork.AssetRepository.GetQuery()
+                                                       .Include(x => x.Type)
+                                                       .Where(x => createDto.Assets.Select(dto => dto.AssetId).Contains(x.Id))
+                                                       .ToList();
 
             var assetQuery = MainUnitOfWork.AssetRepository.GetQuery()
                                                             .Where(x => createDto.Assets!.Select(dto => dto.AssetId).Contains(x!.Id));
@@ -111,7 +117,40 @@ namespace API_FFMS.Services
                 }
             }
 
-            if (!await _transportationRepository.InsertTransportation(transportation, assets, mediaFiles, AccountId, CurrentDate))
+            var transportationDetails = new List<TransportationDetail>();
+            foreach (var asset in assets)
+            {
+                if(asset != null && asset.Type!.Unit == Unit.Individual)
+                {
+                    var transpsortDetail = new TransportationDetail
+                    {
+                        Id = Guid.NewGuid(),
+                        AssetId = asset.Id,
+                        TransportationId = transportation.Id,
+                        RequestDate = CurrentDate,
+                        Quantity = 1,
+                        CreatorId = AccountId,
+                        CreatedAt = CurrentDate
+                    };
+                    transportationDetails.Add(transpsortDetail);
+                } 
+                else if (asset != null && asset.Type!.Unit == Unit.Quantity)
+                {
+                    var transpsortDetail = new TransportationDetail
+                    {
+                        Id = Guid.NewGuid(),
+                        AssetId = asset.Id,
+                        TransportationId = transportation.Id,
+                        RequestDate = CurrentDate,
+                        Quantity = 1,
+                        CreatorId = AccountId,
+                        CreatedAt = CurrentDate
+                    };
+                    transportationDetails.Add(transpsortDetail);
+                }
+            }
+
+            if (!await _transportationRepository.InsertTransportation(transportation, transportationDetails, mediaFiles, AccountId, CurrentDate))
             {
                 throw new ApiException("Tạo yêu cầu thất bại", StatusCode.SERVER_ERROR);
             }

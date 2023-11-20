@@ -47,4 +47,9 @@ public class ReplaceCreateDto : BaseRequestCreateDto
     public Guid NewAssetId { get; set; }
 }
 
+public class ReplaceUpdateDto : BaseRequestUpdateDto
+{
+    public Guid? NewAssetId { get; set; }
+}
+
 public class ReplacementQueryDto : BaseRequestQueryDto { }
