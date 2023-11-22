@@ -6,8 +6,10 @@ namespace MainData.Entities;
 
 public class InventoryCheckConfig : BaseEntity
 {
-    public int CheckPeriod { get; set; }
+    public int? CheckPeriod { get; set; }
     public string? Description { get; set; }
+    public bool Status { get; set; }
+    public DateTime? CheckDate { get; set; }
     public DateTime? LastCheckedDate { get; set; }
     
     //Relationship
@@ -19,9 +21,11 @@ public class InventoryCheckConfigConfig : IEntityTypeConfiguration<InventoryChec
     public void Configure(EntityTypeBuilder<InventoryCheckConfig> builder)
     {
         builder.ToTable("InventoryCheckConfigs");
-        builder.Property(x => x.CheckPeriod).IsRequired();
+        builder.Property(x => x.CheckPeriod).IsRequired(false);
         builder.Property(x => x.Description).IsRequired(false);
         builder.Property(x => x.LastCheckedDate).HasColumnType("datetime").IsRequired(false);
+        builder.Property(x => x.CheckDate).HasColumnType("datetime").IsRequired(false);
+        builder.Property(x => x.Status).IsRequired().HasDefaultValue(false);
 
         //Relationship
     }

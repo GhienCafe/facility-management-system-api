@@ -60,6 +60,12 @@ public class InventoryCheckService : BaseService, IInventoryCheckService
                     x => roomAssets.Select(ra => ra!.AssetId).Contains(x.Id)
                 }, null);
 
+            var mediaFiles = createDto.RelatedFiles?.Select(file => new MediaFile
+            {
+                FileName = file.FileName ?? "",
+                Uri = file.Uri ?? ""
+            }).ToList();
+
             var inventoryCheck = new InventoryCheck
             {
                 RequestCode = GenerateRequestCode(),
@@ -70,7 +76,7 @@ public class InventoryCheckService : BaseService, IInventoryCheckService
                 AssignedTo = createDto.AssignedTo
             };
 
-            if (!await _repository.InsertInventoryCheck(inventoryCheck, rooms, AccountId, CurrentDate))
+            if (!await _repository.InsertInventoryCheck(inventoryCheck, rooms, mediaFiles, AccountId, CurrentDate))
             {
                 throw new ApiException("Tạo yêu cầu thất bại", StatusCode.SERVER_ERROR);
             }
@@ -101,7 +107,7 @@ public class InventoryCheckService : BaseService, IInventoryCheckService
             inventoryCheck.StatusObj = inventoryCheck.Status.GetValue();
 
 
-             
+
             var userQuery = MainUnitOfWork.UserRepository.GetQuery().Where(x => x!.Id == inventoryCheck.AssignedTo);
             inventoryCheck.Staff = await userQuery.Select(x => new AssignedInventoryCheckDto
             {
@@ -399,7 +405,7 @@ public class InventoryCheckService : BaseService, IInventoryCheckService
 
         existingInventCheck.Status = updateStatusDto.Status ?? existingInventCheck.Status;
 
-        if(!await _repository.UpdateInventoryCheckStatus(existingInventCheck, updateStatusDto.Status, AccountId, CurrentDate))
+        if (!await _repository.UpdateInventoryCheckStatus(existingInventCheck, updateStatusDto.Status, AccountId, CurrentDate))
         {
             throw new ApiException("Xác nhận yêu cầu thất bại", StatusCode.SERVER_ERROR);
         }
