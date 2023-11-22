@@ -7,7 +7,7 @@ namespace API_FFMS.Repositories;
 
 public interface IInventoryCheckRepository
 {
-    Task<bool> InsertInventoryCheck(InventoryCheck inventoryCheck, List<Room?> rooms, Guid? creatorId, DateTime? now = null);
+    Task<bool> InsertInventoryCheck(InventoryCheck inventoryCheck, List<Room?> rooms, List<MediaFile>? mediaFiles, Guid? creatorId, DateTime? now = null);
     Task<bool> UpdateInventoryCheckStatus(InventoryCheck inventoryCheck, RequestStatus? statusUpdate, Guid? editorId, DateTime? now = null);
     Task<bool> UpdateInventoryCheck(InventoryCheck inventoryCheck, List<MediaFile?> additionMediaFiles, List<MediaFile?> removalMediaFiles, Guid? editorId, DateTime? now = null);
 }
@@ -36,7 +36,7 @@ public class InventoryCheckRepository : IInventoryCheckRepository
         return newRequestNumber;
     }
 
-    public async Task<bool> InsertInventoryCheck(InventoryCheck inventoryCheck, List<Room?> rooms, Guid? creatorId, DateTime? now = null)
+    public async Task<bool> InsertInventoryCheck(InventoryCheck inventoryCheck, List<Room?> rooms, List<MediaFile>? mediaFiles, Guid? creatorId, DateTime? now = null)
     {
         await _context.Database.BeginTransactionAsync();
         now ??= DateTime.UtcNow;
@@ -52,29 +52,55 @@ public class InventoryCheckRepository : IInventoryCheckRepository
 
             foreach (var room in rooms)
             {
-                var assets = _context.RoomAssets
-                                         .Where(ra => ra.RoomId == room!.Id && ra.ToDate == null)
-                                         .Select(ra => ra.Asset)
-                                         .ToList();
-
-                foreach (var asset in assets)
+                if (room != null)
                 {
-                    var roomAssets = _context.RoomAssets
-                                        .Where(ra => ra.RoomId == room!.Id && ra.AssetId == asset!.Id && ra.ToDate == null)
-                                        .FirstOrDefault();
-                    var inventoryCheckDetail = new InventoryCheckDetail
+                    var assets = _context.RoomAssets
+                                             .Where(ra => ra.RoomId == room.Id && ra.ToDate == null)
+                                             .Select(ra => ra.Asset)
+                                             .ToList();
+
+                    foreach (var asset in assets)
+                    {
+                        if (asset != null)
+                        {
+                            var roomAssets = _context.RoomAssets
+                                                .Where(ra => ra.RoomId == room.Id && ra.AssetId == asset.Id && ra.ToDate == null)
+                                                .FirstOrDefault();
+                            var inventoryCheckDetail = new InventoryCheckDetail
+                            {
+                                Id = Guid.NewGuid(),
+                                AssetId = asset.Id,
+                                InventoryCheckId = inventoryCheck.Id,
+                                CreatorId = creatorId,
+                                CreatedAt = now.Value,
+                                RoomId = room.Id,
+                                StatusBefore = asset.Status,
+                                QuantityBefore = roomAssets!.Quantity
+                            };
+
+                            await _context.InventoryCheckDetails.AddAsync(inventoryCheckDetail);
+                        }
+                    }
+                }
+            }
+
+            if (mediaFiles != null)
+            {
+                foreach (var mediaFile in mediaFiles)
+                {
+                    var newMediaFile = new MediaFile
                     {
                         Id = Guid.NewGuid(),
-                        AssetId = asset!.Id,
-                        InventoryCheckId = inventoryCheck.Id,
-                        CreatorId = creatorId,
                         CreatedAt = now.Value,
-                        RoomId = room!.Id,
-                        StatusBefore = asset.Status,
-                        QuantityBefore = roomAssets!.Quantity
+                        CreatorId = creatorId,
+                        EditedAt = now.Value,
+                        EditorId = creatorId,
+                        FileName = mediaFile.FileName,
+                        Uri = mediaFile.Uri,
+                        FileType = FileType.File,
+                        ItemId = inventoryCheck.Id
                     };
-
-                    await _context.InventoryCheckDetails.AddAsync(inventoryCheckDetail);
+                    _context.MediaFiles.Add(newMediaFile);
                 }
             }
 
@@ -129,7 +155,7 @@ public class InventoryCheckRepository : IInventoryCheckRepository
                     var asset = _context.Assets
                             .FirstOrDefault(x => x.Id == detail.AssetId);
 
-                    if(asset != null)
+                    if (asset != null)
                     {
                         asset.Status = detail.StatusReported;
                         _context.Entry(asset).State = EntityState.Modified;
