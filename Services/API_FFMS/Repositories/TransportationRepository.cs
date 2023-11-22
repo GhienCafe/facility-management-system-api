@@ -186,6 +186,26 @@ public class TransportationRepository : ITransportationRepository
                 }
             }
 
+            if (mediaFiles != null)
+            {
+                foreach (var mediaFile in mediaFiles)
+                {
+                    var newMediaFile = new MediaFile
+                    {
+                        Id = Guid.NewGuid(),
+                        CreatedAt = now.Value,
+                        CreatorId = creatorId,
+                        EditedAt = now.Value,
+                        EditorId = creatorId,
+                        FileName = mediaFile.FileName,
+                        Uri = mediaFile.Uri,
+                        FileType = FileType.File,
+                        ItemId = transportation.Id
+                    };
+                    _context.MediaFiles.Add(newMediaFile);
+                }
+            }
+
             var notification = new Notification
             {
                 CreatedAt = now.Value,
@@ -200,23 +220,6 @@ public class TransportationRepository : ITransportationRepository
                 UserId = transportation.AssignedTo
             };
             await _context.Notifications.AddAsync(notification);
-
-            foreach (var mediaFile in mediaFiles)
-            {
-                var newMediaFile = new MediaFile
-                {
-                    Id = Guid.NewGuid(),
-                    CreatedAt = now.Value,
-                    CreatorId = creatorId,
-                    EditedAt = now.Value,
-                    EditorId = creatorId,
-                    FileName = mediaFile.FileName,
-                    Uri = mediaFile.Uri,
-                    FileType = FileType.File,
-                    ItemId = transportation.Id
-                };
-                _context.MediaFiles.Add(newMediaFile);
-            }
 
             await _context.SaveChangesAsync();
             await _context.Database.CommitTransactionAsync();
