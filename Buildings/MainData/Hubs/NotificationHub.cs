@@ -41,13 +41,13 @@ namespace MainData.Hubs
                             .Where(x => !x.DeletedAt.HasValue && x.UserId == userId && x.IsRead == false)
                             .ToListAsync();
 
-                        await Clients.All.SendAsync("ReceiveNotifications", notifications);
+                        await Clients.Caller.SendAsync("ReceiveNotifications", notifications);
                     }
                 }
                 else
                 {
                     // Handle the case when userIdClaim is null or user ID is not in the expected format
-                    await Clients.All.SendAsync("ReceiveNotifications", null);
+                    await Clients.Caller.SendAsync("ReceiveNotifications", null);
                 }
             }
             catch (Exception ex)
