@@ -12,6 +12,7 @@ public interface IMaintenanceRepository
     Task<bool> InsertMaintenances(List<Maintenance> maintenances, List<MediaFile>? mediaFiles, Guid? creatorId, DateTime? now = null);
     Task<bool> DeleteMaintenances(List<Maintenance?> maintenances, Guid? deleterId, DateTime? now = null);
     Task<bool> DeleteMaintenance(Maintenance maintenance, Guid? deleterId, DateTime? now = null);
+    Task<bool> UpdateMaintenance(Maintenance maintenance, List<MediaFile?> additionMediaFiles, List<MediaFile?> removalMediaFiles, Guid? editorId, DateTime? now = null);
 }
 
 public class MaintenanceRepository : IMaintenanceRepository
@@ -46,7 +47,7 @@ public class MaintenanceRepository : IMaintenanceRepository
                 {
                     CreatedAt = now.Value,
                     Status = NotificationStatus.Waiting,
-                    Content = entity.Description,
+                    Content = entity.Description ?? "Yêu cầu bảo trì",
                     Title = RequestType.Maintenance.GetDisplayName(),
                     Type = NotificationType.Task,
                     CreatorId = creatorId,
@@ -342,7 +343,7 @@ public class MaintenanceRepository : IMaintenanceRepository
                 CreatedAt = now.Value,
                 EditedAt = now.Value,
                 Status = NotificationStatus.Waiting,
-                Content = entity.Description,
+                Content = entity.Description ?? "Yêu cầu bảo trì",
                 Title = RequestType.Maintenance.GetDisplayName(),
                 Type = NotificationType.Task,
                 CreatorId = creatorId,
@@ -367,6 +368,54 @@ public class MaintenanceRepository : IMaintenanceRepository
                     ItemId = entity.Id
                 };
                 _context.MediaFiles.Add(newMediaFile);
+            }
+
+            await _context.SaveChangesAsync();
+            await _context.Database.CommitTransactionAsync();
+            return true;
+        }
+        catch
+        {
+            await _context.Database.RollbackTransactionAsync();
+            return false;
+        }
+    }
+
+    public async Task<bool> UpdateMaintenance(Maintenance maintenance, List<MediaFile?> additionMediaFiles, List<MediaFile?> removalMediaFiles, Guid? editorId, DateTime? now = null)
+    {
+        await _context.Database.BeginTransactionAsync();
+        now ??= DateTime.UtcNow;
+        try
+        {
+            maintenance.EditorId = editorId;
+            maintenance.EditedAt = now.Value;
+            _context.Entry(maintenance).State = EntityState.Modified;
+
+            var mediaFiles = _context.MediaFiles.AsNoTracking()
+                                                .Where(x => x.ItemId == maintenance.Id && !x.DeletedAt.HasValue)
+                                                .ToList();
+
+            if (additionMediaFiles.Count > 0)
+            {
+                foreach (var mediaFile in additionMediaFiles)
+                {
+                    if (mediaFile != null)
+                    {
+                        _context.MediaFiles.Add(mediaFile);
+                    }
+
+                }
+            }
+
+            if (removalMediaFiles.Count > 0)
+            {
+                foreach (var mediaFile in removalMediaFiles)
+                {
+                    if (mediaFile != null)
+                    {
+                        _context.MediaFiles.Remove(mediaFile);
+                    }
+                }
             }
 
             await _context.SaveChangesAsync();

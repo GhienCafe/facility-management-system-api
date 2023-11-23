@@ -88,7 +88,7 @@ public class InventoryCheckCreateDto
     public Priority Priority { get; set; } = Priority.Medium;
     public required Guid AssignedTo { get; set; }
     public List<RoomInvenCheckCretaeDto>? Rooms { get; set; }
-    //public MediaFileCreateDto? RelatedFile { get; set; }
+    public List<MediaFileCreateDto>? RelatedFiles { get; set; }
 }
 
 public class RoomInvenCheckCretaeDto

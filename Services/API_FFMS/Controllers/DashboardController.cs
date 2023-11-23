@@ -14,14 +14,14 @@ public class DashboardController : BaseController
     {
         _dashboardService = dashboardService;
     }
-    
-    [SwaggerOperation("Get base information")]
+
+    [SwaggerOperation("Get statistic asset")]
     [HttpGet]
-    public async Task<ApiResponse<DashboardDto>> GetInformation()
+    public async Task<ApiResponse<AssetStatisticDto>> GetAssetStatistic([FromQuery] AssetStatisticQueryDto queryDto)
     {
-        return await _dashboardService.GetInformation();
+        return await _dashboardService.GetAssetStatistic(queryDto);
     }
-    
+
     [SwaggerOperation("Get asset status information")]
     [HttpGet("analysis-asset-status")]
     public async Task<ApiResponse<IEnumerable<AssetDashBoardInformation>>> GetAssetStatus()
@@ -35,7 +35,7 @@ public class DashboardController : BaseController
     {
         return await _dashboardService.GetBaseTaskInformation();
     }
-    
+
     [SwaggerOperation("Get base task information base on status")]
     [HttpGet("analysis-task-status")]
     public async Task<ApiResponse<IEnumerable<TaskBasedOnStatusDashboardDto>>> GetTaskInformationBasedOnStatus()
@@ -48,5 +48,11 @@ public class DashboardController : BaseController
     public async Task<ApiResponse<TaskStatisticDto>> GetTaskStatistic()
     {
         return await _dashboardService.GetTaskStatistic();
+    }
+    [SwaggerOperation("Get statistic model")]
+    [HttpGet("stastic-model")]
+    public async Task<ApiResponse<IEnumerable<ModelStatisticDto>>> GetModelStatistic()
+    {
+        return await _dashboardService.GetModelStatistic();
     }
 }

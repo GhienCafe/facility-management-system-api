@@ -21,3 +21,9 @@ public class MediaFileDetailDto
     public string? FileName { get; set; }
     public string? Uri { get; set; }
 }
+
+public class MediaFileUpdateDto
+{
+    public string? FileName { get; set; }
+    public string? Uri { get; set; }
+}

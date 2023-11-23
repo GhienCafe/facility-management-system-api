@@ -33,15 +33,15 @@ namespace API_FFMS.Services
 
         public async Task<ApiResponse> Create(TransportCreateDto createDto)
         {
-            var assets = await MainUnitOfWork.AssetRepository.FindAsync(
-                new Expression<Func<Asset, bool>>[]
-                {
-                    x => !x!.DeletedAt.HasValue,
-                    x => createDto.Assets.Select(dto => dto.AssetId).Contains(x.Id)
-                }, null);
+            var assets = MainUnitOfWork.AssetRepository.GetQuery()
+                                                       .Include(x => x!.Type)
+                                                       .Where(x => createDto.Assets.Select(dto => dto.AssetId)
+                                                                                   .Contains(x!.Id))
+                                                       .ToList();
 
             var assetQuery = MainUnitOfWork.AssetRepository.GetQuery()
-                                                            .Where(x => createDto.Assets!.Select(dto => dto.AssetId).Contains(x!.Id));
+                                                           .Where(x => createDto.Assets!.Select(dto => dto.AssetId)
+                                                                                        .Contains(x!.Id));
             var typeQuery = MainUnitOfWork.AssetTypeRepository.GetQuery();
             var joinTable = from asset in assetQuery
                             join type in typeQuery on asset.TypeId equals type.Id into typeGroup
@@ -56,37 +56,42 @@ namespace API_FFMS.Services
 
             foreach (var a in assetList)
             {
-                    if (a.AssetType.Unit == Unit.Individual && a.Asset.RequestStatus != RequestType.Operational)
-                    {
-                        throw new ApiException("Trang thiết bị đang trong một yêu cầu khác", StatusCode.SERVER_ERROR);
-                    }
+                if (a.AssetType.Unit == Unit.Individual && a.Asset.RequestStatus != RequestType.Operational)
+                {
+                    throw new ApiException("Trang thiết bị đang trong một yêu cầu khác", StatusCode.SERVER_ERROR);
+                }
                 var correspondingDto = createDto.Assets!.FirstOrDefault(dto => dto.AssetId == a.Asset.Id);
                 if (correspondingDto != null)
                 {
                     a.Asset.Quantity = correspondingDto.Quantity ?? 0;
                 }
             }
+            var totalQuantity = createDto.Assets?.Sum(assetDto => assetDto.Quantity);
 
             var toRoom = await MainUnitOfWork.RoomRepository.FindOneAsync(createDto.ToRoomId);
-            var roomAssets = await MainUnitOfWork.RoomAssetRepository.FindAsync(
-                new Expression<Func<RoomAsset, bool>>[]
-                {
-                    x => !x.DeletedAt.HasValue,
-                    x => x.RoomId == toRoom!.Id,
-                    x => x.ToDate == null
-                }, null);
-
-            var currentQuantityAssetInRoom = roomAssets.Sum(x => x!.Quantity);
-
-            var totalQuantity = createDto.Assets?.Sum(assetDto => assetDto.Quantity);
-            var checkCapacity = currentQuantityAssetInRoom + totalQuantity;
-            if (checkCapacity > toRoom!.Capacity)
+            if (toRoom != null)
             {
-                throw new ApiException("Số lượng trang thiết bị vượt quá dung tích phòng", StatusCode.UNPROCESSABLE_ENTITY);
+                var roomAssets = await MainUnitOfWork.RoomAssetRepository.FindAsync(
+                    new Expression<Func<RoomAsset, bool>>[]
+                    {
+                        x => !x.DeletedAt.HasValue,
+                        x => x.RoomId == toRoom.Id,
+                        x => x.ToDate == null
+                    }, null);
+
+                var currentQuantityAssetInRoom = roomAssets.Sum(x => x!.Quantity);
+
+
+                var checkCapacity = currentQuantityAssetInRoom + totalQuantity;
+                if (checkCapacity > toRoom.Capacity)
+                {
+                    throw new ApiException("Số lượng trang thiết bị vượt quá dung tích phòng", StatusCode.UNPROCESSABLE_ENTITY);
+                }
             }
 
             var transportation = new Transportation
             {
+                Id = Guid.NewGuid(),
                 RequestCode = GenerateRequestCode(),
                 Description = createDto.Description,
                 Notes = createDto.Notes,
@@ -97,21 +102,62 @@ namespace API_FFMS.Services
                 ToRoomId = createDto.ToRoomId
             };
 
-            var mediaFiles = new List<MediaFile>();
-            if (createDto.RelatedFiles != null)
+            var mediaFiles = createDto.RelatedFiles?.Select(file => new MediaFile 
+            { 
+                FileName = file.FileName ?? "",
+                Uri = file.Uri ?? "" 
+            }).ToList();
+
+            var transportationDetails = new List<TransportationDetail>();
+            foreach (var asset in assets)
             {
-                foreach (var file in createDto.RelatedFiles)
+                if (asset != null)
                 {
-                    var newMediaFile = new MediaFile
+                    if (asset.Type!.IsIdentified == true || asset.Type.Unit == Unit.Individual)
                     {
-                        FileName = file.FileName ?? "",
-                        Uri = file.Uri ?? ""
-                    };
-                    mediaFiles.Add(newMediaFile);
+                        var roomAsset = await MainUnitOfWork.RoomAssetRepository.FindOneAsync(
+                            new Expression<Func<RoomAsset, bool>>[]
+                            {
+                                x => !x.DeletedAt.HasValue,
+                                x => x.AssetId == asset.Id,
+                                x => x.ToDate == null
+                            });
+                        if (roomAsset != null && roomAsset.RoomId == toRoom!.Id)
+                        {
+                            throw new ApiException($"Thiết bị {asset.AssetCode} đã có trong phòng này", StatusCode.UNPROCESSABLE_ENTITY);
+                        }
+
+                        var transpsortDetail = new TransportationDetail
+                        {
+                            Id = Guid.NewGuid(),
+                            AssetId = asset.Id,
+                            TransportationId = transportation.Id,
+                            RequestDate = CurrentDate,
+                            Quantity = 1,
+                            CreatorId = AccountId,
+                            CreatedAt = CurrentDate
+                        };
+                        transportationDetails.Add(transpsortDetail);
+                    }
+                    else if (asset.Type!.IsIdentified == false || asset.Type.Unit == Unit.Quantity)
+                    {
+                        var correspondingDto = createDto.Assets!.FirstOrDefault(dto => dto.AssetId == asset.Id);
+                        var transpsortDetail = new TransportationDetail
+                        {
+                            Id = Guid.NewGuid(),
+                            AssetId = asset.Id,
+                            TransportationId = transportation.Id,
+                            RequestDate = CurrentDate,
+                            Quantity = (int?)correspondingDto!.Quantity,
+                            CreatorId = AccountId,
+                            CreatedAt = CurrentDate
+                        };
+                        transportationDetails.Add(transpsortDetail);
+                    }
                 }
             }
 
-            if (!await _transportationRepository.InsertTransportation(transportation, assets, mediaFiles, AccountId, CurrentDate))
+            if (!await _transportationRepository.InsertTransportation(transportation, transportationDetails, mediaFiles, AccountId, CurrentDate))
             {
                 throw new ApiException("Tạo yêu cầu thất bại", StatusCode.SERVER_ERROR);
             }
@@ -132,8 +178,8 @@ namespace API_FFMS.Services
                 throw new ApiException("Không tìm thấy yêu cầu vận chuyển này", StatusCode.NOT_FOUND);
             }
 
-            if (existingTransport.Status != RequestStatus.Done ||
-               existingTransport.Status != RequestStatus.NotStart ||
+            if (existingTransport.Status != RequestStatus.Done &&
+               existingTransport.Status != RequestStatus.NotStart &&
                existingTransport.Status != RequestStatus.Cancelled)
             {
                 throw new ApiException($"Không thể xóa yêu cầu đang có trạng thái: {existingTransport.Status?.GetDisplayName()}", StatusCode.BAD_REQUEST);
@@ -159,8 +205,8 @@ namespace API_FFMS.Services
 
             foreach (var transportation in transportations)
             {
-                if (transportation!.Status != RequestStatus.Done ||
-                    transportation.Status != RequestStatus.NotStart ||
+                if (transportation!.Status != RequestStatus.Done &&
+                    transportation.Status != RequestStatus.NotStart &&
                     transportation.Status != RequestStatus.Cancelled)
                 {
                     throw new ApiException($"Không thể xóa yêu cầu đang có trạng thái: {transportation.Status?.GetDisplayName()}" +
@@ -321,6 +367,11 @@ namespace API_FFMS.Services
                 transportQuery = transportQuery.Where(x => x!.Status == queryDto.Status);
             }
 
+            if (queryDto.Priority != null)
+            {
+                transportQuery = transportQuery.Where(x => x!.Priority == queryDto.Priority);
+            }
+
             if (!string.IsNullOrEmpty(keyword))
             {
                 transportQuery = transportQuery.Where(x => x!.Description!.ToLower().Contains(keyword)
@@ -395,6 +446,19 @@ namespace API_FFMS.Services
                     FloorId = t.ToRoom.FloorId,
                     CreatedAt = t.ToRoom.CreatedAt,
                     EditedAt = t.ToRoom.EditedAt
+                },
+                AssignTo = new UserBaseDto
+                {
+                    UserCode = t.User!.UserCode,
+                    Fullname = t.User.Fullname,
+                    RoleObj = t.User.Role.GetValue(),
+                    Avatar = t.User.Avatar,
+                    StatusObj = t.User.Status.GetValue(),
+                    Email = t.User.Email,
+                    PhoneNumber = t.User.PhoneNumber,
+                    Address = t.User.Address,
+                    Gender = t.User.Gender,
+                    Dob = t.User.Dob
                 }
             }).ToListAsync();
             transportations = await _mapperRepository.MapCreator(transportations);
@@ -415,11 +479,9 @@ namespace API_FFMS.Services
                 throw new ApiException("Không tìm thấy yêu cầu vận chuyển này", StatusCode.NOT_FOUND);
             }
 
-            if (existingTransport.Status != RequestStatus.Done ||
-               existingTransport.Status != RequestStatus.NotStart ||
-               existingTransport.Status != RequestStatus.Cancelled)
+            if (existingTransport.Status != RequestStatus.NotStart)
             {
-                throw new ApiException($"Không thể cập nhật yêu cầu đang có trạng thái: {existingTransport.Status?.GetDisplayName()}", StatusCode.BAD_REQUEST);
+                throw new ApiException("Chỉ được cập nhật yêu cầu đang có trạng thái chưa bắt đầu", StatusCode.BAD_REQUEST);
             }
 
             existingTransport.Description = updateDto.Description ?? existingTransport.Description;
@@ -428,7 +490,22 @@ namespace API_FFMS.Services
             existingTransport.AssignedTo = updateDto.AssignedTo ?? existingTransport.AssignedTo;
             existingTransport.IsInternal = updateDto.IsInternal ?? existingTransport.IsInternal;
 
-            if (!await MainUnitOfWork.TransportationRepository.UpdateAsync(existingTransport, AccountId, CurrentDate))
+            var mediaFileQuery = MainUnitOfWork.MediaFileRepository.GetQuery().Where(x => x!.ItemId == id).ToList();
+
+            var newMediaFile = updateDto.RelatedFiles.Select(dto => new MediaFile
+            {
+                FileName = dto.FileName,
+                Uri = dto.Uri,
+                CreatedAt = CurrentDate,
+                CreatorId = AccountId,
+                ItemId = id,
+                FileType = FileType.File
+            }).ToList() ?? new List<MediaFile>();
+
+            var additionMediaFiles = newMediaFile.Except(mediaFileQuery).ToList();
+            var removalMediaFiles = mediaFileQuery.Except(newMediaFile).ToList();
+
+            if (!await _transportationRepository.UpdateTransportation(existingTransport, additionMediaFiles, removalMediaFiles, AccountId, CurrentDate))
             {
                 throw new ApiException("Cập nhật thông tin yêu cầu thất bại", StatusCode.SERVER_ERROR);
             }

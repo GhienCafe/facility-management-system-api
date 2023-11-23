@@ -14,7 +14,7 @@ namespace API_FFMS.Services
     {
         Task<ApiResponse> Create(ReplaceCreateDto createDto);
         Task<ApiResponse<ReplaceDto>> GetReplacement(Guid id);
-        Task<ApiResponse> Update(Guid id, BaseRequestUpdateDto updateDto);
+        Task<ApiResponse> Update(Guid id, ReplaceUpdateDto updateDto);
         Task<ApiResponse> Delete(Guid id);
         Task<ApiResponses<ReplaceDto>> GetReplaces(ReplacementQueryDto queryDto);
         Task<ApiResponse> DeleteReplacements(DeleteMutilDto deleteDto);
@@ -46,7 +46,7 @@ namespace API_FFMS.Services
 
             if (newAsset.RequestStatus != RequestType.Operational)
             {
-                throw new ApiException("Trang thiết bị dùng để thay thế đang trong một yêu cầu khác", StatusCode.BAD_REQUEST);
+                throw new ApiException($"Trang thiết bị {newAsset.AssetCode} đang trong một yêu cầu khác", StatusCode.BAD_REQUEST);
             }
 
             var checkExist = await MainUnitOfWork.ReplacementRepository.FindAsync(
@@ -99,8 +99,8 @@ namespace API_FFMS.Services
                 throw new ApiException("Không tìm thấy yêu cầu thay thế này", StatusCode.NOT_FOUND);
             }
 
-            if (existingReplace.Status != RequestStatus.Done ||
-               existingReplace.Status != RequestStatus.NotStart ||
+            if (existingReplace.Status != RequestStatus.Done &&
+               existingReplace.Status != RequestStatus.NotStart &&
                existingReplace.Status != RequestStatus.Cancelled)
             {
                 throw new ApiException($"Không thể xóa yêu cầu đang có trạng thái: {existingReplace.Status?.GetDisplayName()}", StatusCode.NOT_FOUND);
@@ -126,8 +126,8 @@ namespace API_FFMS.Services
 
             foreach (var replacement in replacements)
             {
-                if (replacement!.Status != RequestStatus.Done ||
-                    replacement.Status != RequestStatus.NotStart ||
+                if (replacement!.Status != RequestStatus.Done &&
+                    replacement.Status != RequestStatus.NotStart &&
                     replacement.Status != RequestStatus.Cancelled)
                 {
                     throw new ApiException($"Không thể xóa yêu cầu đang có trạng thái: {replacement.Status?.GetDisplayName()}" +
@@ -279,6 +279,11 @@ namespace API_FFMS.Services
                 replaceQuery = replaceQuery.Where(x => x!.Status == queryDto.Status);
             }
 
+            if (queryDto.Priority != null)
+            {
+                replaceQuery = replaceQuery.Where(x => x!.Priority == queryDto.Priority);
+            }
+
             if (!string.IsNullOrEmpty(keyword))
             {
                 replaceQuery = replaceQuery.Where(x => x!.Description!.ToLower().Contains(keyword)
@@ -392,7 +397,7 @@ namespace API_FFMS.Services
         }
 
 
-        public async Task<ApiResponse> Update(Guid id, BaseRequestUpdateDto updateDto)
+        public async Task<ApiResponse> Update(Guid id, ReplaceUpdateDto updateDto)
         {
             var existingReplace = await MainUnitOfWork.ReplacementRepository.FindOneAsync(id);
             if (existingReplace == null)
@@ -400,17 +405,33 @@ namespace API_FFMS.Services
                 throw new ApiException("Không tìm thấy yêu cầu thay thế này", StatusCode.NOT_FOUND);
             }
 
-            if (existingReplace.Status != RequestStatus.Done ||
-               existingReplace.Status != RequestStatus.NotStart ||
-               existingReplace.Status != RequestStatus.Cancelled)
+            if (existingReplace.Status != RequestStatus.NotStart)
             {
-                throw new ApiException($"Không thể cập nhật yêu cầu đang có trạng thái: {existingReplace.Status?.GetDisplayName()}", StatusCode.BAD_REQUEST);
+                throw new ApiException("Chỉ được cập nhật yêu cầu đang có trạng thái chưa bắt đầu", StatusCode.BAD_REQUEST);
             }
 
             existingReplace.Description = updateDto.Description ?? existingReplace.Description;
             existingReplace.Notes = updateDto.Notes ?? existingReplace.Notes;
             existingReplace.Priority = updateDto.Priority ?? existingReplace.Priority;
-            if (!await _repository.UpdateStatus(existingReplace, existingReplace.Status, AccountId, CurrentDate))
+            existingReplace.AssetId = updateDto.AssetId ?? existingReplace.AssetId;
+            existingReplace.NewAssetId = updateDto.NewAssetId ?? existingReplace.NewAssetId;
+
+            var mediaFileQuery = MainUnitOfWork.MediaFileRepository.GetQuery().Where(x => x!.ItemId == id).ToList();
+
+            var newMediaFile = updateDto.RelatedFiles.Select(dto => new MediaFile
+            {
+                FileName = dto.FileName,
+                Uri = dto.Uri,
+                CreatedAt = CurrentDate,
+                CreatorId = AccountId,
+                ItemId = id,
+                FileType = FileType.File
+            }).ToList() ?? new List<MediaFile>();
+
+            var additionMediaFiles = newMediaFile.Except(mediaFileQuery).ToList();
+            var removalMediaFiles = mediaFileQuery.Except(newMediaFile).ToList();
+
+            if (!await _repository.UpdateReplacement(existingReplace, additionMediaFiles, removalMediaFiles, AccountId, CurrentDate))
             {
                 throw new ApiException("Cập nhật thông tin yêu cầu thất bại", StatusCode.SERVER_ERROR);
             }

@@ -94,9 +94,11 @@ public class AssetCheckService : BaseService, IAssetCheckService
             throw new ApiException("Không tìm thấy yêu cầu kiểm tra này", StatusCode.NOT_FOUND);
         }
 
-        if (existingAssetcheck.Status != RequestStatus.Reported || existingAssetcheck.Status != RequestStatus.NotStart)
+        if (existingAssetcheck.Status != RequestStatus.Done &&
+            existingAssetcheck.Status != RequestStatus.NotStart &&
+            existingAssetcheck.Status != RequestStatus.Cancelled)
         {
-            throw new ApiException("Chỉ xóa được yêu cầu chưa bắt đầu hoặc đã báo cáo", StatusCode.NOT_FOUND);
+            throw new ApiException($"Không thể xóa yêu cầu đang có trạng thái: {existingAssetcheck.Status?.GetDisplayName()}", StatusCode.BAD_REQUEST);
         }
 
         if (!await MainUnitOfWork.AssetCheckRepository.DeleteAsync(existingAssetcheck, AccountId, CurrentDate))
@@ -119,10 +121,12 @@ public class AssetCheckService : BaseService, IAssetCheckService
 
         foreach (var assetCheck in assetChecks)
         {
-            if (assetCheck!.Status != RequestStatus.Reported || assetCheck.Status != RequestStatus.NotStart)
+            if (assetCheck!.Status != RequestStatus.Done &&
+                assetCheck.Status != RequestStatus.NotStart &&
+                assetCheck.Status != RequestStatus.Cancelled)
             {
-                throw new ApiException($"Chỉ xóa được yêu cầu chưa bắt đầu hoặc đã báo cáo, " +
-                                       $"kiểm tra yêu cầu: {assetCheck.RequestCode}", StatusCode.NOT_FOUND);
+                throw new ApiException($"Không thể xóa yêu cầu đang có trạng thái: {assetCheck.Status?.GetDisplayName()}" +
+                                       $"kiểm tra yêu cầu: {assetCheck.RequestCode}", StatusCode.BAD_REQUEST);
             }
         }
 
@@ -240,6 +244,11 @@ public class AssetCheckService : BaseService, IAssetCheckService
             assetCheckQuery = assetCheckQuery.Where(x => x!.Status == queryDto.Status);
         }
 
+        if(queryDto.Priority != null)
+        {
+            assetCheckQuery = assetCheckQuery.Where(x => x!.Priority == queryDto.Priority);
+        }
+
         if (!string.IsNullOrEmpty(keyword))
         {
             assetCheckQuery = assetCheckQuery.Where(x => x!.Description!.ToLower().Contains(keyword)
@@ -350,9 +359,9 @@ public class AssetCheckService : BaseService, IAssetCheckService
             throw new ApiException("Không tìm thấy nội dung", StatusCode.NOT_FOUND);
         }
 
-        if (existingAssetcheck.Status == RequestStatus.InProgress)
+        if (existingAssetcheck.Status != RequestStatus.NotStart)
         {
-            throw new ApiException($"Không thể cập nhật yêu cầu đang có trạng thái: {existingAssetcheck.Status?.GetDisplayName()}", StatusCode.BAD_REQUEST);
+            throw new ApiException("Chỉ được cập nhật yêu cầu đang có trạng thái chưa bắt đầu", StatusCode.BAD_REQUEST);
         }
 
         existingAssetcheck.Description = updateDto.Description ?? existingAssetcheck.Description;
@@ -362,8 +371,25 @@ public class AssetCheckService : BaseService, IAssetCheckService
         existingAssetcheck.AssetTypeId = updateDto.AssetTypeId ?? existingAssetcheck.AssetTypeId;
         existingAssetcheck.AssignedTo = updateDto.AssignedTo ?? existingAssetcheck.AssignedTo;
         existingAssetcheck.Priority = updateDto.Priority ?? existingAssetcheck.Priority;
+        existingAssetcheck.Priority = updateDto.Priority ?? existingAssetcheck.Priority;
+        existingAssetcheck.AssetId = updateDto.AssetId ?? existingAssetcheck.AssetId;
 
-        if (!await MainUnitOfWork.AssetCheckRepository.UpdateAsync(existingAssetcheck, AccountId, CurrentDate))
+        var mediaFileQuery = MainUnitOfWork.MediaFileRepository.GetQuery().Where(x => x!.ItemId == id).ToList();
+
+        var newMediaFile = updateDto.RelatedFiles.Select(dto => new MediaFile
+        {
+            FileName = dto.FileName,
+            Uri = dto.Uri,
+            CreatedAt = CurrentDate,
+            CreatorId = AccountId,
+            ItemId = id,
+            FileType = FileType.File
+        }).ToList() ?? new List<MediaFile>();
+
+        var additionMediaFiles = newMediaFile.Except(mediaFileQuery).ToList();
+        var removalMediaFiles = mediaFileQuery.Except(newMediaFile).ToList();
+
+        if (!await _assetcheckRepository.UpdateAssetCheck(existingAssetcheck, additionMediaFiles, removalMediaFiles, AccountId, CurrentDate))
         {
             throw new ApiException("Cập nhật thất bại", StatusCode.SERVER_ERROR);
         }

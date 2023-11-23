@@ -12,6 +12,7 @@ public interface IAssetcheckRepository
     Task<bool> UpdateStatus(AssetCheck assetCheck, RequestStatus? statusUpdate, Guid? editorId, DateTime? now = null);
     Task<bool> DeleteAssetCheck(AssetCheck assetCheck, Guid? deleterId, DateTime? now = null);
     Task<bool> DeleteAssetChecks(List<AssetCheck?> assetChecks, Guid? deleterId, DateTime? now = null);
+    Task<bool> UpdateAssetCheck(AssetCheck assetCheck, List<MediaFile?> additionMediaFiles, List<MediaFile?> removalMediaFiles, Guid? editorId, DateTime? now = null);
 }
 public class AssetcheckRepository : IAssetcheckRepository
 {
@@ -52,6 +53,9 @@ public class AssetcheckRepository : IAssetcheckRepository
                 {
                     var roomAsset = await _context.RoomAssets
                     .FirstOrDefaultAsync(x => x.AssetId == entity.AssetId && x.ToDate == null);
+                    var location = await _context.Rooms.FirstOrDefaultAsync(x => x.Id == roomAsset!.RoomId &&
+                                                                                 roomAsset.AssetId == asset.Id &&
+                                                                                 roomAsset.ToDate == null);
 
                     if (roomAsset != null)
                     {
@@ -66,7 +70,7 @@ public class AssetcheckRepository : IAssetcheckRepository
                         CreatedAt = now.Value,
                         EditedAt = now.Value,
                         Status = NotificationStatus.Waiting,
-                        Content = entity.Description,
+                        Content = entity.Description ?? "Yêu cầu kiểm tra",
                         Title = RequestType.Repairation.GetDisplayName(),
                         Type = NotificationType.Task,
                         CreatorId = creatorId,
@@ -309,6 +313,55 @@ public class AssetcheckRepository : IAssetcheckRepository
                     ItemId = assetCheck.Id
                 };
                 _context.MediaFiles.Add(newMediaFile);
+            }
+
+            await _context.SaveChangesAsync();
+            await _context.Database.CommitTransactionAsync();
+            return true;
+        }
+        catch
+        {
+            await _context.Database.RollbackTransactionAsync();
+            return false;
+        }
+    }
+
+    public async Task<bool> UpdateAssetCheck(AssetCheck assetCheck, List<MediaFile?> additionMediaFiles,
+                                             List<MediaFile?> removalMediaFiles, Guid? editorId, DateTime? now = null)
+    {
+        await _context.Database.BeginTransactionAsync();
+        now ??= DateTime.UtcNow;
+        try
+        {
+            assetCheck.EditorId = editorId;
+            assetCheck.EditedAt = now.Value;
+            _context.Entry(assetCheck).State = EntityState.Modified;
+
+            var mediaFiles = _context.MediaFiles.AsNoTracking()
+                                                .Where(x => x.ItemId == assetCheck.Id && !x.DeletedAt.HasValue)
+                                                .ToList();
+
+            if (additionMediaFiles.Count > 0)
+            {
+                foreach (var mediaFile in additionMediaFiles)
+                {
+                    if (mediaFile != null)
+                    {
+                        _context.MediaFiles.Add(mediaFile);
+                    }
+
+                }
+            }
+
+            if (removalMediaFiles.Count > 0)
+            {
+                foreach (var mediaFile in removalMediaFiles)
+                {
+                    if (mediaFile != null)
+                    {
+                        _context.MediaFiles.Remove(mediaFile);
+                    }
+                }
             }
 
             await _context.SaveChangesAsync();

@@ -49,13 +49,13 @@ namespace API_FFMS.Services
             var roomDataset = MainUnitOfWork.RoomRepository.GetQuery();
 
             var joinedRooms = from roomAsset in roomAssetDataset
-                where roomAsset.AssetId == id
-                join room in roomDataset on roomAsset.RoomId equals room.Id
-                select new
-                {
-                    RoomAsset = roomAsset,
-                    Room = room,
-                };
+                              where roomAsset.AssetId == id
+                              join room in roomDataset on roomAsset.RoomId equals room.Id
+                              select new
+                              {
+                                  RoomAsset = roomAsset,
+                                  Room = room,
+                              };
 
             if (queryDto.ToDate != null)
             {
@@ -119,37 +119,55 @@ namespace API_FFMS.Services
         public async Task<ApiResponse> CreateRoomAsset(RoomAssetCreateBaseDto createBaseDto)
         {
             var room = await MainUnitOfWork.RoomRepository.FindOneAsync(createBaseDto.RoomId);
-            var roomAssets = await MainUnitOfWork.RoomAssetRepository.FindAsync(
+            if (room == null)
+            {
+                throw new ApiException("Phòng không tồn tại", StatusCode.NOT_FOUND);
+            }
+            var asset = MainUnitOfWork.AssetRepository.GetQuery()
+                                                      .Include(x => x!.Type)
+                                                      .FirstOrDefault(x => x!.Id == createBaseDto.AssetId);
+            if (asset == null)
+            {
+                throw new ApiException("Thiết bị không tồn tại", StatusCode.NOT_FOUND);
+            }
+
+            var checkExist = await MainUnitOfWork.RoomAssetRepository.FindOneAsync(
                 new Expression<Func<RoomAsset, bool>>[]
                 {
                     x => !x.DeletedAt.HasValue,
-                    x => x.RoomId == room!.Id,
+                    x => x.AssetId == createBaseDto.AssetId,
+                    x => x.RoomId == createBaseDto.RoomId,
                     x => x.ToDate == null
+                });
+
+            if (asset.Type!.Unit == Unit.Individual || asset.Type.IsIdentified == true)
+            {
+                if (checkExist != null)
+                {
+                    throw new ApiException("Đã tồn tại trang thiết bị trong phòng", StatusCode.ALREADY_EXISTS);
+                }
+            }
+
+            var roomAssets = await MainUnitOfWork.RoomAssetRepository.FindAsync(
+                new Expression<Func<RoomAsset, bool>>[]
+                {
+                        x => !x.DeletedAt.HasValue,
+                        x => x.RoomId == room.Id,
+                        x => x.ToDate == null
                 }, null);
 
             var currentQuantityAssetInRoom = roomAssets.Sum(x => x!.Quantity);
             var checkCapacity = currentQuantityAssetInRoom + createBaseDto.Quantity;
-
-            if(checkCapacity > room!.Capacity)
+            if (checkCapacity > room.Capacity)
             {
                 throw new ApiException("Số lượng trang thiết bị vượt quá dung tích phòng", StatusCode.UNPROCESSABLE_ENTITY);
             }
 
             var roomAsset = createBaseDto.ProjectTo<RoomAssetCreateBaseDto, RoomAsset>();
 
-            var checkExist = await MainUnitOfWork.RoomAssetRepository.FindAsync(new Expression<Func<RoomAsset, bool>>[]
-            {
-                x => !x.DeletedAt.HasValue,
-                x => x.AssetId == createBaseDto.AssetId,
-                x => x.RoomId == createBaseDto.RoomId
-            }, null);
-
-            if (checkExist.Any())
-                throw new ApiException("Đã tồn tại trang thiết bị trong phòng", StatusCode.ALREADY_EXISTS);
-            
             if (!await _roomAssetRepository.AddAssetToRoom(roomAsset, AccountId, CurrentDate))
                 throw new ApiException("Thêm mới trang thiết bị vào phòng thất bại", StatusCode.SERVER_ERROR);
-            
+
             return ApiResponse.Created("Thêm mới trang thiết bị vào phòng thành công");
         }
 
@@ -158,7 +176,7 @@ namespace API_FFMS.Services
             //var room = await MainUnitOfWork.RoomRepository.FindOneAsync(createBaseDto.RoomId);
 
             var roomAssets = new List<RoomAsset>();
-            foreach(var room in createBaseDto.Rooms)
+            foreach (var room in createBaseDto.Rooms)
             {
                 foreach (var asset in room.Assets)
                 {
@@ -171,7 +189,7 @@ namespace API_FFMS.Services
                     roomAssets.Add(roomAsset);
                 }
             }
-            
+
             if (!await _roomAssetRepository.AddAssetToRooms(roomAssets, AccountId, CurrentDate))
                 throw new ApiException("Thêm mới trang thiết bị vào phòng thất bại", StatusCode.SERVER_ERROR);
 
@@ -210,12 +228,14 @@ namespace API_FFMS.Services
                                                          || x.Room.RoomName!.ToLower().Contains(keyword)
                                                          || x.Room.RoomCode.ToLower().Contains(keyword));
                 }
-                
-                if(queryDto.RoomId != null) {
+
+                if (queryDto.RoomId != null)
+                {
                     joinedRooms = joinedRooms.Where(x => x!.RoomAsset.RoomId == queryDto.RoomId);
                 }
-                
-                if(queryDto.AssetId != null) {
+
+                if (queryDto.AssetId != null)
+                {
                     joinedRooms = joinedRooms.Where(x => x!.RoomAsset.AssetId == queryDto.AssetId);
                 }
 
@@ -291,12 +311,12 @@ namespace API_FFMS.Services
                     queryDto.Page,
                     (int)Math.Ceiling(totalCount / (double)queryDto.PageSize));
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 throw new Exception(ex.Message);
             }
-            
-            
+
+
         }
 
         public async Task<ApiResponse<RoomAssetDetailDto>> GetItem(Guid id)
@@ -349,7 +369,7 @@ namespace API_FFMS.Services
 
             if (!await MainUnitOfWork.RoomAssetRepository.DeleteAsync(roomAsset, AccountId, CurrentDate))
                 throw new ApiException("Xóa nội dung thất bại", StatusCode.SERVER_ERROR);
-            
+
             return ApiResponse.Success("Xóa nội dung thành công");
         }
 
@@ -369,7 +389,7 @@ namespace API_FFMS.Services
 
             if (!await MainUnitOfWork.RoomAssetRepository.UpdateAsync(roomAsset, AccountId, CurrentDate))
                 throw new ApiException("Cập nhật thông tin thất bại", StatusCode.SERVER_ERROR);
-            
+
             return ApiResponse.Success("Cập nhật thông tin thành công");
         }
     }

@@ -15,6 +15,8 @@ public interface IDashboardService : IBaseService
     public Task<ApiResponse<IEnumerable<TaskDashBoardInformation>>> GetBaseTaskInformation();
     public Task<ApiResponse<IEnumerable<TaskBasedOnStatusDashboardDto>>> GetBaseTaskStatusInformation();
     public Task<ApiResponse<TaskStatisticDto>> GetTaskStatistic();
+    public Task<ApiResponse<AssetStatisticDto>> GetAssetStatistic(AssetStatisticQueryDto queryDto);
+    public Task<ApiResponse<IEnumerable<ModelStatisticDto>>> GetModelStatistic();
 }
 
 public class DashboardService : BaseService, IDashboardService
@@ -36,10 +38,10 @@ public class DashboardService : BaseService, IDashboardService
             Quantity = assetDataSet
                 .Where(asset => asset!.TypeId == assetType.Id)
                 .Sum(asset => asset!.Quantity),
-            InUsed  = assetDataSet
+            InUsed = assetDataSet
                 .Where(asset => asset!.TypeId == assetType.Id && asset.Status == AssetStatus.Operational)
                 .Sum(asset => asset!.Quantity),
-            NotUsed  = assetDataSet
+            NotUsed = assetDataSet
                 .Where(asset => asset!.TypeId == assetType.Id && asset.Status == AssetStatus.Inactive)
                 .Sum(asset => asset!.Quantity),
             Maintenance = assetDataSet
@@ -190,5 +192,65 @@ public class DashboardService : BaseService, IDashboardService
             };
         }
         return null;
+    }
+
+    public async Task<ApiResponse<AssetStatisticDto>> GetAssetStatistic(AssetStatisticQueryDto queryDto)
+    {
+        var assetQuery = MainUnitOfWork.AssetRepository.GetQuery().Include(x => x!.Type)
+                         .Where(x => !x!.DeletedAt.HasValue);
+
+        assetQuery = assetQuery.Where(x => x!.Type!.Unit == queryDto.Unit);
+
+        if (queryDto.IsRent != null)
+        {
+            assetQuery = assetQuery.Where(x => x!.IsRented == queryDto.IsRent);
+        }
+
+        var assetStatistc = new AssetStatisticDto
+        {
+            TotalQuantity = assetQuery.Sum(x => x!.Quantity),
+            TotalOperational = assetQuery.Where(x => x!.Status == AssetStatus.Operational).Sum(x => x!.Quantity),
+            TotalNotUsed = assetQuery.Where(x => x!.Status == AssetStatus.Inactive).Sum(x => x!.Quantity),
+            TotalMaintenance = assetQuery.Where(x => x!.RequestStatus == RequestType.Maintenance).Sum(x => x!.Quantity),
+            TotalRepair = assetQuery.Where(x => x!.RequestStatus == RequestType.Repairation).Sum(x => x!.Quantity),
+            TotalTransportation = assetQuery.Where(x => x!.RequestStatus == RequestType.Transportation).Sum(x => x!.Quantity),
+            TotalReplacement = assetQuery.Where(x => x!.RequestStatus == RequestType.Replacement).Sum(x => x!.Quantity),
+            TotalNeedInspection = assetQuery.Where(x => x!.RequestStatus == RequestType.InventoryCheck).Sum(x => x!.Quantity),
+        };
+
+        return ApiResponse<AssetStatisticDto>.Success(assetStatistc);
+    }
+
+    public async Task<ApiResponse<IEnumerable<ModelStatisticDto>>> GetModelStatistic()
+    {
+        var modelQuery = MainUnitOfWork.ModelRepository.GetQuery();
+
+        var taskQuery = MainUnitOfWork.TaskRepository.GetQueryAll()
+                                                     .Where(x => x!.Type == RequestType.Repairation &&
+                                                                 x.Status != RequestStatus.NotStart);
+
+        var assetQuery = MainUnitOfWork.AssetRepository.GetQuery()
+                                                       .Include(a => a!.Type)
+                                                       .Where(a => a!.Type!.Unit == Unit.Individual);
+
+        var join = from model in modelQuery
+                   join asset in assetQuery on model.Id equals asset.ModelId into groupAssets
+                   from asset in groupAssets.DefaultIfEmpty()
+                   join task in taskQuery on asset.Id equals task.AssetId into groupTasks
+                   from task in groupTasks.DefaultIfEmpty()
+                   group new { model, asset, task } by new
+                   {
+                       model.Id,
+                       model.ModelName
+                   } into groupData
+                   select new ModelStatisticDto
+                   {
+                       ModelName = groupData.Key.ModelName,
+                       TotalRepair = groupData.Count(item => item.task != null)
+                   };
+
+        var result = await join.ToListAsync();
+
+        return ApiResponse<IEnumerable<ModelStatisticDto>>.Success(result);
     }
 }

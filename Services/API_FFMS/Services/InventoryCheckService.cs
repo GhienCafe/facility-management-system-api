@@ -60,6 +60,12 @@ public class InventoryCheckService : BaseService, IInventoryCheckService
                     x => roomAssets.Select(ra => ra!.AssetId).Contains(x.Id)
                 }, null);
 
+            var mediaFiles = createDto.RelatedFiles?.Select(file => new MediaFile
+            {
+                FileName = file.FileName ?? "",
+                Uri = file.Uri ?? ""
+            }).ToList();
+
             var inventoryCheck = new InventoryCheck
             {
                 RequestCode = GenerateRequestCode(),
@@ -70,7 +76,7 @@ public class InventoryCheckService : BaseService, IInventoryCheckService
                 AssignedTo = createDto.AssignedTo
             };
 
-            if (!await _repository.InsertInventoryCheck(inventoryCheck, rooms, AccountId, CurrentDate))
+            if (!await _repository.InsertInventoryCheck(inventoryCheck, rooms, mediaFiles, AccountId, CurrentDate))
             {
                 throw new ApiException("Tạo yêu cầu thất bại", StatusCode.SERVER_ERROR);
             }
@@ -101,7 +107,7 @@ public class InventoryCheckService : BaseService, IInventoryCheckService
             inventoryCheck.StatusObj = inventoryCheck.Status.GetValue();
 
 
-             
+
             var userQuery = MainUnitOfWork.UserRepository.GetQuery().Where(x => x!.Id == inventoryCheck.AssignedTo);
             inventoryCheck.Staff = await userQuery.Select(x => new AssignedInventoryCheckDto
             {
@@ -185,11 +191,9 @@ public class InventoryCheckService : BaseService, IInventoryCheckService
             throw new ApiException("Không tìm thấy yêu cầu này", StatusCode.NOT_FOUND);
         }
 
-        if (existinginventoryCheck.Status != RequestStatus.NotStart ||
-            existinginventoryCheck.Status != RequestStatus.Done ||
-            existinginventoryCheck.Status != RequestStatus.Cancelled)
+        if (existinginventoryCheck.Status != RequestStatus.NotStart)
         {
-            throw new ApiException($"Không thể cập nhật yêu cầu đang có trạng thái: {existinginventoryCheck.Status?.GetDisplayName()}", StatusCode.NOT_FOUND);
+            throw new ApiException("Chỉ được cập nhật yêu cầu đang có trạng thái chưa bắt đầu", StatusCode.NOT_FOUND);
         }
 
         existinginventoryCheck.Description = updateDto.Description ?? existinginventoryCheck.Description;
@@ -198,7 +202,22 @@ public class InventoryCheckService : BaseService, IInventoryCheckService
         existinginventoryCheck.AssignedTo = updateDto.AssignedTo ?? existinginventoryCheck.AssignedTo;
         existinginventoryCheck.IsInternal = updateDto.IsInternal ?? existinginventoryCheck.IsInternal;
 
-        if (!await MainUnitOfWork.InventoryCheckRepository.UpdateAsync(existinginventoryCheck, AccountId, CurrentDate))
+        var mediaFileQuery = MainUnitOfWork.MediaFileRepository.GetQuery().Where(x => x!.ItemId == id).ToList();
+
+        var newMediaFile = updateDto.RelatedFiles.Select(dto => new MediaFile
+        {
+            FileName = dto.FileName,
+            Uri = dto.Uri,
+            CreatedAt = CurrentDate,
+            CreatorId = AccountId,
+            ItemId = id,
+            FileType = FileType.File
+        }).ToList() ?? new List<MediaFile>();
+
+        var additionMediaFiles = newMediaFile.Except(mediaFileQuery).ToList();
+        var removalMediaFiles = mediaFileQuery.Except(newMediaFile).ToList();
+
+        if (!await _repository.UpdateInventoryCheck(existinginventoryCheck, additionMediaFiles, removalMediaFiles, AccountId, CurrentDate))
         {
             throw new ApiException("Cập nhật thông tin yêu cầu thất bại", StatusCode.SERVER_ERROR);
         }
@@ -222,6 +241,11 @@ public class InventoryCheckService : BaseService, IInventoryCheckService
             if (queryDto.AssignedTo != null)
             {
                 inventoryCheckQuery = inventoryCheckQuery.Where(x => x!.AssignedTo == queryDto.AssignedTo);
+            }
+
+            if (queryDto.Priority != null)
+            {
+                inventoryCheckQuery = inventoryCheckQuery.Where(x => x!.Priority == queryDto.Priority);
             }
 
             if (queryDto.Status != null)
@@ -331,8 +355,8 @@ public class InventoryCheckService : BaseService, IInventoryCheckService
             throw new ApiException("Không tìm thấy yêu cầu này", StatusCode.NOT_FOUND);
         }
 
-        if (existingInventoryCheck.Status != RequestStatus.Done ||
-            existingInventoryCheck.Status != RequestStatus.NotStart ||
+        if (existingInventoryCheck.Status != RequestStatus.Done &&
+            existingInventoryCheck.Status != RequestStatus.NotStart &&
             existingInventoryCheck.Status != RequestStatus.Cancelled)
         {
             throw new ApiException($"Không thể xóa yêu cầu đang có trạng thái: {existingInventoryCheck.Status?.GetDisplayName()}", StatusCode.NOT_FOUND);
@@ -381,7 +405,7 @@ public class InventoryCheckService : BaseService, IInventoryCheckService
 
         existingInventCheck.Status = updateStatusDto.Status ?? existingInventCheck.Status;
 
-        if(!await _repository.UpdateInventoryCheckStatus(existingInventCheck, updateStatusDto.Status, AccountId, CurrentDate))
+        if (!await _repository.UpdateInventoryCheckStatus(existingInventCheck, updateStatusDto.Status, AccountId, CurrentDate))
         {
             throw new ApiException("Xác nhận yêu cầu thất bại", StatusCode.SERVER_ERROR);
         }

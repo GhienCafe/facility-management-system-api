@@ -135,8 +135,8 @@ namespace API_FFMS.Services
                 throw new ApiException("Không tìm thấy yêu cầu sửa chữa này", StatusCode.NOT_FOUND);
             }
 
-            if(existingRepair.Status != RequestStatus.Done ||
-               existingRepair.Status != RequestStatus.NotStart ||
+            if(existingRepair.Status != RequestStatus.Done &&
+               existingRepair.Status != RequestStatus.NotStart &&
                existingRepair.Status != RequestStatus.Cancelled)
             {
                 throw new ApiException($"Không thể xóa yêu cầu đang có trạng thái: {existingRepair.Status?.GetDisplayName()}", StatusCode.BAD_REQUEST);
@@ -162,8 +162,8 @@ namespace API_FFMS.Services
 
             foreach (var repair in repairs)
             {
-                if (repair!.Status != RequestStatus.Done ||
-                    repair.Status != RequestStatus.NotStart ||
+                if (repair!.Status != RequestStatus.Done &&
+                    repair.Status != RequestStatus.NotStart &&
                     repair.Status != RequestStatus.Cancelled)
                 {
                     throw new ApiException($"Không thể xóa yêu cầu đang có trạng thái: {repair.Status?.GetDisplayName()}" +
@@ -259,6 +259,11 @@ namespace API_FFMS.Services
             if (queryDto.Status != null)
             {
                 repairQuery = repairQuery.Where(x => x!.Status == queryDto.Status);
+            }
+
+            if (queryDto.Priority != null)
+            {
+                repairQuery = repairQuery.Where(x => x!.Priority == queryDto.Priority);
             }
 
             if (!string.IsNullOrEmpty(keyword))
@@ -371,31 +376,54 @@ namespace API_FFMS.Services
 
         public async Task<ApiResponse> Update(Guid id, BaseRequestUpdateDto updateDto)
         {
-            var existingRepair = await MainUnitOfWork.RepairRepository.FindOneAsync(id);
-            if (existingRepair == null)
+            try
             {
-                throw new ApiException("Không tìm thấy yêu cầu", StatusCode.NOT_FOUND);
-            }
+                var existingRepair = await MainUnitOfWork.RepairRepository.FindOneAsync(id);
+                if (existingRepair == null)
+                {
+                    throw new ApiException("Không tìm thấy yêu cầu", StatusCode.NOT_FOUND);
+                }
 
-            if (existingRepair.Status != RequestStatus.NotStart || existingRepair.Status != RequestStatus.Done)
+                if (existingRepair.Status != RequestStatus.NotStart)
+                {
+                    throw new ApiException("Chỉ được cập nhật yêu cầu đang có trạng thái chưa bắt đầu", StatusCode.NOT_FOUND);
+                }
+
+                existingRepair.Description = updateDto.Description ?? existingRepair.Description;
+                existingRepair.Notes = updateDto.Notes ?? existingRepair.Notes;
+                existingRepair.CategoryId = updateDto.CategoryId ?? existingRepair.CategoryId;
+                existingRepair.IsInternal = updateDto.IsInternal ?? existingRepair.IsInternal;
+                existingRepair.AssetTypeId = updateDto.AssetTypeId ?? existingRepair.AssetTypeId;
+                existingRepair.AssignedTo = updateDto.AssignedTo ?? existingRepair.AssignedTo;
+                existingRepair.Priority = updateDto.Priority ?? existingRepair.Priority;
+                existingRepair.AssetId = updateDto.AssetId ?? existingRepair.AssetId;
+
+                var mediaFileQuery = MainUnitOfWork.MediaFileRepository.GetQuery().Where(x => x!.ItemId == id).ToList();
+
+                var newMediaFile = updateDto.RelatedFiles.Select(dto => new MediaFile
+                {
+                    FileName = dto.FileName,
+                    Uri = dto.Uri,
+                    CreatedAt = CurrentDate,
+                    CreatorId = AccountId,
+                    ItemId = id,
+                    FileType = FileType.File
+                }).ToList() ?? new List<MediaFile>();
+
+                var additionMediaFiles = newMediaFile.Except(mediaFileQuery).ToList();
+                var removalMediaFiles = mediaFileQuery.Except(newMediaFile).ToList();
+
+                if (!await _repairRepository.UpdateRepair(existingRepair, additionMediaFiles, removalMediaFiles, AccountId, CurrentDate))
+                {
+                    throw new ApiException("Cập nhật thông tin yêu cầu thất bại", StatusCode.SERVER_ERROR);
+                }
+
+                return ApiResponse.Success("Cập nhật yêu cầu thành công");
+            }
+            catch (Exception ex)
             {
-                throw new ApiException("Chỉ được cập nhật các yêu cầu chưa bắt đầu thực hiện hoặc đã kết thúc", StatusCode.NOT_FOUND);
+                throw new Exception(ex.Message);
             }
-
-            existingRepair.Description = updateDto.Description ?? existingRepair.Description;
-            existingRepair.Notes = updateDto.Notes ?? existingRepair.Notes;
-            existingRepair.CategoryId = updateDto.CategoryId ?? existingRepair.CategoryId;
-            existingRepair.IsInternal = updateDto.IsInternal ?? existingRepair.IsInternal;
-            existingRepair.AssetTypeId = updateDto.AssetTypeId ?? existingRepair.AssetTypeId;
-            existingRepair.AssignedTo = updateDto.AssignedTo ?? existingRepair.AssignedTo;
-            existingRepair.Priority = updateDto.Priority ?? existingRepair.Priority;
-
-            if (!await MainUnitOfWork.RepairRepository.UpdateAsync(existingRepair, AccountId, CurrentDate))
-            {
-                throw new ApiException("Cập nhật thông tin yêu cầu thất bại", StatusCode.SERVER_ERROR);
-            }
-
-            return ApiResponse.Success("Cập nhật yêu cầu thành công");
         }
 
         public async Task<ApiResponse> UpdateStatus(Guid id, BaseUpdateStatusDto requestStatus)

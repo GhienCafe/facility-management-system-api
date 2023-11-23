@@ -1,4 +1,5 @@
 ﻿using AppCore.Extensions;
+using DocumentFormat.OpenXml.Vml.Office;
 using MainData;
 using MainData.Entities;
 using Microsoft.EntityFrameworkCore;
@@ -12,6 +13,7 @@ public interface IRepairRepository
     Task<bool> UpdateStatus(Repair repair, RequestStatus? statusUpdate, Guid? editorId, DateTime? now = null);
     Task<bool> DeleteRepair(Repair repair, Guid? deleterId, DateTime? now = null);
     Task<bool> DeleteRepairs(List<Repair?> repairs, Guid? deleterId, DateTime? now = null);
+    Task<bool> UpdateRepair(Repair repair, List<MediaFile?> additionMediaFiles, List<MediaFile?> removalMediaFiles, Guid? creatorId, DateTime? now = null);
 }
 public class RepairRepository : IRepairRepository
 {
@@ -45,7 +47,7 @@ public class RepairRepository : IRepairRepository
                 {
                     CreatedAt = now.Value,
                     Status = NotificationStatus.Waiting,
-                    Content = entity.Description,
+                    Content = entity.Description ?? "Yêu cầu sửa chữa",
                     Title = RequestType.Repairation.GetDisplayName(),
                     Type = NotificationType.Task,
                     CreatorId = creatorId,
@@ -326,7 +328,7 @@ public class RepairRepository : IRepairRepository
                 CreatedAt = now.Value,
                 EditedAt = now.Value,
                 Status = NotificationStatus.Waiting,
-                Content = repair.Description,
+                Content = repair.Description ?? "Yêu cầu sửa chữa",
                 Title = RequestType.Repairation.GetDisplayName(),
                 Type = NotificationType.Task,
                 CreatorId = creatorId,
@@ -351,6 +353,54 @@ public class RepairRepository : IRepairRepository
                     ItemId = repair.Id
                 };
                 _context.MediaFiles.Add(newMediaFile);
+            }
+
+            await _context.SaveChangesAsync();
+            await _context.Database.CommitTransactionAsync();
+            return true;
+        }
+        catch
+        {
+            await _context.Database.RollbackTransactionAsync();
+            return false;
+        }
+    }
+
+    public async Task<bool> UpdateRepair(Repair repair, List<MediaFile?> additionMediaFiles, List<MediaFile?> removalMediaFiles, Guid? creatorId, DateTime? now = null)
+    {
+        await _context.Database.BeginTransactionAsync();
+        now ??= DateTime.UtcNow;
+        try
+        {
+            repair.EditorId = creatorId;
+            repair.EditedAt = now.Value;
+            _context.Entry(repair).State = EntityState.Modified;
+
+            var mediaFiles = _context.MediaFiles.AsNoTracking()
+                                                .Where(x => x.ItemId == repair.Id && !x.DeletedAt.HasValue)
+                                                .ToList();
+
+            if (additionMediaFiles.Count > 0)
+            {
+                foreach (var mediaFile in additionMediaFiles)
+                {
+                    if (mediaFile != null)
+                    {
+                        _context.MediaFiles.Add(mediaFile);
+                    }
+
+                }
+            }
+
+            if (removalMediaFiles.Count > 0)
+            {
+                foreach (var mediaFile in removalMediaFiles)
+                {
+                    if (mediaFile != null)
+                    {
+                        _context.MediaFiles.Remove(mediaFile);
+                    }
+                }
             }
 
             await _context.SaveChangesAsync();
