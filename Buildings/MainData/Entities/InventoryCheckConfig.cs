@@ -6,27 +6,25 @@ namespace MainData.Entities;
 
 public class InventoryCheckConfig : BaseEntity
 {
-    public int? CheckPeriod { get; set; }
-    public string? Description { get; set; }
-    public bool Status { get; set; }
-    public DateTime? CheckDate { get; set; }
-    public DateTime? LastCheckedDate { get; set; }
+    public int NotificationDays  { get; set; }
+    public string? Content { get; set; }
+    public bool IsActive { get; set; }
     
     //Relationship
-    public IEnumerable<InventoryCheck>? InventoryChecks { get; set; }
+    public IEnumerable<InventoryDetailConfig>? InventoryDetailConfigs { get; set; }
 }
 
 public class InventoryCheckConfigConfig : IEntityTypeConfiguration<InventoryCheckConfig>
 {
     public void Configure(EntityTypeBuilder<InventoryCheckConfig> builder)
     {
-        builder.ToTable("InventoryCheckConfigs");
-        builder.Property(x => x.CheckPeriod).IsRequired(false);
-        builder.Property(x => x.Description).IsRequired(false);
-        builder.Property(x => x.LastCheckedDate).HasColumnType("datetime").IsRequired(false);
-        builder.Property(x => x.CheckDate).HasColumnType("datetime").IsRequired(false);
-        builder.Property(x => x.Status).IsRequired().HasDefaultValue(false);
+        builder.ToTable("InventoryCheckConfig");
+        builder.Property(x => x.NotificationDays).IsRequired();
+        builder.Property(x => x.Content).IsRequired(false);
+        builder.Property(x => x.IsActive).HasDefaultValue(false);
 
-        //Relationship
+        builder.HasMany(x => x.InventoryDetailConfigs)
+            .WithOne(x => x.InventoryCheckConfig)
+            .HasForeignKey(x => x.InventoryConfigId);
     }
 }
