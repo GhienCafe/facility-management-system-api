@@ -222,7 +222,7 @@ public class InventoryCheckService : BaseService, IInventoryCheckService
             throw new ApiException("Cập nhật thông tin yêu cầu thất bại", StatusCode.SERVER_ERROR);
         }
 
-        return ApiResponse.Success("Cập nhật yêu cầu thành công");
+        return ApiResponse.Success("Cập nhật yêu cầu thông tin thành công");
     }
 
     public async Task<ApiResponses<InventoryCheckDto>> GetInventoryChecks(InventoryCheckQueryDto queryDto)
@@ -364,7 +364,7 @@ public class InventoryCheckService : BaseService, IInventoryCheckService
 
         if (!await MainUnitOfWork.InventoryCheckRepository.DeleteAsync(existingInventoryCheck, AccountId, CurrentDate))
         {
-            throw new ApiException("Xóa thất bại", StatusCode.SERVER_ERROR);
+            throw new ApiException("Xóa yêu cầu thất bại", StatusCode.SERVER_ERROR);
         }
         return ApiResponse.Success();
     }
