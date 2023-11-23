@@ -12,7 +12,7 @@ public class MediaFile : BaseEntity
     public bool IsVerified { get; set; }
     public FileType FileType { get; set; }
     public string Content { get; set; } = null!;
-
+    public bool IsReported { get; set; }
     public Guid? MaintenanceId { get; set; }
     public Guid? ReplacementId { get; set; }
     public Guid? AssetCheckId { get; set; }
@@ -50,6 +50,7 @@ public class MediaFileConfig : IEntityTypeConfiguration<MediaFile>
         builder.Property(a => a.Content).IsRequired(false);
         builder.Property(a => a.ItemId).IsRequired(false);
         builder.Property(x => x.IsVerified).IsRequired().HasDefaultValue(false);
+        builder.Property(x => x.IsReported).IsRequired().HasDefaultValue(false);
 
         builder.Property(a => a.MaintenanceId).IsRequired(false);
         builder.Property(a => a.ReplacementId).IsRequired(false);

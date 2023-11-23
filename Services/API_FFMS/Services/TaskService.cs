@@ -155,7 +155,8 @@ public class TaskService : BaseService, ITaskService
                 FileType = createDto.FileType!,
                 Content = createDto.Content!,
                 ItemId = createDto.ItemId,
-                IsVerified = createDto.IsVerified ?? false
+                IsVerified = createDto.IsVerified ?? false,
+                IsReported = true
             };
             mediaFiles.Add(newMediaFile);
         }
