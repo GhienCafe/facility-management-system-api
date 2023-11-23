@@ -20,6 +20,7 @@ public class MediaFileDetailDto
 {
     public string? FileName { get; set; }
     public string? Uri { get; set; }
+    public string? Content { get; set; }
 }
 
 public class MediaFileUpdateDto

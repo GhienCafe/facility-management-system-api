@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using AppCore.Attributes;
 using AppCore.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -54,6 +55,33 @@ public enum RoomState
 
     [Display(Name = "Cần bổ sung trang thiết bị")]
     MissingAsset = 9
+}
+
+public enum RoomAssetStatus
+{
+    [Display(Name = "Phòng không có thiết bị hư hỏng")]
+    [Color("#00a652")]
+    Operational = 1,
+
+    [Display(Name = "Phòng có một vài thiết bị hư hỏng")]
+    [Color("#0779b8")]
+    Notice = 2,
+
+    [Display(Name = "Phòng có nhiều thiết bị hư hỏng")]
+    [Color("#f6ee21")]
+    Caution = 3,
+
+    [Display(Name = "Phòng có rất nhiều thiết bị hư hỏng")]
+    [Color("#f69220")]
+    Warning = 4,
+
+    [Display(Name = "Toàn bộ thiết bị trong phòng đều hư hỏng")]
+    [Color("#da1b20")]
+    Danger = 5,
+
+    [Display(Name = "Phòng không có trang thiết bị")]
+    [Color("#e1e1e1")]
+    Empty = 6
 }
 
 public class RoomConfig : IEntityTypeConfiguration<Room>

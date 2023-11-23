@@ -72,7 +72,7 @@ namespace API_FFMS.Services
 
                 }
 
-                return ApiResponses<ImportTransportError>.Fail(validationAssetErrors, StatusCode.UNPROCESSABLE_ENTITY, "Some Asset imports failed due to validation errors");
+                return ApiResponses<ImportTransportError>.Fail(validationAssetErrors, StatusCode.UNPROCESSABLE_ENTITY, "Một vài thiết bị được thêm mới có thể lỗi trong quá trình xác thực");
 
             }
             catch (Exception exception)
@@ -121,7 +121,7 @@ namespace API_FFMS.Services
                     validationAssetErrors.Add(new ImportTransportError
                     {
                         Row = row,
-                        ErrorMessage = $"Asset '{assetDto.AssetName}' in row '{row}' does not exist"
+                        ErrorMessage = $"Thiết bị '{assetDto.AssetName}' tại dòng '{row}' không tồn tại"
                     });
                 }
                 else
@@ -378,7 +378,7 @@ namespace API_FFMS.Services
                     validationErrors.Add(new ImportError
                     {
                         Row = row,
-                        ErrorMessage = $"Type Code '{asset.Type}' in row {row} does not exist"
+                        ErrorMessage = $"Nhóm thiết bị '{asset.Type}' tại dòng {row} không tồn tại"
                     });
                 }
             }

@@ -194,7 +194,7 @@ public class AssetCheckService : BaseService, IAssetCheckService
                     });
             }
         }
-
+        
         assetCheck.AssignTo = await MainUnitOfWork.UserRepository.FindOneAsync<UserBaseDto>(
             new Expression<Func<User, bool>>[]
             {
@@ -202,12 +202,20 @@ public class AssetCheckService : BaseService, IAssetCheckService
                 x => x.Id == assetCheck.AssignedTo
             });
 
-        var mediaFileQuery = MainUnitOfWork.MediaFileRepository.GetQuery().Where(m => m!.ItemId == id);
-        assetCheck.RelatedFiles = mediaFileQuery.Select(x => new MediaFileDetailDto
+        var relatedMediaFileQuery = MainUnitOfWork.MediaFileRepository.GetQuery().Where(m => m!.ItemId == id && !m.IsReported);
+        assetCheck.RelatedFiles = relatedMediaFileQuery.Select(x => new MediaFileDetailDto
         {
             FileName = x!.FileName,
             Uri = x.Uri,
         }).ToList();
+
+        var mediaFileQuery = MainUnitOfWork.MediaFileRepository.GetQuery().Where(m => m!.ItemId == id && m.IsReported);
+        assetCheck.MediaFile = new MediaFileDto
+        {
+            FileType = mediaFileQuery.Select(m => m!.FileType).FirstOrDefault(),
+            Uri = mediaFileQuery.Select(m => m!.Uri).ToList(),
+            Content = mediaFileQuery.Select(m => m!.Content).FirstOrDefault()
+        };
 
         assetCheck.PriorityObj = assetCheck.Priority.GetValue();
         assetCheck.IsVerified = assetCheck.IsVerified;

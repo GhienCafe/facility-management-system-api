@@ -8,6 +8,7 @@ public class MaintenanceDto : BaseRequestDto {
     public AssetTypeDto? AssetType { get; set; }
     public CategoryDto? Category { get; set; }
     public List<MediaFileDetailDto>? RelatedFiles { get; set; }
+    public MediaFileDto? MediaFile { get; set; }
 }
 
 public class MaintenanceQueryDto : BaseRequestQueryDto
