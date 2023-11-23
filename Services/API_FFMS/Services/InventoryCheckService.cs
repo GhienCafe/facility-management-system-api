@@ -106,7 +106,20 @@ public class InventoryCheckService : BaseService, IInventoryCheckService
             inventoryCheck.PriorityObj = inventoryCheck.Priority.GetValue();
             inventoryCheck.StatusObj = inventoryCheck.Status.GetValue();
 
+            var relatedMediaFileQuery = MainUnitOfWork.MediaFileRepository.GetQuery().Where(m => m!.ItemId == id && !m.IsReported);
+            inventoryCheck.RelatedFiles = relatedMediaFileQuery.Select(x => new MediaFileDetailDto
+            {
+                FileName = x!.FileName,
+                Uri = x.Uri,
+            }).ToList();
 
+            var mediaFileQuery = MainUnitOfWork.MediaFileRepository.GetQuery().Where(m => m!.ItemId == id && m.IsReported);
+            inventoryCheck.MediaFile = new MediaFileDto
+            {
+                FileType = mediaFileQuery.Select(m => m!.FileType).FirstOrDefault(),
+                Uri = mediaFileQuery.Select(m => m!.Uri).ToList(),
+                Content = mediaFileQuery.Select(m => m!.Content).FirstOrDefault()
+            };
 
             var userQuery = MainUnitOfWork.UserRepository.GetQuery().Where(x => x!.Id == inventoryCheck.AssignedTo);
             inventoryCheck.Staff = await userQuery.Select(x => new AssignedInventoryCheckDto

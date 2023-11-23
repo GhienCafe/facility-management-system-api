@@ -224,13 +224,20 @@ public class MaintenanceService : BaseService, IMaintenanceService
             PriorityObj = x.Maintenance.Priority.GetValue()
         }).FirstOrDefaultAsync();
 
-        var mediaFileQuerys = MainUnitOfWork.MediaFileRepository.GetQuery().Where(m => m!.ItemId == id);
-
-        item!.RelatedFiles = mediaFileQuerys.Select(x => new MediaFileDetailDto
+        var relatedMediaFileQuery = MainUnitOfWork.MediaFileRepository.GetQuery().Where(m => m!.ItemId == id && !m.IsReported);
+        item.RelatedFiles = relatedMediaFileQuery.Select(x => new MediaFileDetailDto
         {
             FileName = x!.FileName,
             Uri = x.Uri,
         }).ToList();
+
+        var mediaFileQuery = MainUnitOfWork.MediaFileRepository.GetQuery().Where(m => m!.ItemId == id && m.IsReported);
+        item.MediaFile = new MediaFileDto
+        {
+            FileType = mediaFileQuery.Select(m => m!.FileType).FirstOrDefault(),
+            Uri = mediaFileQuery.Select(m => m!.Uri).ToList(),
+            Content = mediaFileQuery.Select(m => m!.Content).FirstOrDefault()
+        };
 
         return ApiResponse<MaintenanceDto>.Success(item);
     }
