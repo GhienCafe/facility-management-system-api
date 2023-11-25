@@ -137,6 +137,11 @@ public class VirtualizeService : BaseService, IVirtualizeService
         // Execute the query and retrieve the result
         var queryResult = await result.ToListAsync();
 
+        foreach(var item in queryResult)
+        {
+            item.StatusBaseOnAsset = GetRoomAssetStatus(item.Id).GetValue();
+        }
+
         return ApiResponse<IEnumerable<VirtualizeRoomDto>>.Success(queryResult);
     }
 
@@ -151,5 +156,49 @@ public class VirtualizeService : BaseService, IVirtualizeService
         virtualDashboard.TotalUser = await MainUnitOfWork.UserRepository.CountAsync(null);
         
         return ApiResponse<VirtualDashboard>.Success(virtualDashboard);
+    }
+
+    public RoomAssetStatus GetRoomAssetStatus(Guid roomId)
+    {
+        var roomAssets = MainUnitOfWork.RoomAssetRepository.GetQuery()
+            .Where(x => x!.RoomId == roomId && x.ToDate == null);
+
+        var currentQuantityAssetInRoom = roomAssets.Sum(x => x!.Quantity);
+
+        var assetIdsInRoom = roomAssets.Select(ra => ra!.AssetId);
+
+        var assetInRooms = MainUnitOfWork.AssetRepository.GetQuery()
+            .Where(x => assetIdsInRoom.Contains(x.Id) && x.Status == AssetStatus.Damaged);
+
+        var currentAssetDamagedInRoom = assetInRooms.Sum(x => x!.Quantity);
+
+        var roomAssetStatus = RoomAssetStatus.Operational;
+
+        if (currentQuantityAssetInRoom > 0 && currentAssetDamagedInRoom == 0)
+        {
+            roomAssetStatus = RoomAssetStatus.Operational;
+        }
+        else if (currentAssetDamagedInRoom > 0 && currentAssetDamagedInRoom <= 5)
+        {
+            roomAssetStatus = RoomAssetStatus.Notice;
+        }
+        else if (currentAssetDamagedInRoom > 5 && currentAssetDamagedInRoom <= 15)
+        {
+            roomAssetStatus = RoomAssetStatus.Caution;
+        }
+        else if (currentAssetDamagedInRoom > 15 && currentAssetDamagedInRoom <= 30)
+        {
+            roomAssetStatus = RoomAssetStatus.Warning;
+        }
+        else if (currentQuantityAssetInRoom > 0 && currentAssetDamagedInRoom == currentQuantityAssetInRoom)
+        {
+            roomAssetStatus = RoomAssetStatus.Danger;
+        }
+        else if (currentQuantityAssetInRoom == 0)
+        {
+            roomAssetStatus = RoomAssetStatus.Empty;
+        }
+
+        return roomAssetStatus;
     }
 }

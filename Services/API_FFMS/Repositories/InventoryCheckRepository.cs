@@ -148,13 +148,12 @@ public class InventoryCheckRepository : IInventoryCheckRepository
 
             foreach (var detail in inventoryCheckDetails)
             {
+                var roomAsset = _context.RoomAssets
+                            .FirstOrDefault(x => x.AssetId == detail.AssetId && x.RoomId == detail.RoomId);
+                var asset = _context.Assets
+                        .FirstOrDefault(x => x.Id == detail.AssetId);
                 if (statusUpdate == RequestStatus.Done)
                 {
-                    var roomAsset = _context.RoomAssets
-                            .FirstOrDefault(x => x.AssetId == detail.AssetId && x.RoomId == detail.RoomId);
-                    var asset = _context.Assets
-                            .FirstOrDefault(x => x.Id == detail.AssetId);
-
                     if (asset != null)
                     {
                         asset.Status = detail.StatusReported;

@@ -21,6 +21,7 @@ public class VirtualizeRoomDto: BaseDto
     public string RoomCode { get; set; } = null!;
     public Guid? RoomTypeId { get; set; }
     public int? Capacity { get; set; }
+    public EnumValue? StatusBaseOnAsset { get; set; }
     public Guid StatusId { get; set; }
     public Guid FloorId { get; set; }
     public string? Description { get; set; }

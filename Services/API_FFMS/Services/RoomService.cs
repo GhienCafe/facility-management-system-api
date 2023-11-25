@@ -216,48 +216,4 @@ public class RoomService : BaseService, IRoomService
         return ApiResponse.Success("Xóa thành công");
 
     }
-
-    public RoomAssetStatus GetRoomAssetStatus(Guid roomId)
-    {
-        var roomAssets = MainUnitOfWork.RoomAssetRepository.GetQuery()
-                    .Where(x => x!.RoomId == roomId && x.ToDate == null);
-
-        var currentQuantityAssetInRoom = roomAssets.Sum(x => x!.Quantity);
-
-        var assetInRooms = MainUnitOfWork.AssetRepository.GetQuery()
-                        .Where(x => roomAssets.Select(ra => ra!.AssetId).Contains(x.Id) &&
-                                            x.Status == AssetStatus.Damaged);
-
-        var assetDamagedInRoom = MainUnitOfWork.RoomAssetRepository.GetQuery()
-                                .Where(x => assetInRooms.Select(a => a.Id).Contains(x.AssetId));
-
-        var currentAssetDamagedInRoom = assetDamagedInRoom.Sum(x => x!.Quantity);
-
-        var roomAssetStatus = RoomAssetStatus.Operational;
-        if(currentAssetDamagedInRoom == 0)
-        {
-            roomAssetStatus = RoomAssetStatus.Operational;
-        }
-        else if (0 < currentAssetDamagedInRoom && currentAssetDamagedInRoom < 5)
-        {
-            roomAssetStatus |= RoomAssetStatus.Notice;
-        }
-        else if (5 < currentAssetDamagedInRoom && currentAssetDamagedInRoom < 15)
-        {
-            roomAssetStatus |= RoomAssetStatus.Caution;
-        }
-        else if (15 < currentAssetDamagedInRoom && currentAssetDamagedInRoom < 30)
-        {
-            roomAssetStatus |= RoomAssetStatus.Warning;
-        }
-        else if (currentAssetDamagedInRoom == currentQuantityAssetInRoom)
-        {
-            roomAssetStatus |= RoomAssetStatus.Danger;
-        }
-        else if(currentQuantityAssetInRoom == 0)
-        {
-            roomAssetStatus = RoomAssetStatus.Empty;
-        }
-        return roomAssetStatus;
-    }
 }
