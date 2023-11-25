@@ -21,6 +21,7 @@ namespace API_FFMS.Dtos
         public NotificationStatus Status { get; set; }
         public EnumValue? StatusObj { get; set; }
         public Guid? ItemId { get; set; }
+        public string? RedirectPath { get; set; }
     }
 
     public class RegistrationDto

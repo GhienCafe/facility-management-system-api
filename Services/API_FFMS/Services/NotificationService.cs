@@ -4,6 +4,7 @@ using MainData;
 using MainData.Repositories;
 using AppCore.Extensions;
 using AppCore.Models;
+using MainData.Constants;
 using MainData.Entities;
 using Microsoft.EntityFrameworkCore;
 
@@ -90,6 +91,17 @@ public class NotificationService : BaseService, INotificationService
             EditorId = x.EditorId ?? Guid.Empty,
             CreatorId = x.CreatorId ?? Guid.Empty
         }).ToListAsync();
+
+        foreach (var item in notifications)
+        {
+            if (item.ItemId != null)
+            {
+                var task = (await MainUnitOfWork.TaskRepository
+                    .GetQueryAll().FirstOrDefaultAsync(x => x!.Id == item.ItemId));
+                item.RedirectPath =  RequestTypeMetadata
+                    .GetRedirectPath(task!.Type) + item.ItemId;
+            }
+        }
         
         notifications = await _mapperRepository.MapCreator(notifications);
 
