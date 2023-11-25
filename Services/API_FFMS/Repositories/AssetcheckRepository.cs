@@ -71,7 +71,7 @@ public class AssetcheckRepository : IAssetcheckRepository
                         EditedAt = now.Value,
                         Status = NotificationStatus.Waiting,
                         Content = entity.Description ?? "Yêu cầu kiểm tra",
-                        Title = RequestType.Repairation.GetDisplayName(),
+                        Title = RequestType.StatusCheck.GetDisplayName(),
                         Type = NotificationType.Task,
                         CreatorId = creatorId,
                         IsRead = false,
@@ -142,6 +142,7 @@ public class AssetcheckRepository : IAssetcheckRepository
             else if (assetCheck.Status == RequestStatus.Cancelled)
             {
                 asset!.Status = AssetStatus.Operational;
+                asset.RequestStatus = RequestType.Operational;
                 asset.EditedAt = now.Value;
                 asset.EditorId = editorId;
                 _context.Entry(asset).State = EntityState.Modified;

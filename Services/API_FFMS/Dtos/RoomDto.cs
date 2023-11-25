@@ -10,7 +10,6 @@ public class RoomDto : BaseDto
     public double? Area { get; set; }
     public string? PathRoom { get; set; }
     public string RoomCode { get; set; } = null!;
-   // public EnumValue? RoomType { get; set; }
     public Guid? RoomTypeId { get; set; }
     public int? Capacity { get; set; }
     public Guid? StatusId { get; set; }
