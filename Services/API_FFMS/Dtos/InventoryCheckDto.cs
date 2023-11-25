@@ -97,32 +97,29 @@ public class RoomInvenCheckCretaeDto
     public required Guid RoomId { get; set; }
 }
 
+public class InventoryCheckConfigCreateDto 
+{
+    public Guid? Id  { get; set; }
+    public int? NotificationDays  { get; set; }
+    public string? Content { get; set; }
+    public bool IsActive { get; set; }
+    public IEnumerable<InventoryCheckDatesDto>? CheckDates { get; set; }
+}
+
+public class InventoryCheckDatesDto
+{
+    public DateTime InventoryDate { get; set; }
+}
+
 public class InventoryCheckConfigDto : BaseDto
 {
-    public int? CheckPeriod { get; set; }
-    public string? Description { get; set; }
+    public int? NotificationDays  { get; set; }
+    public string? Content { get; set; }
+    public bool IsActive { get; set; }
+    public IEnumerable<CheckDatesDto>? CheckDates { get; set; }
 }
 
-public class InventoryCheckConfigCreateDto
+public class CheckDatesDto : BaseDto
 {
-    public int? CheckPeriod { get; set; }
-    public string? Description { get; set; }
-}
-
-public class NextInventoryCheckDto
-{
-    [JsonConverter(typeof(LocalTimeZoneDateTimeConverter))]
-    public DateTime? NextInventoryCheck { get; set; }
-}
-
-public class InventoryCheckConfigUpdateDto
-{
-    public int? CheckPeriod { get; set; }
-    public string? Description { get; set; }
-}
-
-public class InventoryCheckConfigQueryDto : BaseQueryDto
-{
-    public int? CheckPeriod { get; set; }
-    public string? Description { get; set; }
+    public DateTime InventoryDate { get; set; }
 }

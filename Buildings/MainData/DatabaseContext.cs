@@ -44,6 +44,7 @@ public class DatabaseContext : DbContext
     public DbSet<InventoryCheck> InventoryChecks { get; set; }
     public DbSet<InventoryCheckDetail> InventoryCheckDetails { get; set; }
     public DbSet<InventoryCheckConfig> InventoryCheckConfigs { get; set; }
+    public DbSet<InventoryDetailConfig> InventoryDetailConfigs { get; set; }
 
     
     // ***** VIEW ***** //
