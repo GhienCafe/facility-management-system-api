@@ -43,6 +43,7 @@ public class MainUnitOfWork : IDisposable
     public BaseRepository<InventoryCheck> InventoryCheckRepository => new(_context);
     public BaseRepository<InventoryCheckDetail> InventoryCheckDetailRepository => new(_context);
     public BaseRepository<InventoryCheckConfig> InventoryCheckConfigRepository => new(_context);
+    public BaseRepository<InventoryDetailConfig> InventoryDetailConfigRepository => new(_context);
     
     //******* VIEWS *******//
     public BaseRepository<TaskView> TaskRepository => new(_context);

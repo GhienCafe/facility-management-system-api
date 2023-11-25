@@ -38,9 +38,9 @@ public class BaseDto
     [JsonIgnore] public Guid CreatorId { get; set; }
     [JsonIgnore] public Guid EditorId { get; set; }
     [JsonConverter(typeof(LocalTimeZoneDateTimeConverter))]
-    public DateTime CreatedAt { get; set; }
+    public DateTime? CreatedAt { get; set; }
     [JsonConverter(typeof(LocalTimeZoneDateTimeConverter))]
-    public DateTime EditedAt { get; set; }
+    public DateTime? EditedAt { get; set; }
     public AccountCreator? Creator { get; set; }
     public AccountCreator? Editor { get; set; }
 }
