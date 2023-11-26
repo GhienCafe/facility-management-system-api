@@ -70,7 +70,7 @@ public class TaskRepository : ITaskRepository
                         EditedAt = now.Value,
                         Status = NotificationStatus.Waiting,
                         Content = inventoryCheck.Description ?? "Báo cáo kiểm kê",
-                        Title = RequestType.Repairation.GetDisplayName(),
+                        Title = "Báo cáo kiểm kê",
                         Type = NotificationType.Task,
                         CreatorId = editorId,
                         IsRead = false,
@@ -146,6 +146,7 @@ public class TaskRepository : ITaskRepository
                             Uri = mediaFile.Uri,
                             FileType = mediaFile.FileType,
                             Content = mediaFile.Content,
+                            IsReported = true,
                             ItemId = assetCheck.Id
                         };
                         _context.MediaFiles.Add(newMediaFile);
@@ -205,7 +206,7 @@ public class TaskRepository : ITaskRepository
                         EditedAt = now.Value,
                         Status = NotificationStatus.Waiting,
                         Content = assetCheck.Description ?? "Báo cáo kiểm tra",
-                        Title = RequestType.Repairation.GetDisplayName(),
+                        Title = "Báo cáo kiểm tra",
                         Type = NotificationType.Task,
                         CreatorId = editorId,
                         IsRead = false,
@@ -277,6 +278,7 @@ public class TaskRepository : ITaskRepository
                                 Uri = mediaFile.Uri,
                                 FileType = mediaFile.FileType,
                                 Content = mediaFile.Content,
+                                IsReported = true,
                                 ItemId = transportation.Id
                             };
                             _context.MediaFiles.Add(newMediaFile);
@@ -291,7 +293,7 @@ public class TaskRepository : ITaskRepository
                             EditedAt = now.Value,
                             Status = NotificationStatus.Waiting,
                             Content = transportation.Description ?? "Báo cáo vận chuyển",
-                            Title = RequestType.Repairation.GetDisplayName(),
+                            Title = "Báo cáo vận chuyển",
                             Type = NotificationType.Task,
                             CreatorId = editorId,
                             IsRead = false,
@@ -365,6 +367,7 @@ public class TaskRepository : ITaskRepository
                             Uri = mediaFile.Uri,
                             FileType = mediaFile.FileType,
                             Content = mediaFile.Content,
+                            IsReported = true,
                             ItemId = repairation.Id
                         };
                         _context.MediaFiles.Add(newMediaFile);
@@ -379,7 +382,7 @@ public class TaskRepository : ITaskRepository
                         EditedAt = now.Value,
                         Status = NotificationStatus.Waiting,
                         Content = repairation.Description ?? "Báo cáo sửa chữa",
-                        Title = RequestType.Repairation.GetDisplayName(),
+                        Title = "Báo cáo sửa chữa",
                         Type = NotificationType.Task,
                         CreatorId = editorId,
                         IsRead = false,
@@ -439,6 +442,7 @@ public class TaskRepository : ITaskRepository
                             FileType = mediaFile.FileType,
                             Content = mediaFile.Content,
                             ItemId = repairation.Id,
+                            IsReported = true,
                             RepairId = repairation.Id
                         };
                         _context.MediaFiles.Add(newMediaFile);
@@ -453,7 +457,7 @@ public class TaskRepository : ITaskRepository
                         EditedAt = now.Value,
                         Status = NotificationStatus.Waiting,
                         Content = repairation.Description ?? "Báo cáo sửa chữa",
-                        Title = RequestType.Repairation.GetDisplayName(),
+                        Title = "Báo cáo sửa chữa",
                         Type = NotificationType.Task,
                         CreatorId = editorId,
                         IsRead = false,
@@ -537,6 +541,7 @@ public class TaskRepository : ITaskRepository
                             Uri = mediaFile.Uri,
                             FileType = mediaFile.FileType,
                             Content = mediaFile.Content,
+                            IsReported = true,
                             ItemId = replacement.Id
                         };
                         _context.MediaFiles.Add(newMediaFile);
@@ -551,7 +556,7 @@ public class TaskRepository : ITaskRepository
                         EditedAt = now.Value,
                         Status = NotificationStatus.Waiting,
                         Content = replacement.Description ?? "Báo cáo thay thế",
-                        Title = RequestType.Repairation.GetDisplayName(),
+                        Title = "Báo cáo thay thế",
                         Type = NotificationType.Task,
                         CreatorId = editorId,
                         IsRead = false,
@@ -614,6 +619,7 @@ public class TaskRepository : ITaskRepository
                             Uri = mediaFile.Uri,
                             FileType = mediaFile.FileType,
                             Content = mediaFile.Content,
+                            IsReported = true,
                             ItemId = maintenance.Id
                         };
                         _context.MediaFiles.Add(newMediaFile);
@@ -628,7 +634,7 @@ public class TaskRepository : ITaskRepository
                         EditedAt = now.Value,
                         Status = NotificationStatus.Waiting,
                         Content = maintenance.Description ?? "Báo cáo bảo trì",
-                        Title = RequestType.Repairation.GetDisplayName(),
+                        Title = "Báo cáo bảo trì",
                         Type = NotificationType.Task,
                         CreatorId = editorId,
                         IsRead = false,
@@ -698,6 +704,7 @@ public class TaskRepository : ITaskRepository
                             Uri = mediaFile.Uri,
                             FileType = mediaFile.FileType,
                             Content = mediaFile.Content,
+                            IsReported = true,
                             ItemId = maintenance.Id,
                             MaintenanceId = maintenance.Id
                         };
@@ -713,7 +720,7 @@ public class TaskRepository : ITaskRepository
                         EditedAt = now.Value,
                         Status = NotificationStatus.Waiting,
                         Content = maintenance.Description ?? "Báo cáo bảo trì",
-                        Title = RequestType.Repairation.GetDisplayName(),
+                        Title = "Báo cáo bảo trì",
                         Type = NotificationType.Task,
                         CreatorId = editorId,
                         IsRead = false,

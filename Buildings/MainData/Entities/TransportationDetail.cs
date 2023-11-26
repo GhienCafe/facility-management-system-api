@@ -8,6 +8,7 @@ public class TransportationDetail : BaseEntity
 {
     public Guid? AssetId { get; set; }
     public Guid? TransportationId { get; set; }
+    public Guid? FromRoomId { get; set; }
     public DateTime? RequestDate { get; set; }
     public int? Quantity { get; set; }
     public virtual Asset? Asset { get; set; }
@@ -20,6 +21,7 @@ public class TransportationDetailConfig : IEntityTypeConfiguration<Transportatio
     {
         builder.ToTable("TransportationDetails");
         builder.Property(a => a.AssetId).IsRequired();
+        builder.Property(a => a.FromRoomId).IsRequired(false);
         builder.Property(a => a.TransportationId).IsRequired();
         builder.Property(a => a.RequestDate).IsRequired();
         builder.Property(a => a.Quantity).IsRequired();
