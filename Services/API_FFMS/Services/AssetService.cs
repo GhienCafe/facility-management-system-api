@@ -112,7 +112,7 @@ public class AssetService : BaseService, IAssetService
                 x => x.ToDate == null
             }, null)).Select(x => x?.AssetId);
 
-            assetDataSet = assetDataSet.Where(x => listAssetIds.Contains(x?.Id));
+            assetDataSet = assetDataSet.Where(x => listAssetIds.Contains(x!.Id));
         }
         
         // Order
