@@ -916,6 +916,13 @@ public class AssetService : BaseService, IAssetService
                                 join model in modelsQueryable
                                     on asset.ModelId equals model.Id into modelsGroup
                                 from model in modelsGroup.DefaultIfEmpty()
+                                join assetType in MainUnitOfWork.AssetTypeRepository.GetQuery()
+                                    on asset.TypeId equals assetType.Id into assetTypeGroup
+                                from assetType in assetTypeGroup.DefaultIfEmpty()
+                                join category in MainUnitOfWork.CategoryRepository.GetQuery()
+                                    on assetType.CategoryId equals category.Id into categoryGroup
+                                from category in categoryGroup.DefaultIfEmpty()
+                                
                                 select new AssetMaintenanceDto
                                 {
                                     // Map other properties from your entities to the DTO
@@ -932,6 +939,7 @@ public class AssetService : BaseService, IAssetService
                                     LastMaintenanceTime = asset.LastMaintenanceTime,
                                     LastCheckedDate = asset.LastCheckedDate,
                                     TypeId = asset.TypeId,
+                                    CategoryId = category.Id,
                                     ModelId = asset.ModelId,
                                     IsRented = asset.IsRented,
                                     StartDateOfUse = asset.StartDateOfUse,

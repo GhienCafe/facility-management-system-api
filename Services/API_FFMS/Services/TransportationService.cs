@@ -334,6 +334,7 @@ namespace API_FFMS.Services
                 Description = existingTransport.Description,
                 Notes = existingTransport.Notes,
                 Status = existingTransport.Status,
+                IsInternal = existingTransport.IsInternal,
                 StatusObj = existingTransport.Status!.GetValue(),
                 RequestDate = existingTransport.RequestDate,
                 Quantity = existingTransport.Quantity,
