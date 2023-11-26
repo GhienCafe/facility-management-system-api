@@ -36,7 +36,7 @@ namespace API_FFMS.Controllers
             return await _service.Insert(insertDto);
         }
 
-        [HttpPut]
+        [HttpPut("{id:guid}")]
         [SwaggerOperation("Update team")]
         public async Task<ApiResponse> Update(Guid id, TeamUpdateDto updateDto)
         {
