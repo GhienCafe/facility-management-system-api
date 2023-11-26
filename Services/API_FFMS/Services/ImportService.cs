@@ -155,7 +155,7 @@ namespace API_FFMS.Services
                 {
                     AssetName = dto.AssetName,
                     AssetCode = dto.AssetCode,
-                    //Type = dto.TypeCode == null ? null : GetAssetTypeByCode(dto.TypeCode!),
+                    TypeId = dto.TypeCode == null ? null : GetAssetTypeByCode(dto.TypeCode!),
                     Status = AssetStatus.Operational,
                     ManufacturingYear = dto.ManufacturingYear,
                     SerialNumber = dto.SerialNumber,
@@ -163,7 +163,7 @@ namespace API_FFMS.Services
                     Description = dto.Description,
                     IsRented = IsTrueOrFalse(dto.IsRented!),
                     IsMovable = IsTrueOrFalse(dto.IsMovable!),
-                    //Model = dto.ModelCode == null ? null : GetModelByName(dto.ModelCode!),
+                    ModelId = dto.ModelCode == null ? null : GetModelByName(dto.ModelCode!),
                     ImageUrl = "",
                     StartDateOfUse = DateTime.Now,
                     LastCheckedDate = null,
