@@ -212,7 +212,7 @@ public class TransportationRepository : ITransportationRepository
                 EditedAt = now.Value,
                 Status = NotificationStatus.Waiting,
                 Content = transportation.Description ?? "Yêu cầu vận chuyển",
-                Title = RequestType.Maintenance.GetDisplayName(),
+                Title = RequestType.Transportation.GetDisplayName(),
                 Type = NotificationType.Task,
                 CreatorId = creatorId,
                 IsRead = false,

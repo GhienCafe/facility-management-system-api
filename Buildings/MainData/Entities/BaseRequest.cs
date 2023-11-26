@@ -47,16 +47,22 @@ public enum RequestType
 {
     [Display(Name = "Kiểm tra tình trạng")]
     StatusCheck = 1,
+
     [Display(Name = "Bảo trì, nâng cấp")]
     Maintenance = 2,
+
     [Display(Name = "Sửa chữa")]
     Repairation = 3,
+
     [Display(Name = "Thay thế")]
     Replacement = 4,
+
     [Display(Name = "Điều chuyển")]
     Transportation = 5,
+
     [Display(Name = "Kiểm kê tài sản")]
     InventoryCheck = 6,
+
     [Display(Name = "Đang không thuộc yêu cầu nào")]
     Operational = 7
 }
