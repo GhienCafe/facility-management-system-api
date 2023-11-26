@@ -5,15 +5,11 @@
 namespace InitDatabase.Migrations
 {
     /// <inheritdoc />
-    public partial class u69 : Migration
+    public partial class v2 : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
-        {
-  migrationBuilder.Sql(@"
-                drop view Tasks;
-                ");
-
+        { 
             migrationBuilder.Sql(@"
                	CREATE VIEW Tasks AS 
                 SELECT 
@@ -211,6 +207,7 @@ namespace InitDatabase.Migrations
 	                iven.DeleterId
                 FROM InventoryChecks iven) AS t3
                 WHERE t3.DeletedAt is null");
+        
         }
 
         /// <inheritdoc />
