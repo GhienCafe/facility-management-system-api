@@ -1,8 +1,6 @@
-using System;
-using System.Threading;
 using Worker_Notify.Services;
 
-namespace Worker_Notify
+namespace Worker_Notify.Workers
 {
     public class Worker : BackgroundService
     {
