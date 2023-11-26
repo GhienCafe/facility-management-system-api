@@ -103,11 +103,18 @@ public class AssetService : BaseService, IAssetService
         if (queryDto.CreateAtTo != null)
             assetDataSet = assetDataSet.Where(x => x!.CreatedAt <= queryDto.CreateAtTo);
 
-        //var roomAssetDataset = MainUnitOfWork.RoomAssetRepository.GetQuery().Include(x => x.Room);
+        if (queryDto.RoomId != null)
+        {
+            var listAssetIds = (await MainUnitOfWork.RoomAssetRepository.FindAsync(new Expression<Func<RoomAsset, bool>>[]
+            {
+                x => !x.DeletedAt.HasValue,
+                x => x.RoomId == queryDto.RoomId,
+                x => x.ToDate == null
+            }, null)).Select(x => x?.AssetId);
 
-        //if (queryDto.RoomId != null)
-        //    assetDataSet = assetDataSet.Where(x => roomAssetDataset.RoomId == queryDto.RoomId);
-
+            assetDataSet = assetDataSet.Where(x => listAssetIds.Contains(x?.Id));
+        }
+        
         // Order
         var isDescending = queryDto.OrderBy.EndsWith("desc", StringComparison.OrdinalIgnoreCase);
         var orderByColumn = queryDto.OrderBy.Split(' ')[0];
