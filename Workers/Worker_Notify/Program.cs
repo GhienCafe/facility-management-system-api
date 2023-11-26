@@ -4,6 +4,7 @@ using MainData.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Worker_Notify;
 using Worker_Notify.Services;
+using Worker_Notify.Workers;
 
 IHost host = Host.CreateDefaultBuilder(args)
     .ConfigureServices((hostContext, services) =>
