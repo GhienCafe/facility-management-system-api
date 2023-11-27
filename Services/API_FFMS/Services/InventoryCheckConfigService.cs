@@ -36,7 +36,7 @@ public class InventoryCheckConfigService : BaseService, IInventoryCheckConfigSer
         
         var checkDates = createDto.CheckDates?.ToList().ProjectTo<InventoryCheckDatesDto, InventoryDetailConfig>();
 
-        if (!await _configRepository.InsertInventoryConfig(inventories, checkDates, AccountId, CurrentDate))
+        if (!await _configRepository.UpdateInsertInventoryConfig(inventories, checkDates, AccountId, CurrentDate))
             throw new ApiException("Thao tác thất bại", StatusCode.SERVER_ERROR);
         
         return ApiResponse.Created("Cài đặt thành công");
