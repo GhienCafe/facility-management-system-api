@@ -7,7 +7,6 @@ using MainData.Repositories;
 using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
 using API_FFMS.Repositories;
-using DocumentFormat.OpenXml.Spreadsheet;
 
 namespace API_FFMS.Services;
 public interface IAssetService : IBaseService
@@ -112,7 +111,7 @@ public class AssetService : BaseService, IAssetService
                 x => x.ToDate == null
             }, null)).Select(x => x?.AssetId);
 
-            assetDataSet = assetDataSet.Where(x => listAssetIds.Contains(x?.Id));
+            assetDataSet = assetDataSet.Where(x => listAssetIds.Contains(x!.Id));
         }
         
         // Order
@@ -916,6 +915,13 @@ public class AssetService : BaseService, IAssetService
                                 join model in modelsQueryable
                                     on asset.ModelId equals model.Id into modelsGroup
                                 from model in modelsGroup.DefaultIfEmpty()
+                                join assetType in MainUnitOfWork.AssetTypeRepository.GetQuery()
+                                    on asset.TypeId equals assetType.Id into assetTypeGroup
+                                from assetType in assetTypeGroup.DefaultIfEmpty()
+                                join category in MainUnitOfWork.CategoryRepository.GetQuery()
+                                    on assetType.CategoryId equals category.Id into categoryGroup
+                                from category in categoryGroup.DefaultIfEmpty()
+                                
                                 select new AssetMaintenanceDto
                                 {
                                     // Map other properties from your entities to the DTO
@@ -932,6 +938,12 @@ public class AssetService : BaseService, IAssetService
                                     LastMaintenanceTime = asset.LastMaintenanceTime,
                                     LastCheckedDate = asset.LastCheckedDate,
                                     TypeId = asset.TypeId,
+                                    Category = new CategoryDto
+                                    {
+                                        Id = category.Id,
+                                        Description = category.Description,
+                                        CategoryName = category.CategoryName
+                                    },
                                     ModelId = asset.ModelId,
                                     IsRented = asset.IsRented,
                                     StartDateOfUse = asset.StartDateOfUse,

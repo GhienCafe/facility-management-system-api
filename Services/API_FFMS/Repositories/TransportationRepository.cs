@@ -212,7 +212,7 @@ public class TransportationRepository : ITransportationRepository
                 EditedAt = now.Value,
                 Status = NotificationStatus.Waiting,
                 Content = transportation.Description ?? "Yêu cầu vận chuyển",
-                Title = RequestType.Maintenance.GetDisplayName(),
+                Title = RequestType.Transportation.GetDisplayName(),
                 Type = NotificationType.Task,
                 CreatorId = creatorId,
                 IsRead = false,
@@ -240,7 +240,6 @@ public class TransportationRepository : ITransportationRepository
         {
             transportation.EditedAt = now.Value;
             transportation.EditorId = editorId;
-            transportation.Status = statusUpdate;
             _context.Entry(transportation).State = EntityState.Modified;
 
             var assetIds = transportation.TransportationDetails?.Select(td => td.AssetId).ToList();
@@ -267,6 +266,7 @@ public class TransportationRepository : ITransportationRepository
                     if (statusUpdate == RequestStatus.Done)
                     {
                         transportation.CompletionDate = now.Value;
+                        transportation.Status = statusUpdate;
                         _context.Entry(transportation).State = EntityState.Modified;
 
                         if (asset.Type!.Unit == Unit.Individual || asset.Type.IsIdentified == true)
@@ -332,6 +332,9 @@ public class TransportationRepository : ITransportationRepository
                     }
                     else if (statusUpdate == RequestStatus.Cancelled)
                     {
+                        transportation.Status = statusUpdate;
+                        _context.Entry(transportation).State = EntityState.Modified;
+
                         asset.RequestStatus = RequestType.Operational;
                         _context.Entry(asset).State = EntityState.Modified;
 

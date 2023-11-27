@@ -28,6 +28,7 @@ public class AssetMaintenanceDto : BaseDto
     public string? ImageUrl { get; set; }
     [JsonConverter(typeof(LocalTimeZoneDateTimeConverter))]
     public DateTime? NextMaintenanceDate { get; set; }
+    public CategoryDto? Category { get; set; }
 }
 
 public class MaintenanceScheduleConfigDto : BaseDto

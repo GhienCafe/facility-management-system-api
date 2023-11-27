@@ -110,7 +110,7 @@ public class InventoryCheckRepository : IInventoryCheckRepository
                 EditedAt = now.Value,
                 Status = NotificationStatus.Waiting,
                 Content = inventoryCheck.Description ?? "Yêu cầu đi kiểm kê",
-                Title = RequestType.Maintenance.GetDisplayName(),
+                Title = RequestType.InventoryCheck.GetDisplayName(),
                 Type = NotificationType.Task,
                 CreatorId = creatorId,
                 IsRead = false,
