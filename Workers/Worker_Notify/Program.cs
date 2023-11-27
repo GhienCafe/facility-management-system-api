@@ -27,8 +27,12 @@ IHost host = Host.CreateDefaultBuilder(args)
 
         services.AddScoped<IShortTermNotificationService, ShortTermNotificationService>();
         services.AddScoped<ISendNotification, SendNotification>();
+        services.AddScoped<IInventoryConfigService, InventoryConfigService>();
         
+        // Worker for push notification
         services.AddHostedService<Worker>();
+        // Worker for create notification
+        services.AddHostedService<InventoryWorker>();
     })
     .Build();
 
