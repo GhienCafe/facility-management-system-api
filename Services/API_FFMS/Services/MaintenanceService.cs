@@ -5,6 +5,7 @@ using AppCore.Models;
 using MainData;
 using MainData.Entities;
 using MainData.Repositories;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
 
@@ -244,43 +245,36 @@ public class MaintenanceService : BaseService, IMaintenanceService
 
     public async Task<ApiResponse> CreateItem(MaintenanceCreateDto createDto)
     {
-        try
+        var asset = await MainUnitOfWork.AssetRepository.FindOneAsync(createDto.AssetId);
+        //var assetType = await MainUnitOfWork.AssetTypeRepository.FindOneAsync((Guid)createDto.AssetTypeId!);
+
+        if (asset == null)
+            throw new ApiException("Không cần tồn tại trang thiết bị", StatusCode.NOT_FOUND);
+
+        if (asset.RequestStatus != RequestType.Operational)
+            throw new ApiException("Trang thiết bị đang trong một yêu cầu khác", StatusCode.BAD_REQUEST);
+
+        var maintenance = createDto.ProjectTo<MaintenanceCreateDto, Maintenance>();
+        maintenance.RequestCode = GenerateRequestCode();
+
+        var mediaFiles = new List<MediaFile>();
+        if (createDto.RelatedFiles != null)
         {
-            var asset = await MainUnitOfWork.AssetRepository.FindOneAsync(createDto.AssetId);
-            var assetType = await MainUnitOfWork.AssetTypeRepository.FindOneAsync((Guid)createDto.AssetTypeId!);
-
-            if (asset == null)
-                throw new ApiException("Không cần tồn tại trang thiết bị", StatusCode.NOT_FOUND);
-
-            if (assetType!.Unit == Unit.Individual && asset.RequestStatus != RequestType.Operational)
-                throw new ApiException("Trang thiết bị đang trong một yêu cầu khác", StatusCode.BAD_REQUEST);
-
-            var maintenance = createDto.ProjectTo<MaintenanceCreateDto, Maintenance>();
-            maintenance.RequestCode = GenerateRequestCode();
-
-            var mediaFiles = new List<MediaFile>();
-            if (createDto.RelatedFiles != null)
+            foreach (var file in createDto.RelatedFiles)
             {
-                foreach (var file in createDto.RelatedFiles)
+                var newMediaFile = new MediaFile
                 {
-                    var newMediaFile = new MediaFile
-                    {
-                        FileName = file.FileName ?? "",
-                        Uri = file.Uri ?? ""
-                    };
-                    mediaFiles.Add(newMediaFile);
-                }
+                    FileName = file.FileName ?? "",
+                    Uri = file.Uri ?? ""
+                };
+                mediaFiles.Add(newMediaFile);
             }
-
-            if (!await _maintenanceRepository.InsertMaintenance(maintenance, mediaFiles , AccountId, CurrentDate))
-                throw new ApiException("Tạo yêu cầu thất bại", StatusCode.SERVER_ERROR);
-
-            return ApiResponse.Created("Gửi yêu cầu thành công");
         }
-        catch (Exception ex)
-        {
-            throw new Exception(ex.Message);
-        }
+
+        if (!await _maintenanceRepository.InsertMaintenance(maintenance, mediaFiles, AccountId, CurrentDate))
+            throw new ApiException("Tạo yêu cầu thất bại", StatusCode.SERVER_ERROR);
+
+        return ApiResponse.Created("Gửi yêu cầu thành công");
     }
 
     public async Task<ApiResponse> UpdateItem(Guid id, MaintenanceUpdateDto updateDto)
@@ -331,19 +325,33 @@ public class MaintenanceService : BaseService, IMaintenanceService
                     x => createDtos.Select(dto => dto.AssetId).Contains(x.Id)
                 }, null);
 
-        if (assets.Any(asset => asset!.RequestStatus != RequestType.Operational))
+        foreach(var asset in assets)
         {
-            throw new ApiException("Trang thiết bị đang trong một yêu cầu khác", StatusCode.SERVER_ERROR);
+            if (asset == null)
+                throw new ApiException("Không cần tồn tại trang thiết bị", StatusCode.NOT_FOUND);
+
+            if (asset.RequestStatus != RequestType.Operational)
+                throw new ApiException($"Thiết bị {asset.AssetCode} đang trong một yêu cầu khác", StatusCode.BAD_REQUEST);
+
+            var checkExist = await MainUnitOfWork.MaintenanceRepository.FindAsync(
+                    new Expression<Func<Maintenance, bool>>[]
+                    {
+                            x => !x.DeletedAt.HasValue,
+                            x => x.AssetId == asset.Id, 
+                            x => x.Status != RequestStatus.Done
+                    }, null);
+            if (checkExist.Any())
+            {
+                throw new ApiException($"Đã có yêu cầu bảo trì cho thiết bị {asset.AssetCode}", StatusCode.ALREADY_EXISTS);
+            }
         }
 
-        //var maintenances = createDtos.Select(dto => dto.ProjectTo<MaintenanceCreateDto, Maintenance>())
-        //                             .ToList();
         var maintenances = new List<Maintenance>();
         var relatedFiles = new List<MediaFile>();
         foreach (var create in createDtos)
         {
-            var repair = create.ProjectTo<MaintenanceCreateDto, Maintenance>();
-            repair.Id = Guid.NewGuid();
+            var maintenance = create.ProjectTo<MaintenanceCreateDto, Maintenance>();
+            maintenance.Id = Guid.NewGuid();
             if (create.RelatedFiles != null)
             {
                 foreach (var file in create.RelatedFiles)
@@ -355,12 +363,12 @@ public class MaintenanceService : BaseService, IMaintenanceService
                         Uri = file.Uri ?? "",
                         CreatedAt = CurrentDate,
                         CreatorId = AccountId,
-                        ItemId = repair.Id
+                        ItemId = maintenance.Id
                     };
                     relatedFiles.Add(relatedFile);
                 }
             }
-            maintenances.Add(repair);
+            maintenances.Add(maintenance);
         }
 
         if (!await _maintenanceRepository.InsertMaintenances(maintenances, relatedFiles, AccountId, CurrentDate))
