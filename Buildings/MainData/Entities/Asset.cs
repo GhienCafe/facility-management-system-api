@@ -48,25 +48,25 @@ public enum AssetStatus
     [Color("#962612")] // Red color
     Inactive = 2,
 
-    [Display(Name = "Đang bảo dưỡng")]
-    [Color("#967508")] // Yellow color
-    Maintenance = 3,
-
-    [Display(Name = "Đang sửa chữa")]
-    [Color("#d98f1a")] // Orange color
-    Repair = 4,
-
-    [Display(Name = "Đang chờ kiểm tra")]
-    [Color("#040e91")] // Blue color
-    NeedInspection = 5,
-
-    [Display(Name = "Đang chờ thay thế")]
-    [Color("#4a0982")] // Purple color
-    Replacement = 6,
-
-    [Display(Name = "Đang được điều chuyển")]
-    [Color("#1a4e61")] // Teal color
-    Transportation = 7,
+    // [Display(Name = "Đang bảo dưỡng")]
+    // [Color("#967508")] // Yellow color
+    // Maintenance = 3,
+    //
+    // [Display(Name = "Đang sửa chữa")]
+    // [Color("#d98f1a")] // Orange color
+    // Repair = 4,
+    //
+    // [Display(Name = "Đang chờ kiểm tra")]
+    // [Color("#040e91")] // Blue color
+    // NeedInspection = 5,
+    //
+    // [Display(Name = "Đang chờ thay thế")]
+    // [Color("#4a0982")] // Purple color
+    // Replacement = 6,
+    //
+    // [Display(Name = "Đang được điều chuyển")]
+    // [Color("#1a4e61")] // Teal color
+    // Transportation = 7,
 
     [Display(Name = "Hư hại")]
     [Color("#FF6347")] // Tomato color

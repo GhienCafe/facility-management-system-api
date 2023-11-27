@@ -205,11 +205,11 @@ public class MaintenanceRepository : IMaintenanceRepository
                 maintenance.DeleterId = deleterId;
                 _context.Entry(maintenance).State = EntityState.Modified;
 
-                var asset = await _context.Assets.FindAsync(maintenance.AssetId);
-                asset!.Status = AssetStatus.Maintenance;
-                asset.EditedAt = now.Value;
-                asset.EditorId = deleterId;
-                _context.Entry(asset).State = EntityState.Modified;
+                 var asset = await _context.Assets.FindAsync(maintenance.AssetId);
+                // asset!.Status = AssetStatus.Operational;
+                // asset.EditedAt = now.Value;
+                // asset.EditorId = deleterId;
+                // _context.Entry(asset).State = EntityState.Modified;
 
                 var roomAsset = await _context.RoomAssets
                     .FirstOrDefaultAsync(x => x.AssetId == maintenance.AssetId && x.ToDate == null);
@@ -223,13 +223,13 @@ public class MaintenanceRepository : IMaintenanceRepository
                     _context.Entry(notification).State = EntityState.Modified;
                 }
 
-                if (asset != null)
-                {
-                    asset.Status = AssetStatus.Operational;
-                    asset.EditedAt = now.Value;
-                    asset.EditorId = deleterId;
-                    _context.Entry(asset).State = EntityState.Modified;
-                }
+                // if (asset != null)
+                // {
+                //     asset.Status = AssetStatus.Operational;
+                //     asset.EditedAt = now.Value;
+                //     asset.EditorId = deleterId;
+                //     _context.Entry(asset).State = EntityState.Modified;
+                // }
 
                 if (roomAsset != null)
                 {
