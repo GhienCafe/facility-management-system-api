@@ -368,5 +368,4 @@ public class BaseRepository<TEntity> : IBaseRepository<TEntity> where TEntity : 
         var result = await query.FirstOrDefaultAsync();
         return result!.ProjectTo<TEntity, TDto>();
     }
-
 }
