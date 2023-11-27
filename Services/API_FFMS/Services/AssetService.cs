@@ -7,7 +7,6 @@ using MainData.Repositories;
 using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
 using API_FFMS.Repositories;
-using DocumentFormat.OpenXml.Spreadsheet;
 
 namespace API_FFMS.Services;
 public interface IAssetService : IBaseService
@@ -977,6 +976,17 @@ public class AssetService : BaseService, IAssetService
         if (queryDto.IsMovable != null)
         {
             maintenanceItems = maintenanceItems.Where(x => x.IsMovable == queryDto.IsMovable);
+        }
+
+        if(queryDto.CategoryId != null)
+        {
+            var listTypeIds = (await MainUnitOfWork.AssetTypeRepository.FindAsync(
+                new Expression<Func<AssetType, bool>>[]
+                {
+                    x => !x.DeletedAt.HasValue,
+                    x => x.CategoryId == queryDto.CategoryId
+                }, null)).Select(x => x!.Id).ToList();
+            maintenanceItems = maintenanceItems.Where(x => listTypeIds.Contains((Guid)x.TypeId));
         }
 
         var totalCount = await maintenanceItems.CountAsync();

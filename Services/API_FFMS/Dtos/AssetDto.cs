@@ -128,6 +128,7 @@ public class AssetQueryDto : BaseQueryDto
     public bool? IsMovable { get; set; }
     public Guid? TypeId { get; set; }
     public Guid? ModelId { get; set; }
+    public Guid? CategoryId { get; set; }
     public bool? IsRented { get; set; }
     public Guid? RoomId  { get; set; }
 }
