@@ -161,14 +161,14 @@ public class TaskService : BaseService, ITaskService
             mediaFiles.Add(newMediaFile);
         }
 
-        if (mediaFiles.Count() > 0 && inventoryCheckReport == null)
+        if (mediaFiles.Count > 0 && inventoryCheckReport == null)
         {
             if (!await _taskRepository.UpdateStatus(mediaFiles, createDto.Status, AccountId, CurrentDate))
             {
                 throw new ApiException("Báo cáo thất bại", StatusCode.SERVER_ERROR);
             }
         }
-        else if (mediaFiles.Count() > 0 && inventoryCheckReport != null)
+        else if (mediaFiles.Count > 0 && inventoryCheckReport != null)
         {
             if (!await _taskRepository.InventoryCheckReport(mediaFiles, inventoryDetails, createDto.Status, AccountId, CurrentDate))
             {

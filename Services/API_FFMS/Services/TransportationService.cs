@@ -118,6 +118,7 @@ namespace API_FFMS.Services
                             {
                                 x => !x.DeletedAt.HasValue,
                                 x => x.RoomId == createDto.FromRoomId,
+                                x => x.AssetId == asset.Id,
                                 x => x.ToDate == null
                             });
                     if (roomAsset != null)
