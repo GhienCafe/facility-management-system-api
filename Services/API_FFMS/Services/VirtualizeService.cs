@@ -168,7 +168,7 @@ public class VirtualizeService : BaseService, IVirtualizeService
         var assetIdsInRoom = roomAssets.Select(ra => ra!.AssetId);
 
         var assetInRooms = MainUnitOfWork.AssetRepository.GetQuery()
-            .Where(x => assetIdsInRoom.Contains(x.Id) && x.Status == AssetStatus.Damaged);
+            .Where(x => assetIdsInRoom.Contains(x!.Id) && x.Status == AssetStatus.Damaged);
 
         var currentAssetDamagedInRoom = assetInRooms.Sum(x => x!.Quantity);
 

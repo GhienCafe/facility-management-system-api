@@ -44,43 +44,21 @@ public class AssetcheckRepository : IAssetcheckRepository
                 entity.RequestCode = "AC" + GenerateRequestCode(ref numbers);
                 await _context.AssetChecks.AddAsync(entity);
 
-                var asset = await _context.Assets.FindAsync(entity.AssetId);
-                asset!.Status = AssetStatus.NeedInspection;
-                asset.EditedAt = now.Value;
-                asset.EditorId = creatorId;
-                _context.Entry(asset).State = EntityState.Modified;
-
-                if (entity.IsInternal)
+                var notification = new Notification
                 {
-                    var roomAsset = await _context.RoomAssets
-                    .FirstOrDefaultAsync(x => x.AssetId == entity.AssetId && x.ToDate == null);
-                    var location = await _context.Rooms.FirstOrDefaultAsync(x => x.Id == roomAsset!.RoomId &&
-                                                                                 roomAsset.AssetId == asset.Id &&
-                                                                                 roomAsset.ToDate == null);
+                    CreatedAt = now.Value,
+                    EditedAt = now.Value,
+                    Status = NotificationStatus.Waiting,
+                    Content = entity.Description ?? "Yêu cầu kiểm tra",
+                    Title = RequestType.StatusCheck.GetDisplayName(),
+                    Type = NotificationType.Task,
+                    CreatorId = creatorId,
+                    IsRead = false,
+                    ItemId = entity.Id,
+                    UserId = entity.AssignedTo
+                };
+                await _context.Notifications.AddAsync(notification);
 
-                    if (roomAsset != null)
-                    {
-                        roomAsset!.Status = AssetStatus.NeedInspection;
-                        roomAsset.EditedAt = now.Value;
-                        roomAsset.EditorId = creatorId;
-                        _context.Entry(roomAsset).State = EntityState.Modified;
-                    }
-
-                    var notification = new Notification
-                    {
-                        CreatedAt = now.Value,
-                        EditedAt = now.Value,
-                        Status = NotificationStatus.Waiting,
-                        Content = entity.Description ?? "Yêu cầu kiểm tra",
-                        Title = RequestType.StatusCheck.GetDisplayName(),
-                        Type = NotificationType.Task,
-                        CreatorId = creatorId,
-                        IsRead = false,
-                        ItemId = entity.Id,
-                        UserId = entity.AssignedTo
-                    };
-                    await _context.Notifications.AddAsync(notification);
-                }
             }
 
             await _context.SaveChangesAsync();
@@ -94,7 +72,7 @@ public class AssetcheckRepository : IAssetcheckRepository
         }
     }
 
-    private int GenerateRequestCode(ref List<int> numbers)
+    private static int GenerateRequestCode(ref List<int> numbers)
     {
         int newRequestNumber = numbers.Any() ? numbers.Max() + 1 : 1;
         numbers.Add(newRequestNumber); // Add the new number to the list

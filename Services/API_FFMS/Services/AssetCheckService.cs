@@ -57,7 +57,7 @@ public class AssetCheckService : BaseService, IAssetCheckService
         var assetCheck = createDto.ProjectTo<AssetCheckCreateDto, AssetCheck>();
 
         assetCheck.RequestCode = GenerateRequestCode();
-        assetCheck.Priority = assetCheck.Priority != null ? assetCheck.Priority : Priority.Medium;
+        assetCheck.Priority ??= Priority.Medium;
 
         var mediaFiles = new List<MediaFile>();
         if (createDto.RelatedFiles != null)
