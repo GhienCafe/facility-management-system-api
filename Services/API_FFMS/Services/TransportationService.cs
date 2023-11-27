@@ -58,7 +58,7 @@ namespace API_FFMS.Services
             {
                 if (a.AssetType.Unit == Unit.Individual && a.Asset.RequestStatus != RequestType.Operational)
                 {
-                    throw new ApiException("Trang thiết bị đang trong một yêu cầu khác", StatusCode.SERVER_ERROR);
+                    throw new ApiException($"Thiết bị {a.Asset.AssetCode} đang trong một yêu cầu khác", StatusCode.SERVER_ERROR);
                 }
                 var correspondingDto = createDto.Assets!.FirstOrDefault(dto => dto.AssetId == a.Asset.Id);
                 if (correspondingDto != null)
@@ -359,6 +359,7 @@ namespace API_FFMS.Services
                 ToRoom = toRoom,
                 RelatedFiles = relatedMediaFile,
                 MediaFile = mediaFile,
+                AssignedTo = existingTransport.AssignedTo,
                 AssignTo = assignTo
             };
 
