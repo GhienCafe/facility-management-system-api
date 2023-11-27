@@ -117,7 +117,7 @@ namespace API_FFMS.Services
                             new Expression<Func<RoomAsset, bool>>[]
                             {
                                 x => !x.DeletedAt.HasValue,
-                                x => x.AssetId == asset.Id,
+                                x => x.RoomId == createDto.FromRoomId,
                                 x => x.ToDate == null
                             });
                     if (roomAsset != null)
@@ -145,10 +145,10 @@ namespace API_FFMS.Services
                         }
                         else if (asset.Type?.IsIdentified == false || asset.Type?.Unit == Unit.Quantity)
                         {
-                            var correspondingDto = createDto.Assets!.FirstOrDefault(dto => dto.AssetId == asset.Id);
-                            if(correspondingDto != null && correspondingDto.Quantity > roomAsset.Quantity)
+                            var assetTransportDto = createDto.Assets!.FirstOrDefault(dto => dto.AssetId == asset.Id);
+                            if(assetTransportDto != null && assetTransportDto.Quantity > roomAsset.Quantity)
                             {
-                                throw new ApiException($"Phòng di dời không đủ trang thiết bị {asset.AssetName}", StatusCode.UNPROCESSABLE_ENTITY);
+                                throw new ApiException($"Phòng lấy thiết bị chỉ có: {roomAsset.Quantity} {asset.AssetName}", StatusCode.UNPROCESSABLE_ENTITY);
                             }
                             var transpsortDetail = new TransportationDetail
                             {
@@ -156,7 +156,7 @@ namespace API_FFMS.Services
                                 AssetId = asset.Id,
                                 TransportationId = transportation.Id,
                                 RequestDate = CurrentDate,
-                                Quantity = (int?)correspondingDto.Quantity,
+                                Quantity = (int?)assetTransportDto!.Quantity,
                                 FromRoomId = createDto.FromRoomId,
                                 CreatorId = AccountId,
                                 CreatedAt = CurrentDate
