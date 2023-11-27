@@ -5,6 +5,7 @@ using MainData;
 using MainData.Entities;
 using MainData.Repositories;
 using Microsoft.EntityFrameworkCore;
+using System.Linq;
 
 namespace API_FFMS.Services;
 
@@ -199,24 +200,68 @@ public class DashboardService : BaseService, IDashboardService
         var assetQuery = MainUnitOfWork.AssetRepository.GetQuery().Include(x => x!.Type)
                          .Where(x => !x!.DeletedAt.HasValue);
 
-        assetQuery = assetQuery.Where(x => x!.Type!.Unit == queryDto.Unit);
+        var transportQuery = MainUnitOfWork.TransportationRepository.GetQuery()
+                                                                       .Where(x => x!.Status == RequestStatus.Reported ||
+                                                                                   x.Status == RequestStatus.InProgress)
+                                                                       .ToList();
+        var unIdentAssetQuery = MainUnitOfWork.AssetRepository.GetQuery()
+                                                         .Include(x => x!.Type)
+                                                         .Where(x => !x!.DeletedAt.HasValue && x!.Type!.Unit == Unit.Quantity)
+                                                         .ToList();
+
+        var transportDetails = MainUnitOfWork.TransportationDetailRepository.GetQuery()
+                            .Where(td => unIdentAssetQuery.Select(a => a!.Id).Contains((Guid)td!.AssetId!) &&
+                                         transportQuery.Select(t => t!.Id).Contains((Guid)td.TransportationId!))
+                            .Select(td => new
+                            {
+                                td!.Id
+                            }).ToList();
+        var transportDetailQuery = MainUnitOfWork.TransportationDetailRepository.GetQuery();
+
+        //assetQuery = assetQuery.Where(x => x!.Type!.Unit == queryDto.Unit);
 
         if (queryDto.IsRent != null)
         {
             assetQuery = assetQuery.Where(x => x!.IsRented == queryDto.IsRent);
         }
 
-        var assetStatistc = new AssetStatisticDto
+        var assetStatistc = new AssetStatisticDto();
+        if(queryDto.Unit == Unit.Individual)
         {
-            TotalQuantity = assetQuery.Sum(x => x!.Quantity),
-            TotalOperational = assetQuery.Where(x => x!.Status == AssetStatus.Operational).Sum(x => x!.Quantity),
-            TotalNotUsed = assetQuery.Where(x => x!.Status == AssetStatus.Inactive).Sum(x => x!.Quantity),
-            TotalMaintenance = assetQuery.Where(x => x!.RequestStatus == RequestType.Maintenance).Sum(x => x!.Quantity),
-            TotalRepair = assetQuery.Where(x => x!.RequestStatus == RequestType.Repairation).Sum(x => x!.Quantity),
-            TotalTransportation = assetQuery.Where(x => x!.RequestStatus == RequestType.Transportation).Sum(x => x!.Quantity),
-            TotalReplacement = assetQuery.Where(x => x!.RequestStatus == RequestType.Replacement).Sum(x => x!.Quantity),
-            TotalNeedInspection = assetQuery.Where(x => x!.RequestStatus == RequestType.InventoryCheck).Sum(x => x!.Quantity),
-        };
+            assetQuery = assetQuery.Where(x => x!.Type!.Unit == queryDto.Unit);
+
+            assetStatistc.TotalQuantity = assetQuery.Sum(x => x!.Quantity);
+            assetStatistc.TotalOperational = assetQuery.Where(x => x!.Status == AssetStatus.Operational).Sum(x => x!.Quantity);
+            assetStatistc.TotalNotUsed = assetQuery.Where(x => x!.Status == AssetStatus.Inactive).Sum(x => x!.Quantity);
+            assetStatistc.TotalMaintenance = assetQuery.Where(x => x!.RequestStatus == RequestType.Maintenance).Sum(x => x!.Quantity);
+            assetStatistc.TotalRepair = assetQuery.Where(x => x!.RequestStatus == RequestType.Repairation).Sum(x => x!.Quantity);
+            assetStatistc.TotalTransportation = assetQuery.Where(x => x!.RequestStatus == RequestType.Transportation).Sum(x => x!.Quantity);
+            assetStatistc.TotalReplacement = assetQuery.Where(x => x!.RequestStatus == RequestType.Replacement).Sum(x => x!.Quantity);
+            assetStatistc.TotalNeedInspection = assetQuery.Where(x => x!.RequestStatus == RequestType.InventoryCheck).Sum(x => x!.Quantity);
+        }
+        else if (queryDto.Unit == Unit.Quantity)
+        {
+            assetStatistc.TotalQuantity = assetQuery.Where(x => x!.Type!.Unit == Unit.Quantity).Sum(x => x!.Quantity);
+            assetStatistc.TotalOperational = assetQuery.Where(x => x!.Status == AssetStatus.Operational && x!.Type!.Unit == Unit.Quantity).Sum(x => x!.Quantity);
+            assetStatistc.TotalNotUsed = assetQuery.Where(x => x!.Status == AssetStatus.Inactive && x!.Type!.Unit == Unit.Quantity).Sum(x => x!.Quantity);
+            //assetStatistc.TotalMaintenance = assetQuery.Where(x => x!.RequestStatus == RequestType.Maintenance).Sum(x => x!.Quantity);
+            //assetStatistc.TotalRepair = assetQuery.Where(x => x!.RequestStatus == RequestType.Repairation).Sum(x => x!.Quantity);
+            assetStatistc.TotalTransportation = transportDetailQuery.Where(x => transportDetails.Select(td => td.Id).Contains(x.Id)).Sum(x => x!.Quantity);
+            //assetStatistc.TotalReplacement = assetQuery.Where(x => x!.RequestStatus == RequestType.Replacement).Sum(x => x!.Quantity);
+            //assetStatistc.TotalNeedInspection = assetQuery.Where(x => x!.RequestStatus == RequestType.InventoryCheck).Sum(x => x!.Quantity);
+        }
+
+        //var assetStatistc = new AssetStatisticDto
+        //{
+        //    TotalQuantity = assetQuery.Sum(x => x!.Quantity),
+        //    TotalOperational = assetQuery.Where(x => x!.Status == AssetStatus.Operational).Sum(x => x!.Quantity),
+        //    TotalNotUsed = assetQuery.Where(x => x!.Status == AssetStatus.Inactive).Sum(x => x!.Quantity),
+        //    TotalMaintenance = assetQuery.Where(x => x!.RequestStatus == RequestType.Maintenance).Sum(x => x!.Quantity),
+        //    TotalRepair = assetQuery.Where(x => x!.RequestStatus == RequestType.Repairation).Sum(x => x!.Quantity),
+        //    TotalTransportation = assetQuery.Where(x => x!.RequestStatus == RequestType.Transportation).Sum(x => x!.Quantity),
+        //    TotalReplacement = assetQuery.Where(x => x!.RequestStatus == RequestType.Replacement).Sum(x => x!.Quantity),
+        //    TotalNeedInspection = assetQuery.Where(x => x!.RequestStatus == RequestType.InventoryCheck).Sum(x => x!.Quantity),
+        //};
 
         return ApiResponse<AssetStatisticDto>.Success(assetStatistc);
     }

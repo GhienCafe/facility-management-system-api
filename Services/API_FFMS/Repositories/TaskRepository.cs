@@ -61,6 +61,26 @@ public class TaskRepository : ITaskRepository
                         }
                     }
 
+                    foreach (var mediaFile in mediaFiles)
+                    {
+                        var newMediaFile = new MediaFile
+                        {
+                            Id = Guid.NewGuid(),
+                            CreatedAt = now.Value,
+                            CreatorId = editorId,
+                            EditedAt = now.Value,
+                            EditorId = editorId,
+                            FileName = mediaFile.FileName,
+                            RawUri = mediaFile.RawUri,
+                            Uri = mediaFile.Uri,
+                            FileType = mediaFile.FileType,
+                            Content = mediaFile.Content,
+                            IsReported = true,
+                            ItemId = inventoryCheck.Id
+                        };
+                        _context.MediaFiles.Add(newMediaFile);
+                    }
+
                     inventoryCheck.Result = mediaFiles.First().Content;
                     inventoryCheck.Checkout = now.Value;
                     _context.Entry(inventoryCheck).State = EntityState.Modified;
@@ -181,7 +201,7 @@ public class TaskRepository : ITaskRepository
                     else if (assetCheck.IsVerified == false)
                     {
                         asset!.Status = AssetStatus.Operational;
-                        asset!.RequestStatus = RequestType.Operational;
+                        asset.RequestStatus = RequestType.Operational;
                         asset.EditedAt = now.Value;
                         asset.EditorId = editorId;
                         _context.Entry(asset).State = EntityState.Modified;
@@ -244,10 +264,16 @@ public class TaskRepository : ITaskRepository
                     var fromRoom = await _context.Rooms.FirstOrDefaultAsync(x => x.Id == roomAsset!.RoomId && roomAsset.AssetId == asset.Id);
                     if (statusUpdate == RequestStatus.InProgress)
                     {
-                        asset.RequestStatus = RequestType.Transportation;
-                        asset.EditedAt = now.Value;
-                        asset.EditorId = editorId;
-                        _context.Entry(asset).State = EntityState.Modified;
+                        transportation.Checkin = now.Value;
+                        _context.Entry(transportation).State = EntityState.Modified;
+
+                        if (asset.Type!.Unit == Unit.Individual || asset.Type.IsIdentified == true)
+                        {
+                            asset.RequestStatus = RequestType.Transportation;
+                            asset.EditedAt = now.Value;
+                            asset.EditorId = editorId;
+                            _context.Entry(asset).State = EntityState.Modified;
+                        }
 
                         toRoom!.State = RoomState.Transportation;
                         toRoom.EditedAt = now.Value;
@@ -258,9 +284,6 @@ public class TaskRepository : ITaskRepository
                         fromRoom.EditedAt = now.Value;
                         fromRoom.EditorId = editorId;
                         _context.Entry(fromRoom).State = EntityState.Modified;
-
-                        transportation.Checkin = now.Value;
-                        _context.Entry(transportation).State = EntityState.Modified;
                     }
                     else if (statusUpdate == RequestStatus.Reported)
                     {
@@ -328,26 +351,31 @@ public class TaskRepository : ITaskRepository
                 var location = await _context.Rooms.FirstOrDefaultAsync(x => x.Id == roomAsset!.RoomId && roomAsset.AssetId == asset!.Id);
                 if (statusUpdate == RequestStatus.InProgress)
                 {
-                    asset!.RequestStatus = RequestType.Repairation;
-                    asset.EditedAt = now.Value;
-                    asset.EditorId = editorId;
-                    _context.Entry(asset).State = EntityState.Modified;
-
-                    if (asset.IsMovable == false)
+                    if (asset != null)
                     {
-                        location!.State = RoomState.Repair;
-                        location.EditedAt = now.Value;
-                        location.EditorId = editorId;
-                        _context.Entry(location).State = EntityState.Modified;
-                    }
-                    else if (asset.IsMovable == true)
-                    {
-                        location!.State = RoomState.MissingAsset;
-                        location.EditedAt = now.Value;
-                        location.EditorId = editorId;
-                        _context.Entry(location).State = EntityState.Modified;
-                    }
+                        if (asset.Type!.Unit == Unit.Individual || asset.Type.IsIdentified == true)
+                        {
+                            asset.RequestStatus = RequestType.Repairation;
+                            asset.EditedAt = now.Value;
+                            asset.EditorId = editorId;
+                            _context.Entry(asset).State = EntityState.Modified;
+                        }
 
+                        if (asset.IsMovable == false)
+                        {
+                            location!.State = RoomState.Repair;
+                            location.EditedAt = now.Value;
+                            location.EditorId = editorId;
+                            _context.Entry(location).State = EntityState.Modified;
+                        }
+                        else if (asset.IsMovable == true)
+                        {
+                            location!.State = RoomState.MissingAsset;
+                            location.EditedAt = now.Value;
+                            location.EditorId = editorId;
+                            _context.Entry(location).State = EntityState.Modified;
+                        }
+                    }
                     repairation.Checkin = now.Value;
                     _context.Entry(repairation).State = EntityState.Modified;
                 }
