@@ -1,4 +1,5 @@
 ﻿using AppCore.Extensions;
+using DocumentFormat.OpenXml.Vml.Office;
 using MainData;
 using MainData.Entities;
 using Microsoft.EntityFrameworkCore;
@@ -289,8 +290,8 @@ public class AssetcheckRepository : IAssetcheckRepository
                 CreatedAt = now.Value,
                 EditedAt = now.Value,
                 Status = NotificationStatus.Waiting,
-                Content = assetCheck.Description,
-                Title = RequestType.Repairation.GetDisplayName(),
+                Content = assetCheck.Description ?? "Yêu cầu kiểm tra",
+                Title = RequestType.StatusCheck.GetDisplayName(),
                 Type = NotificationType.Task,
                 CreatorId = creatorId,
                 IsRead = false,
