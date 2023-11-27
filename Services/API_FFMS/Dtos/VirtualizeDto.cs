@@ -29,11 +29,6 @@ public class VirtualizeRoomDto: BaseDto
     public int? TotalAssets { get; set; }
     public int? TotalDamagedAssets { get; set; }
     public int? TotalNormalAssets { get; set; }
-    public int? TotalRepairAssets { get; set; }
-    public int? TotalNeedInspectionAssets { get; set; }
-    public int? TotalInMaintenanceAssets { get; set; }
-    public int? TotalInReplacementAssets { get; set; }
-    public int? TotalInTransportationAssets { get; set; }
     public int? TotalOtherAssets { get; set; }
     
     public RoomStatusDto? Status { get; set; }

@@ -9,10 +9,12 @@ namespace API_FFMS.Controllers;
 public class RoomController : BaseController
 {
     private readonly IRoomService _service;
+    private readonly ICacheService _cacheService;
 
-    public RoomController(IRoomService service) 
+    public RoomController(IRoomService service, ICacheService cacheService)
     {
         _service = service;
+        _cacheService = cacheService;
     }
     
     [HttpGet]
