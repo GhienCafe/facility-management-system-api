@@ -359,6 +359,7 @@ namespace API_FFMS.Services
                 ToRoom = toRoom,
                 RelatedFiles = relatedMediaFile,
                 MediaFile = mediaFile,
+                AssignedTo = existingTransport.AssignedTo,
                 AssignTo = assignTo
             };
 
