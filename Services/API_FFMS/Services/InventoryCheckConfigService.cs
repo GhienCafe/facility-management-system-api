@@ -47,42 +47,17 @@ public class InventoryCheckConfigService : BaseService, IInventoryCheckConfigSer
         var inventory = (await MainUnitOfWork.InventoryCheckConfigRepository.FindOneAsync(null))?
             .ProjectTo<InventoryCheckConfig, InventoryCheckConfigDto>();
 
-        if (inventory != null)
-        {
-            var dates = await MainUnitOfWork.InventoryDetailConfigRepository.FindAsync(
-                new Expression<Func<InventoryDetailConfig, bool>>[]
-                {
-                    x => !x.DeletedAt.HasValue,
-                    x => x.InventoryConfigId == inventory.Id
-                }, null);
+        if (inventory == null) return ApiResponse<InventoryCheckConfigDto>.Success(null);
+        
+        var dates = await MainUnitOfWork.InventoryDetailConfigRepository.FindAsync(
+            new Expression<Func<InventoryDetailConfig, bool>>[]
+            {
+                x => !x.DeletedAt.HasValue,
+                x => x.InventoryConfigId == inventory.Id
+            }, null);
             
-            inventory.CheckDates = dates.ToList()!.ProjectTo<InventoryDetailConfig, CheckDatesDto>();
-        }
+        inventory.CheckDates = dates.ToList()!.ProjectTo<InventoryDetailConfig, CheckDatesDto>();
 
         return ApiResponse<InventoryCheckConfigDto>.Success(inventory);
     }
-
-    // public async Task<ApiResponse> UpdateConfig(Guid id, InventoryCheckConfigCreateDto createDto)
-    // {
-    //     var configQuery = MainUnitOfWork.InventoryCheckConfigRepository.GetQuery();
-    //
-    //     configQuery = configQuery.Where(x => x!.Id == id);
-    //     var config = await configQuery.FirstOrDefaultAsync();
-    //
-    //
-    //     if (config == null)
-    //         throw new ApiException("Không tìm thấy cấu hình", StatusCode.NOT_FOUND);
-    //     
-    //     var inventories = createDto.ProjectTo<InventoryCheckConfigCreateDto, InventoryCheckConfig>();
-    //     config.Content = inventories.Content;
-    //     config.IsActive = inventories.IsActive;
-    //     config.NotificationDays = inventories.NotificationDays;
-    //     
-    //     var checkDates = createDto.CheckDates?.ToList().ProjectTo<InventoryCheckDatesDto, InventoryDetailConfig>();
-    //     
-    //     if (await _configRepository.UpdateInsertInventoryConfig(inventories, checkDates, AccountId, CurrentDate))
-    //         throw new ApiException("Thao tác thất bại", StatusCode.SERVER_ERROR);
-    //     
-    //     return ApiResponse.Created("Cài đặt thành công");
-    // }
 }
