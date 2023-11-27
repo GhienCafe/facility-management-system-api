@@ -22,13 +22,13 @@ public class AssetMaintenanceDto : BaseDto
     public DateTime? LastCheckedDate { get; set; }
     public Guid? TypeId { get; set; }
     public Guid? ModelId { get; set; }
-    public Guid? CategoryId { get; set; }
     public bool? IsRented { get; set; }
     [JsonConverter(typeof(LocalTimeZoneDateTimeConverter))]
     public DateTime? StartDateOfUse { get; set; }
     public string? ImageUrl { get; set; }
     [JsonConverter(typeof(LocalTimeZoneDateTimeConverter))]
     public DateTime? NextMaintenanceDate { get; set; }
+    public CategoryDto? Category { get; set; }
 }
 
 public class MaintenanceScheduleConfigDto : BaseDto
