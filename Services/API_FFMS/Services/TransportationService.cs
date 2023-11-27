@@ -120,42 +120,49 @@ namespace API_FFMS.Services
                                 x => x.AssetId == asset.Id,
                                 x => x.ToDate == null
                             });
-                    if (asset.Type?.IsIdentified == true || asset.Type?.Unit == Unit.Individual)
+                    if (roomAsset != null)
                     {
-
-                        if (roomAsset != null && roomAsset.RoomId == toRoom!.Id)
+                        if (asset.Type?.IsIdentified == true || asset.Type?.Unit == Unit.Individual)
                         {
-                            throw new ApiException($"Thiết bị {asset.AssetCode} đã có trong phòng này", StatusCode.UNPROCESSABLE_ENTITY);
+
+                            if (createDto.FromRoomId == toRoom!.Id)
+                            {
+                                throw new ApiException($"Thiết bị {asset.AssetCode} đã có trong phòng này", StatusCode.UNPROCESSABLE_ENTITY);
+                            }
+
+                            var transpsortDetail = new TransportationDetail
+                            {
+                                Id = Guid.NewGuid(),
+                                AssetId = asset.Id,
+                                TransportationId = transportation.Id,
+                                FromRoomId = createDto.FromRoomId,
+                                RequestDate = CurrentDate,
+                                Quantity = 1,
+                                CreatorId = AccountId,
+                                CreatedAt = CurrentDate
+                            };
+                            transportationDetails.Add(transpsortDetail);
                         }
-
-                        var transpsortDetail = new TransportationDetail
+                        else if (asset.Type?.IsIdentified == false || asset.Type?.Unit == Unit.Quantity)
                         {
-                            Id = Guid.NewGuid(),
-                            AssetId = asset.Id,
-                            TransportationId = transportation.Id,
-                            FromRoomId = roomAsset?.RoomId,
-                            RequestDate = CurrentDate,
-                            Quantity = 1,
-                            CreatorId = AccountId,
-                            CreatedAt = CurrentDate
-                        };
-                        transportationDetails.Add(transpsortDetail);
-                    }
-                    else if (asset.Type?.IsIdentified == false || asset.Type?.Unit == Unit.Quantity)
-                    {
-                        var correspondingDto = createDto.Assets!.FirstOrDefault(dto => dto.AssetId == asset.Id);
-                        var transpsortDetail = new TransportationDetail
-                        {
-                            Id = Guid.NewGuid(),
-                            AssetId = asset.Id,
-                            TransportationId = transportation.Id,
-                            RequestDate = CurrentDate,
-                            Quantity = (int?)correspondingDto!.Quantity,
-                            FromRoomId = roomAsset?.RoomId,
-                            CreatorId = AccountId,
-                            CreatedAt = CurrentDate
-                        };
-                        transportationDetails.Add(transpsortDetail);
+                            var correspondingDto = createDto.Assets!.FirstOrDefault(dto => dto.AssetId == asset.Id);
+                            if(correspondingDto != null && correspondingDto.Quantity > roomAsset.Quantity)
+                            {
+                                throw new ApiException($"Phòng di dời không đủ trang thiết bị {asset.AssetName}", StatusCode.UNPROCESSABLE_ENTITY);
+                            }
+                            var transpsortDetail = new TransportationDetail
+                            {
+                                Id = Guid.NewGuid(),
+                                AssetId = asset.Id,
+                                TransportationId = transportation.Id,
+                                RequestDate = CurrentDate,
+                                Quantity = (int?)correspondingDto.Quantity,
+                                FromRoomId = createDto.FromRoomId,
+                                CreatorId = AccountId,
+                                CreatedAt = CurrentDate
+                            };
+                            transportationDetails.Add(transpsortDetail);
+                        }
                     }
                 }
             }
@@ -319,11 +326,11 @@ namespace API_FFMS.Services
                                     },
                                     FromRoom = new RoomBaseDto
                                     {
-                                        Id = (Guid)td.FromRoomId,
-                                        RoomCode = roomQuery.FirstOrDefault(x => x.Id == td.FromRoomId)!.RoomCode,
-                                        RoomName = roomQuery.FirstOrDefault(x => x.Id == td.FromRoomId)!.RoomName,
-                                        StatusId = roomQuery.FirstOrDefault(x => x.Id == td.FromRoomId)!.StatusId,
-                                        FloorId = roomQuery.FirstOrDefault(x => x.Id == td.FromRoomId)!.FloorId
+                                        Id = (Guid)td.FromRoomId!,
+                                        RoomCode = roomQuery.FirstOrDefault(x => x!.Id == td.FromRoomId)!.RoomCode,
+                                        RoomName = roomQuery.FirstOrDefault(x => x!.Id == td.FromRoomId)!.RoomName,
+                                        StatusId = roomQuery.FirstOrDefault(x => x!.Id == td.FromRoomId)!.StatusId,
+                                        FloorId = roomQuery.FirstOrDefault(x => x!.Id == td.FromRoomId)!.FloorId
                                     }
                                 }).ToListAsync();
 
