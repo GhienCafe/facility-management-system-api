@@ -97,7 +97,6 @@ public class RepairRepository : IRepairRepository
         {
             repair.EditedAt = now.Value;
             repair.EditorId = editorId;
-            repair.Status = statusUpdate;
             _context.Entry(repair).State = EntityState.Modified;
 
             var asset = await _context.Assets
@@ -112,6 +111,7 @@ public class RepairRepository : IRepairRepository
                 if (statusUpdate == RequestStatus.Done)
                 {
                     repair.CompletionDate = now.Value;
+                    repair.Status = RequestStatus.Done;
                     _context.Entry(repair).State = EntityState.Modified;
 
                     asset!.Status = AssetStatus.Operational;
@@ -132,6 +132,23 @@ public class RepairRepository : IRepairRepository
                 }
                 else if (statusUpdate == RequestStatus.Cancelled)
                 {
+                    repair.Status = RequestStatus.InProgress;
+                    _context.Entry(repair).State = EntityState.Modified;
+
+                    var notification = new Notification
+                    {
+                        CreatedAt = now.Value,
+                        Status = NotificationStatus.Waiting,
+                        Content = repair.Description ?? "Báo cáo lại",
+                        Title = "Báo cáo lại",
+                        Type = NotificationType.Task,
+                        CreatorId = editorId,
+                        IsRead = false,
+                        ItemId = repair.Id,
+                        UserId = repair.AssignedTo
+                    };
+                    await _context.Notifications.AddAsync(notification);
+
                     asset!.RequestStatus = RequestType.Operational;
                     asset.EditedAt = now.Value;
                     asset.EditorId = editorId;
@@ -148,6 +165,7 @@ public class RepairRepository : IRepairRepository
                 if (statusUpdate == RequestStatus.Done)
                 {
                     repair.CompletionDate = now.Value;
+                    repair.Status = RequestStatus.Done;
                     _context.Entry(repair).State = EntityState.Modified;
 
                     asset!.Status = AssetStatus.Operational;
@@ -176,6 +194,23 @@ public class RepairRepository : IRepairRepository
                 }
                 else if (statusUpdate == RequestStatus.Cancelled)
                 {
+                    repair.Status = RequestStatus.InProgress;
+                    _context.Entry(repair).State = EntityState.Modified;
+
+                    var notification = new Notification
+                    {
+                        CreatedAt = now.Value,
+                        Status = NotificationStatus.Waiting,
+                        Content = repair.Description ?? "Báo cáo lại",
+                        Title = "Báo cáo lại",
+                        Type = NotificationType.Task,
+                        CreatorId = editorId,
+                        IsRead = false,
+                        ItemId = repair.Id,
+                        UserId = repair.AssignedTo
+                    };
+                    await _context.Notifications.AddAsync(notification);
+
                     asset!.RequestStatus = RequestType.Operational;
                     asset.EditedAt = now.Value;
                     asset.EditorId = editorId;

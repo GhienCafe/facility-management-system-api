@@ -938,7 +938,12 @@ public class AssetService : BaseService, IAssetService
                                     LastMaintenanceTime = asset.LastMaintenanceTime,
                                     LastCheckedDate = asset.LastCheckedDate,
                                     TypeId = asset.TypeId,
-                                    CategoryId = category.Id,
+                                    Category = new CategoryDto
+                                    {
+                                        Id = category.Id,
+                                        Description = category.Description,
+                                        CategoryName = category.CategoryName
+                                    },
                                     ModelId = asset.ModelId,
                                     IsRented = asset.IsRented,
                                     StartDateOfUse = asset.StartDateOfUse,
@@ -976,17 +981,6 @@ public class AssetService : BaseService, IAssetService
         if (queryDto.IsMovable != null)
         {
             maintenanceItems = maintenanceItems.Where(x => x.IsMovable == queryDto.IsMovable);
-        }
-
-        if(queryDto.CategoryId != null)
-        {
-            var listTypeIds = (await MainUnitOfWork.AssetTypeRepository.FindAsync(
-                new Expression<Func<AssetType, bool>>[]
-                {
-                    x => !x.DeletedAt.HasValue,
-                    x => x.CategoryId == queryDto.CategoryId
-                }, null)).Select(x => x!.Id).ToList();
-            maintenanceItems = maintenanceItems.Where(x => listTypeIds.Contains((Guid)x.TypeId));
         }
 
         var totalCount = await maintenanceItems.CountAsync();
