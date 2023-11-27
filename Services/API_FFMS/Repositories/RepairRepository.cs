@@ -56,6 +56,7 @@ public class RepairRepository : IRepairRepository
                     UserId = entity.AssignedTo
                 };
                 await _context.Notifications.AddAsync(notification);
+
                 if (mediaFiles != null && mediaFiles.Count > 0)
                 {
                     await _context.MediaFiles.AddRangeAsync(mediaFiles);
