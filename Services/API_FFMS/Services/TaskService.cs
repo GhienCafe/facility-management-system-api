@@ -255,6 +255,7 @@ public class TaskService : BaseService, ITaskService
                                 CreatedAt = r.CreatedAt,
                                 EditedAt = r.EditedAt
                             }).FirstOrDefaultAsync();
+            var roomQuery = MainUnitOfWork.RoomRepository.GetQuery();
             var transportDetails = MainUnitOfWork.TransportationDetailRepository.GetQuery();
             var assets = await transportDetails
                         .Where(td => td!.TransportationId == id)
@@ -287,13 +288,13 @@ public class TaskService : BaseService, ITaskService
                                     },
                                     FromRoom = new RoomBaseDto
                                     {
-                                        Id = asset.RoomAssets!.FirstOrDefault(ra => ra.AssetId == td!.AssetId)!.Room!.Id,
-                                        RoomCode = asset.RoomAssets!.FirstOrDefault(ra => ra.AssetId == td!.AssetId)!.Room!.RoomCode,
-                                        RoomName = asset.RoomAssets!.FirstOrDefault(ra => ra.AssetId == td!.AssetId)!.Room!.RoomName,
-                                        StatusId = asset.RoomAssets!.FirstOrDefault(ra => ra.AssetId == td!.AssetId)!.Room!.StatusId,
-                                        FloorId = asset.RoomAssets!.FirstOrDefault(ra => ra.AssetId == td!.AssetId)!.Room!.FloorId,
-                                        CreatedAt = asset.RoomAssets!.FirstOrDefault(ra => ra.AssetId == td!.AssetId)!.Room!.CreatedAt,
-                                        EditedAt = asset.RoomAssets!.FirstOrDefault(ra => ra.AssetId == td!.AssetId)!.Room!.EditedAt
+                                        Id = (Guid)td.FromRoomId!,
+                                        RoomCode = roomQuery.FirstOrDefault(x => x!.Id == td.FromRoomId)!.RoomCode,
+                                        RoomName = roomQuery.FirstOrDefault(x => x!.Id == td.FromRoomId)!.RoomName,
+                                        StatusId = roomQuery.FirstOrDefault(x => x!.Id == td.FromRoomId)!.StatusId,
+                                        FloorId = roomQuery.FirstOrDefault(x => x!.Id == td.FromRoomId)!.FloorId,
+                                        CreatedAt = roomQuery.FirstOrDefault(x => x!.Id == td.FromRoomId)!.CreatedAt,
+                                        EditedAt = roomQuery.FirstOrDefault(x => x!.Id == td.FromRoomId)!.EditedAt
                                     },
                                     Quantity = td!.Quantity
                                 }).ToListAsync();

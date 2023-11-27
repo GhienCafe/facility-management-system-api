@@ -56,6 +56,9 @@ public class TransportCreateDto
 
     [Required(ErrorMessage = "Vui lòng chọn phòng muốn vận chuyển đến")]
     public required Guid ToRoomId { get; set; }
+
+    [Required(ErrorMessage = "Vui lòng chọn phòng muốn lấy thiết bị")]
+    public required Guid FromRoomId { get; set; }
     public List<MediaFileCreateDto>? RelatedFiles { get; set; }
 }
 
