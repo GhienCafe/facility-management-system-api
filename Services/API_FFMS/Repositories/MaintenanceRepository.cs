@@ -115,6 +115,7 @@ public class MaintenanceRepository : IMaintenanceRepository
                     asset!.RequestStatus = RequestType.Operational;
                     asset.Status = AssetStatus.Operational;
                     asset.EditedAt = now.Value;
+                    asset.LastMaintenanceTime = now.Value;
                     asset.EditorId = editorId;
                     _context.Entry(asset).State = EntityState.Modified;
 
