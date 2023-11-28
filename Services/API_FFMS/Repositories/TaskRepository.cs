@@ -258,14 +258,16 @@ public class TaskRepository : ITaskRepository
                             .ToListAsync();
 
                 var toRoom = await _context.Rooms.FindAsync(transportation.ToRoomId);
-                foreach (var asset in assets)
+
+                if (statusUpdate == RequestStatus.InProgress)
                 {
-                    var roomAsset = await _context.RoomAssets.FirstOrDefaultAsync(x => x.AssetId == asset.Id && x.ToDate == null);
-                    var fromRoom = await _context.Rooms.FirstOrDefaultAsync(x => x.Id == roomAsset!.RoomId && roomAsset.AssetId == asset.Id);
-                    if (statusUpdate == RequestStatus.InProgress)
+                    transportation.Checkin = now.Value;
+                    _context.Entry(transportation).State = EntityState.Modified;
+
+                    foreach (var asset in assets)
                     {
-                        transportation.Checkin = now.Value;
-                        _context.Entry(transportation).State = EntityState.Modified;
+                        var roomAsset = await _context.RoomAssets.FirstOrDefaultAsync(x => x.AssetId == asset.Id && x.ToDate == null);
+                        var fromRoom = await _context.Rooms.FirstOrDefaultAsync(x => x.Id == roomAsset!.RoomId && roomAsset.AssetId == asset.Id);
 
                         if (asset.Type!.Unit == Unit.Individual || asset.Type.IsIdentified == true)
                         {
@@ -285,47 +287,48 @@ public class TaskRepository : ITaskRepository
                         fromRoom.EditorId = editorId;
                         _context.Entry(fromRoom).State = EntityState.Modified;
                     }
-                    else if (statusUpdate == RequestStatus.Reported)
-                    {
-                        foreach (var mediaFile in mediaFiles)
-                        {
-                            var newMediaFile = new MediaFile
-                            {
-                                Id = Guid.NewGuid(),
-                                CreatedAt = now.Value,
-                                CreatorId = editorId,
-                                EditedAt = now.Value,
-                                EditorId = editorId,
-                                FileName = mediaFile.FileName,
-                                RawUri = mediaFile.RawUri,
-                                Uri = mediaFile.Uri,
-                                FileType = mediaFile.FileType,
-                                Content = mediaFile.Content,
-                                IsReported = true,
-                                ItemId = transportation.Id
-                            };
-                            _context.MediaFiles.Add(newMediaFile);
-                        }
-                        transportation.Result = mediaFiles.First().Content;
-                        transportation.Checkout = now.Value;
-                        _context.Entry(transportation).State = EntityState.Modified;
-
-                        var notification = new Notification
-                        {
-                            CreatedAt = now.Value,
-                            EditedAt = now.Value,
-                            Status = NotificationStatus.Waiting,
-                            Content = transportation.Description ?? "Báo cáo vận chuyển",
-                            Title = "Báo cáo vận chuyển",
-                            Type = NotificationType.Task,
-                            CreatorId = editorId,
-                            IsRead = false,
-                            ItemId = transportation.Id,
-                            UserId = transportation.CreatorId
-                        };
-                        await _context.Notifications.AddAsync(notification);
-                    }
                 }
+                else if (statusUpdate == RequestStatus.Reported)
+                {
+                    foreach (var mediaFile in mediaFiles)
+                    {
+                        var newMediaFile = new MediaFile
+                        {
+                            Id = Guid.NewGuid(),
+                            CreatedAt = now.Value,
+                            CreatorId = editorId,
+                            EditedAt = now.Value,
+                            EditorId = editorId,
+                            FileName = mediaFile.FileName,
+                            RawUri = mediaFile.RawUri,
+                            Uri = mediaFile.Uri,
+                            FileType = mediaFile.FileType,
+                            Content = mediaFile.Content,
+                            IsReported = true,
+                            ItemId = transportation.Id
+                        };
+                        _context.MediaFiles.Add(newMediaFile);
+                    }
+                    transportation.Result = mediaFiles.First().Content;
+                    transportation.Checkout = now.Value;
+                    _context.Entry(transportation).State = EntityState.Modified;
+
+                    var notification = new Notification
+                    {
+                        CreatedAt = now.Value,
+                        EditedAt = now.Value,
+                        Status = NotificationStatus.Waiting,
+                        Content = transportation.Description ?? "Báo cáo vận chuyển",
+                        Title = "Báo cáo vận chuyển",
+                        Type = NotificationType.Task,
+                        CreatorId = editorId,
+                        IsRead = false,
+                        ItemId = transportation.Id,
+                        UserId = transportation.CreatorId
+                    };
+                    await _context.Notifications.AddAsync(notification);
+                }
+
                 await _context.SaveChangesAsync();
                 await _context.Database.CommitTransactionAsync();
                 return true;
