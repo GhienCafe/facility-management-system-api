@@ -255,7 +255,7 @@ public class TransportationRepository : ITransportationRepository
                 if (asset != null)
                 {
                     var transportDetails = await _context.TransportationDetails
-                                                    .FirstOrDefaultAsync(x => x.TransportationId == transportation.Id ||
+                                                    .FirstOrDefaultAsync(x => x.TransportationId == transportation.Id &&
                                                                               x.AssetId == asset.Id);
                     var roomAsset = await _context.RoomAssets.FirstOrDefaultAsync(x => x.AssetId == asset.Id &&
                                                                                        x.RoomId == transportDetails!.FromRoomId &&
