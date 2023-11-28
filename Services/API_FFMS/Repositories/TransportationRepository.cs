@@ -254,11 +254,16 @@ public class TransportationRepository : ITransportationRepository
             {
                 if (asset != null)
                 {
-                    var roomAsset = await _context.RoomAssets.FirstOrDefaultAsync(x => x.AssetId == asset.Id && x.ToDate == null);
-                    var fromRoom = await _context.Rooms.FirstOrDefaultAsync(x => x.Id == roomAsset!.RoomId);
                     var transportDetails = await _context.TransportationDetails
                                                     .FirstOrDefaultAsync(x => x.TransportationId == transportation.Id ||
                                                                               x.AssetId == asset.Id);
+                    var roomAsset = await _context.RoomAssets.FirstOrDefaultAsync(x => x.AssetId == asset.Id &&
+                                                                                       x.RoomId == transportDetails!.FromRoomId &&
+                                                                                       x.ToDate == null);
+
+
+                    var fromRoom = await _context.Rooms.FirstOrDefaultAsync(x => x.Id == roomAsset!.RoomId);
+                    
                     var toRoomAsset = await _context.RoomAssets.FirstOrDefaultAsync(x => x.AssetId == asset.Id &&
                                                                                 x.RoomId == toRoom!.Id &&
                                                                                 x.ToDate == null);
