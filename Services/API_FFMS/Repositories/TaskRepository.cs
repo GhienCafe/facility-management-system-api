@@ -120,7 +120,6 @@ public class TaskRepository : ITaskRepository
         {
             //ASSET CHECK
             var assetCheck = await _context.AssetChecks
-                             .Include(x => x.Asset)
                              .FirstOrDefaultAsync(x => x.Id == mediaFiles.First().ItemId);
             if (assetCheck != null)
             {
@@ -338,7 +337,7 @@ public class TaskRepository : ITaskRepository
             var repairation = await _context.Repairs
                             .Include(x => x.Asset)
                             .FirstOrDefaultAsync(x => x.Id == mediaFiles.First().ItemId);
-            if (repairation != null && repairation.IsInternal == true)
+            if (repairation != null && repairation.IsInternal)
             {
                 repairation.EditedAt = now.Value;
                 repairation.EditorId = editorId;
