@@ -59,12 +59,12 @@ public class AssetCheckService : BaseService, IAssetCheckService
         assetCheck.RequestCode = GenerateRequestCode();
         assetCheck.Priority ??= Priority.Medium;
 
-        var mediaFiles = new List<MediaFile>();
+        var mediaFiles = new List<Report>();
         if (createDto.RelatedFiles != null)
         {
             foreach (var file in createDto.RelatedFiles)
             {
-                var newMediaFile = new MediaFile
+                var newMediaFile = new Report
                 {
                     FileName = file.FileName ?? "",
                     Uri = file.Uri ?? ""
@@ -384,7 +384,7 @@ public class AssetCheckService : BaseService, IAssetCheckService
 
         var mediaFileQuery = MainUnitOfWork.MediaFileRepository.GetQuery().Where(x => x!.ItemId == id).ToList();
 
-        var newMediaFile = updateDto.RelatedFiles.Select(dto => new MediaFile
+        var newMediaFile = updateDto.RelatedFiles.Select(dto => new Report
         {
             FileName = dto.FileName,
             Uri = dto.Uri,
@@ -392,7 +392,7 @@ public class AssetCheckService : BaseService, IAssetCheckService
             CreatorId = AccountId,
             ItemId = id,
             FileType = FileType.File
-        }).ToList() ?? new List<MediaFile>();
+        }).ToList() ?? new List<Report>();
 
         var additionMediaFiles = newMediaFile.Except(mediaFileQuery).ToList();
         var removalMediaFiles = mediaFileQuery.Except(newMediaFile).ToList();

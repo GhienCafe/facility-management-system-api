@@ -4,15 +4,16 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace MainData.Entities;
 
-public class MediaFile : BaseEntity
+public class Report : BaseEntity
 {
     public string FileName { get; set; } = null!;
-    public string RawUri { get; set; } = null!;
     public string Uri { get; set; } = null!;
     public bool IsVerified { get; set; }
     public FileType FileType { get; set; }
     public string Content { get; set; } = null!;
     public bool IsReported { get; set; }
+    public bool IsReject { get; set; }
+    public string RejectReason { get; set; }
     public Guid? MaintenanceId { get; set; }
     public Guid? ReplacementId { get; set; }
     public Guid? AssetCheckId { get; set; }
@@ -38,13 +39,14 @@ public enum FileType
     File = 3
 }
 
-public class MediaFileConfig : IEntityTypeConfiguration<MediaFile>
+public class MediaFileConfig : IEntityTypeConfiguration<Report>
 {
-    public void Configure(EntityTypeBuilder<MediaFile> builder)
+    public void Configure(EntityTypeBuilder<Report> builder)
     {
-        builder.ToTable("MediaFiles");
+        builder.ToTable("Reports");
         builder.Property(a => a.FileName).IsRequired(false);
-        builder.Property(a => a.RawUri).IsRequired(false);
+        builder.Property(a => a.RejectReason).IsRequired(false); 
+        builder.Property(a => a.IsReject).IsRequired().HasDefaultValue(false);
         builder.Property(a => a.Uri).IsRequired();
         builder.Property(a => a.FileType).IsRequired();
         builder.Property(a => a.Content).IsRequired(false);
