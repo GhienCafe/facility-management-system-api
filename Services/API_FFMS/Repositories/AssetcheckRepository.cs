@@ -1,4 +1,5 @@
 ﻿using AppCore.Extensions;
+using DocumentFormat.OpenXml.Bibliography;
 using DocumentFormat.OpenXml.Vml.Office;
 using MainData;
 using MainData.Entities;
@@ -43,6 +44,13 @@ public class AssetcheckRepository : IAssetcheckRepository
                 entity.RequestDate = now.Value;
                 entity.RequestCode = "AC" + GenerateRequestCode(ref numbers);
                 await _context.AssetChecks.AddAsync(entity);
+
+                var asset = await _context.Assets.FindAsync(entity.AssetId);
+                if (asset != null)
+                {
+                    asset.RequestStatus = RequestType.StatusCheck;
+                    _context.Entry(asset).State = EntityState.Modified;
+                }
 
                 var notification = new Notification
                 {
@@ -262,6 +270,13 @@ public class AssetcheckRepository : IAssetcheckRepository
             assetCheck.IsVerified = false;
             assetCheck.RequestDate = now.Value;
             await _context.AssetChecks.AddAsync(assetCheck);
+
+            var asset = await _context.Assets.FindAsync(assetCheck.AssetId);
+            if (asset != null)
+            {
+                asset.RequestStatus = RequestType.StatusCheck;
+                _context.Entry(asset).State = EntityState.Modified;
+            }
 
             var notification = new Notification
             {

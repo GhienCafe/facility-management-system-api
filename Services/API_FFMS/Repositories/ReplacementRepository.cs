@@ -1,4 +1,5 @@
 ﻿using AppCore.Extensions;
+using DocumentFormat.OpenXml.Bibliography;
 using MainData;
 using MainData.Entities;
 using Microsoft.EntityFrameworkCore;
@@ -225,6 +226,21 @@ namespace API_FFMS.Repositories
                 replacement.Status = RequestStatus.NotStart;
                 replacement.RequestDate = now.Value;
                 await _context.Replacements.AddAsync(replacement);
+
+                //ASSET
+                var asset = await _context.Assets.FindAsync(replacement.AssetId);
+                if (asset != null)
+                {
+                    asset.RequestStatus = RequestType.Replacement;
+                    _context.Entry(asset).State = EntityState.Modified;
+                }
+
+                var newAsset = await _context.Assets.FindAsync(replacement.NewAssetId);
+                if(newAsset != null)
+                {
+                    newAsset.RequestStatus = RequestType.Replacement;
+                    _context.Entry(newAsset).State = EntityState.Modified;
+                }
 
                 var notification = new Notification
                 {

@@ -1,4 +1,5 @@
 ﻿using AppCore.Extensions;
+using DocumentFormat.OpenXml.Bibliography;
 using MainData;
 using MainData.Entities;
 using Microsoft.EntityFrameworkCore;
@@ -178,7 +179,22 @@ public class TransportationRepository : ITransportationRepository
             transportation.RequestDate = now.Value;
             await _context.Transportations.AddAsync(transportation);
 
-            foreach (var transpsortDetail in transportationDetails)
+            var assetIds = transportationDetails.Select(td => td.AssetId).ToList();
+            var assets = await _context.Assets
+                            .Include(a => a.Type)
+                            .Where(asset => assetIds!.Contains(asset.Id))
+                            .ToListAsync();
+
+            foreach (var asset in assets)
+            {
+                if (asset.Type!.Unit == Unit.Individual || asset.Type.IsIdentified == true)
+                {
+                    asset.RequestStatus = RequestType.Transportation;
+                    _context.Entry(asset).State = EntityState.Modified;
+                }
+            }
+
+                foreach (var transpsortDetail in transportationDetails)
             {
                 if (transpsortDetail != null)
                 {

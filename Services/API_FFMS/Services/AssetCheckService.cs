@@ -75,10 +75,10 @@ public class AssetCheckService : BaseService, IAssetCheckService
 
         if (!await _assetcheckRepository.InsertAssetCheck(assetCheck, mediaFiles, AccountId, CurrentDate))
         {
-            throw new ApiException("Thêm mới thất bại", StatusCode.SERVER_ERROR);
+            throw new ApiException("Tạo yêu cầu thất bại", StatusCode.SERVER_ERROR);
         }
 
-        return ApiResponse.Created("Thêm mới thành công");
+        return ApiResponse.Created("Tạo yêu cầu thành công");
     }
 
     public async Task<ApiResponse> Delete(Guid id)
@@ -364,7 +364,7 @@ public class AssetCheckService : BaseService, IAssetCheckService
         var existingAssetcheck = await MainUnitOfWork.AssetCheckRepository.FindOneAsync(id);
         if (existingAssetcheck == null)
         {
-            throw new ApiException("Không tìm thấy nội dung", StatusCode.NOT_FOUND);
+            throw new ApiException("Không tìm thấy yêu cầu", StatusCode.NOT_FOUND);
         }
 
         if (existingAssetcheck.Status != RequestStatus.NotStart)

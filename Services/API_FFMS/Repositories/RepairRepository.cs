@@ -1,4 +1,5 @@
 ﻿using AppCore.Extensions;
+using DocumentFormat.OpenXml.Bibliography;
 using DocumentFormat.OpenXml.Vml.Office;
 using MainData;
 using MainData.Entities;
@@ -42,6 +43,19 @@ public class RepairRepository : IRepairRepository
                 entity.RequestDate = now.Value;
                 entity.RequestCode = "REP" + GenerateRequestCode(ref numbers);
                 await _context.Repairs.AddAsync(entity);
+
+                var asset = await _context.Assets
+                        .Include(a => a.Type)
+                        .Where(a => a.Id == entity.AssetId)
+                        .FirstOrDefaultAsync();
+                if (asset != null)
+                {
+                    if (asset.Type!.Unit == Unit.Individual || asset.Type.IsIdentified == true)
+                    {
+                        asset.RequestStatus = RequestType.Repairation;
+                        _context.Entry(asset).State = EntityState.Modified;
+                    }
+                }
 
                 var notification = new Notification
                 {
@@ -358,6 +372,19 @@ public class RepairRepository : IRepairRepository
             repair.Status = RequestStatus.NotStart;
             repair.RequestDate = now.Value;
             await _context.Repairs.AddAsync(repair);
+
+            var asset = await _context.Assets
+                        .Include(a => a.Type)
+                        .Where(a => a.Id == repair.AssetId)
+                        .FirstOrDefaultAsync();
+            if (asset != null)
+            {
+                if (asset.Type!.Unit == Unit.Individual || asset.Type.IsIdentified == true)
+                {
+                    asset.RequestStatus = RequestType.Repairation;
+                    _context.Entry(asset).State = EntityState.Modified;
+                }
+            }
 
             var notification = new Notification
             {
