@@ -8,6 +8,7 @@ using MainData.Repositories;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
+using Newtonsoft.Json;
 
 namespace API_FFMS.Services;
 
@@ -232,13 +233,26 @@ public class MaintenanceService : BaseService, IMaintenanceService
             Uri = x.Uri,
         }).ToList();
 
-        var mediaFileQuery = MainUnitOfWork.MediaFileRepository.GetQuery().Where(m => m!.ItemId == id && m.IsReported);
-        item.MediaFile = new MediaFileDto
+        var reports = await MainUnitOfWork.MediaFileRepository.GetQuery()
+            .Where(m => m!.ItemId == id && m.IsReported).ToListAsync();
+            
+        //TODO: orderby
+        item.Reports = new List<MediaFileDto>();
+        foreach (var report in reports)
         {
-            FileType = mediaFileQuery.Select(m => m!.FileType).FirstOrDefault(),
-            Uri = mediaFileQuery.Select(m => m!.Uri).ToList(),
-            Content = mediaFileQuery.Select(m => m!.Content).FirstOrDefault()
-        };
+            // Deserialize the URI string back into a List<string>
+            var uriList = JsonConvert.DeserializeObject<List<string>>(report.Uri);
+            
+            item.Reports.Add(new MediaFileDto
+            {
+                ItemId = report.ItemId,
+                Uri = uriList,
+                FileType = report.FileType,
+                Content = report.Content,
+                IsReject = report.IsReject,
+                RejectReason = report.RejectReason
+            });
+        }
 
         return ApiResponse<MaintenanceDto>.Success(item);
     }

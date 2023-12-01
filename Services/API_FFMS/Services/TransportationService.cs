@@ -7,6 +7,7 @@ using MainData.Entities;
 using MainData.Repositories;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
+using Newtonsoft.Json;
 
 namespace API_FFMS.Services
 {
@@ -253,14 +254,6 @@ namespace API_FFMS.Services
                 Uri = x.Uri,
             }).ToList();
 
-            var mediaFileQuery = MainUnitOfWork.MediaFileRepository.GetQuery().Where(m => m!.ItemId == id && m.IsReported);
-            var mediaFile = new MediaFileDto
-            {
-                FileType = mediaFileQuery.Select(m => m!.FileType).FirstOrDefault(),
-                Uri = mediaFileQuery.Select(m => m!.Uri).ToList(),
-                Content = mediaFileQuery.Select(m => m!.Content).FirstOrDefault()
-            };
-
             var roomDataset = MainUnitOfWork.RoomRepository.GetQuery();
             var toRoom = await roomDataset
                             .Where(r => r!.Id == existingTransport.ToRoomId)
@@ -335,6 +328,27 @@ namespace API_FFMS.Services
                                     }
                                 }).ToListAsync();
 
+            var reports = await MainUnitOfWork.MediaFileRepository.GetQuery()
+                .Where(m => m!.ItemId == id && m.IsReported).ToListAsync();
+
+            //TODO: orderby
+            var listReport = new List<MediaFileDto>();
+            foreach (var report in reports)
+            {
+                // Deserialize the URI string back into a List<string>
+                var uriList = JsonConvert.DeserializeObject<List<string>>(report.Uri);
+            
+                listReport.Add(new MediaFileDto
+                {
+                    ItemId = report.ItemId,
+                    Uri = uriList,
+                    FileType = report.FileType,
+                    Content = report.Content,
+                    IsReject = report.IsReject,
+                    RejectReason = report.RejectReason
+                });
+            }
+            
             var tranportation = new TransportDto
             {
                 Id = existingTransport.Id,
@@ -358,7 +372,7 @@ namespace API_FFMS.Services
                 Assets = assets,
                 ToRoom = toRoom,
                 RelatedFiles = relatedMediaFile,
-                MediaFile = mediaFile,
+                Reports = listReport,
                 AssignedTo = existingTransport.AssignedTo,
                 AssignTo = assignTo
             };

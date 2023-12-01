@@ -7,14 +7,11 @@ using MainData.Entities;
 using MainData.Repositories;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
+using Newtonsoft.Json;
 
 namespace API_FFMS.Services;
 public interface IInventoryCheckService : IBaseService
 {
-    //Task<ApiResponse> Create(InventoryCheckCreateDto createDto);
-    //Task<ApiResponse<InventoryCheckDto>> GetInventoryCheck(Guid id);
-    //Task<ApiResponses<InventoryCheckDto>> GetInventoryChecks(InventoryCheckQueryDto queryDto);
-
     Task<ApiResponse> Create(InventoryCheckCreateDto createDto);
     Task<ApiResponse<InventoryCheckDto>> GetInventoryCheck(Guid id);
     Task<ApiResponses<InventoryCheckDto>> GetInventoryChecks(InventoryCheckQueryDto queryDto);
@@ -113,13 +110,26 @@ public class InventoryCheckService : BaseService, IInventoryCheckService
                 Uri = x.Uri,
             }).ToList();
 
-            var mediaFileQuery = MainUnitOfWork.MediaFileRepository.GetQuery().Where(m => m!.ItemId == id && m.IsReported);
-            inventoryCheck.MediaFile = new MediaFileDto
+            var reports = await MainUnitOfWork.MediaFileRepository.GetQuery()
+                .Where(m => m!.ItemId == id && m.IsReported).ToListAsync();
+            
+            //TODO: orderby
+            inventoryCheck.Reports = new List<MediaFileDto>();
+            foreach (var report in reports)
             {
-                FileType = mediaFileQuery.Select(m => m!.FileType).FirstOrDefault(),
-                Uri = mediaFileQuery.Select(m => m!.Uri).ToList(),
-                Content = mediaFileQuery.Select(m => m!.Content).FirstOrDefault()
-            };
+                // Deserialize the URI string back into a List<string>
+                var uriList = JsonConvert.DeserializeObject<List<string>>(report.Uri);
+            
+                inventoryCheck.Reports.Add(new MediaFileDto
+                {
+                    ItemId = report.ItemId,
+                    Uri = uriList,
+                    FileType = report.FileType,
+                    Content = report.Content,
+                    IsReject = report.IsReject,
+                    RejectReason = report.RejectReason
+                });
+            }
 
             var userQuery = MainUnitOfWork.UserRepository.GetQuery().Where(x => x!.Id == inventoryCheck.AssignedTo);
             inventoryCheck.Staff = await userQuery.Select(x => new AssignedInventoryCheckDto
