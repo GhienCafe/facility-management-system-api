@@ -7,8 +7,8 @@ namespace API_FFMS.Repositories;
 
 public interface ITaskRepository
 {
-    Task<bool> UpdateStatus(List<MediaFile> mediaFiles, RequestStatus? statusUpdate, Guid? editorId, DateTime? now = null);
-    Task<bool> InventoryCheckReport(List<MediaFile> mediaFiles, List<InventoryCheckDetail>? inventoryCheckDetails, RequestStatus? statusUpdate, Guid? editorId, DateTime? now = null);
+    Task<bool> UpdateStatus(List<Report> mediaFiles, RequestStatus? statusUpdate, Guid? editorId, DateTime? now = null);
+    Task<bool> InventoryCheckReport(List<Report> mediaFiles, List<InventoryCheckDetail>? inventoryCheckDetails, RequestStatus? statusUpdate, Guid? editorId, DateTime? now = null);
 }
 public class TaskRepository : ITaskRepository
 {
@@ -19,7 +19,7 @@ public class TaskRepository : ITaskRepository
         _context = context;
     }
 
-    public async Task<bool> InventoryCheckReport(List<MediaFile> mediaFiles, List<InventoryCheckDetail>? inventoryCheckDetails, RequestStatus? statusUpdate, Guid? editorId, DateTime? now = null)
+    public async Task<bool> InventoryCheckReport(List<Report> mediaFiles, List<InventoryCheckDetail>? inventoryCheckDetails, RequestStatus? statusUpdate, Guid? editorId, DateTime? now = null)
     {
         await _context.Database.BeginTransactionAsync();
         now ??= DateTime.UtcNow;
@@ -63,7 +63,7 @@ public class TaskRepository : ITaskRepository
 
                     foreach (var mediaFile in mediaFiles)
                     {
-                        var newMediaFile = new MediaFile
+                        var newMediaFile = new Report
                         {
                             Id = Guid.NewGuid(),
                             CreatedAt = now.Value,
@@ -71,7 +71,6 @@ public class TaskRepository : ITaskRepository
                             EditedAt = now.Value,
                             EditorId = editorId,
                             FileName = mediaFile.FileName,
-                            RawUri = mediaFile.RawUri,
                             Uri = mediaFile.Uri,
                             FileType = mediaFile.FileType,
                             Content = mediaFile.Content,
@@ -112,7 +111,7 @@ public class TaskRepository : ITaskRepository
         }
     }
 
-    public async Task<bool> UpdateStatus(List<MediaFile> mediaFiles, RequestStatus? statusUpdate, Guid? editorId, DateTime? now = null)
+    public async Task<bool> UpdateStatus(List<Report> mediaFiles, RequestStatus? statusUpdate, Guid? editorId, DateTime? now = null)
     {
         await _context.Database.BeginTransactionAsync();
         now ??= DateTime.UtcNow;
@@ -153,7 +152,7 @@ public class TaskRepository : ITaskRepository
                 {
                     foreach (var mediaFile in mediaFiles)
                     {
-                        var newMediaFile = new MediaFile
+                        var newMediaFile = new Report
                         {
                             Id = Guid.NewGuid(),
                             CreatedAt = now.Value,
@@ -161,7 +160,6 @@ public class TaskRepository : ITaskRepository
                             EditedAt = now.Value,
                             EditorId = editorId,
                             FileName = mediaFile.FileName,
-                            RawUri = mediaFile.RawUri,
                             Uri = mediaFile.Uri,
                             FileType = mediaFile.FileType,
                             Content = mediaFile.Content,
@@ -291,7 +289,7 @@ public class TaskRepository : ITaskRepository
                 {
                     foreach (var mediaFile in mediaFiles)
                     {
-                        var newMediaFile = new MediaFile
+                        var newMediaFile = new Report
                         {
                             Id = Guid.NewGuid(),
                             CreatedAt = now.Value,
@@ -299,7 +297,6 @@ public class TaskRepository : ITaskRepository
                             EditedAt = now.Value,
                             EditorId = editorId,
                             FileName = mediaFile.FileName,
-                            RawUri = mediaFile.RawUri,
                             Uri = mediaFile.Uri,
                             FileType = mediaFile.FileType,
                             Content = mediaFile.Content,
@@ -385,7 +382,7 @@ public class TaskRepository : ITaskRepository
                 {
                     foreach (var mediaFile in mediaFiles)
                     {
-                        var newMediaFile = new MediaFile
+                        var newMediaFile = new Report
                         {
                             Id = Guid.NewGuid(),
                             CreatedAt = now.Value,
@@ -393,7 +390,6 @@ public class TaskRepository : ITaskRepository
                             EditedAt = now.Value,
                             EditorId = editorId,
                             FileName = mediaFile.FileName,
-                            RawUri = mediaFile.RawUri,
                             Uri = mediaFile.Uri,
                             FileType = mediaFile.FileType,
                             Content = mediaFile.Content,
@@ -459,7 +455,7 @@ public class TaskRepository : ITaskRepository
                 {
                     foreach (var mediaFile in mediaFiles)
                     {
-                        var newMediaFile = new MediaFile
+                        var newMediaFile = new Report
                         {
                             Id = Guid.NewGuid(),
                             CreatedAt = now.Value,
@@ -467,7 +463,6 @@ public class TaskRepository : ITaskRepository
                             EditedAt = now.Value,
                             EditorId = editorId,
                             FileName = mediaFile.FileName,
-                            RawUri = mediaFile.RawUri,
                             Uri = mediaFile.Uri,
                             FileType = mediaFile.FileType,
                             Content = mediaFile.Content,
@@ -559,7 +554,7 @@ public class TaskRepository : ITaskRepository
                 {
                     foreach (var mediaFile in mediaFiles)
                     {
-                        var newMediaFile = new MediaFile
+                        var newMediaFile = new Report
                         {
                             Id = Guid.NewGuid(),
                             CreatedAt = now.Value,
@@ -567,7 +562,6 @@ public class TaskRepository : ITaskRepository
                             EditedAt = now.Value,
                             EditorId = editorId,
                             FileName = mediaFile.FileName,
-                            RawUri = mediaFile.RawUri,
                             Uri = mediaFile.Uri,
                             FileType = mediaFile.FileType,
                             Content = mediaFile.Content,
@@ -637,7 +631,7 @@ public class TaskRepository : ITaskRepository
                 {
                     foreach (var mediaFile in mediaFiles)
                     {
-                        var newMediaFile = new MediaFile
+                        var newMediaFile = new Report
                         {
                             Id = Guid.NewGuid(),
                             CreatedAt = now.Value,
@@ -645,7 +639,6 @@ public class TaskRepository : ITaskRepository
                             EditedAt = now.Value,
                             EditorId = editorId,
                             FileName = mediaFile.FileName,
-                            RawUri = mediaFile.RawUri,
                             Uri = mediaFile.Uri,
                             FileType = mediaFile.FileType,
                             Content = mediaFile.Content,
@@ -721,7 +714,7 @@ public class TaskRepository : ITaskRepository
                 {
                     foreach (var mediaFile in mediaFiles)
                     {
-                        var newMediaFile = new MediaFile
+                        var newMediaFile = new Report
                         {
                             Id = Guid.NewGuid(),
                             CreatedAt = now.Value,
@@ -729,8 +722,6 @@ public class TaskRepository : ITaskRepository
                             EditedAt = now.Value,
                             EditorId = editorId,
                             FileName = mediaFile.FileName,
-                            //Key = mediaFile.Key,
-                            RawUri = mediaFile.RawUri,
                             Uri = mediaFile.Uri,
                             FileType = mediaFile.FileType,
                             Content = mediaFile.Content,

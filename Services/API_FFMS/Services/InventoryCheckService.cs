@@ -60,7 +60,7 @@ public class InventoryCheckService : BaseService, IInventoryCheckService
                     x => roomAssets.Select(ra => ra!.AssetId).Contains(x.Id)
                 }, null);
 
-            var mediaFiles = createDto.RelatedFiles?.Select(file => new MediaFile
+            var mediaFiles = createDto.RelatedFiles?.Select(file => new Report
             {
                 FileName = file.FileName ?? "",
                 Uri = file.Uri ?? ""
@@ -217,7 +217,7 @@ public class InventoryCheckService : BaseService, IInventoryCheckService
 
         var mediaFileQuery = MainUnitOfWork.MediaFileRepository.GetQuery().Where(x => x!.ItemId == id).ToList();
 
-        var newMediaFile = updateDto.RelatedFiles.Select(dto => new MediaFile
+        var newMediaFile = updateDto.RelatedFiles.Select(dto => new Report
         {
             FileName = dto.FileName,
             Uri = dto.Uri,
@@ -225,7 +225,7 @@ public class InventoryCheckService : BaseService, IInventoryCheckService
             CreatorId = AccountId,
             ItemId = id,
             FileType = FileType.File
-        }).ToList() ?? new List<MediaFile>();
+        }).ToList() ?? new List<Report>();
 
         var additionMediaFiles = newMediaFile.Except(mediaFileQuery).ToList();
         var removalMediaFiles = mediaFileQuery.Except(newMediaFile).ToList();

@@ -3,11 +3,11 @@ using API_FFMS.Dtos;
 using API_FFMS.Repositories;
 using AppCore.Extensions;
 using AppCore.Models;
-using DocumentFormat.OpenXml.Office2010.Excel;
 using MainData;
 using MainData.Entities;
 using MainData.Repositories;
 using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
 
 namespace API_FFMS.Services;
 
@@ -33,24 +33,20 @@ public class TaskService : BaseService, ITaskService
     public async Task<ApiResponse> UpdateTaskStatus(ReportCreateDto createDto)
     {
         // Handle report content
-        var mediaFiles = new List<MediaFile>();
-        foreach (var uri in createDto.Uris!)
+        var mediaFiles = new List<Report>();
+        var listUrisJson = JsonConvert.SerializeObject(createDto.Uris);
+        var report = new Report
         {
-            var newMediaFile = new MediaFile
-            {
-                FileName = createDto.FileName!,
-                RawUri = createDto.RawUri!,
-                Uri = uri,
-                Content = createDto.Content,
-                FileType = createDto.FileType!,
-                ItemId = createDto.ItemId,
-                IsVerified = createDto.IsVerified ?? false,
-                IsReported = true,
-            };
-
-
-            mediaFiles.Add(newMediaFile);
-        }
+            FileName = createDto.FileName!,
+            Uri = listUrisJson,
+            Content = createDto.Content,
+            FileType = createDto.FileType!,
+            ItemId = createDto.ItemId,
+            IsVerified = createDto.IsVerified ?? false,
+            IsReported = true,
+        };
+        
+        mediaFiles.Add(report);
 
         var reportedTask = await MainUnitOfWork.TaskRepository.FindOneAsync(createDto.ItemId ?? Guid.Empty);
 

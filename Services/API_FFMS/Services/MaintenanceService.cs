@@ -257,12 +257,12 @@ public class MaintenanceService : BaseService, IMaintenanceService
         var maintenance = createDto.ProjectTo<MaintenanceCreateDto, Maintenance>();
         maintenance.RequestCode = GenerateRequestCode();
 
-        var mediaFiles = new List<MediaFile>();
+        var mediaFiles = new List<Report>();
         if (createDto.RelatedFiles != null)
         {
             foreach (var file in createDto.RelatedFiles)
             {
-                var newMediaFile = new MediaFile
+                var newMediaFile = new Report
                 {
                     FileName = file.FileName ?? "",
                     Uri = file.Uri ?? ""
@@ -297,7 +297,7 @@ public class MaintenanceService : BaseService, IMaintenanceService
 
         var mediaFileQuery = MainUnitOfWork.MediaFileRepository.GetQuery().Where(x => x!.ItemId == id).ToList();
 
-        var newMediaFile = updateDto.RelatedFiles.Select(dto => new MediaFile
+        var newMediaFile = updateDto.RelatedFiles.Select(dto => new Report
         {
             FileName = dto.FileName,
             Uri = dto.Uri,
@@ -305,7 +305,7 @@ public class MaintenanceService : BaseService, IMaintenanceService
             CreatorId = AccountId,
             ItemId = id,
             FileType = FileType.File
-        }).ToList() ?? new List<MediaFile>();
+        }).ToList() ?? new List<Report>();
 
         var additionMediaFiles = newMediaFile.Except(mediaFileQuery).ToList();
         var removalMediaFiles = mediaFileQuery.Except(newMediaFile).ToList();
@@ -347,7 +347,7 @@ public class MaintenanceService : BaseService, IMaintenanceService
         }
 
         var maintenances = new List<Maintenance>();
-        var relatedFiles = new List<MediaFile>();
+        var relatedFiles = new List<Report>();
         foreach (var create in createDtos)
         {
             var maintenance = create.ProjectTo<MaintenanceCreateDto, Maintenance>();
@@ -356,7 +356,7 @@ public class MaintenanceService : BaseService, IMaintenanceService
             {
                 foreach (var file in create.RelatedFiles)
                 {
-                    var relatedFile = new MediaFile
+                    var relatedFile = new Report
                     {
                         Id = Guid.NewGuid(),
                         FileName = file.FileName ?? "",

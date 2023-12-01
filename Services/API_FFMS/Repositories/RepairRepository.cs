@@ -8,12 +8,12 @@ namespace API_FFMS.Repositories;
 
 public interface IRepairRepository
 {
-    Task<bool> InsertRepair(Repair repair, List<MediaFile> mediaFiles, Guid? creatorId, DateTime? now = null);
-    Task<bool> InsertRepairs(List<Repair> repairs, List<MediaFile>? mediaFiles, Guid? creatorId, DateTime? now = null);
+    Task<bool> InsertRepair(Repair repair, List<Report> mediaFiles, Guid? creatorId, DateTime? now = null);
+    Task<bool> InsertRepairs(List<Repair> repairs, List<Report>? mediaFiles, Guid? creatorId, DateTime? now = null);
     Task<bool> UpdateStatus(Repair repair, RequestStatus? statusUpdate, Guid? editorId, DateTime? now = null);
     Task<bool> DeleteRepair(Repair repair, Guid? deleterId, DateTime? now = null);
     Task<bool> DeleteRepairs(List<Repair?> repairs, Guid? deleterId, DateTime? now = null);
-    Task<bool> UpdateRepair(Repair repair, List<MediaFile?> additionMediaFiles, List<MediaFile?> removalMediaFiles, Guid? creatorId, DateTime? now = null);
+    Task<bool> UpdateRepair(Repair repair, List<Report?> additionMediaFiles, List<Report?> removalMediaFiles, Guid? creatorId, DateTime? now = null);
 }
 public class RepairRepository : IRepairRepository
 {
@@ -24,7 +24,7 @@ public class RepairRepository : IRepairRepository
         _context = context;
     }
 
-    public async Task<bool> InsertRepairs(List<Repair> entities, List<MediaFile>? mediaFiles, Guid? creatorId, DateTime? now = null)
+    public async Task<bool> InsertRepairs(List<Repair> entities, List<Report>? mediaFiles, Guid? creatorId, DateTime? now = null)
     {
         await _context.Database.BeginTransactionAsync();
         now ??= DateTime.UtcNow;
@@ -345,7 +345,7 @@ public class RepairRepository : IRepairRepository
         return wareHouse;
     }
 
-    public async Task<bool> InsertRepair(Repair repair, List<MediaFile> mediaFiles, Guid? creatorId, DateTime? now = null)
+    public async Task<bool> InsertRepair(Repair repair, List<Report> mediaFiles, Guid? creatorId, DateTime? now = null)
     {
         await _context.Database.BeginTransactionAsync();
         now ??= DateTime.UtcNow;
@@ -376,7 +376,7 @@ public class RepairRepository : IRepairRepository
 
             foreach (var mediaFile in mediaFiles)
             {
-                var newMediaFile = new MediaFile
+                var newMediaFile = new Report
                 {
                     Id = Guid.NewGuid(),
                     CreatedAt = now.Value,
@@ -402,7 +402,7 @@ public class RepairRepository : IRepairRepository
         }
     }
 
-    public async Task<bool> UpdateRepair(Repair repair, List<MediaFile?> additionMediaFiles, List<MediaFile?> removalMediaFiles, Guid? creatorId, DateTime? now = null)
+    public async Task<bool> UpdateRepair(Repair repair, List<Report?> additionMediaFiles, List<Report?> removalMediaFiles, Guid? creatorId, DateTime? now = null)
     {
         await _context.Database.BeginTransactionAsync();
         now ??= DateTime.UtcNow;

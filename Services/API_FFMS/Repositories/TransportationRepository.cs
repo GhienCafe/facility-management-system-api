@@ -10,8 +10,8 @@ public interface ITransportationRepository
     Task<bool> UpdateStatus(Transportation transportation, RequestStatus? statusUpdate, Guid? editorId, DateTime? now = null);
     Task<bool> DeleteTransport(Transportation transportation, Guid? deleterId, DateTime? now = null);
     Task<bool> DeleteTransports(List<Transportation?> transportations, Guid? deleterId, DateTime? now = null);
-    Task<bool> InsertTransportation(Transportation transportation, List<TransportationDetail> transportationDetails, List<MediaFile>? mediaFiles, Guid? creatorId, DateTime? now = null);
-    Task<bool> UpdateTransportation(Transportation transportation, List<MediaFile?> additionMediaFiles, List<MediaFile?> removalMediaFiles, Guid? editorId, DateTime? now = null);
+    Task<bool> InsertTransportation(Transportation transportation, List<TransportationDetail> transportationDetails, List<Report>? mediaFiles, Guid? creatorId, DateTime? now = null);
+    Task<bool> UpdateTransportation(Transportation transportation, List<Report?> additionMediaFiles, List<Report?> removalMediaFiles, Guid? editorId, DateTime? now = null);
 }
 public class TransportationRepository : ITransportationRepository
 {
@@ -165,7 +165,7 @@ public class TransportationRepository : ITransportationRepository
         }
     }
 
-    public async Task<bool> InsertTransportation(Transportation transportation, List<TransportationDetail> transportationDetails, List<MediaFile>? mediaFiles, Guid? creatorId, DateTime? now = null)
+    public async Task<bool> InsertTransportation(Transportation transportation, List<TransportationDetail> transportationDetails, List<Report>? mediaFiles, Guid? creatorId, DateTime? now = null)
     {
         await _context.Database.BeginTransactionAsync();
         now ??= DateTime.UtcNow;
@@ -190,7 +190,7 @@ public class TransportationRepository : ITransportationRepository
             {
                 foreach (var mediaFile in mediaFiles)
                 {
-                    var newMediaFile = new MediaFile
+                    var newMediaFile = new Report
                     {
                         Id = Guid.NewGuid(),
                         CreatedAt = now.Value,
@@ -363,8 +363,8 @@ public class TransportationRepository : ITransportationRepository
         }
     }
 
-    public async Task<bool> UpdateTransportation(Transportation transportation, List<MediaFile?> additionMediaFiles,
-                                                 List<MediaFile?> removalMediaFiles, Guid? editorId, DateTime? now = null)
+    public async Task<bool> UpdateTransportation(Transportation transportation, List<Report?> additionMediaFiles,
+                                                 List<Report?> removalMediaFiles, Guid? editorId, DateTime? now = null)
     {
         await _context.Database.BeginTransactionAsync();
         now ??= DateTime.UtcNow;
