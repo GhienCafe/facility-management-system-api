@@ -7,6 +7,8 @@ public class MediaFileDto
     public List<string>? Uri { get; set; }
     public FileType FileType { get; set; }
     public string? Content { get; set; }
+    public string? RejectReason { get; set; }
+    public bool IsReject { get; set; }
     public Guid? ItemId { get; set; }
 }
 
