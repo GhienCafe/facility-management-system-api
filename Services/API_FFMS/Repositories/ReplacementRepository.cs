@@ -7,11 +7,11 @@ namespace API_FFMS.Repositories
 {
     public interface IReplacementRepository
     {
-        Task<bool> InsertReplacement(Replacement replacement, List<MediaFile> mediaFiles, Guid? creatorId, DateTime? now = null);
+        Task<bool> InsertReplacement(Replacement replacement, List<Report> mediaFiles, Guid? creatorId, DateTime? now = null);
         Task<bool> UpdateStatus(Replacement replacement, RequestStatus? statusUpdate, Guid? editorId, DateTime? now = null);
         Task<bool> DeleteReplacement(Replacement replacement, Guid? deleterId, DateTime? now = null);
         Task<bool> DeleteReplacements(List<Replacement?> replacements, Guid? deleterId, DateTime? now = null);
-        Task<bool> UpdateReplacement(Replacement replacement, List<MediaFile?> additionMediaFiles, List<MediaFile?> removalMediaFiles, Guid? editorId, DateTime? now = null);
+        Task<bool> UpdateReplacement(Replacement replacement, List<Report?> additionMediaFiles, List<Report?> removalMediaFiles, Guid? editorId, DateTime? now = null);
     }
     public class ReplacementRepository : IReplacementRepository
     {
@@ -212,7 +212,7 @@ namespace API_FFMS.Repositories
             }
         }
 
-        public async Task<bool> InsertReplacement(Replacement replacement, List<MediaFile> mediaFiles, Guid? creatorId, DateTime? now = null)
+        public async Task<bool> InsertReplacement(Replacement replacement, List<Report> mediaFiles, Guid? creatorId, DateTime? now = null)
         {
             await _context.Database.BeginTransactionAsync();
             now ??= DateTime.UtcNow;
@@ -243,7 +243,7 @@ namespace API_FFMS.Repositories
 
                 foreach (var mediaFile in mediaFiles)
                 {
-                    var newMediaFile = new MediaFile
+                    var newMediaFile = new Report
                     {
                         Id = Guid.NewGuid(),
                         CreatedAt = now.Value,
@@ -269,7 +269,7 @@ namespace API_FFMS.Repositories
             }
         }
 
-        public async Task<bool> UpdateReplacement(Replacement replacement, List<MediaFile?> additionMediaFiles, List<MediaFile?> removalMediaFiles, Guid? editorId, DateTime? now = null)
+        public async Task<bool> UpdateReplacement(Replacement replacement, List<Report?> additionMediaFiles, List<Report?> removalMediaFiles, Guid? editorId, DateTime? now = null)
         {
             await _context.Database.BeginTransactionAsync();
             now ??= DateTime.UtcNow;

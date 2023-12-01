@@ -64,12 +64,12 @@ namespace API_FFMS.Services
             var replacement = createDto.ProjectTo<ReplaceCreateDto, Replacement>();
             replacement.RequestCode = GenerateRequestCode();
 
-            var mediaFiles = new List<MediaFile>();
+            var mediaFiles = new List<Report>();
             if (createDto.RelatedFiles != null)
             {
                 foreach (var file in createDto.RelatedFiles)
                 {
-                    var newMediaFile = new MediaFile
+                    var newMediaFile = new Report
                     {
                         FileName = file.FileName ?? "",
                         Uri = file.Uri ?? ""
@@ -426,7 +426,7 @@ namespace API_FFMS.Services
 
             var mediaFileQuery = MainUnitOfWork.MediaFileRepository.GetQuery().Where(x => x!.ItemId == id).ToList();
 
-            var newMediaFile = updateDto.RelatedFiles.Select(dto => new MediaFile
+            var newMediaFile = updateDto.RelatedFiles.Select(dto => new Report
             {
                 FileName = dto.FileName,
                 Uri = dto.Uri,
@@ -434,7 +434,7 @@ namespace API_FFMS.Services
                 CreatorId = AccountId,
                 ItemId = id,
                 FileType = FileType.File
-            }).ToList() ?? new List<MediaFile>();
+            }).ToList() ?? new List<Report>();
 
             var additionMediaFiles = newMediaFile.Except(mediaFileQuery).ToList();
             var removalMediaFiles = mediaFileQuery.Except(newMediaFile).ToList();

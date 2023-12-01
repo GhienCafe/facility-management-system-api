@@ -7,9 +7,9 @@ namespace API_FFMS.Repositories;
 
 public interface IInventoryCheckRepository
 {
-    Task<bool> InsertInventoryCheck(InventoryCheck inventoryCheck, List<Room?> rooms, List<MediaFile>? mediaFiles, Guid? creatorId, DateTime? now = null);
+    Task<bool> InsertInventoryCheck(InventoryCheck inventoryCheck, List<Room?> rooms, List<Report>? mediaFiles, Guid? creatorId, DateTime? now = null);
     Task<bool> UpdateInventoryCheckStatus(InventoryCheck inventoryCheck, RequestStatus? statusUpdate, Guid? editorId, DateTime? now = null);
-    Task<bool> UpdateInventoryCheck(InventoryCheck inventoryCheck, List<MediaFile?> additionMediaFiles, List<MediaFile?> removalMediaFiles, Guid? editorId, DateTime? now = null);
+    Task<bool> UpdateInventoryCheck(InventoryCheck inventoryCheck, List<Report?> additionMediaFiles, List<Report?> removalMediaFiles, Guid? editorId, DateTime? now = null);
 }
 
 public class InventoryCheckRepository : IInventoryCheckRepository
@@ -36,7 +36,7 @@ public class InventoryCheckRepository : IInventoryCheckRepository
         return newRequestNumber;
     }
 
-    public async Task<bool> InsertInventoryCheck(InventoryCheck inventoryCheck, List<Room?> rooms, List<MediaFile>? mediaFiles, Guid? creatorId, DateTime? now = null)
+    public async Task<bool> InsertInventoryCheck(InventoryCheck inventoryCheck, List<Room?> rooms, List<Report>? mediaFiles, Guid? creatorId, DateTime? now = null)
     {
         await _context.Database.BeginTransactionAsync();
         now ??= DateTime.UtcNow;
@@ -88,7 +88,7 @@ public class InventoryCheckRepository : IInventoryCheckRepository
             {
                 foreach (var mediaFile in mediaFiles)
                 {
-                    var newMediaFile = new MediaFile
+                    var newMediaFile = new Report
                     {
                         Id = Guid.NewGuid(),
                         CreatedAt = now.Value,
@@ -188,7 +188,7 @@ public class InventoryCheckRepository : IInventoryCheckRepository
         }
     }
 
-    public async Task<bool> UpdateInventoryCheck(InventoryCheck inventoryCheck, List<MediaFile?> additionMediaFiles, List<MediaFile?> removalMediaFiles, Guid? editorId, DateTime? now = null)
+    public async Task<bool> UpdateInventoryCheck(InventoryCheck inventoryCheck, List<Report?> additionMediaFiles, List<Report?> removalMediaFiles, Guid? editorId, DateTime? now = null)
     {
         await _context.Database.BeginTransactionAsync();
         now ??= DateTime.UtcNow;

@@ -24,7 +24,7 @@ public class DatabaseContext : DbContext
     public DbSet<RoomStatus> RoomStatus { get; set; }
     public DbSet<RoomType> RoomTypes { get; set; }
 
-    public DbSet<MediaFile> MediaFiles { get; set; }
+    public DbSet<Report> MediaFiles { get; set; }
 
     public DbSet<Replacement> Replacements { get; set; }
 

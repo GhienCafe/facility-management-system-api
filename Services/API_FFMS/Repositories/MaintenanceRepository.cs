@@ -7,12 +7,12 @@ namespace API_FFMS.Repositories;
 
 public interface IMaintenanceRepository
 {
-    Task<bool> InsertMaintenance(Maintenance maintenance, List<MediaFile> mediaFiles, Guid? creatorId, DateTime? now = null);
+    Task<bool> InsertMaintenance(Maintenance maintenance, List<Report> mediaFiles, Guid? creatorId, DateTime? now = null);
     Task<bool> UpdateStatus(Maintenance maintenance, RequestStatus? statusUpdate, Guid? editorId, DateTime? now = null);
-    Task<bool> InsertMaintenances(List<Maintenance> maintenances, List<MediaFile>? mediaFiles, Guid? creatorId, DateTime? now = null);
+    Task<bool> InsertMaintenances(List<Maintenance> maintenances, List<Report>? mediaFiles, Guid? creatorId, DateTime? now = null);
     Task<bool> DeleteMaintenances(List<Maintenance?> maintenances, Guid? deleterId, DateTime? now = null);
     Task<bool> DeleteMaintenance(Maintenance maintenance, Guid? deleterId, DateTime? now = null);
-    Task<bool> UpdateMaintenance(Maintenance maintenance, List<MediaFile?> additionMediaFiles, List<MediaFile?> removalMediaFiles, Guid? editorId, DateTime? now = null);
+    Task<bool> UpdateMaintenance(Maintenance maintenance, List<Report?> additionMediaFiles, List<Report?> removalMediaFiles, Guid? editorId, DateTime? now = null);
 }
 
 public class MaintenanceRepository : IMaintenanceRepository
@@ -24,7 +24,7 @@ public class MaintenanceRepository : IMaintenanceRepository
         _context = context;
     }
 
-    public async Task<bool> InsertMaintenances(List<Maintenance> entities, List<MediaFile>? mediaFiles, Guid? creatorId, DateTime? now = null)
+    public async Task<bool> InsertMaintenances(List<Maintenance> entities, List<Report>? mediaFiles, Guid? creatorId, DateTime? now = null)
     {
         await _context.Database.BeginTransactionAsync();
         now ??= DateTime.UtcNow;
@@ -325,7 +325,7 @@ public class MaintenanceRepository : IMaintenanceRepository
         return wareHouse;
     }
 
-    public async Task<bool> InsertMaintenance(Maintenance entity, List<MediaFile> mediaFiles, Guid? creatorId, DateTime? now = null)
+    public async Task<bool> InsertMaintenance(Maintenance entity, List<Report> mediaFiles, Guid? creatorId, DateTime? now = null)
     {
         await _context.Database.BeginTransactionAsync();
         now ??= DateTime.UtcNow;
@@ -356,7 +356,7 @@ public class MaintenanceRepository : IMaintenanceRepository
 
             foreach (var mediaFile in mediaFiles)
             {
-                var newMediaFile = new MediaFile
+                var newMediaFile = new Report
                 {
                     Id = Guid.NewGuid(),
                     CreatedAt = now.Value,
@@ -382,7 +382,7 @@ public class MaintenanceRepository : IMaintenanceRepository
         }
     }
 
-    public async Task<bool> UpdateMaintenance(Maintenance maintenance, List<MediaFile?> additionMediaFiles, List<MediaFile?> removalMediaFiles, Guid? editorId, DateTime? now = null)
+    public async Task<bool> UpdateMaintenance(Maintenance maintenance, List<Report?> additionMediaFiles, List<Report?> removalMediaFiles, Guid? editorId, DateTime? now = null)
     {
         await _context.Database.BeginTransactionAsync();
         now ??= DateTime.UtcNow;
