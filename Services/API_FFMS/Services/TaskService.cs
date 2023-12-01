@@ -3,6 +3,7 @@ using API_FFMS.Dtos;
 using API_FFMS.Repositories;
 using AppCore.Extensions;
 using AppCore.Models;
+using DocumentFormat.OpenXml.Office2010.Excel;
 using MainData;
 using MainData.Entities;
 using MainData.Repositories;
@@ -21,129 +22,17 @@ public interface ITaskService : IBaseService
 public class TaskService : BaseService, ITaskService
 {
     private readonly ITaskRepository _taskRepository;
+
     public TaskService(MainUnitOfWork mainUnitOfWork, IHttpContextAccessor httpContextAccessor,
-                       IMapperRepository mapperRepository, ITaskRepository taskRepository)
-                       : base(mainUnitOfWork, httpContextAccessor, mapperRepository)
+        IMapperRepository mapperRepository, ITaskRepository taskRepository)
+        : base(mainUnitOfWork, httpContextAccessor, mapperRepository)
     {
         _taskRepository = taskRepository;
     }
 
     public async Task<ApiResponse> UpdateTaskStatus(ReportCreateDto createDto)
     {
-        //ASSET CHECK
-        var assetCheckReport = await MainUnitOfWork.AssetCheckRepository.FindOneAsync(
-            new Expression<Func<AssetCheck, bool>>[]
-            {
-                x => !x.DeletedAt.HasValue,
-                x => x.AssignedTo == AccountId,
-                x => x.Id == createDto.ItemId,
-                x => x.Status != RequestStatus.Cancelled
-            });
-        if (assetCheckReport != null)
-        {
-            var asset = await MainUnitOfWork.AssetRepository.FindOneAsync(assetCheckReport.AssetId);
-            if (asset == null)
-            {
-                throw new ApiException("Không tìm thấy thiết bị của yêu cầu này", StatusCode.NOT_FOUND);
-            }
-
-            createDto.ItemId = assetCheckReport.Id;
-        }
-
-        //TRANSPORTATION
-        var transportReport = await MainUnitOfWork.TransportationRepository.FindOneAsync(
-            new Expression<Func<Transportation, bool>>[]
-            {
-                x => !x.DeletedAt.HasValue,
-                x => x.AssignedTo == AccountId,
-                x => x.Id == createDto.ItemId,
-                x => x.Status != RequestStatus.Cancelled
-            });
-        if (transportReport != null)
-        {
-            createDto.ItemId = transportReport.Id;
-        }
-
-        //REPLACEMENT
-        var replaceReport = await MainUnitOfWork.ReplacementRepository.FindOneAsync(
-            new Expression<Func<Replacement, bool>>[]
-            {
-                x => !x.DeletedAt.HasValue,
-                x => x.AssignedTo == AccountId,
-                x => x.Id == createDto.ItemId,
-                x => x.Status != RequestStatus.Cancelled
-            });
-        if (replaceReport != null)
-        {
-            createDto.ItemId = replaceReport.Id;
-        }
-
-        //REPAIRATION
-        var repairReport = await MainUnitOfWork.RepairRepository.FindOneAsync(
-            new Expression<Func<Repair, bool>>[]
-            {
-                x => !x.DeletedAt.HasValue,
-                x => x.AssignedTo == AccountId,
-                x => x.Id == createDto.ItemId,
-                x => x.Status != RequestStatus.Cancelled
-            });
-        if (repairReport != null)
-        {
-            createDto.ItemId = repairReport.Id;
-        }
-
-        //MAINTENANCE
-        var maintenReport = await MainUnitOfWork.MaintenanceRepository.FindOneAsync(
-            new Expression<Func<Maintenance, bool>>[]
-            {
-                x => !x.DeletedAt.HasValue,
-                x => x.AssignedTo == AccountId,
-                x => x.Id == createDto.ItemId,
-                x => x.Status != RequestStatus.Cancelled
-            });
-        if (maintenReport != null)
-        {
-            createDto.ItemId = maintenReport.Id;
-        }
-
-        //INVENTORY CHECK
-        var inventoryCheckReport = await MainUnitOfWork.InventoryCheckRepository.FindOneAsync(
-            new Expression<Func<InventoryCheck, bool>>[]
-            {
-                x => !x.DeletedAt.HasValue,
-                x => x.AssignedTo == AccountId,
-                x => x.Id == createDto.ItemId,
-                x => x.Status != RequestStatus.Cancelled
-            });
-
-        var inventoryDetails = new List<InventoryCheckDetail>();
-        if (inventoryCheckReport != null)
-        {
-            if (createDto.Rooms != null)
-            {
-                foreach (var room in createDto.Rooms)
-                {
-                    if (room.Assets != null)
-                    {
-                        foreach (var assetReport in room.Assets)
-                        {
-                            var inventoryDetail = new InventoryCheckDetail
-                            {
-                                AssetId = assetReport.AssetId ?? Guid.Empty,
-                                InventoryCheckId = inventoryCheckReport.Id,
-                                RoomId = (Guid)room.RoomId,
-                                StatusReported = assetReport.Status,
-                                QuantityReported = assetReport.Quantity
-                            };
-
-                            inventoryDetails.Add(inventoryDetail);
-                        }
-                    }
-                }
-            }
-            createDto.ItemId = inventoryCheckReport.Id;
-        }
-
+        // Handle report content
         var mediaFiles = new List<MediaFile>();
         foreach (var uri in createDto.Uris!)
         {
@@ -152,32 +41,74 @@ public class TaskService : BaseService, ITaskService
                 FileName = createDto.FileName!,
                 RawUri = createDto.RawUri!,
                 Uri = uri,
+                Content = createDto.Content,
                 FileType = createDto.FileType!,
-                Content = createDto.Content!,
                 ItemId = createDto.ItemId,
                 IsVerified = createDto.IsVerified ?? false,
-                IsReported = true
+                IsReported = true,
             };
+
+
             mediaFiles.Add(newMediaFile);
         }
 
-        if (mediaFiles.Count > 0 && inventoryCheckReport == null)
+        var reportedTask = await MainUnitOfWork.TaskRepository.FindOneAsync(createDto.ItemId ?? Guid.Empty);
+
+        if (reportedTask != null)
         {
-            if (!await _taskRepository.UpdateStatus(mediaFiles, createDto.Status, AccountId, CurrentDate))
-            {
-                throw new ApiException("Báo cáo thất bại", StatusCode.SERVER_ERROR);
-            }
+            createDto.ItemId = reportedTask.Id;
         }
-        else if (mediaFiles.Count > 0 && inventoryCheckReport != null)
+
+        // For normal task
+        if (reportedTask != null && reportedTask.Type != RequestType.InventoryCheck)
         {
-            if (!await _taskRepository.InventoryCheckReport(mediaFiles, inventoryDetails, createDto.Status, AccountId, CurrentDate))
+            if (mediaFiles.Count > 0)
             {
-                throw new ApiException("Báo cáo thất bại", StatusCode.SERVER_ERROR);
+                if (!await _taskRepository.UpdateStatus(mediaFiles, createDto.Status, AccountId, CurrentDate))
+                {
+                    throw new ApiException("Báo cáo thất bại", StatusCode.SERVER_ERROR);
+                }
             }
-        }
+        } // For inventory check
         else
         {
-            throw new ApiException("Báo cáo thất bại", StatusCode.SERVER_ERROR);
+            var inventoryDetails = new List<InventoryCheckDetail>();
+            if (reportedTask != null)
+            {
+                if (createDto.Rooms != null)
+                {
+                    foreach (var room in createDto.Rooms)
+                    {
+                        if (room.Assets != null)
+                        {
+                            foreach (var assetReport in room.Assets)
+                            {
+                                var inventoryDetail = new InventoryCheckDetail
+                                {
+                                    AssetId = assetReport.AssetId ?? Guid.Empty,
+                                    InventoryCheckId = reportedTask.Id,
+                                    RoomId = (Guid)room.RoomId,
+                                    StatusReported = assetReport.Status,
+                                    QuantityReported = assetReport.Quantity
+                                };
+
+                                inventoryDetails.Add(inventoryDetail);
+                            }
+                        }
+                    }
+                }
+
+                createDto.ItemId = reportedTask.Id;
+            }
+
+            if (mediaFiles.Count > 0 && reportedTask != null)
+            {
+                if (!await _taskRepository.InventoryCheckReport(mediaFiles, inventoryDetails, createDto.Status,
+                        AccountId, CurrentDate))
+                {
+                    throw new ApiException("Báo cáo thất bại", StatusCode.SERVER_ERROR);
+                }
+            }
         }
 
         return ApiResponse.Created("Báo cáo thành công");
@@ -198,31 +129,32 @@ public class TaskService : BaseService, ITaskService
         if (assetCheckTask != null)
         {
             assetCheckTask!.Asset = await MainUnitOfWork.AssetRepository.FindOneAsync<AssetBaseDto>(
-                    new Expression<Func<Asset, bool>>[]
-                    {
+                new Expression<Func<Asset, bool>>[]
+                {
                     x => !x.DeletedAt.HasValue,
                     x => x.Id == assetCheckTask.AssetId
-                    });
+                });
             if (assetCheckTask.Asset != null)
             {
                 assetCheckTask.Asset!.StatusObj = assetCheckTask.Asset.Status?.GetValue();
                 var location = await MainUnitOfWork.RoomAssetRepository.FindOneAsync<RoomAsset>(
                     new Expression<Func<RoomAsset, bool>>[]
                     {
-                    x => !x.DeletedAt.HasValue,
-                    x => x.AssetId == assetCheckTask.Asset.Id,
-                    x => x.ToDate == null
+                        x => !x.DeletedAt.HasValue,
+                        x => x.AssetId == assetCheckTask.Asset.Id,
+                        x => x.ToDate == null
                     });
                 if (location != null)
                 {
                     assetCheckTask.CurrentRoom = await MainUnitOfWork.RoomRepository.FindOneAsync<RoomBaseDto>(
-                            new Expression<Func<Room, bool>>[]
-                            {
+                        new Expression<Func<Room, bool>>[]
+                        {
                             x => !x.DeletedAt.HasValue,
                             x => x.Id == location.RoomId
-                            });
+                        });
                 }
             }
+
             assetCheckTask.PriorityObj = assetCheckTask.Priority.GetValue();
             assetCheckTask.StatusObj = assetCheckTask.Status?.GetValue();
             assetCheckTask.Type = RequestType.StatusCheck;
@@ -244,60 +176,60 @@ public class TaskService : BaseService, ITaskService
             trasportTask.Type = RequestType.Transportation;
             var roomDataset = MainUnitOfWork.RoomRepository.GetQuery();
             var toRoom = await roomDataset
-                            .Where(r => r!.Id == trasportTask!.ToRoomId)
-                            .Select(r => new RoomBaseDto
-                            {
-                                Id = r!.Id,
-                                RoomCode = r.RoomCode,
-                                RoomName = r.RoomName,
-                                StatusId = r.StatusId,
-                                FloorId = r.FloorId,
-                                CreatedAt = r.CreatedAt,
-                                EditedAt = r.EditedAt
-                            }).FirstOrDefaultAsync();
+                .Where(r => r!.Id == trasportTask!.ToRoomId)
+                .Select(r => new RoomBaseDto
+                {
+                    Id = r!.Id,
+                    RoomCode = r.RoomCode,
+                    RoomName = r.RoomName,
+                    StatusId = r.StatusId,
+                    FloorId = r.FloorId,
+                    CreatedAt = r.CreatedAt,
+                    EditedAt = r.EditedAt
+                }).FirstOrDefaultAsync();
             var roomQuery = MainUnitOfWork.RoomRepository.GetQuery();
             var transportDetails = MainUnitOfWork.TransportationDetailRepository.GetQuery();
             var assets = await transportDetails
-                        .Where(td => td!.TransportationId == id)
-                        .Join(MainUnitOfWork.AssetRepository.GetQuery(),
-                                td => td!.AssetId,
-                                asset => asset!.Id, (td, asset) => new FromRoomAssetDto
-                                {
-                                    Asset = new AssetBaseDto
-                                    {
-                                        Id = asset!.Id,
-                                        Description = asset.Description,
-                                        AssetCode = asset.AssetCode,
-                                        AssetName = asset.AssetName,
-                                        Quantity = (double)td!.Quantity!,
-                                        IsMovable = asset.IsMovable,
-                                        IsRented = asset.IsRented,
-                                        ManufacturingYear = asset.ManufacturingYear,
-                                        StatusObj = asset.Status.GetValue(),
-                                        Status = asset.Status,
-                                        StartDateOfUse = asset.StartDateOfUse,
-                                        SerialNumber = asset.SerialNumber,
-                                        LastCheckedDate = asset.LastCheckedDate,
-                                        LastMaintenanceTime = asset.LastMaintenanceTime,
-                                        TypeId = asset.TypeId,
-                                        ModelId = asset.ModelId,
-                                        CreatedAt = asset.CreatedAt,
-                                        EditedAt = asset.EditedAt,
-                                        CreatorId = asset.CreatorId ?? Guid.Empty,
-                                        EditorId = asset.EditorId ?? Guid.Empty
-                                    },
-                                    FromRoom = new RoomBaseDto
-                                    {
-                                        Id = (Guid)td.FromRoomId!,
-                                        RoomCode = roomQuery.FirstOrDefault(x => x!.Id == td.FromRoomId)!.RoomCode,
-                                        RoomName = roomQuery.FirstOrDefault(x => x!.Id == td.FromRoomId)!.RoomName,
-                                        StatusId = roomQuery.FirstOrDefault(x => x!.Id == td.FromRoomId)!.StatusId,
-                                        FloorId = roomQuery.FirstOrDefault(x => x!.Id == td.FromRoomId)!.FloorId,
-                                        CreatedAt = roomQuery.FirstOrDefault(x => x!.Id == td.FromRoomId)!.CreatedAt,
-                                        EditedAt = roomQuery.FirstOrDefault(x => x!.Id == td.FromRoomId)!.EditedAt
-                                    },
-                                    Quantity = td!.Quantity
-                                }).ToListAsync();
+                .Where(td => td!.TransportationId == id)
+                .Join(MainUnitOfWork.AssetRepository.GetQuery(),
+                    td => td!.AssetId,
+                    asset => asset!.Id, (td, asset) => new FromRoomAssetDto
+                    {
+                        Asset = new AssetBaseDto
+                        {
+                            Id = asset!.Id,
+                            Description = asset.Description,
+                            AssetCode = asset.AssetCode,
+                            AssetName = asset.AssetName,
+                            Quantity = (double)td!.Quantity!,
+                            IsMovable = asset.IsMovable,
+                            IsRented = asset.IsRented,
+                            ManufacturingYear = asset.ManufacturingYear,
+                            StatusObj = asset.Status.GetValue(),
+                            Status = asset.Status,
+                            StartDateOfUse = asset.StartDateOfUse,
+                            SerialNumber = asset.SerialNumber,
+                            LastCheckedDate = asset.LastCheckedDate,
+                            LastMaintenanceTime = asset.LastMaintenanceTime,
+                            TypeId = asset.TypeId,
+                            ModelId = asset.ModelId,
+                            CreatedAt = asset.CreatedAt,
+                            EditedAt = asset.EditedAt,
+                            CreatorId = asset.CreatorId ?? Guid.Empty,
+                            EditorId = asset.EditorId ?? Guid.Empty
+                        },
+                        FromRoom = new RoomBaseDto
+                        {
+                            Id = (Guid)td.FromRoomId!,
+                            RoomCode = roomQuery.FirstOrDefault(x => x!.Id == td.FromRoomId)!.RoomCode,
+                            RoomName = roomQuery.FirstOrDefault(x => x!.Id == td.FromRoomId)!.RoomName,
+                            StatusId = roomQuery.FirstOrDefault(x => x!.Id == td.FromRoomId)!.StatusId,
+                            FloorId = roomQuery.FirstOrDefault(x => x!.Id == td.FromRoomId)!.FloorId,
+                            CreatedAt = roomQuery.FirstOrDefault(x => x!.Id == td.FromRoomId)!.CreatedAt,
+                            EditedAt = roomQuery.FirstOrDefault(x => x!.Id == td.FromRoomId)!.EditedAt
+                        },
+                        Quantity = td!.Quantity
+                    }).ToListAsync();
             var tranportation = new TaskDetailDto
             {
                 NewAssetId = null,
@@ -340,16 +272,16 @@ public class TaskService : BaseService, ITaskService
             inventoryCheckTask.StatusObj = inventoryCheckTask.Status.GetValue();
 
             var inventoryCheckDetails = await MainUnitOfWork.InventoryCheckDetailRepository.GetQuery()
-                                              .Include(x => x!.Asset)
-                                              .Where(x => x!.InventoryCheckId == inventoryCheckTask.Id)
-                                              .ToListAsync();
+                .Include(x => x!.Asset)
+                .Where(x => x!.InventoryCheckId == inventoryCheckTask.Id)
+                .ToListAsync();
             var distinctRoomIds = inventoryCheckDetails.Select(detail => detail!.RoomId).Distinct();
 
             var roomAssetQuery = MainUnitOfWork.RoomAssetRepository.GetQuery();
 
             var rooms = await MainUnitOfWork.RoomRepository.GetQuery()
-                             .Where(room => distinctRoomIds.Contains(room!.Id))
-                             .ToListAsync();
+                .Where(room => distinctRoomIds.Contains(room!.Id))
+                .ToListAsync();
             inventoryCheckTask.Rooms = distinctRoomIds.Select(roomId => new RoomInventoryCheckDto
             {
                 Id = roomId,
@@ -380,21 +312,21 @@ public class TaskService : BaseService, ITaskService
 
         //REPLACEMENT
         var replacementTask = await MainUnitOfWork.ReplacementRepository.FindOneAsync<TaskDetailDto>(
-                new Expression<Func<Replacement, bool>>[]
-                {
-                    x => !x.DeletedAt.HasValue,
-                    x => x.AssignedTo == AccountId,
-                    x => x.Id == id,
-                    x => x.Status != RequestStatus.Cancelled
-                });
+            new Expression<Func<Replacement, bool>>[]
+            {
+                x => !x.DeletedAt.HasValue,
+                x => x.AssignedTo == AccountId,
+                x => x.Id == id,
+                x => x.Status != RequestStatus.Cancelled
+            });
         if (replacementTask != null)
         {
             replacementTask!.Asset = await MainUnitOfWork.AssetRepository.FindOneAsync<AssetBaseDto>(
-                    new Expression<Func<Asset, bool>>[]
-                    {
+                new Expression<Func<Asset, bool>>[]
+                {
                     x => !x.DeletedAt.HasValue,
                     x => x.Id == replacementTask.AssetId
-                    });
+                });
 
             var location = await MainUnitOfWork.RoomAssetRepository.FindOneAsync<RoomAsset>(
                 new Expression<Func<RoomAsset, bool>>[]
@@ -450,13 +382,13 @@ public class TaskService : BaseService, ITaskService
 
         //REPAIR
         var repairation = await MainUnitOfWork.RepairRepository.FindOneAsync<TaskDetailDto>(
-                new Expression<Func<Repair, bool>>[]
-                {
-                    x => !x.DeletedAt.HasValue,
-                    x => x.AssignedTo == AccountId,
-                    x => x.Id == id,
-                    x => x.Status != RequestStatus.Cancelled
-                });
+            new Expression<Func<Repair, bool>>[]
+            {
+                x => !x.DeletedAt.HasValue,
+                x => x.AssignedTo == AccountId,
+                x => x.Id == id,
+                x => x.Status != RequestStatus.Cancelled
+            });
         if (repairation != null)
         {
             repairation.Asset = await MainUnitOfWork.AssetRepository.FindOneAsync<AssetBaseDto>(
@@ -496,13 +428,13 @@ public class TaskService : BaseService, ITaskService
 
         //MAINTENANCE
         var maintenance = await MainUnitOfWork.MaintenanceRepository.FindOneAsync<TaskDetailDto>(
-                new Expression<Func<Maintenance, bool>>[]
-                {
-                    x => !x.DeletedAt.HasValue,
-                    x => x.AssignedTo == AccountId,
-                    x => x.Id == id,
-                    x => x.Status != RequestStatus.Cancelled
-                });
+            new Expression<Func<Maintenance, bool>>[]
+            {
+                x => !x.DeletedAt.HasValue,
+                x => x.AssignedTo == AccountId,
+                x => x.Id == id,
+                x => x.Status != RequestStatus.Cancelled
+            });
         if (maintenance != null)
         {
             maintenance.Asset = await MainUnitOfWork.AssetRepository.FindOneAsync<AssetBaseDto>(
@@ -690,10 +622,10 @@ public class TaskService : BaseService, ITaskService
 
         // Concatenate the results from both tables
         var combinedTasks = transportationTasks.Union(maintenanceTasks)
-                                               .Union(assetCheckTasks)
-                                               .Union(replacementTasks)
-                                               .Union(repairationTasks)
-                                               .Union(inventoryCheckTask);
+            .Union(assetCheckTasks)
+            .Union(replacementTasks)
+            .Union(repairationTasks)
+            .Union(inventoryCheckTask);
 
         combinedTasks = combinedTasks.Where(x => x.Status != RequestStatus.Cancelled);
 
@@ -766,33 +698,4 @@ public class TaskService : BaseService, ITaskService
             (int)Math.Ceiling(totalCount / (double)queryDto.PageSize));
     }
 
-    //public async Task<ApiResponse> InventoryCheckReport(InventoryCheckReport reportDto)
-    //{
-    //    //INVENTORY CHECK
-    //    var inventoryCheckReport = await MainUnitOfWork.InventoryCheckRepository.FindOneAsync(
-    //        new Expression<Func<InventoryCheck, bool>>[]
-    //        {
-    //            x => !x.DeletedAt.HasValue,
-    //            x => x.AssignedTo == AccountId,
-    //            x => x.Id == reportDto.ItemId,
-    //            x => x.Status != RequestStatus.Cancelled
-    //        });
-
-    //    var mediaFiles = new List<MediaFile>();
-    //    foreach (var uri in reportDto.Uris!)
-    //    {
-    //        var newMediaFile = new MediaFile
-    //        {
-    //            FileName = reportDto.FileName!,
-    //            RawUri = reportDto.RawUri!,
-    //            Uri = uri,
-    //            FileType = reportDto.FileType!,
-    //            Content = reportDto.Content!,
-    //            ItemId = reportDto.ItemId
-    //        };
-    //        mediaFiles.Add(newMediaFile);
-    //    }
-
-    //    return ApiResponse.Created("Báo cáo thành công");
-    //}
 }
