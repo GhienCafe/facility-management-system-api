@@ -416,7 +416,7 @@ public class InventoryCheckService : BaseService, IInventoryCheckService
         return newRequestCode;
     }
 
-    public async Task<ApiResponse> UpdateStatus(Guid id, BaseUpdateStatusDto updateStatusDto)
+    public async Task<ApiResponse> UpdateStatus(Guid id, BaseUpdateStatusDto confirmDto)
     {
         var existingInventCheck = MainUnitOfWork.InventoryCheckRepository.GetQuery()
                                     .Where(x => x.Id == id)
@@ -426,10 +426,10 @@ public class InventoryCheckService : BaseService, IInventoryCheckService
             throw new ApiException("Không tìm thấy yêu cầu này", StatusCode.NOT_FOUND);
         }
 
-        existingInventCheck.Status = updateStatusDto.Status ?? existingInventCheck.Status;
+        existingInventCheck.Status = confirmDto.Status ?? existingInventCheck.Status;
 
 
-        if (!await _repository.UpdateInventoryCheckStatus(existingInventCheck, updateStatusDto.Status, AccountId, CurrentDate))
+        if (!await _repository.UpdateInventoryCheckStatus(existingInventCheck, confirmDto, AccountId, CurrentDate))
         {
             throw new ApiException("Xác nhận yêu cầu thất bại", StatusCode.SERVER_ERROR);
         }

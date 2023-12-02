@@ -253,26 +253,27 @@ public class TransportationRepository : ITransportationRepository
 
             var reports = await _context.MediaFiles.FirstOrDefaultAsync(x => x.ItemId == transportation.Id && !x.IsReject);
 
-            foreach (var asset in assets)
+
+
+            if (confirmDto?.Status == RequestStatus.Done)
             {
-                if (asset != null)
+                foreach (var asset in assets)
                 {
-                    var transportDetails = await _context.TransportationDetails
-                                                    .FirstOrDefaultAsync(x => x.TransportationId == transportation.Id &&
-                                                                              x.AssetId == asset.Id);
-                    var roomAsset = await _context.RoomAssets.FirstOrDefaultAsync(x => x.AssetId == asset.Id &&
-                                                                                       x.RoomId == transportDetails!.FromRoomId &&
-                                                                                       x.ToDate == null);
-
-
-                    var fromRoom = await _context.Rooms.FirstOrDefaultAsync(x => x.Id == roomAsset!.RoomId);
-                    
-                    var toRoomAsset = await _context.RoomAssets.FirstOrDefaultAsync(x => x.AssetId == asset.Id &&
-                                                                                x.RoomId == toRoom!.Id &&
-                                                                                x.ToDate == null);
-
-                    if (confirmDto?.Status == RequestStatus.Done)
+                    if (asset != null)
                     {
+                        var transportDetails = await _context.TransportationDetails
+                                                        .FirstOrDefaultAsync(x => x.TransportationId == transportation.Id &&
+                                                                                  x.AssetId == asset.Id);
+                        var roomAsset = await _context.RoomAssets.FirstOrDefaultAsync(x => x.AssetId == asset.Id &&
+                                                                                           x.RoomId == transportDetails!.FromRoomId &&
+                                                                                           x.ToDate == null);
+
+
+                        var fromRoom = await _context.Rooms.FirstOrDefaultAsync(x => x.Id == roomAsset!.RoomId);
+
+                        var toRoomAsset = await _context.RoomAssets.FirstOrDefaultAsync(x => x.AssetId == asset.Id &&
+                                                                                    x.RoomId == toRoom!.Id &&
+                                                                                    x.ToDate == null);
                         transportation.CompletionDate = now.Value;
                         transportation.Status = RequestStatus.Done;
                         _context.Entry(transportation).State = EntityState.Modified;
@@ -337,81 +338,107 @@ public class TransportationRepository : ITransportationRepository
                                 await _context.RoomAssets.AddAsync(addRoomAsset);
                             }
                         }
-
-                        var notification = new Notification
-                        {
-                            CreatedAt = now.Value,
-                            Status = NotificationStatus.Waiting,
-                            Content = "Đã xác nhận",
-                            Title = "Đã xác nhận",
-                            Type = NotificationType.Task,
-                            CreatorId = editorId,
-                            IsRead = false,
-                            ItemId = transportation.Id,
-                            UserId = transportation.AssignedTo
-                        };
-                        await _context.Notifications.AddAsync(notification);
                     }
-                    else if (confirmDto?.Status == RequestStatus.Cancelled && confirmDto.NeedAdditional)
-                    {
-                        transportation.Status = RequestStatus.InProgress;
-                        _context.Entry(transportation).State = EntityState.Modified;
-
-                        if (reports != null)
-                        {
-                            reports.IsReject = true;
-                            reports.RejectReason = confirmDto.Reason;
-                            _context.Entry(reports).State = EntityState.Modified;
-                        }
-
-                        var notification = new Notification
-                        {
-                            CreatedAt = now.Value,
-                            Status = NotificationStatus.Waiting,
-                            Content = confirmDto.Reason ?? "Cần bổ sung",
-                            Title = "Báo cáo lại",
-                            Type = NotificationType.Task,
-                            CreatorId = editorId,
-                            IsRead = false,
-                            ItemId = transportation.Id,
-                            UserId = transportation.AssignedTo
-                        };
-                        await _context.Notifications.AddAsync(notification);
-                    }
-                    else if (confirmDto?.Status == RequestStatus.Cancelled && !confirmDto.NeedAdditional)
-                    {
-                        transportation.Status = RequestStatus.Cancelled;
-                        _context.Entry(transportation).State = EntityState.Modified;
-
-                        if (reports != null)
-                        {
-                            reports.IsReject = true;
-                            reports.RejectReason = confirmDto.Reason;
-                            _context.Entry(reports).State = EntityState.Modified;
-                        }
-
-                        var notification = new Notification
-                        {
-                            CreatedAt = now.Value,
-                            Status = NotificationStatus.Waiting,
-                            Content = confirmDto.Reason ?? "Hủy yêu cầu",
-                            Title = "Hủy yêu cầu",
-                            Type = NotificationType.Task,
-                            CreatorId = editorId,
-                            IsRead = false,
-                            ItemId = transportation.Id,
-                            UserId = transportation.AssignedTo
-                        };
-                        await _context.Notifications.AddAsync(notification);
-
-                        asset!.RequestStatus = RequestType.Operational;
-                        asset.EditedAt = now.Value;
-                        asset.EditorId = editorId;
-                        _context.Entry(asset).State = EntityState.Modified;
-                    }
-
                 }
+
+                var notification = new Notification
+                {
+                    CreatedAt = now.Value,
+                    Status = NotificationStatus.Waiting,
+                    Content = "Đã xác nhận",
+                    Title = "Đã xác nhận",
+                    Type = NotificationType.Task,
+                    CreatorId = editorId,
+                    IsRead = false,
+                    ItemId = transportation.Id,
+                    UserId = transportation.AssignedTo
+                };
+                await _context.Notifications.AddAsync(notification);
             }
+            else if (confirmDto?.Status == RequestStatus.Cancelled && confirmDto.NeedAdditional)
+            {
+                transportation.Status = RequestStatus.InProgress;
+                _context.Entry(transportation).State = EntityState.Modified;
+
+                if (reports != null)
+                {
+                    reports.IsReject = true;
+                    reports.RejectReason = confirmDto.Reason;
+                    _context.Entry(reports).State = EntityState.Modified;
+                }
+
+                var notification = new Notification
+                {
+                    CreatedAt = now.Value,
+                    Status = NotificationStatus.Waiting,
+                    Content = confirmDto.Reason ?? "Cần bổ sung",
+                    Title = "Báo cáo lại",
+                    Type = NotificationType.Task,
+                    CreatorId = editorId,
+                    IsRead = false,
+                    ItemId = transportation.Id,
+                    UserId = transportation.AssignedTo
+                };
+                await _context.Notifications.AddAsync(notification);
+            }
+            else if (confirmDto?.Status == RequestStatus.Cancelled && !confirmDto.NeedAdditional)
+            {
+                transportation.Status = RequestStatus.Cancelled;
+                _context.Entry(transportation).State = EntityState.Modified;
+
+                if (reports != null)
+                {
+                    reports.IsReject = true;
+                    reports.RejectReason = confirmDto.Reason;
+                    _context.Entry(reports).State = EntityState.Modified;
+                }
+                foreach (var asset in assets)
+                {
+                    if (asset != null)
+                    {
+                        var transportDetails = await _context.TransportationDetails
+                                                        .FirstOrDefaultAsync(x => x.TransportationId == transportation.Id &&
+                                                                                  x.AssetId == asset.Id);
+                        var roomAsset = await _context.RoomAssets.FirstOrDefaultAsync(x => x.AssetId == asset.Id &&
+                                                                                           x.RoomId == transportDetails!.FromRoomId &&
+                                                                                           x.ToDate == null);
+
+
+                        var fromRoom = await _context.Rooms.FirstOrDefaultAsync(x => x.Id == roomAsset!.RoomId);
+
+                        var toRoomAsset = await _context.RoomAssets.FirstOrDefaultAsync(x => x.AssetId == asset.Id &&
+                                                                                    x.RoomId == toRoom!.Id &&
+                                                                                    x.ToDate == null);
+                        if (asset.Type!.Unit == Unit.Individual || asset.Type.IsIdentified == true)
+                        {
+                            asset.RequestStatus = RequestType.Operational;
+                            _context.Entry(asset).State = EntityState.Modified;
+
+                            fromRoom!.State = RoomState.Operational;
+                            _context.Entry(fromRoom).State = EntityState.Modified;
+
+                            toRoom!.State = RoomState.Operational;
+                            _context.Entry(toRoom).State = EntityState.Modified;
+                        }
+                    }
+                }
+
+                var notification = new Notification
+                {
+                    CreatedAt = now.Value,
+                    Status = NotificationStatus.Waiting,
+                    Content = confirmDto.Reason ?? "Hủy yêu cầu",
+                    Title = "Hủy yêu cầu",
+                    Type = NotificationType.Task,
+                    CreatorId = editorId,
+                    IsRead = false,
+                    ItemId = transportation.Id,
+                    UserId = transportation.AssignedTo
+                };
+                await _context.Notifications.AddAsync(notification);
+
+            }
+
             await _context.SaveChangesAsync();
             await _context.Database.CommitTransactionAsync();
             return true;
