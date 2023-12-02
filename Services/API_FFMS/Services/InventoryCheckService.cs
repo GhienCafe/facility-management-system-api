@@ -57,11 +57,29 @@ public class InventoryCheckService : BaseService, IInventoryCheckService
                     x => roomAssets.Select(ra => ra!.AssetId).Contains(x.Id)
                 }, null);
 
-            var mediaFiles = createDto.RelatedFiles?.Select(file => new Report
+            // var mediaFiles = createDto.RelatedFiles?.Select(file => new Report
+            // {
+            //     FileName = file.FileName ?? "",
+            //     Uri = file.Uri ?? ""
+            // }).ToList();
+            
+            // For storing json in column
+            var mediaFiles = new List<Report>();
+            if (createDto.RelatedFiles != null)
             {
-                FileName = file.FileName ?? "",
-                Uri = file.Uri ?? ""
-            }).ToList();
+                var listUrisJson = JsonConvert.SerializeObject(createDto.RelatedFiles);
+                var report = new Report
+                {
+                    FileName = string.Empty,
+                    Uri = listUrisJson,
+                    Content = string.Empty,
+                    FileType = FileType.File,
+                    IsVerified = false,
+                    IsReported = false,
+                };
+        
+                mediaFiles.Add(report);
+            }
 
             var inventoryCheck = new InventoryCheck
             {
