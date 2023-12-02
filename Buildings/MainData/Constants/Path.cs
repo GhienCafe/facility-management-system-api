@@ -4,7 +4,7 @@ namespace MainData.Constants;
 
 public static class RequestTypeMetadata
 {
-    public static string GetRedirectPath(RequestType type)
+    public static string? GetRedirectPath(RequestType? type)
     {
         var url = "/detail/";
         switch (type)

@@ -92,17 +92,16 @@ public class NotificationService : BaseService, INotificationService
             CreatorId = x.CreatorId ?? Guid.Empty
         }).ToListAsync();
 
-        foreach (var item in notifications)
+        if (HttpContextAccessor.HttpContext?.User.GetRole() == UserRole.Administrator.ToString())
         {
-            if (item.ItemId != null)
+            foreach (var item in notifications.Where(item => item.ItemId != null))
             {
                 var task = (await MainUnitOfWork.TaskRepository
                     .GetQueryAll().FirstOrDefaultAsync(x => x!.Id == item.ItemId));
                 item.RedirectPath =  RequestTypeMetadata
-                    .GetRedirectPath(task!.Type) + item.ItemId;
+                    .GetRedirectPath(task?.Type) + item.ItemId;
             }
         }
-        
         notifications = await _mapperRepository.MapCreator(notifications);
 
         return ApiResponses<NotifcationBaseDto>.Success(
