@@ -108,7 +108,7 @@ public class RepairRepository : IRepairRepository
 
             var roomAsset = await _context.RoomAssets.FirstOrDefaultAsync(x => x.AssetId == asset!.Id && x.ToDate == null);
             var location = await _context.Rooms.FirstOrDefaultAsync(x => x.Id == roomAsset!.RoomId && roomAsset.AssetId == asset!.Id);
-            var reports = await _context.MediaFiles.FirstOrDefaultAsync(x => x.ItemId == repair.Id && !x.IsReject);
+            var reports = await _context.MediaFiles.FirstOrDefaultAsync(x => x.ItemId == repair.Id && !x.IsReject && x.IsReported);
 
             if (repair.IsInternal == true)
             {
