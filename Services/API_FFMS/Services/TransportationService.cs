@@ -7,6 +7,7 @@ using MainData.Entities;
 using MainData.Repositories;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
+using Newtonsoft.Json;
 
 namespace API_FFMS.Services
 {
@@ -246,20 +247,10 @@ namespace API_FFMS.Services
                 throw new ApiException("Không tìm thấy yêu cầu vận chuyển", StatusCode.NOT_FOUND);
             }
 
-            var relatedMediaFileQuery = MainUnitOfWork.MediaFileRepository.GetQuery().Where(m => m!.ItemId == id && !m.IsReported);
-            var relatedMediaFile = relatedMediaFileQuery.Select(x => new MediaFileDetailDto
-            {
-                FileName = x!.FileName,
-                Uri = x.Uri,
-            }).ToList();
+            var relatedMediaFiles = await MainUnitOfWork.MediaFileRepository.GetQuery()
+                .Where(m => m!.ItemId == id && !m.IsReported).FirstOrDefaultAsync();
 
-            var mediaFileQuery = MainUnitOfWork.MediaFileRepository.GetQuery().Where(m => m!.ItemId == id && m.IsReported);
-            var mediaFile = new MediaFileDto
-            {
-                FileType = mediaFileQuery.Select(m => m!.FileType).FirstOrDefault(),
-                Uri = mediaFileQuery.Select(m => m!.Uri).ToList(),
-                Content = mediaFileQuery.Select(m => m!.Content).FirstOrDefault()
-            };
+            var listRelatedFiles = JsonConvert.DeserializeObject<List<MediaFileDetailDto>>(relatedMediaFiles.Uri);
 
             var roomDataset = MainUnitOfWork.RoomRepository.GetQuery();
             var toRoom = await roomDataset
@@ -335,6 +326,27 @@ namespace API_FFMS.Services
                                     }
                                 }).ToListAsync();
 
+            var reports = await MainUnitOfWork.MediaFileRepository.GetQuery()
+                .Where(m => m!.ItemId == id && m.IsReported).ToListAsync();
+
+            //TODO: orderby
+            var listReport = new List<MediaFileDto>();
+            foreach (var report in reports)
+            {
+                // Deserialize the URI string back into a List<string>
+                var uriList = JsonConvert.DeserializeObject<List<string>>(report.Uri);
+            
+                listReport.Add(new MediaFileDto
+                {
+                    ItemId = report.ItemId,
+                    Uri = uriList,
+                    FileType = report.FileType,
+                    Content = report.Content,
+                    IsReject = report.IsReject,
+                    RejectReason = report.RejectReason
+                });
+            }
+            
             var tranportation = new TransportDto
             {
                 Id = existingTransport.Id,
@@ -357,8 +369,8 @@ namespace API_FFMS.Services
                 EditorId = existingTransport.EditorId,
                 Assets = assets,
                 ToRoom = toRoom,
-                RelatedFiles = relatedMediaFile,
-                MediaFile = mediaFile,
+                RelatedFiles = listRelatedFiles,
+                Reports = listReport,
                 AssignedTo = existingTransport.AssignedTo,
                 AssignTo = assignTo
             };
@@ -576,7 +588,7 @@ namespace API_FFMS.Services
 
             existingTransport.Status = requestStatus.Status ?? existingTransport.Status;
 
-            if (!await _transportationRepository.UpdateStatus(existingTransport, requestStatus.Status, AccountId, CurrentDate))
+            if (!await _transportationRepository.UpdateStatus(existingTransport, requestStatus, AccountId, CurrentDate))
             {
                 throw new ApiException("Cập nhật trạng thái yêu cầu thất bại", StatusCode.SERVER_ERROR);
             }

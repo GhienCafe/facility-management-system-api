@@ -7,14 +7,11 @@ using MainData.Entities;
 using MainData.Repositories;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
+using Newtonsoft.Json;
 
 namespace API_FFMS.Services;
 public interface IInventoryCheckService : IBaseService
 {
-    //Task<ApiResponse> Create(InventoryCheckCreateDto createDto);
-    //Task<ApiResponse<InventoryCheckDto>> GetInventoryCheck(Guid id);
-    //Task<ApiResponses<InventoryCheckDto>> GetInventoryChecks(InventoryCheckQueryDto queryDto);
-
     Task<ApiResponse> Create(InventoryCheckCreateDto createDto);
     Task<ApiResponse<InventoryCheckDto>> GetInventoryCheck(Guid id);
     Task<ApiResponses<InventoryCheckDto>> GetInventoryChecks(InventoryCheckQueryDto queryDto);
@@ -106,20 +103,32 @@ public class InventoryCheckService : BaseService, IInventoryCheckService
             inventoryCheck.PriorityObj = inventoryCheck.Priority.GetValue();
             inventoryCheck.StatusObj = inventoryCheck.Status.GetValue();
 
-            var relatedMediaFileQuery = MainUnitOfWork.MediaFileRepository.GetQuery().Where(m => m!.ItemId == id && !m.IsReported);
-            inventoryCheck.RelatedFiles = relatedMediaFileQuery.Select(x => new MediaFileDetailDto
-            {
-                FileName = x!.FileName,
-                Uri = x.Uri,
-            }).ToList();
+            //Related file
+            var relatedMediaFiles = await MainUnitOfWork.MediaFileRepository.GetQuery()
+                .Where(m => m!.ItemId == id && !m.IsReported).FirstOrDefaultAsync();
 
-            var mediaFileQuery = MainUnitOfWork.MediaFileRepository.GetQuery().Where(m => m!.ItemId == id && m.IsReported);
-            inventoryCheck.MediaFile = new MediaFileDto
+            inventoryCheck.RelatedFiles = JsonConvert.DeserializeObject<List<MediaFileDetailDto>>(relatedMediaFiles.Uri);
+
+            var reports = await MainUnitOfWork.MediaFileRepository.GetQuery()
+                .Where(m => m!.ItemId == id && m.IsReported).ToListAsync();
+            
+            //TODO: orderby
+            inventoryCheck.Reports = new List<MediaFileDto>();
+            foreach (var report in reports)
             {
-                FileType = mediaFileQuery.Select(m => m!.FileType).FirstOrDefault(),
-                Uri = mediaFileQuery.Select(m => m!.Uri).ToList(),
-                Content = mediaFileQuery.Select(m => m!.Content).FirstOrDefault()
-            };
+                // Deserialize the URI string back into a List<string>
+                var uriList = JsonConvert.DeserializeObject<List<string>>(report.Uri);
+            
+                inventoryCheck.Reports.Add(new MediaFileDto
+                {
+                    ItemId = report.ItemId,
+                    Uri = uriList,
+                    FileType = report.FileType,
+                    Content = report.Content,
+                    IsReject = report.IsReject,
+                    RejectReason = report.RejectReason
+                });
+            }
 
             var userQuery = MainUnitOfWork.UserRepository.GetQuery().Where(x => x!.Id == inventoryCheck.AssignedTo);
             inventoryCheck.Staff = await userQuery.Select(x => new AssignedInventoryCheckDto
@@ -406,7 +415,7 @@ public class InventoryCheckService : BaseService, IInventoryCheckService
         return newRequestCode;
     }
 
-    public async Task<ApiResponse> UpdateStatus(Guid id, BaseUpdateStatusDto updateStatusDto)
+    public async Task<ApiResponse> UpdateStatus(Guid id, BaseUpdateStatusDto confirmDto)
     {
         var existingInventCheck = MainUnitOfWork.InventoryCheckRepository.GetQuery()
                                     .Where(x => x.Id == id)
@@ -416,9 +425,10 @@ public class InventoryCheckService : BaseService, IInventoryCheckService
             throw new ApiException("Không tìm thấy yêu cầu này", StatusCode.NOT_FOUND);
         }
 
-        existingInventCheck.Status = updateStatusDto.Status ?? existingInventCheck.Status;
+        existingInventCheck.Status = confirmDto.Status ?? existingInventCheck.Status;
 
-        if (!await _repository.UpdateInventoryCheckStatus(existingInventCheck, updateStatusDto.Status, AccountId, CurrentDate))
+
+        if (!await _repository.UpdateInventoryCheckStatus(existingInventCheck, confirmDto, AccountId, CurrentDate))
         {
             throw new ApiException("Xác nhận yêu cầu thất bại", StatusCode.SERVER_ERROR);
         }

@@ -13,7 +13,7 @@ public class Report : BaseEntity
     public string Content { get; set; } = null!;
     public bool IsReported { get; set; }
     public bool IsReject { get; set; }
-    public string RejectReason { get; set; }
+    public string? RejectReason { get; set; }
     public Guid? MaintenanceId { get; set; }
     public Guid? ReplacementId { get; set; }
     public Guid? AssetCheckId { get; set; }
