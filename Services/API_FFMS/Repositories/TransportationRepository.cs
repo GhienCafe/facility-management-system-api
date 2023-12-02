@@ -1,4 +1,5 @@
-﻿using AppCore.Extensions;
+﻿using API_FFMS.Dtos;
+using AppCore.Extensions;
 using MainData;
 using MainData.Entities;
 using Microsoft.EntityFrameworkCore;
@@ -7,7 +8,7 @@ namespace API_FFMS.Repositories;
 
 public interface ITransportationRepository
 {
-    Task<bool> UpdateStatus(Transportation transportation, RequestStatus? statusUpdate, Guid? editorId, DateTime? now = null);
+    Task<bool> UpdateStatus(Transportation transportation, BaseUpdateStatusDto? confirmDto, Guid? editorId, DateTime? now = null);
     Task<bool> DeleteTransport(Transportation transportation, Guid? deleterId, DateTime? now = null);
     Task<bool> DeleteTransports(List<Transportation?> transportations, Guid? deleterId, DateTime? now = null);
     Task<bool> InsertTransportation(Transportation transportation, List<TransportationDetail> transportationDetails, List<Report>? mediaFiles, Guid? creatorId, DateTime? now = null);
@@ -232,7 +233,7 @@ public class TransportationRepository : ITransportationRepository
         }
     }
 
-    public async Task<bool> UpdateStatus(Transportation transportation, RequestStatus? statusUpdate, Guid? editorId, DateTime? now = null)
+    public async Task<bool> UpdateStatus(Transportation transportation, BaseUpdateStatusDto? confirmDto, Guid? editorId, DateTime? now = null)
     {
         await _context.Database.BeginTransactionAsync();
         now ??= DateTime.UtcNow;
@@ -249,6 +250,8 @@ public class TransportationRepository : ITransportationRepository
                             .ToListAsync();
 
             var toRoom = await _context.Rooms.FindAsync(transportation.ToRoomId);
+
+            var reports = await _context.MediaFiles.FirstOrDefaultAsync(x => x.ItemId == transportation.Id && !x.IsReject);
 
             foreach (var asset in assets)
             {
@@ -268,10 +271,10 @@ public class TransportationRepository : ITransportationRepository
                                                                                 x.RoomId == toRoom!.Id &&
                                                                                 x.ToDate == null);
 
-                    if (statusUpdate == RequestStatus.Done)
+                    if (confirmDto?.Status == RequestStatus.Done)
                     {
                         transportation.CompletionDate = now.Value;
-                        transportation.Status = statusUpdate;
+                        transportation.Status = RequestStatus.Done;
                         _context.Entry(transportation).State = EntityState.Modified;
 
                         if (asset.Type!.Unit == Unit.Individual || asset.Type.IsIdentified == true)
@@ -334,20 +337,77 @@ public class TransportationRepository : ITransportationRepository
                                 await _context.RoomAssets.AddAsync(addRoomAsset);
                             }
                         }
+
+                        var notification = new Notification
+                        {
+                            CreatedAt = now.Value,
+                            Status = NotificationStatus.Waiting,
+                            Content = "Đã xác nhận",
+                            Title = "Đã xác nhận",
+                            Type = NotificationType.Task,
+                            CreatorId = editorId,
+                            IsRead = false,
+                            ItemId = transportation.Id,
+                            UserId = transportation.AssignedTo
+                        };
+                        await _context.Notifications.AddAsync(notification);
                     }
-                    else if (statusUpdate == RequestStatus.Cancelled)
+                    else if (confirmDto?.Status == RequestStatus.Cancelled && confirmDto.NeedAdditional)
                     {
-                        transportation.Status = statusUpdate;
+                        transportation.Status = RequestStatus.InProgress;
                         _context.Entry(transportation).State = EntityState.Modified;
 
-                        asset.RequestStatus = RequestType.Operational;
+                        if (reports != null)
+                        {
+                            reports.IsReject = true;
+                            reports.RejectReason = confirmDto.Reason;
+                            _context.Entry(reports).State = EntityState.Modified;
+                        }
+
+                        var notification = new Notification
+                        {
+                            CreatedAt = now.Value,
+                            Status = NotificationStatus.Waiting,
+                            Content = confirmDto.Reason ?? "Cần bổ sung",
+                            Title = "Báo cáo lại",
+                            Type = NotificationType.Task,
+                            CreatorId = editorId,
+                            IsRead = false,
+                            ItemId = transportation.Id,
+                            UserId = transportation.AssignedTo
+                        };
+                        await _context.Notifications.AddAsync(notification);
+                    }
+                    else if (confirmDto?.Status == RequestStatus.Cancelled && !confirmDto.NeedAdditional)
+                    {
+                        transportation.Status = RequestStatus.Cancelled;
+                        _context.Entry(transportation).State = EntityState.Modified;
+
+                        if (reports != null)
+                        {
+                            reports.IsReject = true;
+                            reports.RejectReason = confirmDto.Reason;
+                            _context.Entry(reports).State = EntityState.Modified;
+                        }
+
+                        var notification = new Notification
+                        {
+                            CreatedAt = now.Value,
+                            Status = NotificationStatus.Waiting,
+                            Content = confirmDto.Reason ?? "Hủy yêu cầu",
+                            Title = "Hủy yêu cầu",
+                            Type = NotificationType.Task,
+                            CreatorId = editorId,
+                            IsRead = false,
+                            ItemId = transportation.Id,
+                            UserId = transportation.AssignedTo
+                        };
+                        await _context.Notifications.AddAsync(notification);
+
+                        asset!.RequestStatus = RequestType.Operational;
+                        asset.EditedAt = now.Value;
+                        asset.EditorId = editorId;
                         _context.Entry(asset).State = EntityState.Modified;
-
-                        fromRoom!.State = RoomState.Operational;
-                        _context.Entry(fromRoom).State = EntityState.Modified;
-
-                        toRoom!.State = RoomState.Operational;
-                        _context.Entry(toRoom).State = EntityState.Modified;
                     }
 
                 }

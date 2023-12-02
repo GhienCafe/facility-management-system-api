@@ -428,6 +428,7 @@ public class InventoryCheckService : BaseService, IInventoryCheckService
 
         existingInventCheck.Status = updateStatusDto.Status ?? existingInventCheck.Status;
 
+
         if (!await _repository.UpdateInventoryCheckStatus(existingInventCheck, updateStatusDto.Status, AccountId, CurrentDate))
         {
             throw new ApiException("Xác nhận yêu cầu thất bại", StatusCode.SERVER_ERROR);

@@ -91,4 +91,6 @@ public class BaseTransportCreateDto
 public class BaseUpdateStatusDto
 {
     public RequestStatus? Status { get; set; }
+    public bool NeedAdditional { get; set; }
+    public string? Reason { get; set; }
 }

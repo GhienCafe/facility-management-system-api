@@ -471,7 +471,7 @@ public class MaintenanceService : BaseService, IMaintenanceService
         return ApiResponse.Success();
     }
 
-    public async Task<ApiResponse> UpdateStatus(Guid id, BaseUpdateStatusDto updateStatusDto)
+    public async Task<ApiResponse> UpdateStatus(Guid id, BaseUpdateStatusDto confirmDto)
     {
         var existingMainten = MainUnitOfWork.MaintenanceRepository.GetQuery()
                                     .Include(t => t!.Asset)
@@ -482,9 +482,9 @@ public class MaintenanceService : BaseService, IMaintenanceService
             throw new ApiException("Không tìm thấy yêu cầu bảo trì này", StatusCode.NOT_FOUND);
         }
 
-        existingMainten.Status = updateStatusDto.Status ?? existingMainten.Status;
+        existingMainten.Status = confirmDto.Status ?? existingMainten.Status;
 
-        if (!await _maintenanceRepository.UpdateStatus(existingMainten, updateStatusDto.Status, AccountId, CurrentDate))
+        if (!await _maintenanceRepository.UpdateStatus(existingMainten, confirmDto, AccountId, CurrentDate))
         {
             throw new ApiException("Cập nhật trạng thái yêu cầu thất bại", StatusCode.SERVER_ERROR);
         }

@@ -590,7 +590,7 @@ namespace API_FFMS.Services
 
             existingTransport.Status = requestStatus.Status ?? existingTransport.Status;
 
-            if (!await _transportationRepository.UpdateStatus(existingTransport, requestStatus.Status, AccountId, CurrentDate))
+            if (!await _transportationRepository.UpdateStatus(existingTransport, requestStatus, AccountId, CurrentDate))
             {
                 throw new ApiException("Cập nhật trạng thái yêu cầu thất bại", StatusCode.SERVER_ERROR);
             }

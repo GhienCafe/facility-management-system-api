@@ -21,21 +21,6 @@ public class InventoryCheckRepository : IInventoryCheckRepository
         _context = context;
     }
 
-    private List<string> GetCodes()
-    {
-        var requests = _context.InventoryChecks.Where(x => x.RequestCode.StartsWith("SCH"))
-            .Select(x => x.RequestCode)
-            .ToList();
-        return requests;
-    }
-
-    private int GenerateRequestCode(ref List<int> numbers)
-    {
-        int newRequestNumber = numbers.Any() ? numbers.Max() + 1 : 1;
-        numbers.Add(newRequestNumber); // Add the new number to the list
-        return newRequestNumber;
-    }
-
     public async Task<bool> InsertInventoryCheck(InventoryCheck inventoryCheck, List<Room?> rooms, List<Report>? mediaFiles, Guid? creatorId, DateTime? now = null)
     {
         await _context.Database.BeginTransactionAsync();

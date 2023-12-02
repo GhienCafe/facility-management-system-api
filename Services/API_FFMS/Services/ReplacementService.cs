@@ -461,7 +461,7 @@ namespace API_FFMS.Services
             return ApiResponse.Success("Cập nhật yêu cầu thành công");
         }
 
-        public async Task<ApiResponse> UpdateStatus(Guid id, BaseUpdateStatusDto requestStatus)
+        public async Task<ApiResponse> UpdateStatus(Guid id, BaseUpdateStatusDto confirmDto)
         {
             var existingReplace = MainUnitOfWork.ReplacementRepository.GetQuery()
                                     .Include(r => r!.Asset)
@@ -473,9 +473,9 @@ namespace API_FFMS.Services
                 throw new ApiException("Không tìm thấy yêu cầu thay thế này", StatusCode.NOT_FOUND);
             }
 
-            existingReplace.Status = requestStatus.Status ?? existingReplace.Status;
+            existingReplace.Status = confirmDto.Status ?? existingReplace.Status;
 
-            if (!await _repository.UpdateStatus(existingReplace, requestStatus.Status, AccountId, CurrentDate))
+            if (!await _repository.UpdateStatus(existingReplace, confirmDto, AccountId, CurrentDate))
             {
                 throw new ApiException("Cập nhật trạng thái yêu cầu thất bại", StatusCode.SERVER_ERROR);
             }

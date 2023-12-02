@@ -447,7 +447,7 @@ namespace API_FFMS.Services
             }
         }
 
-        public async Task<ApiResponse> UpdateStatus(Guid id, BaseUpdateStatusDto requestStatus)
+        public async Task<ApiResponse> UpdateStatus(Guid id, BaseUpdateStatusDto confirmDto)
         {
             var existingRepair = MainUnitOfWork.RepairRepository.GetQuery()
                                     .Include(t => t!.Asset)
@@ -458,9 +458,9 @@ namespace API_FFMS.Services
                 throw new ApiException("Không tìm thấy yêu cầu sửa chữa này", StatusCode.NOT_FOUND);
             }
 
-            existingRepair.Status = requestStatus.Status ?? existingRepair.Status;
+            existingRepair.Status = confirmDto.Status ?? existingRepair.Status;
 
-            if (!await _repairRepository.UpdateStatus(existingRepair, requestStatus.Status, AccountId, CurrentDate))
+            if (!await _repairRepository.UpdateStatus(existingRepair, confirmDto, AccountId, CurrentDate))
             {
                 throw new ApiException("Xác nhận trạng thái yêu cầu thất bại", StatusCode.SERVER_ERROR);
             }

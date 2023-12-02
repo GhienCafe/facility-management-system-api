@@ -1,4 +1,6 @@
-﻿using AppCore.Extensions;
+﻿using API_FFMS.Dtos;
+using AppCore.Extensions;
+using DocumentFormat.OpenXml.Bibliography;
 using MainData;
 using MainData.Entities;
 using Microsoft.EntityFrameworkCore;
@@ -8,7 +10,7 @@ namespace API_FFMS.Repositories;
 public interface IMaintenanceRepository
 {
     Task<bool> InsertMaintenance(Maintenance maintenance, List<Report> mediaFiles, Guid? creatorId, DateTime? now = null);
-    Task<bool> UpdateStatus(Maintenance maintenance, RequestStatus? statusUpdate, Guid? editorId, DateTime? now = null);
+    Task<bool> UpdateStatus(Maintenance maintenance, BaseUpdateStatusDto? confirmDto, Guid? editorId, DateTime? now = null);
     Task<bool> InsertMaintenances(List<Maintenance> maintenances, List<Report>? mediaFiles, Guid? creatorId, DateTime? now = null);
     Task<bool> DeleteMaintenances(List<Maintenance?> maintenances, Guid? deleterId, DateTime? now = null);
     Task<bool> DeleteMaintenance(Maintenance maintenance, Guid? deleterId, DateTime? now = null);
@@ -89,7 +91,7 @@ public class MaintenanceRepository : IMaintenanceRepository
         return requests;
     }
 
-    public async Task<bool> UpdateStatus(Maintenance maintenance, RequestStatus? statusUpdate, Guid? editorId, DateTime? now = null)
+    public async Task<bool> UpdateStatus(Maintenance maintenance, BaseUpdateStatusDto? confirmDto, Guid? editorId, DateTime? now = null)
     {
         await _context.Database.BeginTransactionAsync();
         now ??= DateTime.UtcNow;
@@ -97,7 +99,6 @@ public class MaintenanceRepository : IMaintenanceRepository
         {
             maintenance.EditedAt = now.Value;
             maintenance.EditorId = editorId;
-            maintenance.Status = statusUpdate;
             maintenance.CompletionDate = now.Value;
             _context.Entry(maintenance).State = EntityState.Modified;
 
@@ -108,9 +109,11 @@ public class MaintenanceRepository : IMaintenanceRepository
 
             var roomAsset = await _context.RoomAssets.FirstOrDefaultAsync(x => x.AssetId == asset!.Id && x.ToDate == null);
             var location = await _context.Rooms.FirstOrDefaultAsync(x => x.Id == roomAsset!.RoomId && roomAsset.AssetId == asset!.Id);
+            var reports = await _context.MediaFiles.FirstOrDefaultAsync(x => x.ItemId == maintenance.Id && !x.IsReject);
+
             if (maintenance.IsInternal == true)
             {
-                if (statusUpdate == RequestStatus.Done)
+                if (confirmDto?.Status == RequestStatus.Done)
                 {
                     asset!.RequestStatus = RequestType.Operational;
                     asset.Status = AssetStatus.Operational;
@@ -128,23 +131,82 @@ public class MaintenanceRepository : IMaintenanceRepository
                     location.EditedAt = now.Value;
                     location.EditorId = editorId;
                     _context.Entry(location).State = EntityState.Modified;
+
+                    var notification = new Notification
+                    {
+                        CreatedAt = now.Value,
+                        Status = NotificationStatus.Waiting,
+                        Content = "Đã xác nhận",
+                        Title = "Đã xác nhận",
+                        Type = NotificationType.Task,
+                        CreatorId = editorId,
+                        IsRead = false,
+                        ItemId = maintenance.Id,
+                        UserId = maintenance.AssignedTo
+                    };
+                    await _context.Notifications.AddAsync(notification);
                 }
-                else if (statusUpdate == RequestStatus.Cancelled)
+                else if (confirmDto?.Status == RequestStatus.Cancelled && confirmDto.NeedAdditional)
                 {
+                    maintenance.Status = RequestStatus.InProgress;
+                    _context.Entry(maintenance).State = EntityState.Modified;
+
+                    if (reports != null)
+                    {
+                        reports.IsReject = true;
+                        reports.RejectReason = confirmDto.Reason;
+                        _context.Entry(reports).State = EntityState.Modified;
+                    }
+
+                    var notification = new Notification
+                    {
+                        CreatedAt = now.Value,
+                        Status = NotificationStatus.Waiting,
+                        Content = confirmDto.Reason ?? "Cần bổ sung",
+                        Title = "Báo cáo lại",
+                        Type = NotificationType.Task,
+                        CreatorId = editorId,
+                        IsRead = false,
+                        ItemId = maintenance.Id,
+                        UserId = maintenance.AssignedTo
+                    };
+                    await _context.Notifications.AddAsync(notification);
+                }
+                else if (confirmDto?.Status == RequestStatus.Cancelled && !confirmDto.NeedAdditional)
+                {
+                    maintenance.Status = RequestStatus.Cancelled;
+                    _context.Entry(maintenance).State = EntityState.Modified;
+
+                    if (reports != null)
+                    {
+                        reports.IsReject = true;
+                        reports.RejectReason = confirmDto.Reason;
+                        _context.Entry(reports).State = EntityState.Modified;
+                    }
+
+                    var notification = new Notification
+                    {
+                        CreatedAt = now.Value,
+                        Status = NotificationStatus.Waiting,
+                        Content = confirmDto.Reason ?? "Hủy yêu cầu",
+                        Title = "Hủy yêu cầu",
+                        Type = NotificationType.Task,
+                        CreatorId = editorId,
+                        IsRead = false,
+                        ItemId = maintenance.Id,
+                        UserId = maintenance.AssignedTo
+                    };
+                    await _context.Notifications.AddAsync(notification);
+
                     asset!.RequestStatus = RequestType.Operational;
                     asset.EditedAt = now.Value;
                     asset.EditorId = editorId;
                     _context.Entry(asset).State = EntityState.Modified;
-
-                    location!.State = RoomState.Operational;
-                    location.EditedAt = now.Value;
-                    location.EditorId = editorId;
-                    _context.Entry(location).State = EntityState.Modified;
                 }
             }
             else if (maintenance.IsInternal == false)
             {
-                if (statusUpdate == RequestStatus.Done)
+                if (confirmDto?.Status == RequestStatus.Done)
                 {
                     maintenance.CompletionDate = now.Value;
                     _context.Entry(maintenance).State = EntityState.Modified;
@@ -172,9 +234,73 @@ public class MaintenanceRepository : IMaintenanceRepository
                         CreatorId = editorId,
                     };
                     await _context.RoomAssets.AddAsync(addRoomAsset);
+
+                    var notification = new Notification
+                    {
+                        CreatedAt = now.Value,
+                        Status = NotificationStatus.Waiting,
+                        Content = "Đã xác nhận",
+                        Title = "Đã xác nhận",
+                        Type = NotificationType.Task,
+                        CreatorId = editorId,
+                        IsRead = false,
+                        ItemId = maintenance.Id,
+                        UserId = maintenance.AssignedTo
+                    };
+                    await _context.Notifications.AddAsync(notification);
                 }
-                else if (statusUpdate == RequestStatus.Cancelled)
+                else if (confirmDto?.Status == RequestStatus.Cancelled && confirmDto.NeedAdditional)
                 {
+                    maintenance.Status = RequestStatus.InProgress;
+                    _context.Entry(maintenance).State = EntityState.Modified;
+
+                    if (reports != null)
+                    {
+                        reports.IsReject = true;
+                        reports.RejectReason = confirmDto.Reason;
+                        _context.Entry(reports).State = EntityState.Modified;
+                    }
+
+                    var notification = new Notification
+                    {
+                        CreatedAt = now.Value,
+                        Status = NotificationStatus.Waiting,
+                        Content = confirmDto.Reason ?? "Cần bổ sung",
+                        Title = "Báo cáo lại",
+                        Type = NotificationType.Task,
+                        CreatorId = editorId,
+                        IsRead = false,
+                        ItemId = maintenance.Id,
+                        UserId = maintenance.AssignedTo
+                    };
+                    await _context.Notifications.AddAsync(notification);
+                }
+                else if (confirmDto?.Status == RequestStatus.Cancelled && !confirmDto.NeedAdditional)
+                {
+                    maintenance.Status = RequestStatus.Cancelled;
+                    _context.Entry(maintenance).State = EntityState.Modified;
+
+                    if (reports != null)
+                    {
+                        reports.IsReject = true;
+                        reports.RejectReason = confirmDto.Reason;
+                        _context.Entry(reports).State = EntityState.Modified;
+                    }
+
+                    var notification = new Notification
+                    {
+                        CreatedAt = now.Value,
+                        Status = NotificationStatus.Waiting,
+                        Content = confirmDto.Reason ?? "Hủy yêu cầu",
+                        Title = "Hủy yêu cầu",
+                        Type = NotificationType.Task,
+                        CreatorId = editorId,
+                        IsRead = false,
+                        ItemId = maintenance.Id,
+                        UserId = maintenance.AssignedTo
+                    };
+                    await _context.Notifications.AddAsync(notification);
+
                     asset!.RequestStatus = RequestType.Operational;
                     asset.EditedAt = now.Value;
                     asset.EditorId = editorId;
