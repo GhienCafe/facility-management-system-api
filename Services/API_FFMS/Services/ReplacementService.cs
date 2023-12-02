@@ -7,6 +7,7 @@ using MainData.Entities;
 using MainData.Repositories;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
+using Newtonsoft.Json;
 
 namespace API_FFMS.Services
 {
@@ -230,20 +231,31 @@ namespace API_FFMS.Services
                     x => x.Id == replacement.AssetType!.CategoryId
                 });
 
-            var relatedMediaFileQuery = MainUnitOfWork.MediaFileRepository.GetQuery().Where(m => m!.ItemId == id && !m.IsReported);
-            replacement.RelatedFiles = relatedMediaFileQuery.Select(x => new MediaFileDetailDto
-            {
-                FileName = x!.FileName,
-                Uri = x.Uri,
-            }).ToList();
+            var relatedMediaFiles = await MainUnitOfWork.MediaFileRepository.GetQuery()
+                .Where(m => m!.ItemId == id && !m.IsReported).FirstOrDefaultAsync();
 
-            var mediaFileQuery = MainUnitOfWork.MediaFileRepository.GetQuery().Where(m => m!.ItemId == id && m.IsReported);
-            replacement.MediaFile = new MediaFileDto
+            replacement.RelatedFiles = JsonConvert.DeserializeObject<List<MediaFileDetailDto>>(relatedMediaFiles.Uri);
+
+            var reports = await MainUnitOfWork.MediaFileRepository.GetQuery()
+                .Where(m => m!.ItemId == id && m.IsReported).ToListAsync();
+
+            //TODO: orderby
+            replacement.Reports = new List<MediaFileDto>();
+            foreach (var report in reports)
             {
-                FileType = mediaFileQuery.Select(m => m!.FileType).FirstOrDefault(),
-                Uri = mediaFileQuery.Select(m => m!.Uri).ToList(),
-                Content = mediaFileQuery.Select(m => m!.Content).FirstOrDefault()
-            };
+                // Deserialize the URI string back into a List<string>
+                var uriList = JsonConvert.DeserializeObject<List<string>>(report.Uri);
+            
+                replacement.Reports.Add(new MediaFileDto
+                {
+                    ItemId = report.ItemId,
+                    Uri = uriList,
+                    FileType = report.FileType,
+                    Content = report.Content,
+                    IsReject = report.IsReject,
+                    RejectReason = report.RejectReason
+                });
+            }
 
             replacement.AssignTo = await MainUnitOfWork.UserRepository.FindOneAsync<UserBaseDto>(
             new Expression<Func<User, bool>>[]
@@ -447,7 +459,7 @@ namespace API_FFMS.Services
             return ApiResponse.Success("Cập nhật yêu cầu thành công");
         }
 
-        public async Task<ApiResponse> UpdateStatus(Guid id, BaseUpdateStatusDto requestStatus)
+        public async Task<ApiResponse> UpdateStatus(Guid id, BaseUpdateStatusDto confirmDto)
         {
             var existingReplace = MainUnitOfWork.ReplacementRepository.GetQuery()
                                     .Include(r => r!.Asset)
@@ -459,9 +471,9 @@ namespace API_FFMS.Services
                 throw new ApiException("Không tìm thấy yêu cầu thay thế này", StatusCode.NOT_FOUND);
             }
 
-            existingReplace.Status = requestStatus.Status ?? existingReplace.Status;
+            existingReplace.Status = confirmDto.Status ?? existingReplace.Status;
 
-            if (!await _repository.UpdateStatus(existingReplace, requestStatus.Status, AccountId, CurrentDate))
+            if (!await _repository.UpdateStatus(existingReplace, confirmDto, AccountId, CurrentDate))
             {
                 throw new ApiException("Cập nhật trạng thái yêu cầu thất bại", StatusCode.SERVER_ERROR);
             }

@@ -1,4 +1,5 @@
-﻿using AppCore.Extensions;
+﻿using API_FFMS.Dtos;
+using AppCore.Extensions;
 using MainData;
 using MainData.Entities;
 using Microsoft.EntityFrameworkCore;
@@ -8,7 +9,7 @@ namespace API_FFMS.Repositories;
 public interface IInventoryCheckRepository
 {
     Task<bool> InsertInventoryCheck(InventoryCheck inventoryCheck, List<Room?> rooms, List<Report>? mediaFiles, Guid? creatorId, DateTime? now = null);
-    Task<bool> UpdateInventoryCheckStatus(InventoryCheck inventoryCheck, RequestStatus? statusUpdate, Guid? editorId, DateTime? now = null);
+    Task<bool> UpdateInventoryCheckStatus(InventoryCheck inventoryCheck, BaseUpdateStatusDto? confirmDto, Guid? editorId, DateTime? now = null);
     Task<bool> UpdateInventoryCheck(InventoryCheck inventoryCheck, List<Report?> additionMediaFiles, List<Report?> removalMediaFiles, Guid? editorId, DateTime? now = null);
 }
 
@@ -19,21 +20,6 @@ public class InventoryCheckRepository : IInventoryCheckRepository
     public InventoryCheckRepository(DatabaseContext context)
     {
         _context = context;
-    }
-
-    private List<string> GetCodes()
-    {
-        var requests = _context.InventoryChecks.Where(x => x.RequestCode.StartsWith("SCH"))
-            .Select(x => x.RequestCode)
-            .ToList();
-        return requests;
-    }
-
-    private int GenerateRequestCode(ref List<int> numbers)
-    {
-        int newRequestNumber = numbers.Any() ? numbers.Max() + 1 : 1;
-        numbers.Add(newRequestNumber); // Add the new number to the list
-        return newRequestNumber;
     }
 
     public async Task<bool> InsertInventoryCheck(InventoryCheck inventoryCheck, List<Room?> rooms, List<Report>? mediaFiles, Guid? creatorId, DateTime? now = null)
@@ -130,7 +116,7 @@ public class InventoryCheckRepository : IInventoryCheckRepository
         }
     }
 
-    public async Task<bool> UpdateInventoryCheckStatus(InventoryCheck inventoryCheck, RequestStatus? statusUpdate, Guid? editorId, DateTime? now = null)
+    public async Task<bool> UpdateInventoryCheckStatus(InventoryCheck inventoryCheck, BaseUpdateStatusDto? confirmDto, Guid? editorId, DateTime? now = null)
     {
         await _context.Database.BeginTransactionAsync();
         now ??= DateTime.UtcNow;
@@ -138,7 +124,6 @@ public class InventoryCheckRepository : IInventoryCheckRepository
         {
             inventoryCheck.EditedAt = now.Value;
             inventoryCheck.EditorId = editorId;
-            inventoryCheck.Status = statusUpdate;
             _context.Entry(inventoryCheck).State = EntityState.Modified;
 
             var inventoryCheckDetails = _context.InventoryCheckDetails
@@ -146,14 +131,17 @@ public class InventoryCheckRepository : IInventoryCheckRepository
                                             .Where(x => x.InventoryCheckId == inventoryCheck.Id)
                                             .ToList();
 
-            foreach (var detail in inventoryCheckDetails)
+            var reports = await _context.MediaFiles.FirstOrDefaultAsync(x => x.ItemId == inventoryCheck.Id && !x.IsReject);
+
+            if (confirmDto?.Status == RequestStatus.Done)
             {
-                var roomAsset = _context.RoomAssets
-                            .FirstOrDefault(x => x.AssetId == detail.AssetId && x.RoomId == detail.RoomId);
-                var asset = _context.Assets
-                        .FirstOrDefault(x => x.Id == detail.AssetId);
-                if (statusUpdate == RequestStatus.Done)
+                foreach (var detail in inventoryCheckDetails)
                 {
+                    var roomAsset = _context.RoomAssets
+                                .FirstOrDefault(x => x.AssetId == detail.AssetId && x.RoomId == detail.RoomId);
+                    var asset = _context.Assets
+                            .FirstOrDefault(x => x.Id == detail.AssetId);
+
                     if (asset != null)
                     {
                         asset.Status = detail.StatusReported;
@@ -166,15 +154,77 @@ public class InventoryCheckRepository : IInventoryCheckRepository
                         roomAsset.Status = detail.StatusReported;
                         _context.Entry(roomAsset).State = EntityState.Modified;
                     }
+                }
 
-                    inventoryCheck.CompletionDate = now.Value;
-                    _context.Entry(inventoryCheck).State = EntityState.Modified;
-                }
-                else if (statusUpdate == RequestStatus.Cancelled)
+                inventoryCheck.CompletionDate = now.Value;
+                inventoryCheck.Status = RequestStatus.Done;
+                _context.Entry(inventoryCheck).State = EntityState.Modified;
+
+                var notification = new Notification
                 {
-                    inventoryCheck.Status = RequestStatus.Cancelled;
-                    _context.Entry(inventoryCheck).State = EntityState.Modified;
+                    CreatedAt = now.Value,
+                    Status = NotificationStatus.Waiting,
+                    Content = "Đã xác nhận",
+                    Title = "Đã xác nhận",
+                    Type = NotificationType.Task,
+                    CreatorId = editorId,
+                    IsRead = false,
+                    ItemId = inventoryCheck.Id,
+                    UserId = inventoryCheck.AssignedTo
+                };
+                await _context.Notifications.AddAsync(notification);
+            }
+            else if (confirmDto?.Status == RequestStatus.Cancelled && confirmDto.NeedAdditional)
+            {
+                inventoryCheck.Status = RequestStatus.InProgress;
+                _context.Entry(inventoryCheck).State = EntityState.Modified;
+
+                if (reports != null)
+                {
+                    reports.IsReject = true;
+                    reports.RejectReason = confirmDto.Reason;
+                    _context.Entry(reports).State = EntityState.Modified;
                 }
+
+                var notification = new Notification
+                {
+                    CreatedAt = now.Value,
+                    Status = NotificationStatus.Waiting,
+                    Content = confirmDto.Reason ?? "Cần bổ sung",
+                    Title = "Báo cáo lại",
+                    Type = NotificationType.Task,
+                    CreatorId = editorId,
+                    IsRead = false,
+                    ItemId = inventoryCheck.Id,
+                    UserId = inventoryCheck.AssignedTo
+                };
+                await _context.Notifications.AddAsync(notification);
+            }
+            else if (confirmDto?.Status == RequestStatus.Cancelled && !confirmDto.NeedAdditional)
+            {
+                inventoryCheck.Status = RequestStatus.Cancelled;
+                _context.Entry(inventoryCheck).State = EntityState.Modified;
+
+                if (reports != null)
+                {
+                    reports.IsReject = true;
+                    reports.RejectReason = confirmDto.Reason;
+                    _context.Entry(reports).State = EntityState.Modified;
+                }
+
+                var notification = new Notification
+                {
+                    CreatedAt = now.Value,
+                    Status = NotificationStatus.Waiting,
+                    Content = confirmDto.Reason ?? "Hủy yêu cầu",
+                    Title = "Hủy yêu cầu",
+                    Type = NotificationType.Task,
+                    CreatorId = editorId,
+                    IsRead = false,
+                    ItemId = inventoryCheck.Id,
+                    UserId = inventoryCheck.AssignedTo
+                };
+                await _context.Notifications.AddAsync(notification);
             }
 
             await _context.SaveChangesAsync();
