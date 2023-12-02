@@ -65,18 +65,23 @@ namespace API_FFMS.Services
             var replacement = createDto.ProjectTo<ReplaceCreateDto, Replacement>();
             replacement.RequestCode = GenerateRequestCode();
 
+            // For storing json in column
             var mediaFiles = new List<Report>();
             if (createDto.RelatedFiles != null)
             {
-                foreach (var file in createDto.RelatedFiles)
+                var listUrisJson = JsonConvert.SerializeObject(createDto.RelatedFiles);
+                var report = new Report
                 {
-                    var newMediaFile = new Report
-                    {
-                        FileName = file.FileName ?? "",
-                        Uri = file.Uri ?? ""
-                    };
-                    mediaFiles.Add(newMediaFile);
-                }
+                    FileName = string.Empty,
+                    Uri = listUrisJson,
+                    Content = string.Empty,
+                    FileType = FileType.File,
+                    ItemId = replacement.Id,
+                    IsVerified = false,
+                    IsReported = false,
+                };
+        
+                mediaFiles.Add(report);
             }
 
             if (!await _repository.InsertReplacement(replacement, mediaFiles, AccountId, CurrentDate))

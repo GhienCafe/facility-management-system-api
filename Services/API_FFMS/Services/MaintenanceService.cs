@@ -270,18 +270,23 @@ public class MaintenanceService : BaseService, IMaintenanceService
         var maintenance = createDto.ProjectTo<MaintenanceCreateDto, Maintenance>();
         maintenance.RequestCode = GenerateRequestCode();
 
+        // For storing json in column
         var mediaFiles = new List<Report>();
         if (createDto.RelatedFiles != null)
         {
-            foreach (var file in createDto.RelatedFiles)
+            var listUrisJson = JsonConvert.SerializeObject(createDto.RelatedFiles);
+            var report = new Report
             {
-                var newMediaFile = new Report
-                {
-                    FileName = file.FileName ?? "",
-                    Uri = file.Uri ?? ""
-                };
-                mediaFiles.Add(newMediaFile);
-            }
+                FileName = string.Empty,
+                Uri = listUrisJson,
+                Content = string.Empty,
+                FileType = FileType.File,
+                ItemId = maintenance.Id,
+                IsVerified = false,
+                IsReported = false,
+            };
+        
+            mediaFiles.Add(report);
         }
 
         if (!await _maintenanceRepository.InsertMaintenance(maintenance, mediaFiles, AccountId, CurrentDate))

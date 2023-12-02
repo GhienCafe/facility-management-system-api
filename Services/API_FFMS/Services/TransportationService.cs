@@ -103,11 +103,24 @@ namespace API_FFMS.Services
                 ToRoomId = createDto.ToRoomId
             };
 
-            var mediaFiles = createDto.RelatedFiles?.Select(file => new Report
+            // For storing json in column
+            var mediaFiles = new List<Report>();
+            if (createDto.RelatedFiles != null)
             {
-                FileName = file.FileName ?? "",
-                Uri = file.Uri ?? ""
-            }).ToList();
+                var listUrisJson = JsonConvert.SerializeObject(createDto.RelatedFiles);
+                var report = new Report
+                {
+                    FileName = string.Empty,
+                    Uri = listUrisJson,
+                    Content = string.Empty,
+                    FileType = FileType.File,
+                    ItemId = transportation.Id,
+                    IsVerified = false,
+                    IsReported = false,
+                };
+        
+                mediaFiles.Add(report);
+            }
 
             var transportationDetails = new List<TransportationDetail>();
             foreach (var asset in assets)
