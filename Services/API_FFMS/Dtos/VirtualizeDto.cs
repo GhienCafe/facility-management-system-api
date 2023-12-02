@@ -13,7 +13,7 @@ public class VirtualizeFloorDto : BaseDto
     public Guid? BuildingId { get; set; }
 }
 
-public class VirtualizeRoomDto: BaseDto
+public class VirtualizeRoomDto : BaseDto
 {
     public string? RoomName { get; set; }
     public double? Area { get; set; }
@@ -25,12 +25,12 @@ public class VirtualizeRoomDto: BaseDto
     public Guid StatusId { get; set; }
     public Guid FloorId { get; set; }
     public string? Description { get; set; }
-    
+
     public int? TotalAssets { get; set; }
     public int? TotalDamagedAssets { get; set; }
     public int? TotalNormalAssets { get; set; }
     public int? TotalOtherAssets { get; set; }
-    
+
     public RoomStatusDto? Status { get; set; }
     public RoomTypeDto? RoomType { get; set; }
 }

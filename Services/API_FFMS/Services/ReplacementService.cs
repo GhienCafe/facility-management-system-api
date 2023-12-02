@@ -242,7 +242,7 @@ namespace API_FFMS.Services
             replacement.RelatedFiles = JsonConvert.DeserializeObject<List<MediaFileDetailDto>>(relatedMediaFiles.Uri);
 
             var reports = await MainUnitOfWork.MediaFileRepository.GetQuery()
-                .Where(m => m!.ItemId == id && m.IsReported).ToListAsync();
+                .Where(m => m!.ItemId == id && m.IsReported).OrderByDescending(x => x!.CreatedAt).ToListAsync();
 
             //TODO: orderby
             replacement.Reports = new List<MediaFileDto>();

@@ -132,11 +132,30 @@ public class VirtualizeService : BaseService, IVirtualizeService
         // Execute the query and retrieve the result
         var queryResult = await result.ToListAsync();
 
-        //foreach(var item in queryResult)
-        //{
-        //    item.StatusBaseOnAsset = GetRoomAssetStatus(item.Id).GetValue();
-        //}
+        var listRoomIds = queryResult.Select(x => x.Id).ToList();
+        var roomAssets = await MainUnitOfWork.RoomAssetRepository.GetQuery()
+            .Where(a => a.ToDate == null && a.Status != AssetStatus.Operational && listRoomIds.Contains(a.Id))
+            .GroupBy(a => new { a.RoomId, a.Status })
+            .Select(g => new {
+                RoomId = g.Key.RoomId,
+                Status = g.Key.Status,
+                Quantity = g.Count()
+            }).ToListAsync();
+        
+        foreach (var room in queryResult)
+        {
+            var totalDamaged = roomAssets
+                .Count(x => x.RoomId == room.Id);
 
+            room.StatusBaseOnAsset = totalDamaged switch
+            {
+                > 0 and < 5 => RoomAssetStatus.Notice.GetValue(),
+                >= 5 and < 10 => RoomAssetStatus.Caution.GetValue(),
+                >= 10 => RoomAssetStatus.Danger.GetValue(),
+                _ => RoomAssetStatus.Operational.GetValue()
+            };
+        }
+        
         return ApiResponse<IEnumerable<VirtualizeRoomDto>>.Success(queryResult);
     }
 

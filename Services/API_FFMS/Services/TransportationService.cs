@@ -340,7 +340,7 @@ namespace API_FFMS.Services
                                 }).ToListAsync();
 
             var reports = await MainUnitOfWork.MediaFileRepository.GetQuery()
-                .Where(m => m!.ItemId == id && m.IsReported).ToListAsync();
+                .Where(m => m!.ItemId == id && m.IsReported).OrderByDescending(x => x!.CreatedAt).ToListAsync();
 
             //TODO: orderby
             var listReport = new List<MediaFileDto>();
