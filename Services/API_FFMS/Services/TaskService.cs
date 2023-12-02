@@ -33,7 +33,7 @@ public class TaskService : BaseService, ITaskService
     public async Task<ApiResponse> UpdateTaskStatus(ReportCreateDto createDto)
     {
         // Handle report content
-        var mediaFiles = new List<Report>();
+        var reports = new List<Report>();
         var listUrisJson = JsonConvert.SerializeObject(createDto.Uris);
         var report = new Report
         {
@@ -46,7 +46,7 @@ public class TaskService : BaseService, ITaskService
             IsReported = true,
         };
         
-        mediaFiles.Add(report);
+        reports.Add(report);
 
         var reportedTask = await MainUnitOfWork.TaskRepository.FindOneAsync(createDto.ItemId ?? Guid.Empty);
 
@@ -58,9 +58,9 @@ public class TaskService : BaseService, ITaskService
         // For normal task
         if (reportedTask != null && reportedTask.Type != RequestType.InventoryCheck)
         {
-            if (mediaFiles.Count > 0)
+            if (reports.Count > 0)
             {
-                if (!await _taskRepository.UpdateStatus(mediaFiles, createDto.Status, AccountId, CurrentDate))
+                if (!await _taskRepository.UpdateStatus(reports, createDto.Status, AccountId, CurrentDate))
                 {
                     throw new ApiException("Báo cáo thất bại", StatusCode.SERVER_ERROR);
                 }
@@ -97,9 +97,9 @@ public class TaskService : BaseService, ITaskService
                 createDto.ItemId = reportedTask.Id;
             }
 
-            if (mediaFiles.Count > 0 && reportedTask != null)
+            if (reports.Count > 0 && reportedTask != null)
             {
-                if (!await _taskRepository.InventoryCheckReport(mediaFiles, inventoryDetails, createDto.Status,
+                if (!await _taskRepository.InventoryCheckReport(reports, inventoryDetails, createDto.Status,
                         AccountId, CurrentDate))
                 {
                     throw new ApiException("Báo cáo thất bại", StatusCode.SERVER_ERROR);
