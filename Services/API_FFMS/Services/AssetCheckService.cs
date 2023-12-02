@@ -63,15 +63,19 @@ public class AssetCheckService : BaseService, IAssetCheckService
         var mediaFiles = new List<Report>();
         if (createDto.RelatedFiles != null)
         {
-            foreach (var file in createDto.RelatedFiles)
+            var listUrisJson = JsonConvert.SerializeObject(createDto.RelatedFiles);
+            var report = new Report
             {
-                var newMediaFile = new Report
-                {
-                    FileName = file.FileName ?? "",
-                    Uri = file.Uri ?? ""
-                };
-                mediaFiles.Add(newMediaFile);
-            }
+                FileName = string.Empty,
+                Uri = listUrisJson,
+                Content = string.Empty,
+                FileType = FileType.File,
+                ItemId = assetCheck.Id,
+                IsVerified = false,
+                IsReported = false,
+            };
+        
+            mediaFiles.Add(report);
         }
 
         if (!await _assetcheckRepository.InsertAssetCheck(assetCheck, mediaFiles, AccountId, CurrentDate))
@@ -203,13 +207,11 @@ public class AssetCheckService : BaseService, IAssetCheckService
                 x => x.Id == assetCheck.AssignedTo
             });
 
-        var relatedMediaFileQuery = MainUnitOfWork.MediaFileRepository.GetQuery().Where(m => m!.ItemId == id && !m.IsReported);
-        assetCheck.RelatedFiles = relatedMediaFileQuery.Select(x => new MediaFileDetailDto
-        {
-            FileName = x!.FileName,
-            Uri = x.Uri,
-        }).ToList();
+        var relatedMediaFiles = await MainUnitOfWork.MediaFileRepository.GetQuery()
+            .Where(m => m!.ItemId == id && !m.IsReported).FirstOrDefaultAsync();
 
+        assetCheck.RelatedFiles = JsonConvert.DeserializeObject<List<MediaFileDetailDto>>(relatedMediaFiles.Uri);
+        
         var reports = await MainUnitOfWork.MediaFileRepository.GetQuery()
             .Where(m => m!.ItemId == id && m.IsReported).ToListAsync();
 

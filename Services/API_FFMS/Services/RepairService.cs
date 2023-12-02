@@ -218,12 +218,11 @@ namespace API_FFMS.Services
                 repairation.User.RoleObj = repairation.User.Role?.GetValue();
             }
 
-            var relatedMediaFileQuery = MainUnitOfWork.MediaFileRepository.GetQuery().Where(m => m!.ItemId == id && !m.IsReported);
-            repairation.RelatedFiles = relatedMediaFileQuery.Select(x => new MediaFileDetailDto
-            {
-                FileName = x!.FileName,
-                Uri = x.Uri,
-            }).ToList();
+            //Related file
+            var relatedMediaFiles = await MainUnitOfWork.MediaFileRepository.GetQuery()
+                .Where(m => m!.ItemId == id && !m.IsReported).FirstOrDefaultAsync();
+
+            repairation.RelatedFiles = JsonConvert.DeserializeObject<List<MediaFileDetailDto>>(relatedMediaFiles.Uri);
 
             var reports = await MainUnitOfWork.MediaFileRepository.GetQuery()
                 .Where(m => m!.ItemId == id && m.IsReported).ToListAsync();

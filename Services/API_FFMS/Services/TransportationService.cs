@@ -247,12 +247,10 @@ namespace API_FFMS.Services
                 throw new ApiException("Không tìm thấy yêu cầu vận chuyển", StatusCode.NOT_FOUND);
             }
 
-            var relatedMediaFileQuery = MainUnitOfWork.MediaFileRepository.GetQuery().Where(m => m!.ItemId == id && !m.IsReported);
-            var relatedMediaFile = relatedMediaFileQuery.Select(x => new MediaFileDetailDto
-            {
-                FileName = x!.FileName,
-                Uri = x.Uri,
-            }).ToList();
+            var relatedMediaFiles = await MainUnitOfWork.MediaFileRepository.GetQuery()
+                .Where(m => m!.ItemId == id && !m.IsReported).FirstOrDefaultAsync();
+
+            var listRelatedFiles = JsonConvert.DeserializeObject<List<MediaFileDetailDto>>(relatedMediaFiles.Uri);
 
             var roomDataset = MainUnitOfWork.RoomRepository.GetQuery();
             var toRoom = await roomDataset
@@ -371,7 +369,7 @@ namespace API_FFMS.Services
                 EditorId = existingTransport.EditorId,
                 Assets = assets,
                 ToRoom = toRoom,
-                RelatedFiles = relatedMediaFile,
+                RelatedFiles = listRelatedFiles,
                 Reports = listReport,
                 AssignedTo = existingTransport.AssignedTo,
                 AssignTo = assignTo

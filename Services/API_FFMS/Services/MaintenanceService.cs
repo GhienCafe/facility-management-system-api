@@ -226,12 +226,11 @@ public class MaintenanceService : BaseService, IMaintenanceService
             PriorityObj = x.Maintenance.Priority.GetValue()
         }).FirstOrDefaultAsync();
 
-        var relatedMediaFileQuery = MainUnitOfWork.MediaFileRepository.GetQuery().Where(m => m!.ItemId == id && !m.IsReported);
-        item.RelatedFiles = relatedMediaFileQuery.Select(x => new MediaFileDetailDto
-        {
-            FileName = x!.FileName,
-            Uri = x.Uri,
-        }).ToList();
+        //Related file
+        var relatedMediaFiles = await MainUnitOfWork.MediaFileRepository.GetQuery()
+            .Where(m => m!.ItemId == id && !m.IsReported).FirstOrDefaultAsync();
+
+        item.RelatedFiles = JsonConvert.DeserializeObject<List<MediaFileDetailDto>>(relatedMediaFiles.Uri);
 
         var reports = await MainUnitOfWork.MediaFileRepository.GetQuery()
             .Where(m => m!.ItemId == id && m.IsReported).ToListAsync();
