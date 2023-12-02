@@ -347,7 +347,7 @@ namespace API_FFMS.Repositories
                 var newAssetLocation = await _context.Rooms
                                 .FirstOrDefaultAsync(x => x.Id == roomAssetNew!.RoomId && roomAssetNew.AssetId == newAsset!.Id);
 
-                var reports = await _context.MediaFiles.FirstOrDefaultAsync(x => x.ItemId == replacement.Id && !x.IsReject);
+                var reports = await _context.MediaFiles.FirstOrDefaultAsync(x => x.ItemId == replacement.Id && !x.IsReject && x.IsReported);
 
                 if (confirmDto?.Status == RequestStatus.Done)
                 {
