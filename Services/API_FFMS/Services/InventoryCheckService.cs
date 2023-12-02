@@ -57,12 +57,6 @@ public class InventoryCheckService : BaseService, IInventoryCheckService
                     x => roomAssets.Select(ra => ra!.AssetId).Contains(x.Id)
                 }, null);
 
-            // var mediaFiles = createDto.RelatedFiles?.Select(file => new Report
-            // {
-            //     FileName = file.FileName ?? "",
-            //     Uri = file.Uri ?? ""
-            // }).ToList();
-            
             // For storing json in column
             var mediaFiles = new List<Report>();
             if (createDto.RelatedFiles != null)
@@ -128,7 +122,7 @@ public class InventoryCheckService : BaseService, IInventoryCheckService
             inventoryCheck.RelatedFiles = JsonConvert.DeserializeObject<List<MediaFileDetailDto>>(relatedMediaFiles.Uri);
 
             var reports = await MainUnitOfWork.MediaFileRepository.GetQuery()
-                .Where(m => m!.ItemId == id && m.IsReported).ToListAsync();
+                .Where(m => m!.ItemId == id && m.IsReported).OrderByDescending(x => x!.CreatedAt).ToListAsync();
             
             //TODO: orderby
             inventoryCheck.Reports = new List<MediaFileDto>();

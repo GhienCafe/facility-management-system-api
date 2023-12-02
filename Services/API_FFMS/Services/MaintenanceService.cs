@@ -69,6 +69,8 @@ public class MaintenanceService : BaseService, IMaintenanceService
                                                                || x.Notes!.ToLower().Contains(keyword) ||
                                                                x.RequestCode.ToLower().Contains(keyword));
         }
+        
+        maintenanceQueryable = maintenanceQueryable.OrderByDescending(x => x!.CreatedAt);
 
         var assetQueryable = MainUnitOfWork.AssetRepository.GetQuery()
             .Where(x => !x!.DeletedAt.HasValue);
@@ -233,9 +235,8 @@ public class MaintenanceService : BaseService, IMaintenanceService
         item.RelatedFiles = JsonConvert.DeserializeObject<List<MediaFileDetailDto>>(relatedMediaFiles.Uri);
 
         var reports = await MainUnitOfWork.MediaFileRepository.GetQuery()
-            .Where(m => m!.ItemId == id && m.IsReported).ToListAsync();
-            
-        //TODO: orderby
+            .Where(m => m!.ItemId == id && m.IsReported).OrderByDescending(x => x!.CreatedAt).ToListAsync();
+        
         item.Reports = new List<MediaFileDto>();
         foreach (var report in reports)
         {

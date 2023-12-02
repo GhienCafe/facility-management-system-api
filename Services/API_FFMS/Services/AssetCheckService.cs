@@ -213,7 +213,7 @@ public class AssetCheckService : BaseService, IAssetCheckService
         assetCheck.RelatedFiles = JsonConvert.DeserializeObject<List<MediaFileDetailDto>>(relatedMediaFiles.Uri);
         
         var reports = await MainUnitOfWork.MediaFileRepository.GetQuery()
-            .Where(m => m!.ItemId == id && m.IsReported).ToListAsync();
+            .Where(m => m!.ItemId == id && m.IsReported).OrderByDescending(x => x!.CreatedAt).ToListAsync();
 
         //TODO: orderby
         assetCheck.Reports = new List<MediaFileDto>();
