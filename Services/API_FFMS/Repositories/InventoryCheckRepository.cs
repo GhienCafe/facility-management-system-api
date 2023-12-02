@@ -131,7 +131,7 @@ public class InventoryCheckRepository : IInventoryCheckRepository
                                             .Where(x => x.InventoryCheckId == inventoryCheck.Id)
                                             .ToList();
 
-            var reports = await _context.MediaFiles.FirstOrDefaultAsync(x => x.ItemId == inventoryCheck.Id && !x.IsReject);
+            var reports = await _context.MediaFiles.FirstOrDefaultAsync(x => x.ItemId == inventoryCheck.Id && !x.IsReject && x.IsReported);
 
             if (confirmDto?.Status == RequestStatus.Done)
             {

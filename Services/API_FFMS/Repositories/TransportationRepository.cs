@@ -251,7 +251,7 @@ public class TransportationRepository : ITransportationRepository
 
             var toRoom = await _context.Rooms.FindAsync(transportation.ToRoomId);
 
-            var reports = await _context.MediaFiles.FirstOrDefaultAsync(x => x.ItemId == transportation.Id && !x.IsReject);
+            var reports = await _context.MediaFiles.FirstOrDefaultAsync(x => x.ItemId == transportation.Id && !x.IsReject && x.IsReported);
 
 
 
