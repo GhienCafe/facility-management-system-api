@@ -5,7 +5,6 @@ using AppCore.Models;
 using MainData;
 using MainData.Entities;
 using MainData.Repositories;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
 using Newtonsoft.Json;
@@ -21,7 +20,7 @@ public interface IMaintenanceService : IBaseService
     Task<ApiResponse> UpdateItem(Guid id, MaintenanceUpdateDto updateDto);
     Task<ApiResponse> DeleteItem(Guid id);
     Task<ApiResponse> DeleteItems(DeleteMutilDto deleteDto);
-    Task<ApiResponse> UpdateStatus(Guid id, BaseUpdateStatusDto updateStatusDto);
+    Task<ApiResponse> ConfirmOrReject(Guid id, BaseUpdateStatusDto confirmOrRejectDto);
 }
 
 public class MaintenanceService : BaseService, IMaintenanceService
@@ -272,6 +271,7 @@ public class MaintenanceService : BaseService, IMaintenanceService
             throw new ApiException("Trang thiết bị đang trong một yêu cầu khác", StatusCode.BAD_REQUEST);
 
         var maintenance = createDto.ProjectTo<MaintenanceCreateDto, Maintenance>();
+        maintenance.Description = createDto.Description ?? "Yêu cầu bảo trì";
         maintenance.RequestCode = GenerateRequestCode();
 
         // For storing json in column
@@ -373,6 +373,7 @@ public class MaintenanceService : BaseService, IMaintenanceService
         foreach (var create in createDtos)
         {
             var maintenance = create.ProjectTo<MaintenanceCreateDto, Maintenance>();
+            maintenance.Description = create.Description ?? "Yêu cầu bảo trì";
             maintenance.Id = Guid.NewGuid();
             if (create.RelatedFiles != null)
             {
@@ -443,7 +444,7 @@ public class MaintenanceService : BaseService, IMaintenanceService
             throw new ApiException($"Không thể xóa yêu cầu đang có trạng thái: {existingMaintenance.Status?.GetDisplayName()}", StatusCode.BAD_REQUEST);
         }
 
-        if (!await MainUnitOfWork.MaintenanceRepository.DeleteAsync(existingMaintenance, AccountId, CurrentDate))
+        if (!await _maintenanceRepository.DeleteMaintenance(existingMaintenance, AccountId, CurrentDate))
         {
             throw new ApiException("Xóa thất bại", StatusCode.SERVER_ERROR);
         }
@@ -472,14 +473,14 @@ public class MaintenanceService : BaseService, IMaintenanceService
             }
         }
 
-        if (!await MainUnitOfWork.MaintenanceRepository.DeleteAsync(maintenances, AccountId, CurrentDate))
+        if (!await _maintenanceRepository.DeleteMulti(maintenances, AccountId, CurrentDate))
         {
             throw new ApiException("Xóa thất bại", StatusCode.SERVER_ERROR);
         }
         return ApiResponse.Success();
     }
 
-    public async Task<ApiResponse> UpdateStatus(Guid id, BaseUpdateStatusDto confirmDto)
+    public async Task<ApiResponse> ConfirmOrReject(Guid id, BaseUpdateStatusDto confirmOrRejectDto)
     {
         var existingMainten = MainUnitOfWork.MaintenanceRepository.GetQuery()
                                     .Include(t => t!.Asset)
@@ -490,9 +491,9 @@ public class MaintenanceService : BaseService, IMaintenanceService
             throw new ApiException("Không tìm thấy yêu cầu bảo trì này", StatusCode.NOT_FOUND);
         }
 
-        existingMainten.Status = confirmDto.Status ?? existingMainten.Status;
+        existingMainten.Status = confirmOrRejectDto.Status ?? existingMainten.Status;
 
-        if (!await _maintenanceRepository.UpdateStatus(existingMainten, confirmDto, AccountId, CurrentDate))
+        if (!await _maintenanceRepository.ConfirmOrReject(existingMainten, confirmOrRejectDto, AccountId, CurrentDate))
         {
             throw new ApiException("Cập nhật trạng thái yêu cầu thất bại", StatusCode.SERVER_ERROR);
         }

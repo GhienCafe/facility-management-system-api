@@ -9,7 +9,7 @@ namespace API_FFMS.Repositories;
 public interface IInventoryCheckRepository
 {
     Task<bool> InsertInventoryCheck(InventoryCheck inventoryCheck, List<Room?> rooms, List<Report>? mediaFiles, Guid? creatorId, DateTime? now = null);
-    Task<bool> UpdateInventoryCheckStatus(InventoryCheck inventoryCheck, BaseUpdateStatusDto? confirmDto, Guid? editorId, DateTime? now = null);
+    Task<bool> ConfirmOrReject(InventoryCheck inventoryCheck, BaseUpdateStatusDto? confirmOrRejectDto, Guid? editorId, DateTime? now = null);
     Task<bool> UpdateInventoryCheck(InventoryCheck inventoryCheck, List<Report?> additionMediaFiles, List<Report?> removalMediaFiles, Guid? editorId, DateTime? now = null);
 }
 
@@ -116,7 +116,7 @@ public class InventoryCheckRepository : IInventoryCheckRepository
         }
     }
 
-    public async Task<bool> UpdateInventoryCheckStatus(InventoryCheck inventoryCheck, BaseUpdateStatusDto? confirmDto, Guid? editorId, DateTime? now = null)
+    public async Task<bool> ConfirmOrReject(InventoryCheck inventoryCheck, BaseUpdateStatusDto? confirmOrRejectDto, Guid? editorId, DateTime? now = null)
     {
         await _context.Database.BeginTransactionAsync();
         now ??= DateTime.UtcNow;
@@ -133,7 +133,7 @@ public class InventoryCheckRepository : IInventoryCheckRepository
 
             var reports = await _context.MediaFiles.FirstOrDefaultAsync(x => x.ItemId == inventoryCheck.Id && !x.IsReject && x.IsReported);
 
-            if (confirmDto?.Status == RequestStatus.Done)
+            if (confirmOrRejectDto?.Status == RequestStatus.Done)
             {
                 foreach (var detail in inventoryCheckDetails)
                 {
@@ -174,7 +174,7 @@ public class InventoryCheckRepository : IInventoryCheckRepository
                 };
                 await _context.Notifications.AddAsync(notification);
             }
-            else if (confirmDto?.Status == RequestStatus.Cancelled && confirmDto.NeedAdditional)
+            else if (confirmOrRejectDto?.Status == RequestStatus.Cancelled && confirmOrRejectDto.NeedAdditional)
             {
                 inventoryCheck.Status = RequestStatus.InProgress;
                 _context.Entry(inventoryCheck).State = EntityState.Modified;
@@ -182,7 +182,7 @@ public class InventoryCheckRepository : IInventoryCheckRepository
                 if (reports != null)
                 {
                     reports.IsReject = true;
-                    reports.RejectReason = confirmDto.Reason;
+                    reports.RejectReason = confirmOrRejectDto.Reason;
                     _context.Entry(reports).State = EntityState.Modified;
                 }
 
@@ -190,7 +190,7 @@ public class InventoryCheckRepository : IInventoryCheckRepository
                 {
                     CreatedAt = now.Value,
                     Status = NotificationStatus.Waiting,
-                    Content = confirmDto.Reason ?? "Cần bổ sung",
+                    Content = confirmOrRejectDto.Reason ?? "Cần bổ sung",
                     Title = "Báo cáo lại",
                     Type = NotificationType.Task,
                     CreatorId = editorId,
@@ -200,7 +200,7 @@ public class InventoryCheckRepository : IInventoryCheckRepository
                 };
                 await _context.Notifications.AddAsync(notification);
             }
-            else if (confirmDto?.Status == RequestStatus.Cancelled && !confirmDto.NeedAdditional)
+            else if (confirmOrRejectDto?.Status == RequestStatus.Cancelled && !confirmOrRejectDto.NeedAdditional)
             {
                 inventoryCheck.Status = RequestStatus.Cancelled;
                 _context.Entry(inventoryCheck).State = EntityState.Modified;
@@ -208,7 +208,7 @@ public class InventoryCheckRepository : IInventoryCheckRepository
                 if (reports != null)
                 {
                     reports.IsReject = true;
-                    reports.RejectReason = confirmDto.Reason;
+                    reports.RejectReason = confirmOrRejectDto.Reason;
                     _context.Entry(reports).State = EntityState.Modified;
                 }
 
@@ -216,7 +216,7 @@ public class InventoryCheckRepository : IInventoryCheckRepository
                 {
                     CreatedAt = now.Value,
                     Status = NotificationStatus.Waiting,
-                    Content = confirmDto.Reason ?? "Hủy yêu cầu",
+                    Content = confirmOrRejectDto.Reason ?? "Hủy yêu cầu",
                     Title = "Hủy yêu cầu",
                     Type = NotificationType.Task,
                     CreatorId = editorId,

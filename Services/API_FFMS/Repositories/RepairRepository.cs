@@ -1,7 +1,5 @@
 ﻿using API_FFMS.Dtos;
 using AppCore.Extensions;
-using DocumentFormat.OpenXml.Bibliography;
-using DocumentFormat.OpenXml.Vml.Office;
 using MainData;
 using MainData.Entities;
 using Microsoft.EntityFrameworkCore;
@@ -11,10 +9,10 @@ namespace API_FFMS.Repositories;
 public interface IRepairRepository
 {
     Task<bool> InsertRepair(Repair repair, List<Report> mediaFiles, Guid? creatorId, DateTime? now = null);
-    Task<bool> InsertRepairs(List<Repair> repairs, List<Report>? mediaFiles, Guid? creatorId, DateTime? now = null);
-    Task<bool> UpdateStatus(Repair repair, BaseUpdateStatusDto? confirmDto, Guid? editorId, DateTime? now = null);
+    Task<bool> CreateMulti(List<Repair> repairs, List<Report>? mediaFiles, Guid? creatorId, DateTime? now = null);
+    Task<bool> ConfirmOrReject(Repair repair, BaseUpdateStatusDto? confirmOrRejectDto, Guid? editorId, DateTime? now = null);
     Task<bool> DeleteRepair(Repair repair, Guid? deleterId, DateTime? now = null);
-    Task<bool> DeleteRepairs(List<Repair?> repairs, Guid? deleterId, DateTime? now = null);
+    Task<bool> DeleteMulti(List<Repair?> repairs, Guid? deleterId, DateTime? now = null);
     Task<bool> UpdateRepair(Repair repair, List<Report?> additionMediaFiles, List<Report?> removalMediaFiles, Guid? creatorId, DateTime? now = null);
 }
 public class RepairRepository : IRepairRepository
@@ -26,7 +24,7 @@ public class RepairRepository : IRepairRepository
         _context = context;
     }
 
-    public async Task<bool> InsertRepairs(List<Repair> entities, List<Report>? mediaFiles, Guid? creatorId, DateTime? now = null)
+    public async Task<bool> CreateMulti(List<Repair> entities, List<Report>? mediaFiles, Guid? creatorId, DateTime? now = null)
     {
         await _context.Database.BeginTransactionAsync();
         now ??= DateTime.UtcNow;
@@ -105,7 +103,7 @@ public class RepairRepository : IRepairRepository
         return requests;
     }
 
-    public async Task<bool> UpdateStatus(Repair repair, BaseUpdateStatusDto? confirmDto, Guid? editorId, DateTime? now = null)
+    public async Task<bool> ConfirmOrReject(Repair repair, BaseUpdateStatusDto? confirmOrRejectDto, Guid? editorId, DateTime? now = null)
     {
         await _context.Database.BeginTransactionAsync();
         now ??= DateTime.UtcNow;
@@ -126,7 +124,7 @@ public class RepairRepository : IRepairRepository
 
             if (repair.IsInternal == true)
             {
-                if (confirmDto?.Status == RequestStatus.Done)
+                if (confirmOrRejectDto?.Status == RequestStatus.Done)
                 {
                     repair.CompletionDate = now.Value;
                     repair.Status = RequestStatus.Done;
@@ -162,7 +160,7 @@ public class RepairRepository : IRepairRepository
                     };
                     await _context.Notifications.AddAsync(notification);
                 }
-                else if (confirmDto?.Status == RequestStatus.Cancelled && confirmDto.NeedAdditional)
+                else if (confirmOrRejectDto?.Status == RequestStatus.Cancelled && confirmOrRejectDto.NeedAdditional)
                 {
                     repair.Status = RequestStatus.InProgress;
                     _context.Entry(repair).State = EntityState.Modified;
@@ -170,7 +168,7 @@ public class RepairRepository : IRepairRepository
                     if (reports != null)
                     {
                         reports.IsReject = true;
-                        reports.RejectReason = confirmDto.Reason;
+                        reports.RejectReason = confirmOrRejectDto.Reason;
                         _context.Entry(reports).State = EntityState.Modified;
                     }
 
@@ -178,7 +176,7 @@ public class RepairRepository : IRepairRepository
                     {
                         CreatedAt = now.Value,
                         Status = NotificationStatus.Waiting,
-                        Content = confirmDto.Reason ?? "Cần bổ sung",
+                        Content = confirmOrRejectDto.Reason ?? "Cần bổ sung",
                         Title = "Báo cáo lại",
                         Type = NotificationType.Task,
                         CreatorId = editorId,
@@ -189,7 +187,7 @@ public class RepairRepository : IRepairRepository
                     await _context.Notifications.AddAsync(notification);
 
                 }
-                else if (confirmDto?.Status == RequestStatus.Cancelled && !confirmDto.NeedAdditional)
+                else if (confirmOrRejectDto?.Status == RequestStatus.Cancelled && !confirmOrRejectDto.NeedAdditional)
                 {
                     repair.Status = RequestStatus.Cancelled;
                     _context.Entry(repair).State = EntityState.Modified;
@@ -197,7 +195,7 @@ public class RepairRepository : IRepairRepository
                     if (reports != null)
                     {
                         reports.IsReject = true;
-                        reports.RejectReason = confirmDto.Reason;
+                        reports.RejectReason = confirmOrRejectDto.Reason;
                         _context.Entry(reports).State = EntityState.Modified;
                     }
 
@@ -205,7 +203,7 @@ public class RepairRepository : IRepairRepository
                     {
                         CreatedAt = now.Value,
                         Status = NotificationStatus.Waiting,
-                        Content = confirmDto.Reason ?? "Hủy yêu cầu",
+                        Content = confirmOrRejectDto.Reason ?? "Hủy yêu cầu",
                         Title = "Hủy yêu cầu",
                         Type = NotificationType.Task,
                         CreatorId = editorId,
@@ -223,7 +221,7 @@ public class RepairRepository : IRepairRepository
             }
             else if (repair.IsInternal == false)
             {
-                if (confirmDto?.Status == RequestStatus.Done)
+                if (confirmOrRejectDto?.Status == RequestStatus.Done)
                 {
                     repair.CompletionDate = now.Value;
                     repair.Status = RequestStatus.Done;
@@ -267,7 +265,7 @@ public class RepairRepository : IRepairRepository
                     };
                     await _context.Notifications.AddAsync(notification);
                 }
-                else if (confirmDto?.Status == RequestStatus.Cancelled && confirmDto.NeedAdditional)
+                else if (confirmOrRejectDto?.Status == RequestStatus.Cancelled && confirmOrRejectDto.NeedAdditional)
                 {
                     repair.Status = RequestStatus.InProgress;
                     _context.Entry(repair).State = EntityState.Modified;
@@ -275,7 +273,7 @@ public class RepairRepository : IRepairRepository
                     if (reports != null)
                     {
                         reports.IsReject = true;
-                        reports.RejectReason = confirmDto.Reason;
+                        reports.RejectReason = confirmOrRejectDto.Reason;
                         _context.Entry(reports).State = EntityState.Modified;
                     }
 
@@ -298,7 +296,7 @@ public class RepairRepository : IRepairRepository
                     asset.EditorId = editorId;
                     _context.Entry(asset).State = EntityState.Modified;
                 }
-                else if (confirmDto?.Status == RequestStatus.Cancelled && !confirmDto.NeedAdditional)
+                else if (confirmOrRejectDto?.Status == RequestStatus.Cancelled && !confirmOrRejectDto.NeedAdditional)
                 {
                     repair.Status = RequestStatus.Cancelled;
                     _context.Entry(repair).State = EntityState.Modified;
@@ -306,7 +304,7 @@ public class RepairRepository : IRepairRepository
                     if (reports != null)
                     {
                         reports.IsReject = true;
-                        reports.RejectReason = confirmDto.Reason;
+                        reports.RejectReason = confirmOrRejectDto.Reason;
                         _context.Entry(reports).State = EntityState.Modified;
                     }
 
@@ -314,7 +312,7 @@ public class RepairRepository : IRepairRepository
                     {
                         CreatedAt = now.Value,
                         Status = NotificationStatus.Waiting,
-                        Content = confirmDto.Reason ?? "Hủy yêu cầu",
+                        Content = confirmOrRejectDto.Reason ?? "Hủy yêu cầu",
                         Title = "Hủy yêu cầu",
                         Type = NotificationType.Task,
                         CreatorId = editorId,
@@ -394,7 +392,7 @@ public class RepairRepository : IRepairRepository
         }
     }
 
-    public async Task<bool> DeleteRepairs(List<Repair?> repairs, Guid? deleterId, DateTime? now = null)
+    public async Task<bool> DeleteMulti(List<Repair?> repairs, Guid? deleterId, DateTime? now = null)
     {
         await _context.Database.BeginTransactionAsync();
         now ??= DateTime.UtcNow;
