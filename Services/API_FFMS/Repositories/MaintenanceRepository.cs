@@ -1,5 +1,6 @@
 ﻿using API_FFMS.Dtos;
 using AppCore.Extensions;
+using DocumentFormat.OpenXml.Bibliography;
 using MainData;
 using MainData.Entities;
 using Microsoft.EntityFrameworkCore;
@@ -43,6 +44,16 @@ public class MaintenanceRepository : IMaintenanceRepository
                 entity.RequestDate = now.Value;
                 entity.RequestCode = "MTN" + GenerateRequestCode(ref numbers);
                 await _context.Maintenances.AddAsync(entity);
+
+                var asset = await _context.Assets
+                        .Include(a => a.Type)
+                        .Where(a => a.Id == entity.AssetId)
+                        .FirstOrDefaultAsync();
+                if (asset != null)
+                {
+                    asset.RequestStatus = RequestType.Maintenance;
+                    _context.Entry(asset).State = EntityState.Modified;
+                }
 
                 var notification = new Notification
                 {
@@ -463,6 +474,16 @@ public class MaintenanceRepository : IMaintenanceRepository
             entity.Status = RequestStatus.NotStart;
             entity.RequestDate = now.Value;
             await _context.Maintenances.AddAsync(entity);
+
+            var asset = await _context.Assets
+                        .Include(a => a.Type)
+                        .Where(a => a.Id == entity.AssetId)
+                        .FirstOrDefaultAsync();
+            if (asset != null)
+            {
+                asset.RequestStatus = RequestType.Maintenance;
+                _context.Entry(asset).State = EntityState.Modified;
+            }
 
             var notification = new Notification
             {
