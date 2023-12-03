@@ -119,8 +119,11 @@ public class InventoryCheckService : BaseService, IInventoryCheckService
             var relatedMediaFiles = await MainUnitOfWork.MediaFileRepository.GetQuery()
                 .Where(m => m!.ItemId == id && !m.IsReported).FirstOrDefaultAsync();
 
-            inventoryCheck.RelatedFiles = JsonConvert.DeserializeObject<List<MediaFileDetailDto>>(relatedMediaFiles.Uri);
-
+            if (relatedMediaFiles != null)
+            {
+                inventoryCheck.RelatedFiles = JsonConvert.DeserializeObject<List<MediaFileDetailDto>>(relatedMediaFiles.Uri);
+            }
+            
             var reports = await MainUnitOfWork.MediaFileRepository.GetQuery()
                 .Where(m => m!.ItemId == id && m.IsReported).OrderByDescending(x => x!.CreatedAt).ToListAsync();
             

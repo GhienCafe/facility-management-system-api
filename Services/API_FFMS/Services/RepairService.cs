@@ -229,18 +229,24 @@ namespace API_FFMS.Services
             var relatedMediaFiles = await MainUnitOfWork.MediaFileRepository.GetQuery()
                 .Where(m => m!.ItemId == id && !m.IsReported).FirstOrDefaultAsync();
 
-            repairation.RelatedFiles = JsonConvert.DeserializeObject<List<MediaFileDetailDto>>(relatedMediaFiles.Uri);
+            if (relatedMediaFiles != null)
+            {
+                repairation.RelatedFiles = JsonConvert.DeserializeObject<List<MediaFileDetailDto>>(relatedMediaFiles.Uri);
+            }
 
             var reports = await MainUnitOfWork.MediaFileRepository.GetQuery()
                 .Where(m => m!.ItemId == id && m.IsReported).OrderByDescending(x => x!.CreatedAt).ToListAsync();
 
-            //TODO: orderby
             repairation.Reports = new List<MediaFileDto>();
             foreach (var report in reports)
             {
                 // Deserialize the URI string back into a List<string>
-                var uriList = JsonConvert.DeserializeObject<List<string>>(report.Uri);
-            
+                var uriList = new List<string>();
+                if (report?.Uri != null)
+                {
+                    uriList = JsonConvert.DeserializeObject<List<string>>(report.Uri);
+                }
+                
                 repairation.Reports.Add(new MediaFileDto
                 {
                     ItemId = report.ItemId,

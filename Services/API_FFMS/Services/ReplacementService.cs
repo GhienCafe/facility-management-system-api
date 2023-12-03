@@ -240,7 +240,10 @@ namespace API_FFMS.Services
             var relatedMediaFiles = await MainUnitOfWork.MediaFileRepository.GetQuery()
                 .Where(m => m!.ItemId == id && !m.IsReported).FirstOrDefaultAsync();
 
-            replacement.RelatedFiles = JsonConvert.DeserializeObject<List<MediaFileDetailDto>>(relatedMediaFiles.Uri);
+            if (relatedMediaFiles != null)
+            {
+                replacement.RelatedFiles = JsonConvert.DeserializeObject<List<MediaFileDetailDto>>(relatedMediaFiles.Uri);
+            }
 
             var reports = await MainUnitOfWork.MediaFileRepository.GetQuery()
                 .Where(m => m!.ItemId == id && m.IsReported).OrderByDescending(x => x!.CreatedAt).ToListAsync();
