@@ -144,10 +144,6 @@ public class AssetService : BaseService, IAssetService
             ImageUrl = x.ImageUrl ?? x.Model!.ImageUrl,
             TypeId = x.TypeId,
             LastMaintenanceTime = x.LastMaintenanceTime,
-            CreatedAt = x.CreatedAt,
-            EditedAt = x.EditedAt,
-            CreatorId = x.CreatorId ?? Guid.Empty,
-            EditorId = x.EditorId ?? Guid.Empty,
             Type = x.Type != null ? new AssetTypeDto
             {
                 Id = x.Type.Id,
@@ -157,31 +153,19 @@ public class AssetService : BaseService, IAssetService
                 IsIdentified = x.Type.IsIdentified,
                 Unit = x.Type.Unit,
                 UnitObj = x.Type.Unit.GetValue(),
-                CreatedAt = x.Type.CreatedAt,
-                ImageUrl = x.Type.ImageUrl,
-                EditedAt = x.Type.EditedAt,
-                CreatorId = x.Type.CreatorId ?? Guid.Empty,
-                EditorId = x.Type.EditorId ?? Guid.Empty
+                ImageUrl = x.Type.ImageUrl
             } : null,
             Category = x.Type!.Category != null ? new CategoryDto
             {
                 Id = x.Type.Category.Id,
                 Description = x.Type.Category.Description,
-                CategoryName = x.Type.Category.CategoryName,
-                CreatedAt = x.Type.Category.CreatedAt,
-                EditedAt = x.Type.Category.EditedAt,
-                CreatorId = x.Type.Category.CreatorId ?? Guid.Empty,
-                EditorId = x.Type.Category.EditorId ?? Guid.Empty
+                CategoryName = x.Type.Category.CategoryName
             } : null,
             Model = x.Model != null ? new ModelDto
             {
                 Id = x.Model.Id,
                 Description = x.Model.Description,
-                ModelName = x.Model.ModelName,
-                CreatedAt = x.Model.CreatedAt,
-                EditedAt = x.Model.EditedAt,
-                CreatorId = x.Model.CreatorId ?? Guid.Empty,
-                EditorId = x.Model.EditorId ?? Guid.Empty
+                ModelName = x.Model.ModelName
             } : null,
             Room = x.RoomAssets!.Select(ra => new RoomBaseDto
             {
@@ -193,11 +177,7 @@ public class AssetService : BaseService, IAssetService
                 RoomTypeId = ra.Room.RoomTypeId,
                 Capacity = ra.Room.Capacity,
                 StatusId = ra.Room.StatusId,
-                FloorId = ra.Room.FloorId,
-                CreatedAt = ra.Room.CreatedAt,
-                EditedAt = ra.Room.EditedAt,
-                CreatorId = ra.Room.CreatorId ?? Guid.Empty,
-                EditorId = ra.Room.EditorId ?? Guid.Empty
+                FloorId = ra.Room.FloorId
             }).FirstOrDefault()
         }).ToListAsync();
 
