@@ -263,21 +263,25 @@ namespace API_FFMS.Services
             var relatedMediaFiles = await MainUnitOfWork.MediaFileRepository.GetQuery()
                 .Where(m => m!.ItemId == id && !m.IsReported).FirstOrDefaultAsync();
 
-            var listRelatedFiles = JsonConvert.DeserializeObject<List<MediaFileDetailDto>>(relatedMediaFiles.Uri);
+            var listRelatedFiles = new List<MediaFileDetailDto>();
+            if (relatedMediaFiles != null)
+            {
+                listRelatedFiles = JsonConvert.DeserializeObject<List<MediaFileDetailDto>>(relatedMediaFiles.Uri);
+            }
 
             var roomDataset = MainUnitOfWork.RoomRepository.GetQuery();
             var toRoom = await roomDataset
-                            .Where(r => r!.Id == existingTransport.ToRoomId)
-                            .Select(r => new RoomBaseDto
-                            {
-                                Id = r!.Id,
-                                RoomCode = r.RoomCode,
-                                RoomName = r.RoomName,
-                                StatusId = r.StatusId,
-                                FloorId = r.FloorId,
-                                CreatedAt = r.CreatedAt,
-                                EditedAt = r.EditedAt
-                            }).FirstOrDefaultAsync();
+                .Where(r => r!.Id == existingTransport.ToRoomId)
+                .Select(r => new RoomBaseDto
+                {
+                    Id = r!.Id,
+                    RoomCode = r.RoomCode,
+                    RoomName = r.RoomName,
+                    StatusId = r.StatusId,
+                    FloorId = r.FloorId,
+                    CreatedAt = r.CreatedAt,
+                    EditedAt = r.EditedAt
+                }).FirstOrDefaultAsync();
 
             var staffs = MainUnitOfWork.UserRepository.GetQuery();
             var assignTo = await staffs.Where(x => x!.Id == existingTransport.AssignedTo)
@@ -341,8 +345,7 @@ namespace API_FFMS.Services
 
             var reports = await MainUnitOfWork.MediaFileRepository.GetQuery()
                 .Where(m => m!.ItemId == id && m.IsReported).OrderByDescending(x => x!.CreatedAt).ToListAsync();
-
-            //TODO: orderby
+            
             var listReport = new List<MediaFileDto>();
             foreach (var report in reports)
             {

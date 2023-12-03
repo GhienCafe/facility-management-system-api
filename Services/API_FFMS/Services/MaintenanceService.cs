@@ -232,7 +232,10 @@ public class MaintenanceService : BaseService, IMaintenanceService
         var relatedMediaFiles = await MainUnitOfWork.MediaFileRepository.GetQuery()
             .Where(m => m!.ItemId == id && !m.IsReported).FirstOrDefaultAsync();
 
-        item.RelatedFiles = JsonConvert.DeserializeObject<List<MediaFileDetailDto>>(relatedMediaFiles.Uri);
+        if (relatedMediaFiles != null)
+        {
+            item.RelatedFiles = JsonConvert.DeserializeObject<List<MediaFileDetailDto>>(relatedMediaFiles.Uri);
+        }
 
         var reports = await MainUnitOfWork.MediaFileRepository.GetQuery()
             .Where(m => m!.ItemId == id && m.IsReported).OrderByDescending(x => x!.CreatedAt).ToListAsync();
