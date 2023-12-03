@@ -7,6 +7,7 @@ using MainData.Entities;
 using MainData.Repositories;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
+using Newtonsoft.Json;
 
 namespace API_FFMS.Services
 {
@@ -56,18 +57,23 @@ namespace API_FFMS.Services
             var repairation = createDto.ProjectTo<RepairCreateDto, Repair>();
             repairation.RequestCode = GenerateRequestCode();
 
-            var mediaFiles = new List<MediaFile>();
+            // For storing json in column
+            var mediaFiles = new List<Report>();
             if (createDto.RelatedFiles != null)
             {
-                foreach (var file in createDto.RelatedFiles)
+                var listUrisJson = JsonConvert.SerializeObject(createDto.RelatedFiles);
+                var report = new Report
                 {
-                    var newMediaFile = new MediaFile
-                    {
-                        FileName = file.FileName ?? "",
-                        Uri = file.Uri ?? ""
-                    };
-                    mediaFiles.Add(newMediaFile);
-                }
+                    FileName = string.Empty,
+                    Uri = listUrisJson,
+                    Content = string.Empty,
+                    FileType = FileType.File,
+                    ItemId = repairation.Id,
+                    IsVerified = false,
+                    IsReported = false,
+                };
+        
+                mediaFiles.Add(report);
             }
 
             if (!await _repairRepository.InsertRepair(repairation, mediaFiles, AccountId, CurrentDate))
@@ -91,7 +97,7 @@ namespace API_FFMS.Services
             }
 
             var repairs = new List<Repair>();
-            var relatedFiles = new List<MediaFile>();
+            var relatedFiles = new List<Report>();
 
             foreach (var create in createDtos)
             {
@@ -101,7 +107,7 @@ namespace API_FFMS.Services
                 {
                     foreach (var file in create.RelatedFiles)
                     {
-                        var relatedFile = new MediaFile
+                        var relatedFile = new Report
                         {
                             Id = Guid.NewGuid(),
                             FileName = file.FileName ?? "",
@@ -217,20 +223,32 @@ namespace API_FFMS.Services
                 repairation.User.RoleObj = repairation.User.Role?.GetValue();
             }
 
-            var relatedMediaFileQuery = MainUnitOfWork.MediaFileRepository.GetQuery().Where(m => m!.ItemId == id && !m.IsReported);
-            repairation.RelatedFiles = relatedMediaFileQuery.Select(x => new MediaFileDetailDto
-            {
-                FileName = x!.FileName,
-                Uri = x.Uri,
-            }).ToList();
+            //Related file
+            var relatedMediaFiles = await MainUnitOfWork.MediaFileRepository.GetQuery()
+                .Where(m => m!.ItemId == id && !m.IsReported).FirstOrDefaultAsync();
 
-            var mediaFileQuery = MainUnitOfWork.MediaFileRepository.GetQuery().Where(m => m!.ItemId == id && m.IsReported);
-            repairation.MediaFile = new MediaFileDto
+            repairation.RelatedFiles = JsonConvert.DeserializeObject<List<MediaFileDetailDto>>(relatedMediaFiles.Uri);
+
+            var reports = await MainUnitOfWork.MediaFileRepository.GetQuery()
+                .Where(m => m!.ItemId == id && m.IsReported).OrderByDescending(x => x!.CreatedAt).ToListAsync();
+
+            //TODO: orderby
+            repairation.Reports = new List<MediaFileDto>();
+            foreach (var report in reports)
             {
-                FileType = mediaFileQuery.Select(m => m!.FileType).FirstOrDefault(),
-                Uri = mediaFileQuery.Select(m => m!.Uri).ToList(),
-                Content = mediaFileQuery.Select(m => m!.Content).FirstOrDefault()
-            };
+                // Deserialize the URI string back into a List<string>
+                var uriList = JsonConvert.DeserializeObject<List<string>>(report.Uri);
+            
+                repairation.Reports.Add(new MediaFileDto
+                {
+                    ItemId = report.ItemId,
+                    Uri = uriList,
+                    FileType = report.FileType,
+                    Content = report.Content,
+                    IsReject = report.IsReject,
+                    RejectReason = report.RejectReason
+                });
+            }
 
             repairation.PriorityObj = repairation.Priority.GetValue();
             repairation.Status = repairation.Status;
@@ -407,7 +425,7 @@ namespace API_FFMS.Services
 
                 var mediaFileQuery = MainUnitOfWork.MediaFileRepository.GetQuery().Where(x => x!.ItemId == id).ToList();
 
-                var newMediaFile = updateDto.RelatedFiles.Select(dto => new MediaFile
+                var newMediaFile = updateDto.RelatedFiles.Select(dto => new Report
                 {
                     FileName = dto.FileName,
                     Uri = dto.Uri,
@@ -415,7 +433,7 @@ namespace API_FFMS.Services
                     CreatorId = AccountId,
                     ItemId = id,
                     FileType = FileType.File
-                }).ToList() ?? new List<MediaFile>();
+                }).ToList() ?? new List<Report>();
 
                 var additionMediaFiles = newMediaFile.Except(mediaFileQuery).ToList();
                 var removalMediaFiles = mediaFileQuery.Except(newMediaFile).ToList();
@@ -433,7 +451,7 @@ namespace API_FFMS.Services
             }
         }
 
-        public async Task<ApiResponse> UpdateStatus(Guid id, BaseUpdateStatusDto requestStatus)
+        public async Task<ApiResponse> UpdateStatus(Guid id, BaseUpdateStatusDto confirmDto)
         {
             var existingRepair = MainUnitOfWork.RepairRepository.GetQuery()
                                     .Include(t => t!.Asset)
@@ -444,9 +462,9 @@ namespace API_FFMS.Services
                 throw new ApiException("Không tìm thấy yêu cầu sửa chữa này", StatusCode.NOT_FOUND);
             }
 
-            existingRepair.Status = requestStatus.Status ?? existingRepair.Status;
+            existingRepair.Status = confirmDto.Status ?? existingRepair.Status;
 
-            if (!await _repairRepository.UpdateStatus(existingRepair, requestStatus.Status, AccountId, CurrentDate))
+            if (!await _repairRepository.UpdateStatus(existingRepair, confirmDto, AccountId, CurrentDate))
             {
                 throw new ApiException("Xác nhận trạng thái yêu cầu thất bại", StatusCode.SERVER_ERROR);
             }

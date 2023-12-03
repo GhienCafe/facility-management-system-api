@@ -53,7 +53,7 @@ public class InventoryConfigRepository : IInventoryConfigRepository
         }
     }
 
-    public async Task<bool> UpdateInsertInventoryConfig(InventoryCheckConfig inventoryConfig, List<InventoryDetailConfig> checkDates, Guid? creatorId, DateTime? now = null)
+    public async Task<bool> UpdateInsertInventoryConfig(InventoryCheckConfig inventoryConfig, List<InventoryDetailConfig>? checkDates, Guid? creatorId, DateTime? now = null)
     {
         await using var transaction = await _context.Database.BeginTransactionAsync();
 
@@ -86,11 +86,13 @@ public class InventoryConfigRepository : IInventoryConfigRepository
 
             _context.InventoryDetailConfigs.RemoveRange(existingCheckDates);
             
-            foreach (var checkDate in checkDates)
-            {
-                checkDate.InventoryConfigId = inventoryConfig.Id;
-                _context.InventoryDetailConfigs.Add(checkDate);
-            }
+           if (checkDates != null) {
+               foreach (var checkDate in checkDates)
+               {
+                   checkDate.InventoryConfigId = inventoryConfig.Id;
+                   _context.InventoryDetailConfigs.Add(checkDate);
+               }
+           }
 
             await _context.SaveChangesAsync();
             await transaction.CommitAsync();

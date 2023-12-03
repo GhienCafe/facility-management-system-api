@@ -4,6 +4,7 @@ using MainData;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace InitDatabase.Migrations
 {
     [DbContext(typeof(DatabaseContext))]
-    partial class DatabaseContextModelSnapshot : ModelSnapshot
+    [Migration("20231201112843_v5")]
+    partial class v5
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -754,6 +757,97 @@ namespace InitDatabase.Migrations
                     b.ToTable("Maintenances", (string)null);
                 });
 
+            modelBuilder.Entity("MainData.Entities.MediaFile", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("AssetCheckId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Content")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("CreatorId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("DeleterId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("EditedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("EditorId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("FileName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("FileType")
+                        .HasColumnType("int");
+
+                    b.Property<Guid?>("InventoryCheckId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("IsReported")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
+
+                    b.Property<bool>("IsVerified")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
+
+                    b.Property<Guid?>("ItemId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("MaintenanceId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("RawUri")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid?>("RepairId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("ReplacementId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("ReportId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("TransportationId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Uri")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AssetCheckId");
+
+                    b.HasIndex("InventoryCheckId");
+
+                    b.HasIndex("MaintenanceId");
+
+                    b.HasIndex("RepairId");
+
+                    b.HasIndex("ReportId");
+
+                    b.HasIndex("TransportationId");
+
+                    b.ToTable("MediaFiles", (string)null);
+                });
+
             modelBuilder.Entity("MainData.Entities.Model", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1032,9 +1126,6 @@ namespace InitDatabase.Migrations
                     b.Property<Guid?>("AssetCheckId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<string>("Content")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
@@ -1053,26 +1144,10 @@ namespace InitDatabase.Migrations
                     b.Property<Guid?>("EditorId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<string>("FileName")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("FileType")
-                        .HasColumnType("int");
-
                     b.Property<Guid?>("InventoryCheckId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<bool>("IsReject")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bit")
-                        .HasDefaultValue(false);
-
-                    b.Property<bool>("IsReported")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bit")
-                        .HasDefaultValue(false);
-
-                    b.Property<bool>("IsVerified")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("bit")
                         .HasDefaultValue(false);
@@ -1092,12 +1167,12 @@ namespace InitDatabase.Migrations
                     b.Property<Guid?>("ReplacementId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid?>("TransportationId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("Uri")
+                    b.Property<string>("ReportContent")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid?>("TransportationId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.HasKey("Id");
 
@@ -1108,6 +1183,8 @@ namespace InitDatabase.Migrations
                     b.HasIndex("MaintenanceId");
 
                     b.HasIndex("RepairId");
+
+                    b.HasIndex("ReplacementId");
 
                     b.HasIndex("TransportationId");
 
@@ -1872,6 +1949,51 @@ namespace InitDatabase.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("MainData.Entities.MediaFile", b =>
+                {
+                    b.HasOne("MainData.Entities.AssetCheck", "AssetCheck")
+                        .WithMany("MediaFiles")
+                        .HasForeignKey("AssetCheckId");
+
+                    b.HasOne("MainData.Entities.InventoryCheck", "InventoryCheck")
+                        .WithMany("MediaFiles")
+                        .HasForeignKey("InventoryCheckId");
+
+                    b.HasOne("MainData.Entities.Maintenance", "Maintenance")
+                        .WithMany("MediaFiles")
+                        .HasForeignKey("MaintenanceId");
+
+                    b.HasOne("MainData.Entities.Repair", "Repair")
+                        .WithMany("MediaFiles")
+                        .HasForeignKey("RepairId");
+
+                    b.HasOne("MainData.Entities.Replacement", "Replacement")
+                        .WithMany("MediaFiles")
+                        .HasForeignKey("RepairId");
+
+                    b.HasOne("MainData.Entities.Report", "Report")
+                        .WithMany("MediaFiles")
+                        .HasForeignKey("ReportId");
+
+                    b.HasOne("MainData.Entities.Transportation", "Transportation")
+                        .WithMany("MediaFiles")
+                        .HasForeignKey("TransportationId");
+
+                    b.Navigation("AssetCheck");
+
+                    b.Navigation("InventoryCheck");
+
+                    b.Navigation("Maintenance");
+
+                    b.Navigation("Repair");
+
+                    b.Navigation("Replacement");
+
+                    b.Navigation("Report");
+
+                    b.Navigation("Transportation");
+                });
+
             modelBuilder.Entity("MainData.Entities.Model", b =>
                 {
                     b.HasOne("MainData.Entities.Brand", "Brand")
@@ -1927,27 +2049,27 @@ namespace InitDatabase.Migrations
             modelBuilder.Entity("MainData.Entities.Report", b =>
                 {
                     b.HasOne("MainData.Entities.AssetCheck", "AssetCheck")
-                        .WithMany("MediaFiles")
+                        .WithMany("Reports")
                         .HasForeignKey("AssetCheckId");
 
                     b.HasOne("MainData.Entities.InventoryCheck", "InventoryCheck")
-                        .WithMany("MediaFiles")
+                        .WithMany("Reports")
                         .HasForeignKey("InventoryCheckId");
 
                     b.HasOne("MainData.Entities.Maintenance", "Maintenance")
-                        .WithMany("MediaFiles")
+                        .WithMany("Reports")
                         .HasForeignKey("MaintenanceId");
 
                     b.HasOne("MainData.Entities.Repair", "Repair")
-                        .WithMany("MediaFiles")
+                        .WithMany("Reports")
                         .HasForeignKey("RepairId");
 
                     b.HasOne("MainData.Entities.Replacement", "Replacement")
-                        .WithMany("MediaFiles")
-                        .HasForeignKey("RepairId");
+                        .WithMany("Reports")
+                        .HasForeignKey("ReplacementId");
 
                     b.HasOne("MainData.Entities.Transportation", "Transportation")
-                        .WithMany("MediaFiles")
+                        .WithMany("Reports")
                         .HasForeignKey("TransportationId");
 
                     b.Navigation("AssetCheck");
@@ -2091,6 +2213,8 @@ namespace InitDatabase.Migrations
             modelBuilder.Entity("MainData.Entities.AssetCheck", b =>
                 {
                     b.Navigation("MediaFiles");
+
+                    b.Navigation("Reports");
                 });
 
             modelBuilder.Entity("MainData.Entities.AssetType", b =>
@@ -2128,6 +2252,8 @@ namespace InitDatabase.Migrations
                     b.Navigation("InventoryCheckDetails");
 
                     b.Navigation("MediaFiles");
+
+                    b.Navigation("Reports");
                 });
 
             modelBuilder.Entity("MainData.Entities.InventoryCheckConfig", b =>
@@ -2138,6 +2264,8 @@ namespace InitDatabase.Migrations
             modelBuilder.Entity("MainData.Entities.Maintenance", b =>
                 {
                     b.Navigation("MediaFiles");
+
+                    b.Navigation("Reports");
                 });
 
             modelBuilder.Entity("MainData.Entities.Model", b =>
@@ -2148,9 +2276,18 @@ namespace InitDatabase.Migrations
             modelBuilder.Entity("MainData.Entities.Repair", b =>
                 {
                     b.Navigation("MediaFiles");
+
+                    b.Navigation("Reports");
                 });
 
             modelBuilder.Entity("MainData.Entities.Replacement", b =>
+                {
+                    b.Navigation("MediaFiles");
+
+                    b.Navigation("Reports");
+                });
+
+            modelBuilder.Entity("MainData.Entities.Report", b =>
                 {
                     b.Navigation("MediaFiles");
                 });
@@ -2182,6 +2319,8 @@ namespace InitDatabase.Migrations
             modelBuilder.Entity("MainData.Entities.Transportation", b =>
                 {
                     b.Navigation("MediaFiles");
+
+                    b.Navigation("Reports");
 
                     b.Navigation("TransportationDetails");
                 });

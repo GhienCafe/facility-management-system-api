@@ -7,8 +7,8 @@ namespace API_FFMS.Repositories;
 
 public interface ITaskRepository
 {
-    Task<bool> UpdateStatus(List<MediaFile> mediaFiles, RequestStatus? statusUpdate, Guid? editorId, DateTime? now = null);
-    Task<bool> InventoryCheckReport(List<MediaFile> mediaFiles, List<InventoryCheckDetail>? inventoryCheckDetails, RequestStatus? statusUpdate, Guid? editorId, DateTime? now = null);
+    Task<bool> UpdateStatus(List<Report> reports, RequestStatus? statusUpdate, Guid? editorId, DateTime? now = null);
+    Task<bool> InventoryCheckReport(List<Report> reports, List<InventoryCheckDetail>? inventoryCheckDetails, RequestStatus? statusUpdate, Guid? editorId, DateTime? now = null);
 }
 public class TaskRepository : ITaskRepository
 {
@@ -19,7 +19,7 @@ public class TaskRepository : ITaskRepository
         _context = context;
     }
 
-    public async Task<bool> InventoryCheckReport(List<MediaFile> mediaFiles, List<InventoryCheckDetail>? inventoryCheckDetails, RequestStatus? statusUpdate, Guid? editorId, DateTime? now = null)
+    public async Task<bool> InventoryCheckReport(List<Report> reports, List<InventoryCheckDetail>? inventoryCheckDetails, RequestStatus? statusUpdate, Guid? editorId, DateTime? now = null)
     {
         await _context.Database.BeginTransactionAsync();
         now ??= DateTime.UtcNow;
@@ -27,7 +27,7 @@ public class TaskRepository : ITaskRepository
         {
             var inventoryCheck = await _context.InventoryChecks
                                     .Include(x => x.InventoryCheckDetails)
-                                    .FirstOrDefaultAsync(x => x.Id == mediaFiles.First().ItemId);
+                                    .FirstOrDefaultAsync(x => x.Id == reports.First().ItemId);
             if (inventoryCheck != null)
             {
                 inventoryCheck.EditedAt = now.Value;
@@ -61,27 +61,26 @@ public class TaskRepository : ITaskRepository
                         }
                     }
 
-                    foreach (var mediaFile in mediaFiles)
+                    foreach (var report in reports)
                     {
-                        var newMediaFile = new MediaFile
+                        var newReport = new Report
                         {
                             Id = Guid.NewGuid(),
                             CreatedAt = now.Value,
                             CreatorId = editorId,
                             EditedAt = now.Value,
                             EditorId = editorId,
-                            FileName = mediaFile.FileName,
-                            RawUri = mediaFile.RawUri,
-                            Uri = mediaFile.Uri,
-                            FileType = mediaFile.FileType,
-                            Content = mediaFile.Content,
+                            FileName = report.FileName,
+                            Uri = report.Uri,
+                            FileType = report.FileType,
+                            Content = report.Content,
                             IsReported = true,
                             ItemId = inventoryCheck.Id
                         };
-                        _context.MediaFiles.Add(newMediaFile);
+                        _context.MediaFiles.Add(newReport);
                     }
 
-                    inventoryCheck.Result = mediaFiles.First().Content;
+                    inventoryCheck.Result = reports.First().Content;
                     inventoryCheck.Checkout = now.Value;
                     _context.Entry(inventoryCheck).State = EntityState.Modified;
                     var notification = new Notification
@@ -112,7 +111,7 @@ public class TaskRepository : ITaskRepository
         }
     }
 
-    public async Task<bool> UpdateStatus(List<MediaFile> mediaFiles, RequestStatus? statusUpdate, Guid? editorId, DateTime? now = null)
+    public async Task<bool> UpdateStatus(List<Report> reports, RequestStatus? statusUpdate, Guid? editorId, DateTime? now = null)
     {
         await _context.Database.BeginTransactionAsync();
         now ??= DateTime.UtcNow;
@@ -120,8 +119,7 @@ public class TaskRepository : ITaskRepository
         {
             //ASSET CHECK
             var assetCheck = await _context.AssetChecks
-                             .Include(x => x.Asset)
-                             .FirstOrDefaultAsync(x => x.Id == mediaFiles.First().ItemId);
+                             .FirstOrDefaultAsync(x => x.Id == reports.First().ItemId);
             if (assetCheck != null)
             {
                 assetCheck.EditedAt = now.Value;
@@ -152,28 +150,27 @@ public class TaskRepository : ITaskRepository
                 }
                 else if (assetCheck.Status == RequestStatus.Reported)
                 {
-                    foreach (var mediaFile in mediaFiles)
+                    foreach (var report in reports)
                     {
-                        var newMediaFile = new MediaFile
+                        var newReport = new Report
                         {
                             Id = Guid.NewGuid(),
                             CreatedAt = now.Value,
                             CreatorId = editorId,
                             EditedAt = now.Value,
                             EditorId = editorId,
-                            FileName = mediaFile.FileName,
-                            RawUri = mediaFile.RawUri,
-                            Uri = mediaFile.Uri,
-                            FileType = mediaFile.FileType,
-                            Content = mediaFile.Content,
+                            FileName = report.FileName,
+                            Uri = report.Uri,
+                            FileType = report.FileType,
+                            Content = report.Content,
                             IsReported = true,
                             ItemId = assetCheck.Id
                         };
-                        _context.MediaFiles.Add(newMediaFile);
+                        _context.MediaFiles.Add(newReport);
                     }
-                    assetCheck.Result = mediaFiles.First().Content;
+                    assetCheck.Result = reports.First().Content;
                     assetCheck.Checkout = now.Value;
-                    assetCheck.IsVerified = mediaFiles.First().IsVerified;
+                    assetCheck.IsVerified = reports.First().IsVerified;
                     assetCheck.CompletionDate = now.Value;
                     _context.Entry(assetCheck).State = EntityState.Modified;
 
@@ -243,7 +240,7 @@ public class TaskRepository : ITaskRepository
             //TRANSPORTATION
             var transportation = await _context.Transportations
                                 .Include(x => x.TransportationDetails)
-                                .FirstOrDefaultAsync(x => x.Id == mediaFiles.First().ItemId);
+                                .FirstOrDefaultAsync(x => x.Id == reports.First().ItemId);
             if (transportation != null)
             {
                 transportation.EditedAt = now.Value;
@@ -290,26 +287,25 @@ public class TaskRepository : ITaskRepository
                 }
                 else if (statusUpdate == RequestStatus.Reported)
                 {
-                    foreach (var mediaFile in mediaFiles)
+                    foreach (var report in reports)
                     {
-                        var newMediaFile = new MediaFile
+                        var newReport = new Report
                         {
                             Id = Guid.NewGuid(),
                             CreatedAt = now.Value,
                             CreatorId = editorId,
                             EditedAt = now.Value,
                             EditorId = editorId,
-                            FileName = mediaFile.FileName,
-                            RawUri = mediaFile.RawUri,
-                            Uri = mediaFile.Uri,
-                            FileType = mediaFile.FileType,
-                            Content = mediaFile.Content,
+                            FileName = report.FileName,
+                            Uri = report.Uri,
+                            FileType = report.FileType,
+                            Content = report.Content,
                             IsReported = true,
                             ItemId = transportation.Id
                         };
-                        _context.MediaFiles.Add(newMediaFile);
+                        _context.MediaFiles.Add(newReport);
                     }
-                    transportation.Result = mediaFiles.First().Content;
+                    transportation.Result = reports.First().Content;
                     transportation.Checkout = now.Value;
                     _context.Entry(transportation).State = EntityState.Modified;
 
@@ -337,8 +333,8 @@ public class TaskRepository : ITaskRepository
             //REPAIRATION
             var repairation = await _context.Repairs
                             .Include(x => x.Asset)
-                            .FirstOrDefaultAsync(x => x.Id == mediaFiles.First().ItemId);
-            if (repairation != null && repairation.IsInternal == true)
+                            .FirstOrDefaultAsync(x => x.Id == reports.First().ItemId);
+            if (repairation != null && repairation.IsInternal)
             {
                 repairation.EditedAt = now.Value;
                 repairation.EditorId = editorId;
@@ -384,26 +380,25 @@ public class TaskRepository : ITaskRepository
                 }
                 else if (statusUpdate == RequestStatus.Reported)
                 {
-                    foreach (var mediaFile in mediaFiles)
+                    foreach (var report in reports)
                     {
-                        var newMediaFile = new MediaFile
+                        var newReport = new Report
                         {
                             Id = Guid.NewGuid(),
                             CreatedAt = now.Value,
                             CreatorId = editorId,
                             EditedAt = now.Value,
                             EditorId = editorId,
-                            FileName = mediaFile.FileName,
-                            RawUri = mediaFile.RawUri,
-                            Uri = mediaFile.Uri,
-                            FileType = mediaFile.FileType,
-                            Content = mediaFile.Content,
+                            FileName = report.FileName,
+                            Uri = report.Uri,
+                            FileType = report.FileType,
+                            Content = report.Content,
                             IsReported = true,
                             ItemId = repairation.Id
                         };
-                        _context.MediaFiles.Add(newMediaFile);
+                        _context.MediaFiles.Add(newReport);
                     }
-                    repairation.Result = mediaFiles.First().Content;
+                    repairation.Result = reports.First().Content;
                     repairation.Checkout = now.Value;
                     _context.Entry(repairation).State = EntityState.Modified;
 
@@ -458,27 +453,26 @@ public class TaskRepository : ITaskRepository
                 }
                 else if (statusUpdate == RequestStatus.Reported)
                 {
-                    foreach (var mediaFile in mediaFiles)
+                    foreach (var report in reports)
                     {
-                        var newMediaFile = new MediaFile
+                        var newReport = new Report
                         {
                             Id = Guid.NewGuid(),
                             CreatedAt = now.Value,
                             CreatorId = editorId,
                             EditedAt = now.Value,
                             EditorId = editorId,
-                            FileName = mediaFile.FileName,
-                            RawUri = mediaFile.RawUri,
-                            Uri = mediaFile.Uri,
-                            FileType = mediaFile.FileType,
-                            Content = mediaFile.Content,
+                            FileName = report.FileName,
+                            Uri = report.Uri,
+                            FileType = report.FileType,
+                            Content = report.Content,
                             ItemId = repairation.Id,
                             IsReported = true,
                             RepairId = repairation.Id
                         };
-                        _context.MediaFiles.Add(newMediaFile);
+                        _context.MediaFiles.Add(newReport);
                     }
-                    repairation.Result = mediaFiles.First().Content;
+                    repairation.Result = reports.First().Content;
                     repairation.Checkout = now.Value;
                     _context.Entry(repairation).State = EntityState.Modified;
 
@@ -506,7 +500,7 @@ public class TaskRepository : ITaskRepository
             //REPLACEMENT
             var replacement = await _context.Replacements
                               .Include(x => x.Asset)
-                              .FirstOrDefaultAsync(x => x.Id == mediaFiles.First().ItemId);
+                              .FirstOrDefaultAsync(x => x.Id == reports.First().ItemId);
             if (replacement != null)
             {
                 replacement.EditedAt = now.Value;
@@ -558,26 +552,25 @@ public class TaskRepository : ITaskRepository
                 }
                 else if (replacement.Status == RequestStatus.Reported)
                 {
-                    foreach (var mediaFile in mediaFiles)
+                    foreach (var report in reports)
                     {
-                        var newMediaFile = new MediaFile
+                        var newReport = new Report
                         {
                             Id = Guid.NewGuid(),
                             CreatedAt = now.Value,
                             CreatorId = editorId,
                             EditedAt = now.Value,
                             EditorId = editorId,
-                            FileName = mediaFile.FileName,
-                            RawUri = mediaFile.RawUri,
-                            Uri = mediaFile.Uri,
-                            FileType = mediaFile.FileType,
-                            Content = mediaFile.Content,
+                            FileName = report.FileName,
+                            Uri = report.Uri,
+                            FileType = report.FileType,
+                            Content = report.Content,
                             IsReported = true,
                             ItemId = replacement.Id
                         };
-                        _context.MediaFiles.Add(newMediaFile);
+                        _context.MediaFiles.Add(newReport);
                     }
-                    replacement.Result = mediaFiles.First().Content;
+                    replacement.Result = reports.First().Content;
                     replacement.Checkout = now.Value;
                     _context.Entry(replacement).State = EntityState.Modified;
 
@@ -604,7 +597,7 @@ public class TaskRepository : ITaskRepository
             //MAINTENANCE
             var maintenance = await _context.Maintenances
                               .Include(x => x.Asset)
-                              .FirstOrDefaultAsync(x => x.Id == mediaFiles.First().ItemId);
+                              .FirstOrDefaultAsync(x => x.Id == reports.First().ItemId);
             if (maintenance != null && maintenance.IsInternal == true)
             {
                 maintenance.EditedAt = now.Value;
@@ -636,26 +629,25 @@ public class TaskRepository : ITaskRepository
                 }
                 else if (statusUpdate == RequestStatus.Reported)
                 {
-                    foreach (var mediaFile in mediaFiles)
+                    foreach (var report in reports)
                     {
-                        var newMediaFile = new MediaFile
+                        var newReport = new Report
                         {
                             Id = Guid.NewGuid(),
                             CreatedAt = now.Value,
                             CreatorId = editorId,
                             EditedAt = now.Value,
                             EditorId = editorId,
-                            FileName = mediaFile.FileName,
-                            RawUri = mediaFile.RawUri,
-                            Uri = mediaFile.Uri,
-                            FileType = mediaFile.FileType,
-                            Content = mediaFile.Content,
+                            FileName = report.FileName,
+                            Uri = report.Uri,
+                            FileType = report.FileType,
+                            Content = report.Content,
                             IsReported = true,
                             ItemId = maintenance.Id
                         };
-                        _context.MediaFiles.Add(newMediaFile);
+                        _context.MediaFiles.Add(newReport);
                     }
-                    maintenance.Result = mediaFiles.First().Content;
+                    maintenance.Result = reports.First().Content;
                     maintenance.Checkout = now.Value;
                     _context.Entry(maintenance).State = EntityState.Modified;
 
@@ -720,28 +712,26 @@ public class TaskRepository : ITaskRepository
                 }
                 else if (statusUpdate == RequestStatus.Reported)
                 {
-                    foreach (var mediaFile in mediaFiles)
+                    foreach (var report in reports)
                     {
-                        var newMediaFile = new MediaFile
+                        var newReport = new Report
                         {
                             Id = Guid.NewGuid(),
                             CreatedAt = now.Value,
                             CreatorId = editorId,
                             EditedAt = now.Value,
                             EditorId = editorId,
-                            FileName = mediaFile.FileName,
-                            //Key = mediaFile.Key,
-                            RawUri = mediaFile.RawUri,
-                            Uri = mediaFile.Uri,
-                            FileType = mediaFile.FileType,
-                            Content = mediaFile.Content,
+                            FileName = report.FileName,
+                            Uri = report.Uri,
+                            FileType = report.FileType,
+                            Content = report.Content,
                             IsReported = true,
                             ItemId = maintenance.Id,
                             MaintenanceId = maintenance.Id
                         };
-                        _context.MediaFiles.Add(newMediaFile);
+                        _context.MediaFiles.Add(newReport);
                     }
-                    maintenance.Result = mediaFiles.First().Content;
+                    maintenance.Result = reports.First().Content;
                     maintenance.Checkout = now.Value;
                     _context.Entry(maintenance).State = EntityState.Modified;
 

@@ -38,7 +38,7 @@ public class MainUnitOfWork : IDisposable
     public BaseRepository<AssetCheck> AssetCheckRepository => new(_context);
     public BaseRepository<TeamMember> TeamMemberRepository => new(_context);
     public BaseRepository<TransportationDetail> TransportationDetailRepository => new(_context);
-    public BaseRepository<MediaFile> MediaFileRepository => new(_context);
+    public BaseRepository<Report> MediaFileRepository => new(_context);
     public BaseRepository<Brand> BrandRepository => new(_context);
     public BaseRepository<InventoryCheck> InventoryCheckRepository => new(_context);
     public BaseRepository<InventoryCheckDetail> InventoryCheckDetailRepository => new(_context);

@@ -32,7 +32,7 @@ public class TransportDto : BaseDto
     public List<FromRoomAssetDto>? Assets { get; set; }
     public RoomBaseDto? ToRoom { get; set; }
     public List<MediaFileDetailDto>? RelatedFiles { get; set; }
-    public MediaFileDto? MediaFile { get; set; }
+    public List<MediaFileDto>? Reports { get; set; }
     public UserBaseDto? AssignTo { get; set; }
 }
 

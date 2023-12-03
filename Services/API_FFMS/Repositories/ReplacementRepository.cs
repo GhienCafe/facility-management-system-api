@@ -1,4 +1,5 @@
-﻿using AppCore.Extensions;
+﻿using API_FFMS.Dtos;
+using AppCore.Extensions;
 using DocumentFormat.OpenXml.Bibliography;
 using MainData;
 using MainData.Entities;
@@ -8,11 +9,11 @@ namespace API_FFMS.Repositories
 {
     public interface IReplacementRepository
     {
-        Task<bool> InsertReplacement(Replacement replacement, List<MediaFile> mediaFiles, Guid? creatorId, DateTime? now = null);
-        Task<bool> UpdateStatus(Replacement replacement, RequestStatus? statusUpdate, Guid? editorId, DateTime? now = null);
+        Task<bool> InsertReplacement(Replacement replacement, List<Report> mediaFiles, Guid? creatorId, DateTime? now = null);
+        Task<bool> UpdateStatus(Replacement replacement, BaseUpdateStatusDto? confirmDto, Guid? editorId, DateTime? now = null);
         Task<bool> DeleteReplacement(Replacement replacement, Guid? deleterId, DateTime? now = null);
         Task<bool> DeleteReplacements(List<Replacement?> replacements, Guid? deleterId, DateTime? now = null);
-        Task<bool> UpdateReplacement(Replacement replacement, List<MediaFile?> additionMediaFiles, List<MediaFile?> removalMediaFiles, Guid? editorId, DateTime? now = null);
+        Task<bool> UpdateReplacement(Replacement replacement, List<Report?> additionMediaFiles, List<Report?> removalMediaFiles, Guid? editorId, DateTime? now = null);
     }
     public class ReplacementRepository : IReplacementRepository
     {
@@ -213,7 +214,7 @@ namespace API_FFMS.Repositories
             }
         }
 
-        public async Task<bool> InsertReplacement(Replacement replacement, List<MediaFile> mediaFiles, Guid? creatorId, DateTime? now = null)
+        public async Task<bool> InsertReplacement(Replacement replacement, List<Report> mediaFiles, Guid? creatorId, DateTime? now = null)
         {
             await _context.Database.BeginTransactionAsync();
             now ??= DateTime.UtcNow;
@@ -259,7 +260,7 @@ namespace API_FFMS.Repositories
 
                 foreach (var mediaFile in mediaFiles)
                 {
-                    var newMediaFile = new MediaFile
+                    var newMediaFile = new Report
                     {
                         Id = Guid.NewGuid(),
                         CreatedAt = now.Value,
@@ -285,7 +286,7 @@ namespace API_FFMS.Repositories
             }
         }
 
-        public async Task<bool> UpdateReplacement(Replacement replacement, List<MediaFile?> additionMediaFiles, List<MediaFile?> removalMediaFiles, Guid? editorId, DateTime? now = null)
+        public async Task<bool> UpdateReplacement(Replacement replacement, List<Report?> additionMediaFiles, List<Report?> removalMediaFiles, Guid? editorId, DateTime? now = null)
         {
             await _context.Database.BeginTransactionAsync();
             now ??= DateTime.UtcNow;
@@ -333,7 +334,7 @@ namespace API_FFMS.Repositories
             }
         }
 
-        public async Task<bool> UpdateStatus(Replacement replacement, RequestStatus? statusUpdate, Guid? editorId, DateTime? now = null)
+        public async Task<bool> UpdateStatus(Replacement replacement, BaseUpdateStatusDto? confirmDto, Guid? editorId, DateTime? now = null)
         {
             await _context.Database.BeginTransactionAsync();
             now ??= DateTime.UtcNow;
@@ -341,7 +342,7 @@ namespace API_FFMS.Repositories
             {
                 replacement.EditedAt = now.Value;
                 replacement.EditorId = editorId;
-                replacement.Status = statusUpdate;
+                //replacement.Status = statusUpdate;
                 _context.Entry(replacement).State = EntityState.Modified;
 
                 //ASSET
@@ -360,8 +361,12 @@ namespace API_FFMS.Repositories
 
                 var newAssetLocation = await _context.Rooms
                                 .FirstOrDefaultAsync(x => x.Id == roomAssetNew!.RoomId && roomAssetNew.AssetId == newAsset!.Id);
-                if (replacement.Status == RequestStatus.Done)
+
+                var reports = await _context.MediaFiles.FirstOrDefaultAsync(x => x.ItemId == replacement.Id && !x.IsReject && x.IsReported);
+
+                if (confirmDto?.Status == RequestStatus.Done)
                 {
+                    replacement.Status = RequestStatus.Done;
                     replacement.CompletionDate = now.Value;
                     _context.Entry(replacement).State = EntityState.Modified;
 
@@ -424,9 +429,59 @@ namespace API_FFMS.Repositories
                         CreatedAt = now.Value,
                     };
                     _context.RoomAssets.Add(addRoomAsset);
+
+                    var notification = new Notification
+                    {
+                        CreatedAt = now.Value,
+                        Status = NotificationStatus.Waiting,
+                        Content = "Đã xác nhận",
+                        Title = "Đã xác nhận",
+                        Type = NotificationType.Task,
+                        CreatorId = editorId,
+                        IsRead = false,
+                        ItemId = replacement.Id,
+                        UserId = replacement.AssignedTo
+                    };
+                    await _context.Notifications.AddAsync(notification);
                 }
-                else if (replacement.Status == RequestStatus.Cancelled)
+                else if (confirmDto?.Status == RequestStatus.Cancelled && confirmDto.NeedAdditional)
                 {
+                    replacement.Status = RequestStatus.InProgress;
+                    _context.Entry(replacement).State = EntityState.Modified;
+
+                    if (reports != null)
+                    {
+                        reports.IsReject = true;
+                        reports.RejectReason = confirmDto.Reason;
+                        _context.Entry(reports).State = EntityState.Modified;
+                    }
+
+                    var notification = new Notification
+                    {
+                        CreatedAt = now.Value,
+                        Status = NotificationStatus.Waiting,
+                        Content = confirmDto.Reason ?? "Cần bổ sung",
+                        Title = "Báo cáo lại",
+                        Type = NotificationType.Task,
+                        CreatorId = editorId,
+                        IsRead = false,
+                        ItemId = replacement.Id,
+                        UserId = replacement.AssignedTo
+                    };
+                    await _context.Notifications.AddAsync(notification);
+                }
+                else if (confirmDto?.Status == RequestStatus.Cancelled && !confirmDto.NeedAdditional)
+                {
+                    replacement.Status = RequestStatus.Cancelled;
+                    _context.Entry(replacement).State = EntityState.Modified;
+
+                    if (reports != null)
+                    {
+                        reports.IsReject = true;
+                        reports.RejectReason = confirmDto.Reason;
+                        _context.Entry(reports).State = EntityState.Modified;
+                    }
+
                     asset!.Status = roomAsset!.Status;
                     asset.RequestStatus = RequestType.Operational;
                     asset.EditedAt = now.Value;
@@ -448,6 +503,20 @@ namespace API_FFMS.Repositories
                     newAssetLocation.EditedAt = now.Value;
                     newAssetLocation.EditorId = editorId;
                     _context.Entry(newAssetLocation).State = EntityState.Modified;
+
+                    var notification = new Notification
+                    {
+                        CreatedAt = now.Value,
+                        Status = NotificationStatus.Waiting,
+                        Content = confirmDto.Reason ?? "Hủy yêu cầu",
+                        Title = "Hủy yêu cầu",
+                        Type = NotificationType.Task,
+                        CreatorId = editorId,
+                        IsRead = false,
+                        ItemId = replacement.Id,
+                        UserId = replacement.AssignedTo
+                    };
+                    await _context.Notifications.AddAsync(notification);
                 }
 
                 await _context.SaveChangesAsync();

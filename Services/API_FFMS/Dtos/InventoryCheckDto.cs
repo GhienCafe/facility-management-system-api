@@ -35,7 +35,7 @@ public class InventoryCheckDto : BaseDto
     public List<RoomInventoryCheckDto>? Rooms { get; set; }
     //public RoomBaseDto? Room { get; set; }
     public List<MediaFileDetailDto>? RelatedFiles { get; set; }
-    public MediaFileDto? MediaFile { get; set; }
+    public List<MediaFileDto>? Reports { get; set; }
     public AssignedInventoryCheckDto? Staff { get; set; }
 }
 

@@ -7,6 +7,7 @@ using MainData.Entities;
 using MainData.Repositories;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
+using Newtonsoft.Json;
 
 namespace API_FFMS.Services;
 
@@ -59,18 +60,22 @@ public class AssetCheckService : BaseService, IAssetCheckService
         assetCheck.RequestCode = GenerateRequestCode();
         assetCheck.Priority ??= Priority.Medium;
 
-        var mediaFiles = new List<MediaFile>();
+        var mediaFiles = new List<Report>();
         if (createDto.RelatedFiles != null)
         {
-            foreach (var file in createDto.RelatedFiles)
+            var listUrisJson = JsonConvert.SerializeObject(createDto.RelatedFiles);
+            var report = new Report
             {
-                var newMediaFile = new MediaFile
-                {
-                    FileName = file.FileName ?? "",
-                    Uri = file.Uri ?? ""
-                };
-                mediaFiles.Add(newMediaFile);
-            }
+                FileName = string.Empty,
+                Uri = listUrisJson,
+                Content = string.Empty,
+                FileType = FileType.File,
+                ItemId = assetCheck.Id,
+                IsVerified = false,
+                IsReported = false,
+            };
+        
+            mediaFiles.Add(report);
         }
 
         if (!await _assetcheckRepository.InsertAssetCheck(assetCheck, mediaFiles, AccountId, CurrentDate))
@@ -202,20 +207,31 @@ public class AssetCheckService : BaseService, IAssetCheckService
                 x => x.Id == assetCheck.AssignedTo
             });
 
-        var relatedMediaFileQuery = MainUnitOfWork.MediaFileRepository.GetQuery().Where(m => m!.ItemId == id && !m.IsReported);
-        assetCheck.RelatedFiles = relatedMediaFileQuery.Select(x => new MediaFileDetailDto
-        {
-            FileName = x!.FileName,
-            Uri = x.Uri,
-        }).ToList();
+        var relatedMediaFiles = await MainUnitOfWork.MediaFileRepository.GetQuery()
+            .Where(m => m!.ItemId == id && !m.IsReported).FirstOrDefaultAsync();
 
-        var mediaFileQuery = MainUnitOfWork.MediaFileRepository.GetQuery().Where(m => m!.ItemId == id && m.IsReported);
-        assetCheck.MediaFile = new MediaFileDto
+        assetCheck.RelatedFiles = JsonConvert.DeserializeObject<List<MediaFileDetailDto>>(relatedMediaFiles.Uri);
+        
+        var reports = await MainUnitOfWork.MediaFileRepository.GetQuery()
+            .Where(m => m!.ItemId == id && m.IsReported).OrderByDescending(x => x!.CreatedAt).ToListAsync();
+
+        //TODO: orderby
+        assetCheck.Reports = new List<MediaFileDto>();
+        foreach (var report in reports)
         {
-            FileType = mediaFileQuery.Select(m => m!.FileType).FirstOrDefault(),
-            Uri = mediaFileQuery.Select(m => m!.Uri).ToList(),
-            Content = mediaFileQuery.Select(m => m!.Content).FirstOrDefault()
-        };
+            // Deserialize the URI string back into a List<string>
+            var uriList = JsonConvert.DeserializeObject<List<string>>(report.Uri);
+            
+            assetCheck.Reports.Add(new MediaFileDto
+            {
+                ItemId = report.ItemId,
+                Uri = uriList,
+                FileType = report.FileType,
+                Content = report.Content,
+                IsReject = report.IsReject,
+                RejectReason = report.RejectReason
+            });
+        }
 
         assetCheck.PriorityObj = assetCheck.Priority.GetValue();
         assetCheck.IsVerified = assetCheck.IsVerified;
@@ -384,7 +400,7 @@ public class AssetCheckService : BaseService, IAssetCheckService
 
         var mediaFileQuery = MainUnitOfWork.MediaFileRepository.GetQuery().Where(x => x!.ItemId == id).ToList();
 
-        var newMediaFile = updateDto.RelatedFiles.Select(dto => new MediaFile
+        var newMediaFile = updateDto.RelatedFiles.Select(dto => new Report
         {
             FileName = dto.FileName,
             Uri = dto.Uri,
@@ -392,7 +408,7 @@ public class AssetCheckService : BaseService, IAssetCheckService
             CreatorId = AccountId,
             ItemId = id,
             FileType = FileType.File
-        }).ToList() ?? new List<MediaFile>();
+        }).ToList() ?? new List<Report>();
 
         var additionMediaFiles = newMediaFile.Except(mediaFileQuery).ToList();
         var removalMediaFiles = mediaFileQuery.Except(newMediaFile).ToList();

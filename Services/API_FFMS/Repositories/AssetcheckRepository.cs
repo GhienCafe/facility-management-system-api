@@ -9,12 +9,12 @@ namespace API_FFMS.Repositories;
 
 public interface IAssetcheckRepository
 {
-    Task<bool> InsertAssetCheck(AssetCheck assetCheck, List<MediaFile> mediaFiles, Guid? creatorId, DateTime? now = null);
+    Task<bool> InsertAssetCheck(AssetCheck assetCheck, List<Report> mediaFiles, Guid? creatorId, DateTime? now = null);
     Task<bool> InsertAssetChecks(List<AssetCheck> assetChecks, Guid? creatorId, DateTime? now = null);
     Task<bool> UpdateStatus(AssetCheck assetCheck, RequestStatus? statusUpdate, Guid? editorId, DateTime? now = null);
     Task<bool> DeleteAssetCheck(AssetCheck assetCheck, Guid? deleterId, DateTime? now = null);
     Task<bool> DeleteAssetChecks(List<AssetCheck?> assetChecks, Guid? deleterId, DateTime? now = null);
-    Task<bool> UpdateAssetCheck(AssetCheck assetCheck, List<MediaFile?> additionMediaFiles, List<MediaFile?> removalMediaFiles, Guid? editorId, DateTime? now = null);
+    Task<bool> UpdateAssetCheck(AssetCheck assetCheck, List<Report?> additionMediaFiles, List<Report?> removalMediaFiles, Guid? editorId, DateTime? now = null);
 }
 public class AssetcheckRepository : IAssetcheckRepository
 {
@@ -256,7 +256,7 @@ public class AssetcheckRepository : IAssetcheckRepository
         }
     }
 
-    public async Task<bool> InsertAssetCheck(AssetCheck assetCheck, List<MediaFile> mediaFiles, Guid? creatorId, DateTime? now = null)
+    public async Task<bool> InsertAssetCheck(AssetCheck assetCheck, List<Report> mediaFiles, Guid? creatorId, DateTime? now = null)
     {
         await _context.Database.BeginTransactionAsync();
         now ??= DateTime.UtcNow;
@@ -295,7 +295,7 @@ public class AssetcheckRepository : IAssetcheckRepository
 
             foreach (var mediaFile in mediaFiles)
             {
-                var newMediaFile = new MediaFile
+                var newMediaFile = new Report
                 {
                     Id = Guid.NewGuid(),
                     CreatedAt = now.Value,
@@ -321,8 +321,8 @@ public class AssetcheckRepository : IAssetcheckRepository
         }
     }
 
-    public async Task<bool> UpdateAssetCheck(AssetCheck assetCheck, List<MediaFile?> additionMediaFiles,
-                                             List<MediaFile?> removalMediaFiles, Guid? editorId, DateTime? now = null)
+    public async Task<bool> UpdateAssetCheck(AssetCheck assetCheck, List<Report?> additionMediaFiles,
+                                             List<Report?> removalMediaFiles, Guid? editorId, DateTime? now = null)
     {
         await _context.Database.BeginTransactionAsync();
         now ??= DateTime.UtcNow;

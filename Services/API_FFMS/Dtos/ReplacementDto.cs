@@ -14,7 +14,7 @@ public class ReplaceDto : BaseRequestDto
     public AssetTypeDto? AssetType { get; set; }
     public CategoryDto? Category { get; set; }
     public List<MediaFileDetailDto>? RelatedFiles { get; set; }
-    public MediaFileDto? MediaFile { get; set; }
+    public List<MediaFileDto>? Reports { get; set; }
     public AssetLocation? AssetLocation { get; set; }
     public AssetLocation? NewAssetLocation { get; set; }
 }
