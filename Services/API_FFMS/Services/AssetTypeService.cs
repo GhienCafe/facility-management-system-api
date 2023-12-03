@@ -93,11 +93,7 @@ namespace API_FFMS.Services
                 Unit = x.Unit,
                 UnitObj = x.Unit.GetValue(),
                 ImageUrl = x.ImageUrl,
-                CategoryId = x.CategoryId,
-                CreatedAt = x.CreatedAt,
-                EditedAt = x.EditedAt,
-                EditorId = x.EditorId ?? Guid.Empty,
-                CreatorId = x.CreatorId ?? Guid.Empty
+                CategoryId = x.CategoryId
             }).ToListAsync();
 
             assetTypes = await _mapperRepository.MapCreator(assetTypes);

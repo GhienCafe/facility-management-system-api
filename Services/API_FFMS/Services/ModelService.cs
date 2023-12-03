@@ -115,10 +115,6 @@ namespace API_FFMS.Services
                 ModelName = x.ModelName,
                 Description = x.Description,
                 ImageUrl = x.ImageUrl,
-                CreatedAt = x.CreatedAt,
-                EditedAt = x.EditedAt,
-                CreatorId = x.CreatorId ?? Guid.Empty,
-                EditorId = x.EditorId ?? Guid.Empty,
                 Brand = x.Brand != null ? new BrandDto
                 {
                     Id = x.Brand!.Id,

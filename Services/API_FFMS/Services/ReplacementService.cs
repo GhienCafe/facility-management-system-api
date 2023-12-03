@@ -366,9 +366,7 @@ namespace API_FFMS.Services
                 AssetId = x.Replacement.AssetId,
                 NewAssetId = x.Replacement.NewAssetId,
                 CreatedAt = x.Replacement.CreatedAt,
-                EditedAt = x.Replacement.EditedAt,
                 CreatorId = x.Replacement.CreatorId ?? Guid.Empty,
-                EditorId = x.Replacement.EditorId ?? Guid.Empty,
                 Asset = new AssetBaseDto
                 {
                     Id = x.Asset.Id,
