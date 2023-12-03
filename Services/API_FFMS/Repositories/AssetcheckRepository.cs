@@ -1,6 +1,4 @@
 ﻿using AppCore.Extensions;
-using DocumentFormat.OpenXml.Bibliography;
-using DocumentFormat.OpenXml.Vml.Office;
 using MainData;
 using MainData.Entities;
 using Microsoft.EntityFrameworkCore;
@@ -11,9 +9,9 @@ public interface IAssetcheckRepository
 {
     Task<bool> InsertAssetCheck(AssetCheck assetCheck, List<Report> mediaFiles, Guid? creatorId, DateTime? now = null);
     Task<bool> InsertAssetChecks(List<AssetCheck> assetChecks, Guid? creatorId, DateTime? now = null);
-    Task<bool> UpdateStatus(AssetCheck assetCheck, RequestStatus? statusUpdate, Guid? editorId, DateTime? now = null);
+    Task<bool> ConfirmOrReject(AssetCheck assetCheck, RequestStatus? statusUpdate, Guid? editorId, DateTime? now = null);
     Task<bool> DeleteAssetCheck(AssetCheck assetCheck, Guid? deleterId, DateTime? now = null);
-    Task<bool> DeleteAssetChecks(List<AssetCheck?> assetChecks, Guid? deleterId, DateTime? now = null);
+    Task<bool> DeleteMulti(List<AssetCheck?> assetChecks, Guid? deleterId, DateTime? now = null);
     Task<bool> UpdateAssetCheck(AssetCheck assetCheck, List<Report?> additionMediaFiles, List<Report?> removalMediaFiles, Guid? editorId, DateTime? now = null);
 }
 public class AssetcheckRepository : IAssetcheckRepository
@@ -95,7 +93,7 @@ public class AssetcheckRepository : IAssetcheckRepository
         return requests;
     }
 
-    public async Task<bool> UpdateStatus(AssetCheck assetCheck, RequestStatus? statusUpdate, Guid? editorId, DateTime? now = null)
+    public async Task<bool> ConfirmOrReject(AssetCheck assetCheck, RequestStatus? statusUpdate, Guid? editorId, DateTime? now = null)
     {
         await _context.Database.BeginTransactionAsync();
         now ??= DateTime.UtcNow;
@@ -203,7 +201,7 @@ public class AssetcheckRepository : IAssetcheckRepository
         }
     }
 
-    public async Task<bool> DeleteAssetChecks(List<AssetCheck?> assetChecks, Guid? deleterId, DateTime? now = null)
+    public async Task<bool> DeleteMulti(List<AssetCheck?> assetChecks, Guid? deleterId, DateTime? now = null)
     {
         await _context.Database.BeginTransactionAsync();
         now ??= DateTime.UtcNow;

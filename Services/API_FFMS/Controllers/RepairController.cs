@@ -31,9 +31,9 @@ namespace API_FFMS.Controllers
 
         [HttpPost("multi")]
         [SwaggerOperation("Create new list repair")]
-        public async Task<ApiResponse> CreateRepairs([FromBody] List<RepairCreateDto> createDtos)
+        public async Task<ApiResponse> CreateMulti([FromBody] List<RepairCreateDto> createDtos)
         {
-            return await _service.CreateRepairs(createDtos);
+            return await _service.CreateMulti(createDtos);
         }
 
         [HttpGet("{id:guid}")]
@@ -58,17 +58,17 @@ namespace API_FFMS.Controllers
         }
 
         [HttpDelete]
-        [SwaggerOperation("Delete a repair")]
-        public async Task<ApiResponse> DeleteRepairs(DeleteMutilDto deleteDto)
+        [SwaggerOperation("Delete list repair requests")]
+        public async Task<ApiResponse> DeleteMulti(DeleteMutilDto deleteDto)
         {
-            return await _service.DeleteRepairs(deleteDto);
+            return await _service.DeleteMulti(deleteDto);
         }
 
         [HttpPut("status-update/{id:guid}")]
-        [SwaggerOperation("Update repair's status")]
-        public async Task<ApiResponse> UpdateStatus(Guid id, BaseUpdateStatusDto updateDto)
+        [SwaggerOperation("Confirm or reject repair request")]
+        public async Task<ApiResponse> ConfirmOrReject(Guid id, BaseUpdateStatusDto confirmOrRejectDto)
         {
-            return await _service.UpdateStatus(id, updateDto);
+            return await _service.ConfirmOrReject(id, confirmOrRejectDto);
         }
     }
 }

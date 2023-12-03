@@ -19,8 +19,8 @@ namespace API_FFMS.Services
         Task<ApiResponse<TransportDto>> GetTransportation(Guid id);
         //Task<ApiResponses<TransportDto>> GetTransportOfStaff(TransportOfStaffQueryDto queryDto);
         Task<ApiResponse> Delete(Guid id);
-        Task<ApiResponse> DeleteTransports(DeleteMutilDto deleteDto);
-        public Task<ApiResponse> UpdateStatus(Guid id, BaseUpdateStatusDto updateStatusDto);
+        Task<ApiResponse> DeleteMulti(DeleteMutilDto deleteDto);
+        public Task<ApiResponse> ConfirmOrReject(Guid id, BaseUpdateStatusDto confirmOrRejectDto);
     }
     public class TransportationService : BaseService, ITransportationService
     {
@@ -94,7 +94,7 @@ namespace API_FFMS.Services
             {
                 Id = Guid.NewGuid(),
                 RequestCode = GenerateRequestCode(),
-                Description = createDto.Description,
+                Description = createDto.Description ?? "Yêu cầu vận chuyển",
                 Notes = createDto.Notes,
                 Priority = createDto.Priority,
                 IsInternal = createDto.IsInternal,
@@ -210,14 +210,14 @@ namespace API_FFMS.Services
                 throw new ApiException($"Không thể xóa yêu cầu đang có trạng thái: {existingTransport.Status?.GetDisplayName()}", StatusCode.BAD_REQUEST);
             }
 
-            if (!await MainUnitOfWork.TransportationRepository.DeleteAsync(existingTransport, AccountId, CurrentDate))
+            if (!await _transportationRepository.DeleteTransport(existingTransport, AccountId, CurrentDate))
             {
                 throw new ApiException("Xóa thất bại", StatusCode.SERVER_ERROR);
             }
             return ApiResponse.Success();
         }
 
-        public async Task<ApiResponse> DeleteTransports(DeleteMutilDto deleteDto)
+        public async Task<ApiResponse> DeleteMulti(DeleteMutilDto deleteDto)
         {
             var transportDeleteds = await MainUnitOfWork.TransportationRepository.FindAsync(
                 new Expression<Func<Transportation, bool>>[]
@@ -563,7 +563,7 @@ namespace API_FFMS.Services
             return ApiResponse.Success("Cập nhật yêu cầu thành công");
         }
 
-        public async Task<ApiResponse> UpdateStatus(Guid id, BaseUpdateStatusDto requestStatus)
+        public async Task<ApiResponse> ConfirmOrReject(Guid id, BaseUpdateStatusDto confirmOrRejectDto)
         {
             var existingTransport = MainUnitOfWork.TransportationRepository.GetQuery()
                                     .Include(t => t!.TransportationDetails)
@@ -602,9 +602,9 @@ namespace API_FFMS.Services
                 throw new ApiException("Số lượng trang thiết bị vượt quá dung tích phòng", StatusCode.UNPROCESSABLE_ENTITY);
             }
 
-            existingTransport.Status = requestStatus.Status ?? existingTransport.Status;
+            existingTransport.Status = confirmOrRejectDto.Status ?? existingTransport.Status;
 
-            if (!await _transportationRepository.UpdateStatus(existingTransport, requestStatus, AccountId, CurrentDate))
+            if (!await _transportationRepository.ConfirmOrReject(existingTransport, confirmOrRejectDto, AccountId, CurrentDate))
             {
                 throw new ApiException("Cập nhật trạng thái yêu cầu thất bại", StatusCode.SERVER_ERROR);
             }

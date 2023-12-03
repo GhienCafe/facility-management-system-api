@@ -51,9 +51,9 @@ public class InventoryCheckController : BaseController
     }
 
     [HttpPut("status-update/{id:guid}")]
-    [SwaggerOperation("Update inventory check's status")]
-    public async Task<ApiResponse> UpdateStatus(Guid id, BaseUpdateStatusDto updateDto)
+    [SwaggerOperation("Confirm or reject inventory check request")]
+    public async Task<ApiResponse> ConfirmOrReject(Guid id, BaseUpdateStatusDto confirmOrRejectDto)
     {
-        return await _inventoryCheckService.UpdateStatus(id, updateDto);
+        return await _inventoryCheckService.ConfirmOrReject(id, confirmOrRejectDto);
     }
 }

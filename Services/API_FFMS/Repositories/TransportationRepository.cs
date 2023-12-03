@@ -1,6 +1,5 @@
 ﻿using API_FFMS.Dtos;
 using AppCore.Extensions;
-using DocumentFormat.OpenXml.Bibliography;
 using MainData;
 using MainData.Entities;
 using Microsoft.EntityFrameworkCore;
@@ -9,9 +8,9 @@ namespace API_FFMS.Repositories;
 
 public interface ITransportationRepository
 {
-    Task<bool> UpdateStatus(Transportation transportation, BaseUpdateStatusDto? confirmDto, Guid? editorId, DateTime? now = null);
+    Task<bool> ConfirmOrReject(Transportation transportation, BaseUpdateStatusDto? confirmOrRejectDto, Guid? editorId, DateTime? now = null);
     Task<bool> DeleteTransport(Transportation transportation, Guid? deleterId, DateTime? now = null);
-    Task<bool> DeleteTransports(List<Transportation?> transportations, Guid? deleterId, DateTime? now = null);
+    Task<bool> DeleteMulti(List<Transportation?> transportations, Guid? deleterId, DateTime? now = null);
     Task<bool> InsertTransportation(Transportation transportation, List<TransportationDetail> transportationDetails, List<Report>? mediaFiles, Guid? creatorId, DateTime? now = null);
     Task<bool> UpdateTransportation(Transportation transportation, List<Report?> additionMediaFiles, List<Report?> removalMediaFiles, Guid? editorId, DateTime? now = null);
 }
@@ -55,9 +54,9 @@ public class TransportationRepository : ITransportationRepository
                 var roomAsset = await _context.RoomAssets.FirstOrDefaultAsync(x => x.AssetId == asset.Id && x.ToDate == null);
                 var fromRoom = await _context.Rooms.FirstOrDefaultAsync(x => x.Id == roomAsset!.RoomId && roomAsset.AssetId == asset.Id);
 
-                if (asset != null)
+                if (asset.Type!.Unit == Unit.Individual || asset.Type.IsIdentified == true)
                 {
-                    asset.Status = AssetStatus.Operational;
+                    asset.RequestStatus = RequestType.Operational;
                     asset.EditedAt = now.Value;
                     asset.EditorId = deleterId;
                     _context.Entry(asset).State = EntityState.Modified;
@@ -78,14 +77,6 @@ public class TransportationRepository : ITransportationRepository
                     toRoom.EditorId = deleterId;
                     _context.Entry(toRoom).State = EntityState.Modified;
                 }
-
-                if (roomAsset != null)
-                {
-                    roomAsset.Status = AssetStatus.Operational;
-                    roomAsset.EditedAt = now.Value;
-                    roomAsset.EditorId = deleterId;
-                    _context.Entry(roomAsset).State = EntityState.Modified;
-                }
             }
             await _context.SaveChangesAsync();
             await _context.Database.CommitTransactionAsync();
@@ -98,7 +89,7 @@ public class TransportationRepository : ITransportationRepository
         }
     }
 
-    public async Task<bool> DeleteTransports(List<Transportation?> transportations, Guid? deleterId, DateTime? now = null)
+    public async Task<bool> DeleteMulti(List<Transportation?> transportations, Guid? deleterId, DateTime? now = null)
     {
         now ??= DateTime.UtcNow;
         using var transaction = await _context.Database.BeginTransactionAsync();
@@ -249,7 +240,7 @@ public class TransportationRepository : ITransportationRepository
         }
     }
 
-    public async Task<bool> UpdateStatus(Transportation transportation, BaseUpdateStatusDto? confirmDto, Guid? editorId, DateTime? now = null)
+    public async Task<bool> ConfirmOrReject(Transportation transportation, BaseUpdateStatusDto? confirmOrRejectDto, Guid? editorId, DateTime? now = null)
     {
         await _context.Database.BeginTransactionAsync();
         now ??= DateTime.UtcNow;
@@ -271,7 +262,7 @@ public class TransportationRepository : ITransportationRepository
 
 
 
-            if (confirmDto?.Status == RequestStatus.Done)
+            if (confirmOrRejectDto?.Status == RequestStatus.Done)
             {
                 foreach (var asset in assets)
                 {
@@ -371,7 +362,7 @@ public class TransportationRepository : ITransportationRepository
                 };
                 await _context.Notifications.AddAsync(notification);
             }
-            else if (confirmDto?.Status == RequestStatus.Cancelled && confirmDto.NeedAdditional)
+            else if (confirmOrRejectDto?.Status == RequestStatus.Cancelled && confirmOrRejectDto.NeedAdditional)
             {
                 transportation.Status = RequestStatus.InProgress;
                 _context.Entry(transportation).State = EntityState.Modified;
@@ -379,7 +370,7 @@ public class TransportationRepository : ITransportationRepository
                 if (reports != null)
                 {
                     reports.IsReject = true;
-                    reports.RejectReason = confirmDto.Reason;
+                    reports.RejectReason = confirmOrRejectDto.Reason;
                     _context.Entry(reports).State = EntityState.Modified;
                 }
 
@@ -387,7 +378,7 @@ public class TransportationRepository : ITransportationRepository
                 {
                     CreatedAt = now.Value,
                     Status = NotificationStatus.Waiting,
-                    Content = confirmDto.Reason ?? "Cần bổ sung",
+                    Content = confirmOrRejectDto.Reason ?? "Cần bổ sung",
                     Title = "Báo cáo lại",
                     Type = NotificationType.Task,
                     CreatorId = editorId,
@@ -397,7 +388,7 @@ public class TransportationRepository : ITransportationRepository
                 };
                 await _context.Notifications.AddAsync(notification);
             }
-            else if (confirmDto?.Status == RequestStatus.Cancelled && !confirmDto.NeedAdditional)
+            else if (confirmOrRejectDto?.Status == RequestStatus.Cancelled && !confirmOrRejectDto.NeedAdditional)
             {
                 transportation.Status = RequestStatus.Cancelled;
                 _context.Entry(transportation).State = EntityState.Modified;
@@ -405,7 +396,7 @@ public class TransportationRepository : ITransportationRepository
                 if (reports != null)
                 {
                     reports.IsReject = true;
-                    reports.RejectReason = confirmDto.Reason;
+                    reports.RejectReason = confirmOrRejectDto.Reason;
                     _context.Entry(reports).State = EntityState.Modified;
                 }
                 foreach (var asset in assets)
@@ -443,7 +434,7 @@ public class TransportationRepository : ITransportationRepository
                 {
                     CreatedAt = now.Value,
                     Status = NotificationStatus.Waiting,
-                    Content = confirmDto.Reason ?? "Hủy yêu cầu",
+                    Content = confirmOrRejectDto.Reason ?? "Hủy yêu cầu",
                     Title = "Hủy yêu cầu",
                     Type = NotificationType.Task,
                     CreatorId = editorId,
