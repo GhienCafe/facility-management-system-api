@@ -55,6 +55,7 @@ namespace API_FFMS.Services
             }
 
             var repairation = createDto.ProjectTo<RepairCreateDto, Repair>();
+            repairation.Description = createDto.Description ?? "Yêu cầu sửa chữa";
             repairation.RequestCode = GenerateRequestCode();
 
             // For storing json in column
@@ -102,6 +103,7 @@ namespace API_FFMS.Services
             foreach (var create in createDtos)
             {
                 var repair = create.ProjectTo<RepairCreateDto, Repair>();
+                repair.Description = create.Description ?? "Yêu cầu sửa chữa";
                 repair.Id = Guid.NewGuid();
                 if (create.RelatedFiles != null)
                 {

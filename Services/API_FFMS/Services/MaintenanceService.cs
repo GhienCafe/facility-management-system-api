@@ -269,6 +269,7 @@ public class MaintenanceService : BaseService, IMaintenanceService
             throw new ApiException("Trang thiết bị đang trong một yêu cầu khác", StatusCode.BAD_REQUEST);
 
         var maintenance = createDto.ProjectTo<MaintenanceCreateDto, Maintenance>();
+        maintenance.Description = createDto.Description ?? "Yêu cầu bảo trì";
         maintenance.RequestCode = GenerateRequestCode();
 
         // For storing json in column
@@ -370,6 +371,7 @@ public class MaintenanceService : BaseService, IMaintenanceService
         foreach (var create in createDtos)
         {
             var maintenance = create.ProjectTo<MaintenanceCreateDto, Maintenance>();
+            maintenance.Description = create.Description ?? "Yêu cầu bảo trì";
             maintenance.Id = Guid.NewGuid();
             if (create.RelatedFiles != null)
             {

@@ -63,6 +63,7 @@ namespace API_FFMS.Services
             }
 
             var replacement = createDto.ProjectTo<ReplaceCreateDto, Replacement>();
+            replacement.Description = createDto.Description ?? "Yêu cầu thay thế";
             replacement.RequestCode = GenerateRequestCode();
 
             // For storing json in column
@@ -141,7 +142,7 @@ namespace API_FFMS.Services
                 }
             }
 
-            if (!await _repository.DeleteReplacements(replaceDeleteds, AccountId, CurrentDate))
+            if (!await MainUnitOfWork.ReplacementRepository.DeleteAsync(replaceDeleteds, AccountId, CurrentDate))
             {
                 throw new ApiException("Xóa thất bại", StatusCode.SERVER_ERROR);
             }

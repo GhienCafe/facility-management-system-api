@@ -78,7 +78,7 @@ public class InventoryCheckService : BaseService, IInventoryCheckService
             var inventoryCheck = new InventoryCheck
             {
                 RequestCode = GenerateRequestCode(),
-                Description = createDto.Description,
+                Description = createDto.Description ?? "Yêu cầu kiểm kê",
                 Notes = createDto.Notes,
                 Priority = createDto.Priority,
                 IsInternal = createDto.IsInternal,

@@ -57,6 +57,7 @@ public class AssetCheckService : BaseService, IAssetCheckService
 
         var assetCheck = createDto.ProjectTo<AssetCheckCreateDto, AssetCheck>();
 
+        assetCheck.Description = createDto.Description ?? "Yêu cầu kiểm tra";
         assetCheck.RequestCode = GenerateRequestCode();
         assetCheck.Priority ??= Priority.Medium;
 

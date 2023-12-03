@@ -94,7 +94,7 @@ namespace API_FFMS.Services
             {
                 Id = Guid.NewGuid(),
                 RequestCode = GenerateRequestCode(),
-                Description = createDto.Description,
+                Description = createDto.Description ?? "Yêu cầu vận chuyển",
                 Notes = createDto.Notes,
                 Priority = createDto.Priority,
                 IsInternal = createDto.IsInternal,
