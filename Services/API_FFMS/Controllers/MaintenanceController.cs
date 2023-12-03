@@ -44,10 +44,10 @@ public class MaintenanceController : BaseController
     }
 
     [HttpPut("status-update/{id:guid}")]
-    [SwaggerOperation("Update maintenance's status")]
-    public async Task<ApiResponse> UpdateStatus(Guid id, BaseUpdateStatusDto updateDto)
+    [SwaggerOperation("Confirm or reject maintenance request")]
+    public async Task<ApiResponse> ConfirmOrReject(Guid id, BaseUpdateStatusDto updateDto)
     {
-        return await _maintenanceService.UpdateStatus(id, updateDto);
+        return await _maintenanceService.ConfirmOrReject(id, updateDto);
     }
 
     // [HttpDelete("{id}")]

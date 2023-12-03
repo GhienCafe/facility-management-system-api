@@ -10,9 +10,9 @@ namespace API_FFMS.Repositories
     public interface IReplacementRepository
     {
         Task<bool> InsertReplacement(Replacement replacement, List<Report> mediaFiles, Guid? creatorId, DateTime? now = null);
-        Task<bool> UpdateStatus(Replacement replacement, BaseUpdateStatusDto? confirmDto, Guid? editorId, DateTime? now = null);
+        Task<bool> ConfirmOrReject(Replacement replacement, BaseUpdateStatusDto? confirmOrRejectDto, Guid? editorId, DateTime? now = null);
         Task<bool> DeleteReplacement(Replacement replacement, Guid? deleterId, DateTime? now = null);
-        Task<bool> DeleteReplacements(List<Replacement?> replacements, Guid? deleterId, DateTime? now = null);
+        Task<bool> DeleteMulti(List<Replacement?> replacements, Guid? deleterId, DateTime? now = null);
         Task<bool> UpdateReplacement(Replacement replacement, List<Report?> additionMediaFiles, List<Report?> removalMediaFiles, Guid? editorId, DateTime? now = null);
     }
     public class ReplacementRepository : IReplacementRepository
@@ -61,7 +61,7 @@ namespace API_FFMS.Repositories
 
                 if (asset != null)
                 {
-                    asset.Status = AssetStatus.Operational;
+                    asset.RequestStatus = RequestType.Operational;
                     asset.EditedAt = now.Value;
                     asset.EditorId = deleterId;
                     _context.Entry(asset).State = EntityState.Modified;
@@ -69,26 +69,10 @@ namespace API_FFMS.Repositories
 
                 if (newAsset != null)
                 {
-                    newAsset.Status = AssetStatus.Operational;
+                    newAsset.RequestStatus = RequestType.Operational;
                     newAsset.EditedAt = now.Value;
                     newAsset.EditorId = deleterId;
                     _context.Entry(newAsset).State = EntityState.Modified;
-                }
-
-                if (roomAsset != null)
-                {
-                    roomAsset.Status = AssetStatus.Operational;
-                    roomAsset.EditorId = deleterId;
-                    roomAsset.EditedAt = now.Value;
-                    _context.Entry(roomAsset).State = EntityState.Modified;
-                }
-
-                if (roomAssetNew != null)
-                {
-                    roomAssetNew.Status = AssetStatus.Operational;
-                    roomAssetNew.EditorId = deleterId;
-                    roomAssetNew.EditedAt = now.Value;
-                    _context.Entry(roomAssetNew).State = EntityState.Modified;
                 }
 
                 if (assetLocation != null)
@@ -118,7 +102,7 @@ namespace API_FFMS.Repositories
             }
         }
 
-        public async Task<bool> DeleteReplacements(List<Replacement?> replacements, Guid? deleterId, DateTime? now = null)
+        public async Task<bool> DeleteMulti(List<Replacement?> replacements, Guid? deleterId, DateTime? now = null)
         {
             await _context.Database.BeginTransactionAsync();
             now ??= DateTime.UtcNow;
@@ -157,7 +141,7 @@ namespace API_FFMS.Repositories
 
                     if (asset != null)
                     {
-                        asset.Status = AssetStatus.Operational;
+                        asset.RequestStatus = RequestType.Operational;
                         asset.EditedAt = now.Value;
                         asset.EditorId = deleterId;
                         _context.Entry(asset).State = EntityState.Modified;
@@ -165,26 +149,10 @@ namespace API_FFMS.Repositories
 
                     if (newAsset != null)
                     {
-                        newAsset.Status = AssetStatus.Operational;
+                        newAsset.RequestStatus = RequestType.Operational;
                         newAsset.EditedAt = now.Value;
                         newAsset.EditorId = deleterId;
                         _context.Entry(newAsset).State = EntityState.Modified;
-                    }
-
-                    if (roomAsset != null)
-                    {
-                        roomAsset.Status = AssetStatus.Operational;
-                        roomAsset.EditorId = deleterId;
-                        roomAsset.EditedAt = now.Value;
-                        _context.Entry(roomAsset).State = EntityState.Modified;
-                    }
-
-                    if (roomAssetNew != null)
-                    {
-                        roomAssetNew.Status = AssetStatus.Operational;
-                        roomAssetNew.EditorId = deleterId;
-                        roomAssetNew.EditedAt = now.Value;
-                        _context.Entry(roomAssetNew).State = EntityState.Modified;
                     }
 
                     if (assetLocation != null)
@@ -334,7 +302,7 @@ namespace API_FFMS.Repositories
             }
         }
 
-        public async Task<bool> UpdateStatus(Replacement replacement, BaseUpdateStatusDto? confirmDto, Guid? editorId, DateTime? now = null)
+        public async Task<bool> ConfirmOrReject(Replacement replacement, BaseUpdateStatusDto? confirmOrRejectDto, Guid? editorId, DateTime? now = null)
         {
             await _context.Database.BeginTransactionAsync();
             now ??= DateTime.UtcNow;
@@ -364,7 +332,7 @@ namespace API_FFMS.Repositories
 
                 var reports = await _context.MediaFiles.FirstOrDefaultAsync(x => x.ItemId == replacement.Id && !x.IsReject && x.IsReported);
 
-                if (confirmDto?.Status == RequestStatus.Done)
+                if (confirmOrRejectDto?.Status == RequestStatus.Done)
                 {
                     replacement.Status = RequestStatus.Done;
                     replacement.CompletionDate = now.Value;
@@ -444,7 +412,7 @@ namespace API_FFMS.Repositories
                     };
                     await _context.Notifications.AddAsync(notification);
                 }
-                else if (confirmDto?.Status == RequestStatus.Cancelled && confirmDto.NeedAdditional)
+                else if (confirmOrRejectDto?.Status == RequestStatus.Cancelled && confirmOrRejectDto.NeedAdditional)
                 {
                     replacement.Status = RequestStatus.InProgress;
                     _context.Entry(replacement).State = EntityState.Modified;
@@ -452,7 +420,7 @@ namespace API_FFMS.Repositories
                     if (reports != null)
                     {
                         reports.IsReject = true;
-                        reports.RejectReason = confirmDto.Reason;
+                        reports.RejectReason = confirmOrRejectDto.Reason;
                         _context.Entry(reports).State = EntityState.Modified;
                     }
 
@@ -460,7 +428,7 @@ namespace API_FFMS.Repositories
                     {
                         CreatedAt = now.Value,
                         Status = NotificationStatus.Waiting,
-                        Content = confirmDto.Reason ?? "Cần bổ sung",
+                        Content = confirmOrRejectDto.Reason ?? "Cần bổ sung",
                         Title = "Báo cáo lại",
                         Type = NotificationType.Task,
                         CreatorId = editorId,
@@ -470,7 +438,7 @@ namespace API_FFMS.Repositories
                     };
                     await _context.Notifications.AddAsync(notification);
                 }
-                else if (confirmDto?.Status == RequestStatus.Cancelled && !confirmDto.NeedAdditional)
+                else if (confirmOrRejectDto?.Status == RequestStatus.Cancelled && !confirmOrRejectDto.NeedAdditional)
                 {
                     replacement.Status = RequestStatus.Cancelled;
                     _context.Entry(replacement).State = EntityState.Modified;
@@ -478,7 +446,7 @@ namespace API_FFMS.Repositories
                     if (reports != null)
                     {
                         reports.IsReject = true;
-                        reports.RejectReason = confirmDto.Reason;
+                        reports.RejectReason = confirmOrRejectDto.Reason;
                         _context.Entry(reports).State = EntityState.Modified;
                     }
 
@@ -508,7 +476,7 @@ namespace API_FFMS.Repositories
                     {
                         CreatedAt = now.Value,
                         Status = NotificationStatus.Waiting,
-                        Content = confirmDto.Reason ?? "Hủy yêu cầu",
+                        Content = confirmOrRejectDto.Reason ?? "Hủy yêu cầu",
                         Title = "Hủy yêu cầu",
                         Type = NotificationType.Task,
                         CreatorId = editorId,

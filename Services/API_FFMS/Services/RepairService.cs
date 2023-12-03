@@ -15,12 +15,12 @@ namespace API_FFMS.Services
     {
         Task<ApiResponses<RepairDto>> GetRepairs(RepairQueryDto queryDto);
         Task<ApiResponse> CreateRepair(RepairCreateDto createDto);
-        Task<ApiResponse> CreateRepairs(List<RepairCreateDto> createDtos);
+        Task<ApiResponse> CreateMulti(List<RepairCreateDto> createDtos);
         Task<ApiResponse<RepairDto>> GetRepair(Guid id);
         Task<ApiResponse> Update(Guid id, BaseRequestUpdateDto updateDto);
         Task<ApiResponse> Delete(Guid id);
-        Task<ApiResponse> DeleteRepairs(DeleteMutilDto deleteDto);
-        Task<ApiResponse> UpdateStatus(Guid id, BaseUpdateStatusDto updateStatusDto);
+        Task<ApiResponse> DeleteMulti(DeleteMutilDto deleteDto);
+        Task<ApiResponse> ConfirmOrReject(Guid id, BaseUpdateStatusDto confirmOrRejectDto);
     }
     public class RepairService : BaseService, IRepairService
     {
@@ -83,7 +83,7 @@ namespace API_FFMS.Services
             return ApiResponse.Created("Gửi yêu cầu thành công");
         }
 
-        public async Task<ApiResponse> CreateRepairs(List<RepairCreateDto> createDtos)
+        public async Task<ApiResponse> CreateMulti(List<RepairCreateDto> createDtos)
         {
             var assets = await MainUnitOfWork.AssetRepository.FindAsync(
                 new Expression<Func<Asset, bool>>[]
@@ -124,7 +124,7 @@ namespace API_FFMS.Services
                 repairs.Add(repair);
             }
 
-            if (!await _repairRepository.InsertRepairs(repairs, relatedFiles, AccountId, CurrentDate))
+            if (!await _repairRepository.CreateMulti(repairs, relatedFiles, AccountId, CurrentDate))
                 throw new ApiException("Tạo yêu cầu thất bại", StatusCode.SERVER_ERROR);
 
             return ApiResponse.Created("Gửi yêu cầu thành công");
@@ -150,14 +150,14 @@ namespace API_FFMS.Services
                 throw new ApiException($"Không thể xóa yêu cầu đang có trạng thái: {existingRepair.Status?.GetDisplayName()}", StatusCode.BAD_REQUEST);
             }
 
-            if (!await MainUnitOfWork.RepairRepository.DeleteAsync(existingRepair, AccountId, CurrentDate))
+            if (!await _repairRepository.DeleteRepair(existingRepair, AccountId, CurrentDate))
             {
                 throw new ApiException("Xóa thất bại", StatusCode.SERVER_ERROR);
             }
             return ApiResponse.Success();
         }
 
-        public async Task<ApiResponse> DeleteRepairs(DeleteMutilDto deleteDto)
+        public async Task<ApiResponse> DeleteMulti(DeleteMutilDto deleteDto)
         {
             var replairDeleteds = await MainUnitOfWork.RepairRepository.FindAsync(
                 new Expression<Func<Repair, bool>>[]
@@ -179,7 +179,7 @@ namespace API_FFMS.Services
                 }
             }
 
-            if (!await MainUnitOfWork.RepairRepository.DeleteAsync(repairs, AccountId, CurrentDate))
+            if (!await _repairRepository.DeleteMulti(repairs, AccountId, CurrentDate))
             {
                 throw new ApiException("Xóa thất bại", StatusCode.SERVER_ERROR);
             }
@@ -459,7 +459,7 @@ namespace API_FFMS.Services
             }
         }
 
-        public async Task<ApiResponse> UpdateStatus(Guid id, BaseUpdateStatusDto confirmDto)
+        public async Task<ApiResponse> ConfirmOrReject(Guid id, BaseUpdateStatusDto confirmOrRejectDto)
         {
             var existingRepair = MainUnitOfWork.RepairRepository.GetQuery()
                                     .Include(t => t!.Asset)
@@ -470,9 +470,9 @@ namespace API_FFMS.Services
                 throw new ApiException("Không tìm thấy yêu cầu sửa chữa này", StatusCode.NOT_FOUND);
             }
 
-            existingRepair.Status = confirmDto.Status ?? existingRepair.Status;
+            existingRepair.Status = confirmOrRejectDto.Status ?? existingRepair.Status;
 
-            if (!await _repairRepository.UpdateStatus(existingRepair, confirmDto, AccountId, CurrentDate))
+            if (!await _repairRepository.ConfirmOrReject(existingRepair, confirmOrRejectDto, AccountId, CurrentDate))
             {
                 throw new ApiException("Xác nhận trạng thái yêu cầu thất bại", StatusCode.SERVER_ERROR);
             }

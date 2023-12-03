@@ -37,10 +37,10 @@ namespace API_FFMS.Controllers
         }
 
         [HttpDelete]
-        [SwaggerOperation("Delete list transportation")]
-        public async Task<ApiResponse> DeleteTransports(DeleteMutilDto deleteDto)
+        [SwaggerOperation("Delete list transportations")]
+        public async Task<ApiResponse> DeleteMulti(DeleteMutilDto deleteDto)
         {
-            return await _service.DeleteTransports(deleteDto);
+            return await _service.DeleteMulti(deleteDto);
         }
 
         [HttpGet("{id:guid}")]
@@ -58,10 +58,10 @@ namespace API_FFMS.Controllers
         }
 
         [HttpPut("status-update/{id:guid}")]
-        [SwaggerOperation("Update transportation's status")]
-        public async Task<ApiResponse> UpdateStatus(Guid id, BaseUpdateStatusDto updateDto)
+        [SwaggerOperation("Confirm or reject transportation")]
+        public async Task<ApiResponse> ConfirmOrReject(Guid id, BaseUpdateStatusDto confirmOrRejectDto)
         {
-            return await _service.UpdateStatus(id, updateDto);
+            return await _service.ConfirmOrReject(id, confirmOrRejectDto);
         }
     }
 }

@@ -37,10 +37,10 @@ public class AssetCheckController : BaseController
     }
 
     [HttpDelete]
-    [SwaggerOperation("Delete list asset check")]
-    public async Task<ApiResponse> DeleteAssetChecks(DeleteMutilDto deleteDto)
+    [SwaggerOperation("Delete list asset checks")]
+    public async Task<ApiResponse> DeleteMulti(DeleteMutilDto deleteDto)
     {
-        return await _assetCheckService.DeleteAssetChecks(deleteDto);
+        return await _assetCheckService.DeleteMulti(deleteDto);
     }
 
     [HttpPost]
@@ -65,9 +65,9 @@ public class AssetCheckController : BaseController
     }
 
     [HttpPut("status-update/{id:guid}")]
-    [SwaggerOperation("Update repairation's status")]
-    public async Task<ApiResponse> UpdateStatus(Guid id, AssetCheckUpdateStatusDto updateDto)
+    [SwaggerOperation("Confirm or reject request")]
+    public async Task<ApiResponse> ConfirmOrReject(Guid id, AssetCheckUpdateStatusDto updateDto)
     {
-        return await _assetCheckService.UpdateStatus(id, updateDto);
+        return await _assetCheckService.ConfirmOrReject(id, updateDto);
     }
 }

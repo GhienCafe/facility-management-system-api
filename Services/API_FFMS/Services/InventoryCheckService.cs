@@ -17,7 +17,7 @@ public interface IInventoryCheckService : IBaseService
     Task<ApiResponses<InventoryCheckDto>> GetInventoryChecks(InventoryCheckQueryDto queryDto);
     Task<ApiResponse> Update(Guid id, BaseRequestUpdateDto updateDto);
     Task<ApiResponse> Delete(Guid id);
-    Task<ApiResponse> UpdateStatus(Guid id, BaseUpdateStatusDto updateStatusDto);
+    Task<ApiResponse> ConfirmOrReject(Guid id, BaseUpdateStatusDto confirmOrRejectDto);
 }
 
 
@@ -430,7 +430,7 @@ public class InventoryCheckService : BaseService, IInventoryCheckService
         return newRequestCode;
     }
 
-    public async Task<ApiResponse> UpdateStatus(Guid id, BaseUpdateStatusDto confirmDto)
+    public async Task<ApiResponse> ConfirmOrReject(Guid id, BaseUpdateStatusDto confirmOrRejectDto)
     {
         var existingInventCheck = MainUnitOfWork.InventoryCheckRepository.GetQuery()
                                     .Where(x => x.Id == id)
@@ -440,10 +440,10 @@ public class InventoryCheckService : BaseService, IInventoryCheckService
             throw new ApiException("Không tìm thấy yêu cầu này", StatusCode.NOT_FOUND);
         }
 
-        existingInventCheck.Status = confirmDto.Status ?? existingInventCheck.Status;
+        existingInventCheck.Status = confirmOrRejectDto.Status ?? existingInventCheck.Status;
 
 
-        if (!await _repository.UpdateInventoryCheckStatus(existingInventCheck, confirmDto, AccountId, CurrentDate))
+        if (!await _repository.ConfirmOrReject(existingInventCheck, confirmOrRejectDto, AccountId, CurrentDate))
         {
             throw new ApiException("Xác nhận yêu cầu thất bại", StatusCode.SERVER_ERROR);
         }

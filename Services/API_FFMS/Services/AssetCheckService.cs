@@ -14,12 +14,12 @@ namespace API_FFMS.Services;
 public interface IAssetCheckService : IBaseService
 {
     Task<ApiResponses<AssetCheckDto>> GetAssetChecks(AssetCheckQueryDto queryDto);
-    Task<ApiResponse> DeleteAssetChecks(DeleteMutilDto deleteDto);
+    Task<ApiResponse> DeleteMulti(DeleteMutilDto deleteDto);
     Task<ApiResponse> Delete(Guid id);
     Task<ApiResponse> Create(AssetCheckCreateDto createDto);
     Task<ApiResponse<AssetCheckDto>> GetAssetCheck(Guid id);
     Task<ApiResponse> Update(Guid id, AssetCheckUpdateDto updateDto);
-    Task<ApiResponse> UpdateStatus(Guid id, AssetCheckUpdateStatusDto requestStatus);
+    Task<ApiResponse> ConfirmOrReject(Guid id, AssetCheckUpdateStatusDto requestStatus);
     Task<ApiResponse> CreateItems(List<AssetCheckCreateDto> createDtos);
 
 }
@@ -107,14 +107,14 @@ public class AssetCheckService : BaseService, IAssetCheckService
             throw new ApiException($"Không thể xóa yêu cầu đang có trạng thái: {existingAssetcheck.Status?.GetDisplayName()}", StatusCode.BAD_REQUEST);
         }
 
-        if (!await MainUnitOfWork.AssetCheckRepository.DeleteAsync(existingAssetcheck, AccountId, CurrentDate))
+        if (!await _assetcheckRepository.DeleteAssetCheck(existingAssetcheck, AccountId, CurrentDate))
         {
             throw new ApiException("Xóa thất bại", StatusCode.SERVER_ERROR);
         }
         return ApiResponse.Success();
     }
 
-    public async Task<ApiResponse> DeleteAssetChecks(DeleteMutilDto deleteDto)
+    public async Task<ApiResponse> DeleteMulti(DeleteMutilDto deleteDto)
     {
         var assetcheckDeleteds = await MainUnitOfWork.AssetCheckRepository.FindAsync(
                                 new Expression<Func<AssetCheck, bool>>[]
@@ -136,7 +136,7 @@ public class AssetCheckService : BaseService, IAssetCheckService
             }
         }
 
-        if (!await MainUnitOfWork.AssetCheckRepository.DeleteAsync(assetChecks, AccountId, CurrentDate))
+        if (!await _assetcheckRepository.DeleteMulti(assetChecks, AccountId, CurrentDate))
         {
             throw new ApiException("Xóa thất bại", StatusCode.SERVER_ERROR);
         }
@@ -425,7 +425,7 @@ public class AssetCheckService : BaseService, IAssetCheckService
         return ApiResponse.Success("Cập nhật thành công");
     }
 
-    public async Task<ApiResponse> UpdateStatus(Guid id, AssetCheckUpdateStatusDto requestStatus)
+    public async Task<ApiResponse> ConfirmOrReject(Guid id, AssetCheckUpdateStatusDto confirmOrRejectDto)
     {
         var existingAssetCheck = MainUnitOfWork.AssetCheckRepository.GetQuery()
                                 .Include(t => t!.Asset)
@@ -436,10 +436,10 @@ public class AssetCheckService : BaseService, IAssetCheckService
             throw new ApiException("Không tìm thấy yêu cầu kiểm tra này", StatusCode.NOT_FOUND);
         }
 
-        existingAssetCheck.Status = requestStatus.Status ?? existingAssetCheck.Status;
-        existingAssetCheck.IsVerified = requestStatus.IsVerified ?? existingAssetCheck.IsVerified;
+        existingAssetCheck.Status = confirmOrRejectDto.Status ?? existingAssetCheck.Status;
+        existingAssetCheck.IsVerified = confirmOrRejectDto.IsVerified ?? existingAssetCheck.IsVerified;
 
-        if (!await _assetcheckRepository.UpdateStatus(existingAssetCheck, requestStatus.Status, AccountId, CurrentDate))
+        if (!await _assetcheckRepository.ConfirmOrReject(existingAssetCheck, confirmOrRejectDto.Status, AccountId, CurrentDate))
         {
             throw new ApiException("Cập nhật trạng thái yêu cầu thất bại", StatusCode.SERVER_ERROR);
         }

@@ -1,6 +1,5 @@
 ﻿using API_FFMS.Dtos;
 using AppCore.Extensions;
-using DocumentFormat.OpenXml.Bibliography;
 using MainData;
 using MainData.Entities;
 using Microsoft.EntityFrameworkCore;
@@ -10,9 +9,9 @@ namespace API_FFMS.Repositories;
 public interface IMaintenanceRepository
 {
     Task<bool> InsertMaintenance(Maintenance maintenance, List<Report> mediaFiles, Guid? creatorId, DateTime? now = null);
-    Task<bool> UpdateStatus(Maintenance maintenance, BaseUpdateStatusDto? confirmDto, Guid? editorId, DateTime? now = null);
+    Task<bool> ConfirmOrReject(Maintenance maintenance, BaseUpdateStatusDto? confirmOrRejectDto, Guid? editorId, DateTime? now = null);
     Task<bool> InsertMaintenances(List<Maintenance> maintenances, List<Report>? mediaFiles, Guid? creatorId, DateTime? now = null);
-    Task<bool> DeleteMaintenances(List<Maintenance?> maintenances, Guid? deleterId, DateTime? now = null);
+    Task<bool> DeleteMulti(List<Maintenance?> maintenances, Guid? deleterId, DateTime? now = null);
     Task<bool> DeleteMaintenance(Maintenance maintenance, Guid? deleterId, DateTime? now = null);
     Task<bool> UpdateMaintenance(Maintenance maintenance, List<Report?> additionMediaFiles, List<Report?> removalMediaFiles, Guid? editorId, DateTime? now = null);
 }
@@ -101,7 +100,7 @@ public class MaintenanceRepository : IMaintenanceRepository
         return requests;
     }
 
-    public async Task<bool> UpdateStatus(Maintenance maintenance, BaseUpdateStatusDto? confirmDto, Guid? editorId, DateTime? now = null)
+    public async Task<bool> ConfirmOrReject(Maintenance maintenance, BaseUpdateStatusDto? confirmOrRejectDto, Guid? editorId, DateTime? now = null)
     {
         await _context.Database.BeginTransactionAsync();
         now ??= DateTime.UtcNow;
@@ -123,7 +122,7 @@ public class MaintenanceRepository : IMaintenanceRepository
 
             if (maintenance.IsInternal == true)
             {
-                if (confirmDto?.Status == RequestStatus.Done)
+                if (confirmOrRejectDto?.Status == RequestStatus.Done)
                 {
                     asset!.RequestStatus = RequestType.Operational;
                     asset.Status = AssetStatus.Operational;
@@ -156,7 +155,7 @@ public class MaintenanceRepository : IMaintenanceRepository
                     };
                     await _context.Notifications.AddAsync(notification);
                 }
-                else if (confirmDto?.Status == RequestStatus.Cancelled && confirmDto.NeedAdditional)
+                else if (confirmOrRejectDto?.Status == RequestStatus.Cancelled && confirmOrRejectDto.NeedAdditional)
                 {
                     maintenance.Status = RequestStatus.InProgress;
                     _context.Entry(maintenance).State = EntityState.Modified;
@@ -164,7 +163,7 @@ public class MaintenanceRepository : IMaintenanceRepository
                     if (reports != null)
                     {
                         reports.IsReject = true;
-                        reports.RejectReason = confirmDto.Reason;
+                        reports.RejectReason = confirmOrRejectDto.Reason;
                         _context.Entry(reports).State = EntityState.Modified;
                     }
 
@@ -172,7 +171,7 @@ public class MaintenanceRepository : IMaintenanceRepository
                     {
                         CreatedAt = now.Value,
                         Status = NotificationStatus.Waiting,
-                        Content = confirmDto.Reason ?? "Cần bổ sung",
+                        Content = confirmOrRejectDto.Reason ?? "Cần bổ sung",
                         Title = "Báo cáo lại",
                         Type = NotificationType.Task,
                         CreatorId = editorId,
@@ -182,7 +181,7 @@ public class MaintenanceRepository : IMaintenanceRepository
                     };
                     await _context.Notifications.AddAsync(notification);
                 }
-                else if (confirmDto?.Status == RequestStatus.Cancelled && !confirmDto.NeedAdditional)
+                else if (confirmOrRejectDto?.Status == RequestStatus.Cancelled && !confirmOrRejectDto.NeedAdditional)
                 {
                     maintenance.Status = RequestStatus.Cancelled;
                     _context.Entry(maintenance).State = EntityState.Modified;
@@ -190,7 +189,7 @@ public class MaintenanceRepository : IMaintenanceRepository
                     if (reports != null)
                     {
                         reports.IsReject = true;
-                        reports.RejectReason = confirmDto.Reason;
+                        reports.RejectReason = confirmOrRejectDto.Reason;
                         _context.Entry(reports).State = EntityState.Modified;
                     }
 
@@ -198,7 +197,7 @@ public class MaintenanceRepository : IMaintenanceRepository
                     {
                         CreatedAt = now.Value,
                         Status = NotificationStatus.Waiting,
-                        Content = confirmDto.Reason ?? "Hủy yêu cầu",
+                        Content = confirmOrRejectDto.Reason ?? "Hủy yêu cầu",
                         Title = "Hủy yêu cầu",
                         Type = NotificationType.Task,
                         CreatorId = editorId,
@@ -216,7 +215,7 @@ public class MaintenanceRepository : IMaintenanceRepository
             }
             else if (maintenance.IsInternal == false)
             {
-                if (confirmDto?.Status == RequestStatus.Done)
+                if (confirmOrRejectDto?.Status == RequestStatus.Done)
                 {
                     maintenance.CompletionDate = now.Value;
                     _context.Entry(maintenance).State = EntityState.Modified;
@@ -259,7 +258,7 @@ public class MaintenanceRepository : IMaintenanceRepository
                     };
                     await _context.Notifications.AddAsync(notification);
                 }
-                else if (confirmDto?.Status == RequestStatus.Cancelled && confirmDto.NeedAdditional)
+                else if (confirmOrRejectDto?.Status == RequestStatus.Cancelled && confirmOrRejectDto.NeedAdditional)
                 {
                     maintenance.Status = RequestStatus.InProgress;
                     _context.Entry(maintenance).State = EntityState.Modified;
@@ -267,7 +266,7 @@ public class MaintenanceRepository : IMaintenanceRepository
                     if (reports != null)
                     {
                         reports.IsReject = true;
-                        reports.RejectReason = confirmDto.Reason;
+                        reports.RejectReason = confirmOrRejectDto.Reason;
                         _context.Entry(reports).State = EntityState.Modified;
                     }
 
@@ -275,7 +274,7 @@ public class MaintenanceRepository : IMaintenanceRepository
                     {
                         CreatedAt = now.Value,
                         Status = NotificationStatus.Waiting,
-                        Content = confirmDto.Reason ?? "Cần bổ sung",
+                        Content = confirmOrRejectDto.Reason ?? "Cần bổ sung",
                         Title = "Báo cáo lại",
                         Type = NotificationType.Task,
                         CreatorId = editorId,
@@ -285,7 +284,7 @@ public class MaintenanceRepository : IMaintenanceRepository
                     };
                     await _context.Notifications.AddAsync(notification);
                 }
-                else if (confirmDto?.Status == RequestStatus.Cancelled && !confirmDto.NeedAdditional)
+                else if (confirmOrRejectDto?.Status == RequestStatus.Cancelled && !confirmOrRejectDto.NeedAdditional)
                 {
                     maintenance.Status = RequestStatus.Cancelled;
                     _context.Entry(maintenance).State = EntityState.Modified;
@@ -293,7 +292,7 @@ public class MaintenanceRepository : IMaintenanceRepository
                     if (reports != null)
                     {
                         reports.IsReject = true;
-                        reports.RejectReason = confirmDto.Reason;
+                        reports.RejectReason = confirmOrRejectDto.Reason;
                         _context.Entry(reports).State = EntityState.Modified;
                     }
 
@@ -301,7 +300,7 @@ public class MaintenanceRepository : IMaintenanceRepository
                     {
                         CreatedAt = now.Value,
                         Status = NotificationStatus.Waiting,
-                        Content = confirmDto.Reason ?? "Hủy yêu cầu",
+                        Content = confirmOrRejectDto.Reason ?? "Hủy yêu cầu",
                         Title = "Hủy yêu cầu",
                         Type = NotificationType.Task,
                         CreatorId = editorId,
@@ -328,7 +327,7 @@ public class MaintenanceRepository : IMaintenanceRepository
         }
     }
 
-    public async Task<bool> DeleteMaintenances(List<Maintenance?> maintenances, Guid? deleterId, DateTime? now = null)
+    public async Task<bool> DeleteMulti(List<Maintenance?> maintenances, Guid? deleterId, DateTime? now = null)
     {
         await _context.Database.BeginTransactionAsync();
         now ??= DateTime.UtcNow;
@@ -343,10 +342,6 @@ public class MaintenanceRepository : IMaintenanceRepository
                 _context.Entry(maintenance).State = EntityState.Modified;
 
                  var asset = await _context.Assets.FindAsync(maintenance.AssetId);
-                // asset!.Status = AssetStatus.Operational;
-                // asset.EditedAt = now.Value;
-                // asset.EditorId = deleterId;
-                // _context.Entry(asset).State = EntityState.Modified;
 
                 var roomAsset = await _context.RoomAssets
                     .FirstOrDefaultAsync(x => x.AssetId == maintenance.AssetId && x.ToDate == null);
@@ -360,20 +355,12 @@ public class MaintenanceRepository : IMaintenanceRepository
                     _context.Entry(notification).State = EntityState.Modified;
                 }
 
-                // if (asset != null)
-                // {
-                //     asset.Status = AssetStatus.Operational;
-                //     asset.EditedAt = now.Value;
-                //     asset.EditorId = deleterId;
-                //     _context.Entry(asset).State = EntityState.Modified;
-                // }
-
-                if (roomAsset != null)
+                if (asset != null)
                 {
-                    roomAsset.Status = AssetStatus.Operational;
-                    roomAsset.EditedAt = now.Value;
-                    roomAsset.EditorId = deleterId;
-                    _context.Entry(roomAsset).State = EntityState.Modified;
+                    asset.RequestStatus = RequestType.Operational;
+                    asset.EditedAt = now.Value;
+                    asset.EditorId = deleterId;
+                    _context.Entry(asset).State = EntityState.Modified;
                 }
 
                 if (location != null)
@@ -423,18 +410,10 @@ public class MaintenanceRepository : IMaintenanceRepository
 
             if (asset != null)
             {
-                asset.Status = AssetStatus.Operational;
+                asset.RequestStatus = RequestType.Operational;
                 asset.EditedAt = now.Value;
                 asset.EditorId = deleterId;
                 _context.Entry(asset).State = EntityState.Modified;
-            }
-
-            if (roomAsset != null)
-            {
-                roomAsset.Status = AssetStatus.Operational;
-                roomAsset.EditedAt = now.Value;
-                roomAsset.EditorId = deleterId;
-                _context.Entry(roomAsset).State = EntityState.Modified;
             }
 
             if (location != null)

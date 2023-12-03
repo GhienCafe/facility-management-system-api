@@ -51,16 +51,16 @@ namespace API_FFMS.Controllers
 
         [HttpDelete]
         [SwaggerOperation("Delete list replacement")]
-        public async Task<ApiResponse> DeleteReplacements(DeleteMutilDto deleteDto)
+        public async Task<ApiResponse> DeleteMulti(DeleteMutilDto deleteDto)
         {
-            return await _service.DeleteReplacements(deleteDto);
+            return await _service.DeleteMulti(deleteDto);
         }
 
         [HttpPut("status-update/{id:guid}")]
-        [SwaggerOperation("Update replacement's status")]
-        public async Task<ApiResponse> UpdateStatus(Guid id, BaseUpdateStatusDto updateDto)
+        [SwaggerOperation("Confirm or reject replacement")]
+        public async Task<ApiResponse> ConfirmOrReject(Guid id, BaseUpdateStatusDto confirmOrRejectDto)
         {
-            return await _service.UpdateStatus(id, updateDto);
+            return await _service.ConfirmOrReject(id, confirmOrRejectDto);
         }
     }
 }
