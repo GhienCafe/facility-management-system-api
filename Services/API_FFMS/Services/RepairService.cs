@@ -352,9 +352,7 @@ namespace API_FFMS.Services
                 AssignedTo = x.Repairation.AssignedTo,
                 AssetId = x.Repairation.AssetId,
                 CreatedAt = x.Repairation.CreatedAt,
-                EditedAt = x.Repairation.EditedAt,
                 CreatorId = x.Repairation.CreatorId ?? Guid.Empty,
-                EditorId = x.Repairation.EditorId ?? Guid.Empty,
                 Asset = new AssetBaseDto
                 {
                     Id = x.Asset.Id,

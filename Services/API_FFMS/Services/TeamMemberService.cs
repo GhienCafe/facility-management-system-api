@@ -67,9 +67,7 @@ public class TeamMemberService : BaseService, ITeamMemberService
             MemberId = x.TeamMember.MemberId,
             IsLead = x.TeamMember.IsLead,
             CreatedAt = x.TeamMember.CreatedAt,
-            EditedAt = x.TeamMember.EditedAt,
             CreatorId = x.TeamMember.CreatorId ?? Guid.Empty,
-            EditorId = x.TeamMember.EditorId ?? Guid.Empty,
             Team = x.Team.ProjectTo<Team, TeamDto>(),
             Member = x.User.ProjectTo<User, UserBaseDto>()
         }).ToListAsync();

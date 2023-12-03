@@ -208,11 +208,7 @@ public class TaskService : BaseService, ITaskService
                             LastCheckedDate = asset.LastCheckedDate,
                             LastMaintenanceTime = asset.LastMaintenanceTime,
                             TypeId = asset.TypeId,
-                            ModelId = asset.ModelId,
-                            CreatedAt = asset.CreatedAt,
-                            EditedAt = asset.EditedAt,
-                            CreatorId = asset.CreatorId ?? Guid.Empty,
-                            EditorId = asset.EditorId ?? Guid.Empty
+                            ModelId = asset.ModelId
                         },
                         FromRoom = new RoomBaseDto
                         {
@@ -220,9 +216,7 @@ public class TaskService : BaseService, ITaskService
                             RoomCode = roomQuery.FirstOrDefault(x => x!.Id == td.FromRoomId)!.RoomCode,
                             RoomName = roomQuery.FirstOrDefault(x => x!.Id == td.FromRoomId)!.RoomName,
                             StatusId = roomQuery.FirstOrDefault(x => x!.Id == td.FromRoomId)!.StatusId,
-                            FloorId = roomQuery.FirstOrDefault(x => x!.Id == td.FromRoomId)!.FloorId,
-                            CreatedAt = roomQuery.FirstOrDefault(x => x!.Id == td.FromRoomId)!.CreatedAt,
-                            EditedAt = roomQuery.FirstOrDefault(x => x!.Id == td.FromRoomId)!.EditedAt
+                            FloorId = roomQuery.FirstOrDefault(x => x!.Id == td.FromRoomId)!.FloorId
                         },
                         Quantity = td!.Quantity
                     }).ToListAsync();
@@ -242,9 +236,7 @@ public class TaskService : BaseService, ITaskService
                 Status = trasportTask.Status,
                 StatusObj = trasportTask.Status!.GetValue(),
                 CreatedAt = trasportTask.CreatedAt,
-                EditedAt = trasportTask.EditedAt,
                 CreatorId = trasportTask.CreatorId,
-                EditorId = trasportTask.EditorId,
                 Assets = assets,
                 ToRoom = toRoom
             };

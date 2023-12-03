@@ -103,12 +103,8 @@ public class RoomService : BaseService, IRoomService
                 RoomName = x.Room.RoomName,
                 Description = x.Room.Description,
                 RoomTypeId = x.Room.RoomTypeId,
-                CreatedAt = x.Room.CreatedAt,
-                EditedAt = x.Room.EditedAt,
                 RoomCode = x.Room.RoomCode,
                 StatusId = x.Room.StatusId,
-                CreatorId = x.Room.CreatorId ?? Guid.Empty,
-                EditorId = x.Room.EditorId ?? Guid.Empty,
                 Status = x.Status.ProjectTo<RoomStatus, RoomStatusDto>(),
                 RoomType = x.Type.ProjectTo<RoomType, RoomTypeDto>(),
                 Floor = x.Floor.ProjectTo<Floor, FloorBaseDto>()

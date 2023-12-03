@@ -454,9 +454,7 @@ namespace API_FFMS.Services
                 ToRoomId = t.ToRoomId,
                 AssignedTo = t.AssignedTo,
                 CreatedAt = t.CreatedAt,
-                EditedAt = t.EditedAt,
                 CreatorId = t.CreatorId ?? Guid.Empty,
-                EditorId = t.EditorId ?? Guid.Empty,
                 Assets = t.TransportationDetails!.Select(td => new FromRoomAssetDto
                 {
                     Asset = new AssetBaseDto
@@ -482,9 +480,7 @@ namespace API_FFMS.Services
                         RoomCode = td.Asset.RoomAssets!.FirstOrDefault(ra => ra.AssetId == td.AssetId)!.Room!.RoomCode,
                         RoomName = td.Asset.RoomAssets!.FirstOrDefault(ra => ra.AssetId == td.AssetId)!.Room!.RoomName,
                         StatusId = td.Asset.RoomAssets!.FirstOrDefault(ra => ra.AssetId == td.AssetId)!.Room!.StatusId,
-                        FloorId = td.Asset.RoomAssets!.FirstOrDefault(ra => ra.AssetId == td.AssetId)!.Room!.FloorId,
-                        CreatedAt = td.Asset.RoomAssets!.FirstOrDefault(ra => ra.AssetId == td.AssetId)!.Room!.CreatedAt,
-                        EditedAt = td.Asset.RoomAssets!.FirstOrDefault(ra => ra.AssetId == td.AssetId)!.Room!.EditedAt
+                        FloorId = td.Asset.RoomAssets!.FirstOrDefault(ra => ra.AssetId == td.AssetId)!.Room!.FloorId
                     }
                 }).ToList(),
                 ToRoom = new RoomBaseDto
@@ -493,9 +489,7 @@ namespace API_FFMS.Services
                     RoomCode = t.ToRoom.RoomCode,
                     RoomName = t.ToRoom.RoomName,
                     StatusId = t.ToRoom.StatusId,
-                    FloorId = t.ToRoom.FloorId,
-                    CreatedAt = t.ToRoom.CreatedAt,
-                    EditedAt = t.ToRoom.EditedAt
+                    FloorId = t.ToRoom.FloorId
                 },
                 AssignTo = new UserBaseDto
                 {
