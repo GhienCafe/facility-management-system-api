@@ -362,7 +362,7 @@ public class TransportationRepository : ITransportationRepository
                 };
                 await _context.Notifications.AddAsync(notification);
             }
-            else if (confirmOrRejectDto?.Status == RequestStatus.Cancelled && confirmOrRejectDto.NeedAdditional)
+            else if (confirmOrRejectDto?.Status == RequestStatus.NeedAdditional)
             {
                 transportation.Status = RequestStatus.InProgress;
                 _context.Entry(transportation).State = EntityState.Modified;
@@ -388,7 +388,7 @@ public class TransportationRepository : ITransportationRepository
                 };
                 await _context.Notifications.AddAsync(notification);
             }
-            else if (confirmOrRejectDto?.Status == RequestStatus.Cancelled && !confirmOrRejectDto.NeedAdditional)
+            else if (confirmOrRejectDto?.Status == RequestStatus.Cancelled)
             {
                 transportation.Status = RequestStatus.Cancelled;
                 _context.Entry(transportation).State = EntityState.Modified;
