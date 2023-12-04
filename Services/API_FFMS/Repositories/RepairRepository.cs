@@ -160,7 +160,7 @@ public class RepairRepository : IRepairRepository
                     };
                     await _context.Notifications.AddAsync(notification);
                 }
-                else if (confirmOrRejectDto?.Status == RequestStatus.Cancelled && confirmOrRejectDto.NeedAdditional)
+                else if (confirmOrRejectDto?.Status == RequestStatus.NeedAdditional)
                 {
                     repair.Status = RequestStatus.InProgress;
                     _context.Entry(repair).State = EntityState.Modified;
@@ -187,7 +187,7 @@ public class RepairRepository : IRepairRepository
                     await _context.Notifications.AddAsync(notification);
 
                 }
-                else if (confirmOrRejectDto?.Status == RequestStatus.Cancelled && !confirmOrRejectDto.NeedAdditional)
+                else if (confirmOrRejectDto?.Status == RequestStatus.Cancelled)
                 {
                     repair.Status = RequestStatus.Cancelled;
                     _context.Entry(repair).State = EntityState.Modified;
@@ -265,7 +265,7 @@ public class RepairRepository : IRepairRepository
                     };
                     await _context.Notifications.AddAsync(notification);
                 }
-                else if (confirmOrRejectDto?.Status == RequestStatus.Cancelled && confirmOrRejectDto.NeedAdditional)
+                else if (confirmOrRejectDto?.Status == RequestStatus.NeedAdditional)
                 {
                     repair.Status = RequestStatus.InProgress;
                     _context.Entry(repair).State = EntityState.Modified;
@@ -296,7 +296,7 @@ public class RepairRepository : IRepairRepository
                     asset.EditorId = editorId;
                     _context.Entry(asset).State = EntityState.Modified;
                 }
-                else if (confirmOrRejectDto?.Status == RequestStatus.Cancelled && !confirmOrRejectDto.NeedAdditional)
+                else if (confirmOrRejectDto?.Status == RequestStatus.Cancelled)
                 {
                     repair.Status = RequestStatus.Cancelled;
                     _context.Entry(repair).State = EntityState.Modified;

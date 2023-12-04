@@ -174,7 +174,7 @@ public class InventoryCheckRepository : IInventoryCheckRepository
                 };
                 await _context.Notifications.AddAsync(notification);
             }
-            else if (confirmOrRejectDto?.Status == RequestStatus.Cancelled && confirmOrRejectDto.NeedAdditional)
+            else if (confirmOrRejectDto?.Status == RequestStatus.NeedAdditional)
             {
                 inventoryCheck.Status = RequestStatus.InProgress;
                 _context.Entry(inventoryCheck).State = EntityState.Modified;
@@ -200,7 +200,7 @@ public class InventoryCheckRepository : IInventoryCheckRepository
                 };
                 await _context.Notifications.AddAsync(notification);
             }
-            else if (confirmOrRejectDto?.Status == RequestStatus.Cancelled && !confirmOrRejectDto.NeedAdditional)
+            else if (confirmOrRejectDto?.Status == RequestStatus.Cancelled)
             {
                 inventoryCheck.Status = RequestStatus.Cancelled;
                 _context.Entry(inventoryCheck).State = EntityState.Modified;

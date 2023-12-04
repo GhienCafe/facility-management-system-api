@@ -155,7 +155,7 @@ public class MaintenanceRepository : IMaintenanceRepository
                     };
                     await _context.Notifications.AddAsync(notification);
                 }
-                else if (confirmOrRejectDto?.Status == RequestStatus.Cancelled && confirmOrRejectDto.NeedAdditional)
+                else if (confirmOrRejectDto?.Status == RequestStatus.NeedAdditional)
                 {
                     maintenance.Status = RequestStatus.InProgress;
                     _context.Entry(maintenance).State = EntityState.Modified;
@@ -181,7 +181,7 @@ public class MaintenanceRepository : IMaintenanceRepository
                     };
                     await _context.Notifications.AddAsync(notification);
                 }
-                else if (confirmOrRejectDto?.Status == RequestStatus.Cancelled && !confirmOrRejectDto.NeedAdditional)
+                else if (confirmOrRejectDto?.Status == RequestStatus.Cancelled)
                 {
                     maintenance.Status = RequestStatus.Cancelled;
                     _context.Entry(maintenance).State = EntityState.Modified;
@@ -258,7 +258,7 @@ public class MaintenanceRepository : IMaintenanceRepository
                     };
                     await _context.Notifications.AddAsync(notification);
                 }
-                else if (confirmOrRejectDto?.Status == RequestStatus.Cancelled && confirmOrRejectDto.NeedAdditional)
+                else if (confirmOrRejectDto?.Status == RequestStatus.NeedAdditional)
                 {
                     maintenance.Status = RequestStatus.InProgress;
                     _context.Entry(maintenance).State = EntityState.Modified;
@@ -284,7 +284,7 @@ public class MaintenanceRepository : IMaintenanceRepository
                     };
                     await _context.Notifications.AddAsync(notification);
                 }
-                else if (confirmOrRejectDto?.Status == RequestStatus.Cancelled && !confirmOrRejectDto.NeedAdditional)
+                else if (confirmOrRejectDto?.Status == RequestStatus.Cancelled)
                 {
                     maintenance.Status = RequestStatus.Cancelled;
                     _context.Entry(maintenance).State = EntityState.Modified;

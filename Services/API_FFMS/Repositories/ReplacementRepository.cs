@@ -412,7 +412,7 @@ namespace API_FFMS.Repositories
                     };
                     await _context.Notifications.AddAsync(notification);
                 }
-                else if (confirmOrRejectDto?.Status == RequestStatus.Cancelled && confirmOrRejectDto.NeedAdditional)
+                else if (confirmOrRejectDto?.Status == RequestStatus.NeedAdditional)
                 {
                     replacement.Status = RequestStatus.InProgress;
                     _context.Entry(replacement).State = EntityState.Modified;
@@ -438,7 +438,7 @@ namespace API_FFMS.Repositories
                     };
                     await _context.Notifications.AddAsync(notification);
                 }
-                else if (confirmOrRejectDto?.Status == RequestStatus.Cancelled && !confirmOrRejectDto.NeedAdditional)
+                else if (confirmOrRejectDto?.Status == RequestStatus.Cancelled)
                 {
                     replacement.Status = RequestStatus.Cancelled;
                     _context.Entry(replacement).State = EntityState.Modified;

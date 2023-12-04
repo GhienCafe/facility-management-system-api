@@ -39,8 +39,10 @@ public enum RequestStatus
     Done = 4,
     [Display(Name = "Đã hủy")]
     Cancelled = 5,
+    [Display(Name = "Cần bổ sung")]
+    NeedAdditional = 6,
     [Display(Name = "Khác")]
-    Others = 6,
+    Others = 7,
 }
 
 public enum RequestType
