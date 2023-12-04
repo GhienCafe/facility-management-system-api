@@ -493,7 +493,7 @@ public class MaintenanceService : BaseService, IMaintenanceService
 
         if (!await _maintenanceRepository.ConfirmOrReject(existingMainten, confirmOrRejectDto, AccountId, CurrentDate))
         {
-            throw new ApiException("Cập nhật trạng thái yêu cầu thất bại", StatusCode.SERVER_ERROR);
+            throw new ApiException("Cập nhật yêu cầu thất bại", StatusCode.SERVER_ERROR);
         }
 
         return ApiResponse.Success("Cập nhật yêu cầu thành công");
