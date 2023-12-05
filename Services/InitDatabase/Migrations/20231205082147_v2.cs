@@ -9,7 +9,7 @@ namespace InitDatabase.Migrations
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
-        { 
+        {
             migrationBuilder.Sql(@"
                	CREATE VIEW Tasks AS 
                 SELECT 
@@ -207,7 +207,6 @@ namespace InitDatabase.Migrations
 	                iven.DeleterId
                 FROM InventoryChecks iven) AS t3
                 WHERE t3.DeletedAt is null");
-        
         }
 
         /// <inheritdoc />

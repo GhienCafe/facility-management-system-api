@@ -836,6 +836,7 @@ namespace InitDatabase.Migrations
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     AssetId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     TransportationId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    FromRoomId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     RequestDate = table.Column<DateTime>(type: "datetime2", nullable: false),
                     Quantity = table.Column<int>(type: "int", nullable: false),
                     CreatorId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
@@ -863,17 +864,18 @@ namespace InitDatabase.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "MediaFiles",
+                name: "Reports",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     FileName = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    RawUri = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     Uri = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     IsVerified = table.Column<bool>(type: "bit", nullable: false, defaultValue: false),
                     FileType = table.Column<int>(type: "int", nullable: false),
                     Content = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     IsReported = table.Column<bool>(type: "bit", nullable: false, defaultValue: false),
+                    IsReject = table.Column<bool>(type: "bit", nullable: false, defaultValue: false),
+                    RejectReason = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     MaintenanceId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     ReplacementId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     AssetCheckId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
@@ -890,34 +892,34 @@ namespace InitDatabase.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_MediaFiles", x => x.Id);
+                    table.PrimaryKey("PK_Reports", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_MediaFiles_AssetChecks_AssetCheckId",
+                        name: "FK_Reports_AssetChecks_AssetCheckId",
                         column: x => x.AssetCheckId,
                         principalTable: "AssetChecks",
                         principalColumn: "Id");
                     table.ForeignKey(
-                        name: "FK_MediaFiles_InventoryChecks_InventoryCheckId",
+                        name: "FK_Reports_InventoryChecks_InventoryCheckId",
                         column: x => x.InventoryCheckId,
                         principalTable: "InventoryChecks",
                         principalColumn: "Id");
                     table.ForeignKey(
-                        name: "FK_MediaFiles_Maintenances_MaintenanceId",
+                        name: "FK_Reports_Maintenances_MaintenanceId",
                         column: x => x.MaintenanceId,
                         principalTable: "Maintenances",
                         principalColumn: "Id");
                     table.ForeignKey(
-                        name: "FK_MediaFiles_Repairs_RepairId",
+                        name: "FK_Reports_Repairs_RepairId",
                         column: x => x.RepairId,
                         principalTable: "Repairs",
                         principalColumn: "Id");
                     table.ForeignKey(
-                        name: "FK_MediaFiles_Replacements_RepairId",
+                        name: "FK_Reports_Replacements_RepairId",
                         column: x => x.RepairId,
                         principalTable: "Replacements",
                         principalColumn: "Id");
                     table.ForeignKey(
-                        name: "FK_MediaFiles_Transportations_TransportationId",
+                        name: "FK_Reports_Transportations_TransportationId",
                         column: x => x.TransportationId,
                         principalTable: "Transportations",
                         principalColumn: "Id");
@@ -1007,31 +1009,6 @@ namespace InitDatabase.Migrations
                 column: "AssignedTo");
 
             migrationBuilder.CreateIndex(
-                name: "IX_MediaFiles_AssetCheckId",
-                table: "MediaFiles",
-                column: "AssetCheckId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_MediaFiles_InventoryCheckId",
-                table: "MediaFiles",
-                column: "InventoryCheckId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_MediaFiles_MaintenanceId",
-                table: "MediaFiles",
-                column: "MaintenanceId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_MediaFiles_RepairId",
-                table: "MediaFiles",
-                column: "RepairId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_MediaFiles_TransportationId",
-                table: "MediaFiles",
-                column: "TransportationId");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_Models_BrandId",
                 table: "Models",
                 column: "BrandId");
@@ -1060,6 +1037,31 @@ namespace InitDatabase.Migrations
                 name: "IX_Replacements_AssignedTo",
                 table: "Replacements",
                 column: "AssignedTo");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Reports_AssetCheckId",
+                table: "Reports",
+                column: "AssetCheckId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Reports_InventoryCheckId",
+                table: "Reports",
+                column: "InventoryCheckId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Reports_MaintenanceId",
+                table: "Reports",
+                column: "MaintenanceId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Reports_RepairId",
+                table: "Reports",
+                column: "RepairId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Reports_TransportationId",
+                table: "Reports",
+                column: "TransportationId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_RoomAssets_AssetId",
@@ -1144,10 +1146,10 @@ namespace InitDatabase.Migrations
                 name: "InventoryDetailConfigs");
 
             migrationBuilder.DropTable(
-                name: "MediaFiles");
+                name: "Notifications");
 
             migrationBuilder.DropTable(
-                name: "Notifications");
+                name: "Reports");
 
             migrationBuilder.DropTable(
                 name: "RoomAssets");
