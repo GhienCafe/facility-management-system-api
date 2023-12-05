@@ -124,7 +124,7 @@ public class RepairRepository : IRepairRepository
 
             if (repair.IsInternal == true)
             {
-                if (confirmOrRejectDto?.Status == RequestStatus.Done)
+                if (confirmOrRejectDto!.Status == RequestStatus.Done)
                 {
                     repair.CompletionDate = now.Value;
                     repair.Status = RequestStatus.Done;
@@ -160,7 +160,7 @@ public class RepairRepository : IRepairRepository
                     };
                     await _context.Notifications.AddAsync(notification);
                 }
-                else if (confirmOrRejectDto?.Status == RequestStatus.NeedAdditional)
+                else if (confirmOrRejectDto.Status == RequestStatus.NeedAdditional)
                 {
                     repair.Status = RequestStatus.InProgress;
                     _context.Entry(repair).State = EntityState.Modified;
@@ -187,7 +187,7 @@ public class RepairRepository : IRepairRepository
                     await _context.Notifications.AddAsync(notification);
 
                 }
-                else if (confirmOrRejectDto?.Status == RequestStatus.Cancelled)
+                else if (confirmOrRejectDto.Status == RequestStatus.Cancelled)
                 {
                     repair.Status = RequestStatus.Cancelled;
                     _context.Entry(repair).State = EntityState.Modified;
@@ -221,7 +221,7 @@ public class RepairRepository : IRepairRepository
             }
             else if (repair.IsInternal == false)
             {
-                if (confirmOrRejectDto?.Status == RequestStatus.Done)
+                if (confirmOrRejectDto.Status == RequestStatus.Done)
                 {
                     repair.CompletionDate = now.Value;
                     repair.Status = RequestStatus.Done;
@@ -265,7 +265,7 @@ public class RepairRepository : IRepairRepository
                     };
                     await _context.Notifications.AddAsync(notification);
                 }
-                else if (confirmOrRejectDto?.Status == RequestStatus.NeedAdditional)
+                else if (confirmOrRejectDto.Status == RequestStatus.NeedAdditional)
                 {
                     repair.Status = RequestStatus.InProgress;
                     _context.Entry(repair).State = EntityState.Modified;
@@ -296,7 +296,7 @@ public class RepairRepository : IRepairRepository
                     asset.EditorId = editorId;
                     _context.Entry(asset).State = EntityState.Modified;
                 }
-                else if (confirmOrRejectDto?.Status == RequestStatus.Cancelled)
+                else if (confirmOrRejectDto.Status == RequestStatus.Cancelled)
                 {
                     repair.Status = RequestStatus.Cancelled;
                     _context.Entry(repair).State = EntityState.Modified;

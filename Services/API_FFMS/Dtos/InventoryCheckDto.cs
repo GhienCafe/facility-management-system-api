@@ -2,6 +2,7 @@
 using AppCore.Models;
 using MainData.Entities;
 using Newtonsoft.Json;
+using System.ComponentModel.DataAnnotations;
 
 namespace API_FFMS.Dtos;
 
@@ -94,6 +95,7 @@ public class InventoryCheckCreateDto
 
 public class RoomInvenCheckCretaeDto
 {
+    [Required(ErrorMessage = "Thêm phòng cần kiểm tra")]
     public required Guid RoomId { get; set; }
 }
 
