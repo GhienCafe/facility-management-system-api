@@ -471,149 +471,9 @@ public class TaskService : BaseService, ITaskService
 
     public async Task<ApiResponses<TaskBaseDto>> GetTasks(TaskQueryDto queryDto)
     {
-        // Retrieve tasks from the Transportation table
-        var transportationTasks = MainUnitOfWork.TransportationRepository.GetQuery()
-            .Where(t => !t!.DeletedAt.HasValue && t.AssignedTo == AccountId)
-            .Select(t => new TaskBaseDto
-            {
-                Type = RequestType.Transportation,
-                Id = t!.Id,
-                CreatorId = t.CreatorId ?? Guid.Empty,
-                EditorId = t.EditorId ?? Guid.Empty,
-                CreatedAt = t.CreatedAt,
-                EditedAt = t.EditedAt,
-                ToRoomId = t.ToRoomId,
-                Quantity = t.Quantity,
-                AssignedTo = t.AssignedTo,
-                CompletionDate = t.CompletionDate,
-                Description = t.Description,
-                IsInternal = t.IsInternal,
-                Notes = t.Notes,
-                RequestCode = t.RequestCode,
-                RequestDate = t.RequestDate,
-                Status = t.Status,
-            });
-
-        // Retrieve tasks from the Maintenance table
-        var maintenanceTasks = MainUnitOfWork.MaintenanceRepository.GetQuery()
-            .Where(t => !t!.DeletedAt.HasValue && t.AssignedTo == AccountId)
-            .Select(t => new TaskBaseDto
-            {
-                Type = RequestType.Maintenance,
-                Id = t!.Id,
-                CreatorId = t.CreatorId ?? Guid.Empty,
-                EditorId = t.EditorId ?? Guid.Empty,
-                CreatedAt = t.CreatedAt,
-                EditedAt = t.EditedAt,
-                ToRoomId = null,
-                Quantity = null,
-                AssignedTo = t.AssignedTo,
-                CompletionDate = t.CompletionDate,
-                Description = t.Description,
-                IsInternal = t.IsInternal,
-                Notes = t.Notes,
-                RequestCode = t.RequestCode,
-                RequestDate = t.RequestDate,
-                Status = t.Status,
-            });
-
-        // Retrieve tasks from the AssetCheck table
-        var assetCheckTasks = MainUnitOfWork.AssetCheckRepository.GetQuery()
-            .Where(t => !t!.DeletedAt.HasValue && t.AssignedTo == AccountId)
-            .Select(t => new TaskBaseDto
-            {
-                Type = RequestType.StatusCheck,
-                Id = t!.Id,
-                CreatorId = t.CreatorId ?? Guid.Empty,
-                EditorId = t.EditorId ?? Guid.Empty,
-                CreatedAt = t.CreatedAt,
-                EditedAt = t.EditedAt,
-                ToRoomId = null,
-                Quantity = null,
-                AssignedTo = t.AssignedTo,
-                CompletionDate = t.CompletionDate,
-                Description = t.Description,
-                IsInternal = t.IsInternal,
-                Notes = t.Notes,
-                RequestCode = t.RequestCode,
-                RequestDate = t.RequestDate,
-                Status = t.Status,
-            });
-
-        // Retrieve tasks from the Replacement table
-        var replacementTasks = MainUnitOfWork.ReplacementRepository.GetQuery()
-            .Where(t => !t!.DeletedAt.HasValue && t.AssignedTo == AccountId)
-            .Select(t => new TaskBaseDto
-            {
-                Type = RequestType.Replacement,
-                Id = t!.Id,
-                CreatorId = t.CreatorId ?? Guid.Empty,
-                EditorId = t.EditorId ?? Guid.Empty,
-                CreatedAt = t.CreatedAt,
-                EditedAt = t.EditedAt,
-                ToRoomId = null,
-                Quantity = null,
-                AssignedTo = t.AssignedTo,
-                CompletionDate = t.CompletionDate,
-                Description = t.Description,
-                IsInternal = t.IsInternal,
-                Notes = t.Notes,
-                RequestCode = t.RequestCode,
-                RequestDate = t.RequestDate,
-                Status = t.Status,
-            });
-
-        // Retrieve tasks from the Replair table
-        var repairationTasks = MainUnitOfWork.RepairRepository.GetQuery()
-            .Where(t => !t!.DeletedAt.HasValue && t.AssignedTo == AccountId)
-            .Select(t => new TaskBaseDto
-            {
-                Type = RequestType.Repairation,
-                Id = t!.Id,
-                CreatorId = t.CreatorId ?? Guid.Empty,
-                EditorId = t.EditorId ?? Guid.Empty,
-                CreatedAt = t.CreatedAt,
-                EditedAt = t.EditedAt,
-                ToRoomId = null,
-                Quantity = null,
-                AssignedTo = t.AssignedTo,
-                CompletionDate = t.CompletionDate,
-                Description = t.Description,
-                IsInternal = t.IsInternal,
-                Notes = t.Notes,
-                RequestCode = t.RequestCode,
-                RequestDate = t.RequestDate,
-                Status = t.Status,
-            });
-
-        var inventoryCheckTask = MainUnitOfWork.InventoryCheckRepository.GetQuery()
-            .Where(t => !t!.DeletedAt.HasValue && t.AssignedTo == AccountId)
-            .Select(t => new TaskBaseDto
-            {
-                Type = RequestType.InventoryCheck,
-                Id = t!.Id,
-                CreatorId = t.CreatorId ?? Guid.Empty,
-                EditorId = t.EditorId ?? Guid.Empty,
-                CreatedAt = t.CreatedAt,
-                EditedAt = t.EditedAt,
-                ToRoomId = null,
-                Quantity = null,
-                AssignedTo = t.AssignedTo,
-                CompletionDate = t.CompletionDate,
-                Description = t.Description,
-                IsInternal = t.IsInternal,
-                Notes = t.Notes,
-                RequestCode = t.RequestCode,
-                RequestDate = t.RequestDate,
-                Status = t.Status,
-            });
-
-        // Concatenate the results from both tables
-        var combinedTasks = transportationTasks.Union(maintenanceTasks)
-            .Union(assetCheckTasks)
-            .Union(replacementTasks)
-            .Union(repairationTasks)
-            .Union(inventoryCheckTask);
+  
+        var combinedTasks = MainUnitOfWork.TaskRepository.GetQuery()
+            .Where(x => x.AssignedTo == AccountId);
 
         combinedTasks = combinedTasks.Where(x => x.Status != RequestStatus.Cancelled);
 
@@ -654,8 +514,8 @@ public class TaskService : BaseService, ITaskService
         {
             Type = x.Type,
             Id = x.Id,
-            CreatorId = x.CreatorId,
-            EditorId = x.EditorId,
+            CreatorId = x.CreatorId ?? Guid.Empty,
+            EditorId = x.EditorId ?? Guid.Empty,
             CreatedAt = x.CreatedAt,
             EditedAt = x.EditedAt,
             AssignedTo = x.AssignedTo,
@@ -667,13 +527,15 @@ public class TaskService : BaseService, ITaskService
             RequestDate = x.RequestDate,
             Status = x.Status,
             Quantity = x.Quantity,
-            ToRoomId = x.ToRoomId
+            ToRoomId = x.ToRoomId,
+            Priority = x.Priority
         }).ToListAsync();
 
         items.ForEach(x =>
         {
             x.StatusObj = x.Status?.GetValue();
             x.TypeObj = x.Type.GetValue();
+            x.PriorityObj = x.Priority.GetValue();
         });
 
         items = await _mapperRepository.MapCreator(items);
