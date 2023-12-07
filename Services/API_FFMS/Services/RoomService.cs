@@ -111,7 +111,7 @@ public class RoomService : BaseService, IRoomService
             }
             ).ToListAsync();
 
-        rooms = await _mapperRepository.MapCreator(rooms);
+        //rooms = await _mapperRepository.MapCreator(rooms);
 
         // Return data
         return ApiResponses<RoomDto>.Success(
