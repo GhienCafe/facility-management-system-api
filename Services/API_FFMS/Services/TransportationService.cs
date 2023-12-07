@@ -57,6 +57,11 @@ namespace API_FFMS.Services
 
             foreach (var a in assetList)
             {
+                if (a.AssetType.Unit == Unit.Individual && a.Asset.RequestStatus == RequestType.Transportation)
+                {
+                    throw new ApiException($"Đã có yêu cầu vận chuyển cho thiết bị {a.Asset.AssetCode}", StatusCode.SERVER_ERROR);
+                }
+
                 if (a.AssetType.Unit == Unit.Individual && a.Asset.RequestStatus != RequestType.Operational)
                 {
                     throw new ApiException($"Thiết bị {a.Asset.AssetCode} đang trong một yêu cầu khác", StatusCode.SERVER_ERROR);
@@ -536,7 +541,7 @@ namespace API_FFMS.Services
 
             var mediaFileQuery = MainUnitOfWork.MediaFileRepository.GetQuery().Where(x => x!.ItemId == id).ToList();
 
-            var newMediaFile = updateDto.RelatedFiles.Select(dto => new Report
+            var newMediaFile = updateDto.RelatedFiles != null ? updateDto.RelatedFiles.Select(dto => new Report
             {
                 FileName = dto.FileName,
                 Uri = dto.Uri,
@@ -544,7 +549,7 @@ namespace API_FFMS.Services
                 CreatorId = AccountId,
                 ItemId = id,
                 FileType = FileType.File
-            }).ToList() ?? new List<Report>();
+            }).ToList() : new List<Report>();
 
             var additionMediaFiles = newMediaFile.Except(mediaFileQuery).ToList();
             var removalMediaFiles = mediaFileQuery.Except(newMediaFile).ToList();

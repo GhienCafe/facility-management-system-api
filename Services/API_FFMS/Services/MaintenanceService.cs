@@ -265,8 +265,11 @@ public class MaintenanceService : BaseService, IMaintenanceService
         if (asset == null)
             throw new ApiException("Không cần tồn tại trang thiết bị", StatusCode.NOT_FOUND);
 
+        if (asset.RequestStatus == RequestType.Maintenance)
+            throw new ApiException("Đã có yêu cầu bảo trì cho thiết bị này", StatusCode.ALREADY_EXISTS);
+
         if (asset.RequestStatus != RequestType.Operational)
-            throw new ApiException("Trang thiết bị đang trong một yêu cầu khác", StatusCode.BAD_REQUEST);
+            throw new ApiException("Thiết bị đang trong một yêu cầu khác", StatusCode.BAD_REQUEST);
 
         var maintenance = createDto.ProjectTo<MaintenanceCreateDto, Maintenance>();
         maintenance.Description = createDto.Description ?? "Yêu cầu bảo trì";
@@ -315,9 +318,32 @@ public class MaintenanceService : BaseService, IMaintenanceService
         maintenance.AssignedTo = updateDto.AssignedTo ?? maintenance.AssignedTo;
         maintenance.Priority = updateDto.Priority ?? maintenance.Priority;
 
+        if (updateDto.AssetId != null && updateDto.AssetId != maintenance.AssetId)
+        {
+            var assetUpdate = await MainUnitOfWork.AssetRepository.FindOneAsync((Guid)updateDto.AssetId);
+            if (assetUpdate == null)
+            {
+                throw new ApiException("Không cần tồn tại trang thiết bị", StatusCode.NOT_FOUND);
+            }
+
+            if (assetUpdate.RequestStatus == RequestType.Maintenance)
+            {
+                throw new ApiException("Đã có yêu cầu bảo trì cho thiết bị này", StatusCode.ALREADY_EXISTS);
+            }
+
+            if (assetUpdate.RequestStatus != RequestType.Operational)
+            {
+                throw new ApiException("Thiết bị đang trong một yêu cầu khác", StatusCode.BAD_REQUEST);
+            }
+        }
+        else if (updateDto.AssetId != null && updateDto.AssetId == maintenance.AssetId)
+        {
+            maintenance.AssetId = updateDto.AssetId ?? maintenance.AssetId;
+        }
+
         var mediaFileQuery = MainUnitOfWork.MediaFileRepository.GetQuery().Where(x => x!.ItemId == id).ToList();
 
-        var newMediaFile = updateDto.RelatedFiles.Select(dto => new Report
+        var newMediaFile = updateDto.RelatedFiles != null ? updateDto.RelatedFiles.Select(dto => new Report
         {
             FileName = dto.FileName,
             Uri = dto.Uri,
@@ -325,7 +351,7 @@ public class MaintenanceService : BaseService, IMaintenanceService
             CreatorId = AccountId,
             ItemId = id,
             FileType = FileType.File
-        }).ToList() ?? new List<Report>();
+        }).ToList() : new List<Report>();
 
         var additionMediaFiles = newMediaFile.Except(mediaFileQuery).ToList();
         var removalMediaFiles = mediaFileQuery.Except(newMediaFile).ToList();
@@ -350,20 +376,11 @@ public class MaintenanceService : BaseService, IMaintenanceService
             if (asset == null)
                 throw new ApiException("Không cần tồn tại trang thiết bị", StatusCode.NOT_FOUND);
 
+            if (asset.RequestStatus == RequestType.Maintenance)
+                throw new ApiException($"Đã có yêu cầu bảo trì cho thiết bị {asset.AssetCode}", StatusCode.ALREADY_EXISTS);
+
             if (asset.RequestStatus != RequestType.Operational)
                 throw new ApiException($"Thiết bị {asset.AssetCode} đang trong một yêu cầu khác", StatusCode.BAD_REQUEST);
-
-            var checkExist = await MainUnitOfWork.MaintenanceRepository.FindAsync(
-                    new Expression<Func<Maintenance, bool>>[]
-                    {
-                            x => !x.DeletedAt.HasValue,
-                            x => x.AssetId == asset.Id, 
-                            x => x.Status != RequestStatus.Done
-                    }, null);
-            if (checkExist.Any())
-            {
-                throw new ApiException($"Đã có yêu cầu bảo trì cho thiết bị {asset.AssetCode}", StatusCode.ALREADY_EXISTS);
-            }
         }
 
         var maintenances = new List<Maintenance>();

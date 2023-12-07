@@ -8,6 +8,7 @@ using MainData.Repositories;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
 using Newtonsoft.Json;
+using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace API_FFMS.Services;
 
@@ -38,22 +39,15 @@ public class AssetCheckService : BaseService, IAssetCheckService
     {
         var asset = await MainUnitOfWork.AssetRepository.FindOneAsync(createDto.AssetId);
         if (asset == null)
-            throw new ApiException("Không cần tồn tại trang thiết bị", StatusCode.NOT_FOUND);
+            throw new ApiException("Không tồn tại trang thiết bị", StatusCode.NOT_FOUND);
 
-        if (asset.RequestStatus != RequestType.Operational)
-            throw new ApiException("Trang thiết bị đang trong một yêu cầu khác", StatusCode.BAD_REQUEST);
-
-        var checkExist = await MainUnitOfWork.AssetCheckRepository.FindAsync(
-            new Expression<Func<AssetCheck, bool>>[]
-            {
-                    x => !x.DeletedAt.HasValue,
-                    x => x.AssetId == createDto.AssetId,
-                    x => x.Status != RequestStatus.Reported
-            }, null);
-        if (checkExist.Any())
+        if (asset.RequestStatus == RequestType.StatusCheck)
         {
             throw new ApiException("Đã có yêu cầu kiểm tra cho thiết bị này", StatusCode.ALREADY_EXISTS);
         }
+
+        if (asset.RequestStatus != RequestType.Operational)
+            throw new ApiException("Thiết bị đang trong một yêu cầu khác", StatusCode.BAD_REQUEST);
 
         var assetCheck = createDto.ProjectTo<AssetCheckCreateDto, AssetCheck>();
 
@@ -75,7 +69,7 @@ public class AssetCheckService : BaseService, IAssetCheckService
                 IsVerified = false,
                 IsReported = false,
             };
-        
+
             mediaFiles.Add(report);
         }
 
@@ -200,7 +194,7 @@ public class AssetCheckService : BaseService, IAssetCheckService
                     });
             }
         }
-        
+
         assetCheck.AssignTo = await MainUnitOfWork.UserRepository.FindOneAsync<UserBaseDto>(
             new Expression<Func<User, bool>>[]
             {
@@ -225,7 +219,7 @@ public class AssetCheckService : BaseService, IAssetCheckService
         {
             // Deserialize the URI string back into a List<string>
             var uriList = JsonConvert.DeserializeObject<List<string>>(report.Uri);
-            
+
             assetCheck.Reports.Add(new MediaFileDto
             {
                 ItemId = report.ItemId,
@@ -272,7 +266,7 @@ public class AssetCheckService : BaseService, IAssetCheckService
             assetCheckQuery = assetCheckQuery.Where(x => x!.Status == queryDto.Status);
         }
 
-        if(queryDto.Priority != null)
+        if (queryDto.Priority != null)
         {
             assetCheckQuery = assetCheckQuery.Where(x => x!.Priority == queryDto.Priority);
         }
@@ -399,12 +393,33 @@ public class AssetCheckService : BaseService, IAssetCheckService
         existingAssetcheck.AssetTypeId = updateDto.AssetTypeId ?? existingAssetcheck.AssetTypeId;
         existingAssetcheck.AssignedTo = updateDto.AssignedTo ?? existingAssetcheck.AssignedTo;
         existingAssetcheck.Priority = updateDto.Priority ?? existingAssetcheck.Priority;
-        existingAssetcheck.Priority = updateDto.Priority ?? existingAssetcheck.Priority;
-        existingAssetcheck.AssetId = updateDto.AssetId ?? existingAssetcheck.AssetId;
+
+        if (updateDto.AssetId != null && updateDto.AssetId != existingAssetcheck.AssetId)
+        {
+            var assetUpdate = await MainUnitOfWork.AssetRepository.FindOneAsync((Guid)updateDto.AssetId);
+            if (assetUpdate == null)
+            {
+                throw new ApiException("Không cần tồn tại thiết bị", StatusCode.NOT_FOUND);
+            }
+
+            if (assetUpdate.RequestStatus == RequestType.StatusCheck)
+            {
+                throw new ApiException("Đã có yêu cầu kiểm tra cho thiết bị này", StatusCode.ALREADY_EXISTS);
+            }
+
+            if (assetUpdate.RequestStatus != RequestType.Operational)
+            {
+                throw new ApiException("Thiết bị đang trong một yêu cầu khác", StatusCode.BAD_REQUEST);
+            }
+        }
+        else if (updateDto.AssetId != null && updateDto.AssetId == existingAssetcheck.AssetId)
+        {
+            existingAssetcheck.AssetId = updateDto.AssetId ?? existingAssetcheck.AssetId;
+        }
 
         var mediaFileQuery = MainUnitOfWork.MediaFileRepository.GetQuery().Where(x => x!.ItemId == id).ToList();
 
-        var newMediaFile = updateDto.RelatedFiles.Select(dto => new Report
+        var newMediaFile = updateDto.RelatedFiles != null ? updateDto.RelatedFiles.Select(dto => new Report
         {
             FileName = dto.FileName,
             Uri = dto.Uri,
@@ -412,7 +427,8 @@ public class AssetCheckService : BaseService, IAssetCheckService
             CreatorId = AccountId,
             ItemId = id,
             FileType = FileType.File
-        }).ToList() ?? new List<Report>();
+        }).ToList() : new List<Report>();
+
 
         var additionMediaFiles = newMediaFile.Except(mediaFileQuery).ToList();
         var removalMediaFiles = mediaFileQuery.Except(newMediaFile).ToList();
@@ -423,6 +439,7 @@ public class AssetCheckService : BaseService, IAssetCheckService
         }
 
         return ApiResponse.Success("Cập nhật thành công");
+
     }
 
     public async Task<ApiResponse> ConfirmOrReject(Guid id, AssetCheckUpdateStatusDto confirmOrRejectDto)
