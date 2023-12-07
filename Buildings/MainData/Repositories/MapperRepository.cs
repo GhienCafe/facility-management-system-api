@@ -20,19 +20,17 @@ public class MapperRepository : IMapperRepository
 
     public async Task<List<TDto>> MapCreator<TDto>(List<TDto> dtos) where TDto : BaseDto
     {
-        var accountIds = dtos.SelectMany(x => new[] { x.CreatorId, x.EditorId })
+        var accountIds = dtos.SelectMany(x => new[] { x.CreatorId })
             .GroupBy(x => x)
             .Select(x => x.Key);
 
         var accountCreators = (from accountId in accountIds
-            join account in _context.Users
-                on accountId equals account.Id
             join user in _context.Users
-                on account.Id equals user.Id
+                on accountId equals user.Id
             select new AccountCreator
             {
-                Id = account.Id,
-                Fullname = account.Fullname,
+                Id = user.Id,
+                Fullname = user.Fullname,
                 Email = user.Email,
                 PhoneNumber = user.PhoneNumber,
                 Avatar = user.Avatar
@@ -40,7 +38,6 @@ public class MapperRepository : IMapperRepository
         dtos = dtos.Select(x =>
         {
             x.Creator = accountCreators.FirstOrDefault(z => z.Id == x.CreatorId);
-            x.Editor = accountCreators.FirstOrDefault(z => z.Id == x.EditorId);
             return x;
         }).ToList();
         await Task.Delay(1);
@@ -52,8 +49,7 @@ public class MapperRepository : IMapperRepository
         var accountCreators = await (from account in _context.Users
             join user in _context.Users
                 on account.Id equals user.Id
-            where account.Id == dto.CreatorId ||
-                  account.Id == dto.EditorId
+            where account.Id == dto.CreatorId
             select new AccountCreator
             {
                 Id = account.Id,
@@ -64,7 +60,6 @@ public class MapperRepository : IMapperRepository
             }).ToListAsync();
 
         dto.Creator = accountCreators.FirstOrDefault(x => x.Id == dto.CreatorId);
-        dto.Editor = accountCreators.FirstOrDefault(x => x.Id == dto.EditorId);
         return dto;
     }
 }
