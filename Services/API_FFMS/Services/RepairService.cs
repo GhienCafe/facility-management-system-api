@@ -99,7 +99,6 @@ namespace API_FFMS.Services
                 repair.Description = create.Description ?? "Yêu cầu sửa chữa";
                 repair.Id = Guid.NewGuid();
                 // For storing json in column
-                var mediaFiles = new List<Report>();
                 if (create.RelatedFiles != null)
                 {
                     var listUrisJson = JsonConvert.SerializeObject(create.RelatedFiles);
@@ -114,7 +113,7 @@ namespace API_FFMS.Services
                         IsReported = false,
                     };
 
-                    mediaFiles.Add(report);
+                    relatedFiles.Add(report);
                 }
                 repairs.Add(repair);
             }

@@ -390,21 +390,22 @@ public class MaintenanceService : BaseService, IMaintenanceService
             var maintenance = create.ProjectTo<MaintenanceCreateDto, Maintenance>();
             maintenance.Description = create.Description ?? "Yêu cầu bảo trì";
             maintenance.Id = Guid.NewGuid();
+            // For storing json in column
             if (create.RelatedFiles != null)
             {
-                foreach (var file in create.RelatedFiles)
+                var listUrisJson = JsonConvert.SerializeObject(create.RelatedFiles);
+                var report = new Report
                 {
-                    var relatedFile = new Report
-                    {
-                        Id = Guid.NewGuid(),
-                        FileName = file.FileName ?? "",
-                        Uri = file.Uri ?? "",
-                        CreatedAt = CurrentDate,
-                        CreatorId = AccountId,
-                        ItemId = maintenance.Id
-                    };
-                    relatedFiles.Add(relatedFile);
-                }
+                    FileName = string.Empty,
+                    Uri = listUrisJson,
+                    Content = string.Empty,
+                    FileType = FileType.File,
+                    ItemId = maintenance.Id,
+                    IsVerified = false,
+                    IsReported = false,
+                };
+
+                relatedFiles.Add(report);
             }
             maintenances.Add(maintenance);
         }
