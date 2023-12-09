@@ -1,40 +1,36 @@
-﻿using System;
-using System.Threading;
-using System.Threading.Tasks;
-using Microsoft.Extensions.Logging;
-using Worker_Notify.Services;
+﻿using Worker_Notify.Services;
 
 namespace Worker_Notify.Workers
 {
     public class InventoryWorker : BackgroundService
     {
         private readonly ILogger<InventoryWorker> _logger;
-        private readonly IInventoryConfigService _inventoryConfigService;
+        private readonly IServiceScopeFactory _serviceScopeFactory;
         private readonly TimeZoneInfo _localTimeZone = TimeZoneInfo.Local;
 
         private Timer _timer;
 
-        public InventoryWorker(ILogger<InventoryWorker> logger, IInventoryConfigService inventoryConfigService)
+        public InventoryWorker(ILogger<InventoryWorker> logger, IServiceScopeFactory serviceScopeFactory)
         {
             _logger = logger;
-            _inventoryConfigService = inventoryConfigService;
+            _serviceScopeFactory = serviceScopeFactory;
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            _timer = new Timer(DoWork, null, GetDelay(), TimeSpan.FromHours(24)); // Khởi động timer với thời gian delay
+            _timer = new Timer(DoWork, null, GetDelay(), TimeSpan.FromHours(24));
 
-            // Đợi cho sự kết thúc hoặc hủy bỏ của công việc
             await Task.Delay(Timeout.Infinite, stoppingToken);
         }
 
         private TimeSpan GetDelay()
         {
             DateTime now = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, _localTimeZone);
-            DateTime scheduledTime = new DateTime(now.Year, now.Month, now.Day, 6, 0, 0); // Lúc 19h20
+            DateTime scheduledTime = new DateTime(now.Year, now.Month, now.Day, 6, 0, 0);
+
             if (scheduledTime <= now)
             {
-                scheduledTime = scheduledTime.AddDays(1); // Nếu đã qua thời gian đã lên lịch, chuyển sang ngày tiếp theo
+                scheduledTime = scheduledTime.AddDays(1);
             }
             TimeSpan delay = scheduledTime - now;
             return delay < TimeSpan.Zero ? TimeSpan.Zero : delay;
@@ -42,10 +38,14 @@ namespace Worker_Notify.Workers
 
         private void DoWork(object state)
         {
-            DateTime localTime = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, _localTimeZone);
-            _inventoryConfigService.CreateSystemNotification();
-            _logger.LogInformation("Worker running at: {time}", localTime);
-            _timer.Change(GetDelay(), TimeSpan.FromHours(24)); // Đặt lại timer cho ngày tiếp theo
+            using (var scope = _serviceScopeFactory.CreateScope())
+            {
+                var inventoryConfigService = scope.ServiceProvider.GetRequiredService<IInventoryConfigService>();
+                DateTime localTime = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, _localTimeZone);
+                inventoryConfigService.CreateSystemNotification();
+                _logger.LogInformation("Worker running at: {time}", localTime);
+                _timer.Change(GetDelay(), TimeSpan.FromHours(24));
+            }
         }
 
         public override async Task StopAsync(CancellationToken cancellationToken)
