@@ -98,21 +98,22 @@ namespace API_FFMS.Services
                 var repair = create.ProjectTo<RepairCreateDto, Repair>();
                 repair.Description = create.Description ?? "Yêu cầu sửa chữa";
                 repair.Id = Guid.NewGuid();
+                // For storing json in column
                 if (create.RelatedFiles != null)
                 {
-                    foreach (var file in create.RelatedFiles)
+                    var listUrisJson = JsonConvert.SerializeObject(create.RelatedFiles);
+                    var report = new Report
                     {
-                        var relatedFile = new Report
-                        {
-                            Id = Guid.NewGuid(),
-                            FileName = file.FileName ?? "",
-                            Uri = file.Uri ?? "",
-                            CreatedAt = CurrentDate,
-                            CreatorId = AccountId,
-                            ItemId = repair.Id
-                        };
-                        relatedFiles.Add(relatedFile);
-                    }
+                        FileName = string.Empty,
+                        Uri = listUrisJson,
+                        Content = string.Empty,
+                        FileType = FileType.File,
+                        ItemId = repair.Id,
+                        IsVerified = false,
+                        IsReported = false,
+                    };
+
+                    relatedFiles.Add(report);
                 }
                 repairs.Add(repair);
             }
