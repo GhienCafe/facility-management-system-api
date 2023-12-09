@@ -26,7 +26,7 @@ builder.Services.AddDbContext<DatabaseContext>(options =>
             config.Ignore(RelationalEventId.BoolWithDefaultWarning);
         }
     );
-}, ServiceLifetime.Transient);
+}, ServiceLifetime.Singleton);
 
 //
 builder.Services.AddControllers();
