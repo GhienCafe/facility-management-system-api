@@ -33,6 +33,8 @@ public class TokenDeviceService :BaseService, ITokenDeviceService
         if (existingToken != null)
         {
             existingToken.Type = TokenType.DeviceToken;
+            existingToken.AccessToken = tokenDto.Token;
+            existingToken.RefreshToken = tokenDto.Token;
             await MainUnitOfWork.TokenRepository.UpdateAsync(existingToken, AccountId, CurrentDate);
             // Return a success message
             return ApiResponse.Success();
