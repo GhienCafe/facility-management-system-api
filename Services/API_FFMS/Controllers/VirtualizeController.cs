@@ -39,7 +39,7 @@ public class VirtualizeController : BaseController
 
         var response = await _service.GetVirtualizeRoom(queryDto);
         // Leave it null - the default will be 5 minutes
-        var expiryTime = DateTimeOffset.Now.AddMinutes(10);
+        var expiryTime = DateTimeOffset.Now.AddMinutes(60);
         _cacheService.SetData(key, response.Data, expiryTime);
 
         return response;
