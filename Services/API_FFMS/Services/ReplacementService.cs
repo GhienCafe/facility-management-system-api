@@ -36,30 +36,23 @@ namespace API_FFMS.Services
             var asset = await MainUnitOfWork.AssetRepository.FindOneAsync(createDto.AssetId);
             if (asset == null)
             {
-                throw new ApiException("Không tìm thấy trang thiết bị cần thay thế", StatusCode.NOT_FOUND);
+                throw new ApiException("Không tìm thấy thiết bị cần thay thế", StatusCode.NOT_FOUND);
             }
 
             var newAsset = await MainUnitOfWork.AssetRepository.FindOneAsync(createDto.NewAssetId);
             if (newAsset == null)
             {
-                throw new ApiException("Không tìm thấy trang thiết bị để thay thế", StatusCode.NOT_FOUND);
+                throw new ApiException("Không tìm thấy thiết bị để thay thế", StatusCode.NOT_FOUND);
+            }
+
+            if (asset.RequestStatus == RequestType.Replacement)
+            {
+                throw new ApiException($"Đã có yêu cầu thay thế cho thiết bị {asset.AssetCode}", StatusCode.ALREADY_EXISTS);
             }
 
             if (newAsset.RequestStatus != RequestType.Operational)
             {
-                throw new ApiException($"Trang thiết bị {newAsset.AssetCode} đang trong một yêu cầu khác", StatusCode.BAD_REQUEST);
-            }
-
-            var checkExist = await MainUnitOfWork.ReplacementRepository.FindAsync(
-                new Expression<Func<Replacement, bool>>[]
-                {
-                    x => !x.DeletedAt.HasValue,
-                    x => x.AssetId == createDto.AssetId,
-                    x => x.Status != RequestStatus.Done
-                }, null);
-            if (checkExist.Any())
-            {
-                throw new ApiException("Đã có yêu cầu thay thế cho thiết bị này", StatusCode.ALREADY_EXISTS);
+                throw new ApiException($"Thiết bị {newAsset.AssetCode} đang trong một yêu cầu khác", StatusCode.BAD_REQUEST);
             }
 
             var replacement = createDto.ProjectTo<ReplaceCreateDto, Replacement>();
@@ -443,9 +436,55 @@ namespace API_FFMS.Services
             existingReplace.AssetId = updateDto.AssetId ?? existingReplace.AssetId;
             existingReplace.NewAssetId = updateDto.NewAssetId ?? existingReplace.NewAssetId;
 
+            if (updateDto.AssetId != null && updateDto.AssetId != existingReplace.AssetId)
+            {
+                var assetUpdate = await MainUnitOfWork.AssetRepository.FindOneAsync((Guid)updateDto.AssetId);
+                if (assetUpdate == null)
+                {
+                    throw new ApiException("Không cần tồn tại thiết bị", StatusCode.NOT_FOUND);
+                }
+
+                if (assetUpdate.RequestStatus == RequestType.Replacement)
+                {
+                    throw new ApiException($"Đã có yêu cầu thay thế cho thiết bị {assetUpdate.AssetCode}", StatusCode.ALREADY_EXISTS);
+                }
+
+                if (assetUpdate.RequestStatus != RequestType.Operational)
+                {
+                    throw new ApiException($"Thiết bị {assetUpdate.AssetCode} đang trong một yêu cầu khác", StatusCode.BAD_REQUEST);
+                }
+            }
+            else if (updateDto.AssetId != null && updateDto.AssetId == existingReplace.AssetId)
+            {
+                existingReplace.AssetId = updateDto.AssetId ?? existingReplace.AssetId;
+            }
+
+            if (updateDto.NewAssetId != null && updateDto.NewAssetId != existingReplace.NewAssetId)
+            {
+                var assetUpdate = await MainUnitOfWork.AssetRepository.FindOneAsync((Guid)updateDto.NewAssetId);
+                if (assetUpdate == null)
+                {
+                    throw new ApiException("Không cần tồn tại thiết bị", StatusCode.NOT_FOUND);
+                }
+
+                if (assetUpdate.RequestStatus == RequestType.Replacement)
+                {
+                    throw new ApiException($"Đã có yêu cầu thay thế cho thiết bị {assetUpdate.AssetCode}", StatusCode.ALREADY_EXISTS);
+                }
+
+                if (assetUpdate.RequestStatus != RequestType.Operational)
+                {
+                    throw new ApiException($"Thiết bị {assetUpdate.AssetCode} đang trong một yêu cầu khác", StatusCode.BAD_REQUEST);
+                }
+            }
+            else if (updateDto.NewAssetId != null && updateDto.NewAssetId == existingReplace.NewAssetId)
+            {
+                existingReplace.NewAssetId = updateDto.NewAssetId ?? existingReplace.NewAssetId;
+            }
+
             var mediaFileQuery = MainUnitOfWork.MediaFileRepository.GetQuery().Where(x => x!.ItemId == id).ToList();
 
-            var newMediaFile = updateDto.RelatedFiles.Select(dto => new Report
+            var newMediaFile = updateDto.RelatedFiles != null ? updateDto.RelatedFiles.Select(dto => new Report
             {
                 FileName = dto.FileName,
                 Uri = dto.Uri,
@@ -453,7 +492,7 @@ namespace API_FFMS.Services
                 CreatorId = AccountId,
                 ItemId = id,
                 FileType = FileType.File
-            }).ToList() ?? new List<Report>();
+            }).ToList() : new List<Report>();
 
             var additionMediaFiles = newMediaFile.Except(mediaFileQuery).ToList();
             var removalMediaFiles = mediaFileQuery.Except(newMediaFile).ToList();
