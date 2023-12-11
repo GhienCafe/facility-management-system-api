@@ -45,6 +45,27 @@ public class VirtualizeController : BaseController
         return response;
     }
 
+    [HttpGet("room2")]
+    [SwaggerOperation("Get rooms in virtualization of floor")]
+    public async Task<ApiResponse<IEnumerable<VirtualizeRoomDto>>> GetVirtualizeFloor2([FromQuery] VirtualizeRoomQueryDto queryDto)
+    {
+        //var key = "rooms_virtualization" + queryDto.FloorId;
+
+        //// check cache data
+        //var cacheData = _cacheService.GetData<IEnumerable<VirtualizeRoomDto>>(key);
+        //if (cacheData != null)
+        //{
+        //    return ApiResponse<IEnumerable<VirtualizeRoomDto>>.Success(cacheData);
+        //}
+
+        var response = await _service.GetVirtualizeRoom(queryDto);
+        // Leave it null - the default will be 5 minutes
+        //var expiryTime = DateTimeOffset.Now.AddMinutes(10);
+        //_cacheService.SetData(key, response.Data, expiryTime);
+
+        return response;
+    }
+
     [HttpGet("virtualize-dashboard")]
     [SwaggerOperation("Get dashboard information")]
     public async Task<ApiResponse<VirtualDashboard>> GetVirtualizeDashboard()

@@ -134,7 +134,7 @@ public class VirtualizeService : BaseService, IVirtualizeService
 
         var listRoomIds = queryResult.Select(x => x.Id).ToList();
         var roomAssets = await MainUnitOfWork.RoomAssetRepository.GetQuery()
-            .Where(a => a.ToDate == null && a.Status != AssetStatus.Operational && listRoomIds.Contains(a.Id))
+            .Where(a => a.ToDate == null && a.Status != AssetStatus.Operational)
             .GroupBy(a => new { a.RoomId, a.Status })
             .Select(g => new {
                 RoomId = g.Key.RoomId,
