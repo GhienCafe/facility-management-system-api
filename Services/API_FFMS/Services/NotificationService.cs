@@ -92,7 +92,7 @@ public class NotificationService : BaseService, INotificationService
             CreatorId = x.CreatorId ?? Guid.Empty
         }).ToListAsync();
 
-        if (HttpContextAccessor.HttpContext?.User.GetRole() == UserRole.Administrator.ToString())
+        if (HttpContextAccessor.HttpContext?.User.GetRole() != UserRole.Staff.ToString())
         {
             foreach (var item in notifications.Where(item => item.ItemId != null))
             {
