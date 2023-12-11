@@ -139,20 +139,28 @@ public class InventoryCheckRepository : IInventoryCheckRepository
                 {
                     var roomAsset = _context.RoomAssets
                                 .FirstOrDefault(x => x.AssetId == detail.AssetId && x.RoomId == detail.RoomId);
-                    var asset = _context.Assets
+                    var asset = _context.Assets.Include(x => x.Type)
                             .FirstOrDefault(x => x.Id == detail.AssetId);
 
-                    if (asset != null)
+                    if (asset != null && asset.Type!.Unit == Unit.Individual)
                     {
                         asset.Status = detail.StatusReported;
                         _context.Entry(asset).State = EntityState.Modified;
-                    }
 
-                    if (roomAsset != null)
+                        if (roomAsset != null)
+                        {
+                            roomAsset.Quantity = 1;
+                            roomAsset.Status = detail.StatusReported;
+                            _context.Entry(roomAsset).State = EntityState.Modified;
+                        }
+                    }
+                    else if (asset != null && asset.Type!.Unit == Unit.Quantity)
                     {
-                        roomAsset.Quantity = detail.QuantityReported;
-                        roomAsset.Status = detail.StatusReported;
-                        _context.Entry(roomAsset).State = EntityState.Modified;
+                        if (roomAsset != null)
+                        {
+                            roomAsset.Quantity = detail.QuantityReported;
+                            _context.Entry(roomAsset).State = EntityState.Modified;
+                        }
                     }
                 }
 
