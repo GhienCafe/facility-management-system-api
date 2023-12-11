@@ -113,7 +113,7 @@ public class AssetService : BaseService, IAssetService
 
             assetDataSet = assetDataSet.Where(x => listAssetIds.Contains(x!.Id));
         }
-        
+
         // Order
         var isDescending = queryDto.OrderBy.EndsWith("desc", StringComparison.OrdinalIgnoreCase);
         var orderByColumn = queryDto.OrderBy.Split(' ')[0];
@@ -167,7 +167,7 @@ public class AssetService : BaseService, IAssetService
                 Description = x.Model.Description,
                 ModelName = x.Model.ModelName
             } : null,
-            Room = x.RoomAssets!.Select(ra => new RoomBaseDto
+            Room = x.RoomAssets!.Where(ra => ra.AssetId == x.Id && ra.ToDate == null).Select(ra => new RoomBaseDto
             {
                 Id = ra.RoomId,
                 RoomName = ra.Room!.RoomName,
@@ -213,9 +213,9 @@ public class AssetService : BaseService, IAssetService
         existingAsset.StatusObj = existingAsset.Status?.GetValue();
         existingAsset.RequestStatusObj = existingAsset.RequestStatus?.GetValue();
 
-        if (existingAsset.Model != null)
+        if(existingAsset.ImageUrl == null || existingAsset.ImageUrl.Equals(""))
         {
-            existingAsset.ImageUrl ??= existingAsset.Model.ImageUrl;
+            existingAsset.ImageUrl = existingAsset.Model.ImageUrl;
         }
 
         existingAsset.Type = await MainUnitOfWork.AssetTypeRepository.FindOneAsync<AssetTypeDto>(
@@ -901,7 +901,7 @@ public class AssetService : BaseService, IAssetService
                                 join category in MainUnitOfWork.CategoryRepository.GetQuery()
                                     on assetType.CategoryId equals category.Id into categoryGroup
                                 from category in categoryGroup.DefaultIfEmpty()
-                                
+
                                 select new AssetMaintenanceDto
                                 {
                                     // Map other properties from your entities to the DTO
