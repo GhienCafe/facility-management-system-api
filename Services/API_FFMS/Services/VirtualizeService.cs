@@ -168,7 +168,7 @@ public class VirtualizeService : BaseService, IVirtualizeService
         virtualDashboard.TotalRoom = await MainUnitOfWork.RoomRepository.CountAsync(null);
         virtualDashboard.TotalAssetType = await MainUnitOfWork.AssetTypeRepository.CountAsync(null);
         virtualDashboard.TotalUser = await MainUnitOfWork.UserRepository.CountAsync(null);
-        
+
         return ApiResponse<VirtualDashboard>.Success(virtualDashboard);
     }
 

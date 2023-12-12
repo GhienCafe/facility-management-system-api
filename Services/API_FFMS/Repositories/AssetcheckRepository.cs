@@ -269,8 +269,8 @@ public class AssetcheckRepository : IAssetcheckRepository
             assetCheck.RequestDate = now.Value;
             await _context.AssetChecks.AddAsync(assetCheck);
 
-            var asset = await _context.Assets.FindAsync(assetCheck.AssetId);
-            if (asset != null)
+            var asset = await _context.Assets.Include(x => x.Type).FirstOrDefaultAsync(x => x.Id == assetCheck.Id);
+            if (asset != null && asset.Type!.Unit == Unit.Individual)
             {
                 asset.RequestStatus = RequestType.StatusCheck;
                 _context.Entry(asset).State = EntityState.Modified;

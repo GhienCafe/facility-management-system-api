@@ -186,7 +186,7 @@ public class TransportationRepository : ITransportationRepository
                 }
             }
 
-                foreach (var transpsortDetail in transportationDetails)
+            foreach (var transpsortDetail in transportationDetails)
             {
                 if (transpsortDetail != null)
                 {
@@ -268,32 +268,33 @@ public class TransportationRepository : ITransportationRepository
                 {
                     if (asset != null)
                     {
-                        var transportDetails = await _context.TransportationDetails
+                        var transportDetail = await _context.TransportationDetails
                                                         .FirstOrDefaultAsync(x => x.TransportationId == transportation.Id &&
                                                                                   x.AssetId == asset.Id);
-                        var roomAsset = await _context.RoomAssets.FirstOrDefaultAsync(x => x.AssetId == asset.Id &&
-                                                                                           x.RoomId == transportDetails!.FromRoomId &&
-                                                                                           x.ToDate == null);
 
-
-                        var fromRoom = await _context.Rooms.FirstOrDefaultAsync(x => x.Id == roomAsset!.RoomId);
-
-                        var toRoomAsset = await _context.RoomAssets.FirstOrDefaultAsync(x => x.AssetId == asset.Id &&
-                                                                                    x.RoomId == toRoom!.Id &&
-                                                                                    x.ToDate == null);
                         transportation.CompletionDate = now.Value;
                         transportation.Status = RequestStatus.Done;
                         _context.Entry(transportation).State = EntityState.Modified;
 
                         if (asset.Type!.Unit == Unit.Individual || asset.Type.IsIdentified == true)
                         {
+                            var fromRoomAsset = await _context.RoomAssets.FirstOrDefaultAsync(x => x.AssetId == asset.Id &&
+                                                                                           x.RoomId == transportDetail!.FromRoomId &&
+                                                                                           x.ToDate == null);
+
+                            var toRoomAsset = await _context.RoomAssets.FirstOrDefaultAsync(x => x.AssetId == asset.Id &&
+                                                                                    x.RoomId == toRoom!.Id &&
+                                                                                    x.ToDate == null);
+
+                            var fromRoom = await _context.Rooms.FirstOrDefaultAsync(x => x.Id == fromRoomAsset!.RoomId);
+
                             asset.RequestStatus = RequestType.Operational;
                             _context.Entry(asset).State = EntityState.Modified;
 
-                            if (roomAsset != null)
+                            if (fromRoomAsset != null)
                             {
-                                roomAsset.ToDate = now.Value;
-                                _context.Entry(roomAsset).State = EntityState.Modified;
+                                fromRoomAsset.ToDate = now.Value;
+                                _context.Entry(fromRoomAsset).State = EntityState.Modified;
                             }
 
                             fromRoom!.State = RoomState.Operational;
@@ -318,15 +319,29 @@ public class TransportationRepository : ITransportationRepository
                         }
                         else if (asset.Type!.Unit == Unit.Quantity || asset.Type.IsIdentified == false)
                         {
-                            if (roomAsset != null)
+                            var fromRoomAsset = await _context.RoomAssets.FirstOrDefaultAsync(x => x.AssetId == asset.Id &&
+                                                                                           x.RoomId == transportDetail!.FromRoomId &&
+                                                                                           x.ToDate == null);
+
+                            var toRoomAsset = await _context.RoomAssets.FirstOrDefaultAsync(x => x.AssetId == asset.Id &&
+                                                                                    x.RoomId == toRoom!.Id &&
+                                                                                    x.ToDate == null);
+
+                            if (fromRoomAsset != null)
                             {
-                                roomAsset.Quantity -= transportDetails!.Quantity;
-                                _context.Entry(roomAsset).State = EntityState.Modified;
+                                fromRoomAsset.Quantity -= transportDetail!.Quantity;
+                                if (fromRoomAsset.Quantity <= 0)
+                                {
+                                    fromRoomAsset.Quantity = 0;
+                                    fromRoomAsset.ToDate = now.Value;
+                                    _context.Entry(fromRoomAsset).State = EntityState.Modified;
+                                }
+                                _context.Entry(fromRoomAsset).State = EntityState.Modified;
                             }
 
                             if (toRoomAsset != null)
                             {
-                                toRoomAsset.Quantity += transportDetails!.Quantity;
+                                toRoomAsset.Quantity += transportDetail!.Quantity;
                                 _context.Entry(toRoomAsset).State = EntityState.Modified;
                             }
                             else
@@ -337,7 +352,7 @@ public class TransportationRepository : ITransportationRepository
                                     RoomId = toRoom!.Id,
                                     Status = asset.Status,
                                     FromDate = now.Value,
-                                    Quantity = transportDetails!.Quantity,
+                                    Quantity = transportDetail!.Quantity,
                                     ToDate = null,
                                     CreatorId = editorId,
                                     CreatedAt = now.Value,
