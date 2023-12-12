@@ -88,6 +88,7 @@ public class InventoryCheckCreateDto
     public string? Notes { get; set; }
     public bool IsInternal { get; set; }
     public Priority Priority { get; set; } = Priority.Medium;
+    [Required(ErrorMessage = "Chọn người chịu trách nhiệm")]
     public required Guid AssignedTo { get; set; }
     public List<RoomInvenCheckCretaeDto>? Rooms { get; set; }
     public List<MediaFileCreateDto>? RelatedFiles { get; set; }

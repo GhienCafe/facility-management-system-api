@@ -33,191 +33,179 @@ public class InventoryCheckService : BaseService, IInventoryCheckService
 
     public async Task<ApiResponse> Create(InventoryCheckCreateDto createDto)
     {
-        try
-        {
-            var rooms = await MainUnitOfWork.RoomRepository.FindAsync(
-                new Expression<Func<Room, bool>>[]
-                {
+
+        var rooms = await MainUnitOfWork.RoomRepository.FindAsync(
+            new Expression<Func<Room, bool>>[]
+            {
                     x => !x.DeletedAt.HasValue,
                     x => createDto.Rooms!.Select(x => x.RoomId).Contains(x.Id)
-                }, null);
+            }, null);
 
-            var roomAssets = await MainUnitOfWork.RoomAssetRepository.FindAsync(
-                new Expression<Func<RoomAsset, bool>>[]
-                {
+        var roomAssets = await MainUnitOfWork.RoomAssetRepository.FindAsync(
+            new Expression<Func<RoomAsset, bool>>[]
+            {
                     x => !x.DeletedAt.HasValue,
                     x => rooms.Select(r => r!.Id).Contains(x.RoomId),
                     x => x.ToDate == null
-                }, null);
+            }, null);
 
-            var assets = await MainUnitOfWork.AssetRepository.FindAsync(
-                new Expression<Func<Asset, bool>>[]
-                {
+        var assets = await MainUnitOfWork.AssetRepository.FindAsync(
+            new Expression<Func<Asset, bool>>[]
+            {
                     x => !x.DeletedAt.HasValue,
                     x => roomAssets.Select(ra => ra!.AssetId).Contains(x.Id)
-                }, null);
+            }, null);
 
-            // For storing json in column
-            var mediaFiles = new List<Report>();
-            if (createDto.RelatedFiles != null)
+        // For storing json in column
+        var mediaFiles = new List<Report>();
+        if (createDto.RelatedFiles != null)
+        {
+            var listUrisJson = JsonConvert.SerializeObject(createDto.RelatedFiles);
+            var report = new Report
             {
-                var listUrisJson = JsonConvert.SerializeObject(createDto.RelatedFiles);
-                var report = new Report
-                {
-                    FileName = string.Empty,
-                    Uri = listUrisJson,
-                    Content = string.Empty,
-                    FileType = FileType.File,
-                    IsVerified = false,
-                    IsReported = false,
-                };
-        
-                mediaFiles.Add(report);
-            }
-
-            var inventoryCheck = new InventoryCheck
-            {
-                RequestCode = GenerateRequestCode(),
-                Description = createDto.Description ?? "Yêu cầu kiểm kê",
-                Notes = createDto.Notes,
-                Priority = createDto.Priority,
-                IsInternal = createDto.IsInternal,
-                AssignedTo = createDto.AssignedTo
+                FileName = string.Empty,
+                Uri = listUrisJson,
+                Content = string.Empty,
+                FileType = FileType.File,
+                IsVerified = false,
+                IsReported = false,
             };
 
-            if (!await _repository.InsertInventoryCheck(inventoryCheck, rooms, mediaFiles, AccountId, CurrentDate))
-            {
-                throw new ApiException("Tạo yêu cầu thất bại", StatusCode.SERVER_ERROR);
-            }
+            mediaFiles.Add(report);
+        }
 
-            return ApiResponse.Created("Gửi yêu cầu thành công");
-        }
-        catch (Exception ex)
+        var inventoryCheck = new InventoryCheck
         {
-            throw new Exception(ex.Message);
+            RequestCode = GenerateRequestCode(),
+            Description = createDto.Description ?? "Yêu cầu kiểm kê",
+            Notes = createDto.Notes,
+            Priority = createDto.Priority,
+            IsInternal = createDto.IsInternal,
+            AssignedTo = createDto.AssignedTo
+        };
+
+        if (!await _repository.InsertInventoryCheck(inventoryCheck, rooms, mediaFiles, AccountId, CurrentDate))
+        {
+            throw new ApiException("Tạo yêu cầu thất bại", StatusCode.SERVER_ERROR);
         }
+
+        return ApiResponse.Created("Gửi yêu cầu thành công");
     }
 
     public async Task<ApiResponse<InventoryCheckDto>> GetInventoryCheck(Guid id)
     {
-        try
-        {
-            var inventoryCheck = await MainUnitOfWork.InventoryCheckRepository.FindOneAsync<InventoryCheckDto>(
-                    new Expression<Func<InventoryCheck, bool>>[]
-                    {
+
+        var inventoryCheck = await MainUnitOfWork.InventoryCheckRepository.FindOneAsync<InventoryCheckDto>(
+                new Expression<Func<InventoryCheck, bool>>[]
+                {
                         x => !x.DeletedAt.HasValue,
                         x => x.Id == id
-                    });
-            if (inventoryCheck == null)
-            {
-                throw new ApiException("Không tìm thấy yêu cầu này", StatusCode.NOT_FOUND);
-            }
-            inventoryCheck.PriorityObj = inventoryCheck.Priority.GetValue();
-            inventoryCheck.StatusObj = inventoryCheck.Status.GetValue();
-
-            //Related file
-            var relatedMediaFiles = await MainUnitOfWork.MediaFileRepository.GetQuery()
-                .Where(m => m!.ItemId == id && !m.IsReported).FirstOrDefaultAsync();
-
-            if (relatedMediaFiles != null)
-            {
-                inventoryCheck.RelatedFiles = JsonConvert.DeserializeObject<List<MediaFileDetailDto>>(relatedMediaFiles.Uri);
-            }
-            
-            var reports = await MainUnitOfWork.MediaFileRepository.GetQuery()
-                .Where(m => m!.ItemId == id && m.IsReported).OrderByDescending(x => x!.CreatedAt).ToListAsync();
-            
-            //TODO: orderby
-            inventoryCheck.Reports = new List<MediaFileDto>();
-            foreach (var report in reports)
-            {
-                // Deserialize the URI string back into a List<string>
-                var uriList = JsonConvert.DeserializeObject<List<string>>(report.Uri);
-            
-                inventoryCheck.Reports.Add(new MediaFileDto
-                {
-                    ItemId = report.ItemId,
-                    Uri = uriList,
-                    FileType = report.FileType,
-                    Content = report.Content,
-                    IsReject = report.IsReject,
-                    RejectReason = report.RejectReason
                 });
-            }
-
-            var userQuery = MainUnitOfWork.UserRepository.GetQuery().Where(x => x!.Id == inventoryCheck.AssignedTo);
-            inventoryCheck.Staff = await userQuery.Select(x => new AssignedInventoryCheckDto
-            {
-                Id = x!.Id,
-                UserCode = x.UserCode,
-                Fullname = x.Fullname,
-                RoleObj = x.Role.GetValue(),
-                Avatar = x.Avatar,
-                Email = x.Email,
-                PhoneNumber = x.PhoneNumber,
-                Address = x.Address
-            }).FirstOrDefaultAsync();
-
-            var roomQuery = MainUnitOfWork.RoomRepository.GetQuery();
-            var roomAssetQuery = MainUnitOfWork.RoomAssetRepository.GetQuery();
-            var roomStatusQuery = MainUnitOfWork.RoomStatusRepository.GetQuery();
-
-            var inventoryCheckDetails = await MainUnitOfWork.InventoryCheckDetailRepository.GetQuery()
-                                              .Include(x => x!.Asset)
-                                              .Where(x => x!.InventoryCheckId == inventoryCheck.Id)
-                                              .ToListAsync();
-
-            var distinctRoomIds = inventoryCheckDetails.Select(detail => detail!.RoomId).Distinct();
-
-            var rooms = await MainUnitOfWork.RoomRepository.GetQuery()
-                            .Where(room => distinctRoomIds.Contains(room!.Id))
-                            .ToListAsync();
-
-            inventoryCheck.Rooms = distinctRoomIds.Select(roomId =>
-            {
-                var room = rooms.FirstOrDefault(r => r!.Id == roomId);
-                if (room != null)
-                {
-                    return new RoomInventoryCheckDto
-                    {
-                        Id = room.Id,
-                        RoomName = room.RoomName,
-                        Area = room.Area,
-                        RoomCode = room.RoomCode,
-                        FloorId = room.FloorId,
-                        StatusId = room.StatusId,
-                        Status = roomStatusQuery.Where(x => x!.Id == room.StatusId).Select(x => new RoomStatusInvenDto
-                        {
-                            StatusName = x!.StatusName,
-                            Description = x.Description,
-                            Color = x.Color
-                        }).FirstOrDefault(),
-                        Assets = inventoryCheckDetails
-                            .Where(detail => detail!.RoomId == roomId)
-                            .Select(detail => new AssetInventoryCheckDto
-                            {
-                                Id = detail!.AssetId,
-                                AssetName = detail.Asset!.AssetName,
-                                AssetCode = detail.Asset.AssetCode,
-                                QuantityBefore = detail.QuantityBefore,
-                                StatusBefore = detail.StatusBefore,
-                                StatusBeforeObj = detail.StatusBefore.GetValue(),
-                                QuantityReported = detail.QuantityReported,
-                                StatusReported = detail.StatusReported,
-                                StatusReportedObj = detail.StatusReported.GetValue(),
-                            }).ToList()
-                    };
-                }
-                throw new ApiException("Lấy thông tin yêu cầu thất bại", StatusCode.NOT_FOUND);
-            }).ToList();
-
-            inventoryCheck = await _mapperRepository.MapCreator(inventoryCheck);
-            return ApiResponse<InventoryCheckDto>.Success(inventoryCheck);
-        }
-        catch (Exception ex)
+        if (inventoryCheck == null)
         {
-            throw new Exception(ex.Message);
+            throw new ApiException("Không tìm thấy yêu cầu này", StatusCode.NOT_FOUND);
         }
+        inventoryCheck.PriorityObj = inventoryCheck.Priority.GetValue();
+        inventoryCheck.StatusObj = inventoryCheck.Status.GetValue();
+
+        //Related file
+        var relatedMediaFiles = await MainUnitOfWork.MediaFileRepository.GetQuery()
+            .Where(m => m!.ItemId == id && !m.IsReported).FirstOrDefaultAsync();
+
+        if (relatedMediaFiles != null)
+        {
+            inventoryCheck.RelatedFiles = JsonConvert.DeserializeObject<List<MediaFileDetailDto>>(relatedMediaFiles.Uri);
+        }
+
+        var reports = await MainUnitOfWork.MediaFileRepository.GetQuery()
+            .Where(m => m!.ItemId == id && m.IsReported).OrderByDescending(x => x!.CreatedAt).ToListAsync();
+
+        //TODO: orderby
+        inventoryCheck.Reports = new List<MediaFileDto>();
+        foreach (var report in reports)
+        {
+            // Deserialize the URI string back into a List<string>
+            var uriList = JsonConvert.DeserializeObject<List<string>>(report.Uri);
+
+            inventoryCheck.Reports.Add(new MediaFileDto
+            {
+                ItemId = report.ItemId,
+                Uri = uriList,
+                FileType = report.FileType,
+                Content = report.Content,
+                IsReject = report.IsReject,
+                RejectReason = report.RejectReason
+            });
+        }
+
+        var userQuery = MainUnitOfWork.UserRepository.GetQuery().Where(x => x!.Id == inventoryCheck.AssignedTo);
+        inventoryCheck.Staff = await userQuery.Select(x => new AssignedInventoryCheckDto
+        {
+            Id = x!.Id,
+            UserCode = x.UserCode,
+            Fullname = x.Fullname,
+            RoleObj = x.Role.GetValue(),
+            Avatar = x.Avatar,
+            Email = x.Email,
+            PhoneNumber = x.PhoneNumber,
+            Address = x.Address
+        }).FirstOrDefaultAsync();
+
+        var roomQuery = MainUnitOfWork.RoomRepository.GetQuery();
+        var roomAssetQuery = MainUnitOfWork.RoomAssetRepository.GetQuery();
+        var roomStatusQuery = MainUnitOfWork.RoomStatusRepository.GetQuery();
+
+        var inventoryCheckDetails = await MainUnitOfWork.InventoryCheckDetailRepository.GetQuery()
+                                          .Include(x => x!.Asset)
+                                          .Where(x => x!.InventoryCheckId == inventoryCheck.Id)
+                                          .ToListAsync();
+
+        var distinctRoomIds = inventoryCheckDetails.Select(detail => detail!.RoomId).Distinct();
+
+        var rooms = await MainUnitOfWork.RoomRepository.GetQuery()
+                        .Where(room => distinctRoomIds.Contains(room!.Id))
+                        .ToListAsync();
+
+        inventoryCheck.Rooms = distinctRoomIds.Select(roomId =>
+        {
+            var room = rooms.FirstOrDefault(r => r!.Id == roomId);
+            if (room != null)
+            {
+                return new RoomInventoryCheckDto
+                {
+                    Id = room.Id,
+                    RoomName = room.RoomName,
+                    Area = room.Area,
+                    RoomCode = room.RoomCode,
+                    FloorId = room.FloorId,
+                    StatusId = room.StatusId,
+                    Status = roomStatusQuery.Where(x => x!.Id == room.StatusId).Select(x => new RoomStatusInvenDto
+                    {
+                        StatusName = x!.StatusName,
+                        Description = x.Description,
+                        Color = x.Color
+                    }).FirstOrDefault(),
+                    Assets = inventoryCheckDetails
+                        .Where(detail => detail!.RoomId == roomId)
+                        .Select(detail => new AssetInventoryCheckDto
+                        {
+                            Id = detail!.AssetId,
+                            AssetName = detail.Asset!.AssetName,
+                            AssetCode = detail.Asset.AssetCode,
+                            QuantityBefore = detail.QuantityBefore,
+                            StatusBefore = detail.StatusBefore,
+                            StatusBeforeObj = detail.StatusBefore.GetValue(),
+                            QuantityReported = detail.QuantityReported,
+                            StatusReported = detail.StatusReported,
+                            StatusReportedObj = detail.StatusReported.GetValue(),
+                        }).ToList()
+                };
+            }
+            throw new ApiException("Lấy thông tin yêu cầu thất bại", StatusCode.NOT_FOUND);
+        }).ToList();
+
+        inventoryCheck = await _mapperRepository.MapCreator(inventoryCheck);
+        return ApiResponse<InventoryCheckDto>.Success(inventoryCheck);
     }
 
     public async Task<ApiResponse> Update(Guid id, BaseRequestUpdateDto updateDto)
