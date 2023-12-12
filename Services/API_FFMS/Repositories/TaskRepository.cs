@@ -127,7 +127,7 @@ public class TaskRepository : ITaskRepository
                 assetCheck.Status = statusUpdate;
                 _context.Entry(assetCheck).State = EntityState.Modified;
 
-                var asset = await _context.Assets.FindAsync(assetCheck.AssetId);
+                var asset = await _context.Assets.Include(x => x.Type).FirstOrDefaultAsync(x => x.Id == assetCheck.Id);
                 var roomAsset = await _context.RoomAssets
                                 .FirstOrDefaultAsync(x => x.AssetId == asset!.Id && x.ToDate == null);
                 var assetLocation = await _context.Rooms
@@ -135,11 +135,6 @@ public class TaskRepository : ITaskRepository
 
                 if (assetCheck.Status == RequestStatus.InProgress)
                 {
-                    asset!.RequestStatus = RequestType.StatusCheck;
-                    asset.EditedAt = now.Value;
-                    asset.EditorId = editorId;
-                    _context.Entry(asset).State = EntityState.Modified;
-
                     assetLocation!.State = RoomState.NeedInspection;
                     assetLocation.EditedAt = now.Value;
                     assetLocation.EditorId = editorId;
@@ -176,11 +171,14 @@ public class TaskRepository : ITaskRepository
 
                     if (assetCheck.IsVerified == true)
                     {
-                        asset!.Status = AssetStatus.Damaged;
-                        asset!.RequestStatus = RequestType.Operational;
-                        asset.EditedAt = now.Value;
-                        asset.EditorId = editorId;
-                        _context.Entry(asset).State = EntityState.Modified;
+                        if (asset != null && asset.Type!.Unit == Unit.Individual)
+                        {
+                            asset.Status = AssetStatus.Damaged;
+                            asset.RequestStatus = RequestType.Operational;
+                            asset.EditedAt = now.Value;
+                            asset.EditorId = editorId;
+                            _context.Entry(asset).State = EntityState.Modified;
+                        }
 
                         if (roomAsset != null)
                         {
@@ -189,11 +187,6 @@ public class TaskRepository : ITaskRepository
                             roomAsset.EditorId = editorId;
                             _context.Entry(roomAsset).State = EntityState.Modified;
                         }
-
-                        assetLocation!.State = RoomState.Damaged;
-                        assetLocation.EditedAt = now.Value;
-                        assetLocation.EditorId = editorId;
-                        _context.Entry(assetLocation).State = EntityState.Modified;
                     }
                     else if (assetCheck.IsVerified == false)
                     {
@@ -210,11 +203,6 @@ public class TaskRepository : ITaskRepository
                             roomAsset.EditorId = editorId;
                             _context.Entry(roomAsset).State = EntityState.Modified;
                         }
-
-                        assetLocation!.State = RoomState.Operational;
-                        assetLocation.EditedAt = now.Value;
-                        assetLocation.EditorId = editorId;
-                        _context.Entry(assetLocation).State = EntityState.Modified;
                     }
 
                     var notification = new Notification
