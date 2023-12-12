@@ -71,23 +71,23 @@ public enum RequestType
 
 public enum Priority
 {
-    [Display(Name = "Highest")]
+    [Display(Name = "Cao nhất")]
     [Color("#ff5630")]
     Highest = 1,
 
-    [Display(Name = "High")]
+    [Display(Name = "Cao")]
     [Color("#ff7452")]
     High = 2,
 
-    [Display(Name = "Medium")]
+    [Display(Name = "Trung bình")]
     [Color("#ffab00")]
     Medium = 3,
 
-    [Display(Name = "Low")]
+    [Display(Name = "Thấp")]
     [Color("#2684ff")]
     Low = 4,
 
-    [Display(Name = "Lowest")]
+    [Display(Name = "Thấp nhất")]
     [Color("#0065ff")]
     Lowest = 5
 }
