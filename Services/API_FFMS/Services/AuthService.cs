@@ -5,6 +5,7 @@ using System.Text.RegularExpressions;
 using API_FFMS.Dtos;
 using AppCore.Extensions;
 using AppCore.Models;
+using DocumentFormat.OpenXml.Spreadsheet;
 using MainData;
 using MainData.Entities;
 using MainData.Repositories;
@@ -20,6 +21,7 @@ public interface IAuthService : IBaseService
     Task<ApiResponse> RevokeToken();
     Task<ApiResponse> ResetPassword(UpdatePasswordDto resetPasswordDto);
     Task<ApiResponse> SendMailConfirmPassword(ResetPasswordDto email);
+    Task<ApiResponse> ChangePassword(ChangePasswordDto account);
 }
 
 public class AuthService : BaseService, IAuthService
@@ -274,7 +276,7 @@ public class AuthService : BaseService, IAuthService
     }
     
     public async Task<ApiResponse> SendMailConfirmPassword(ResetPasswordDto email)
-{
+    {
     var user =  MainUnitOfWork.UserRepository.GetQuery().SingleOrDefault(x => !x!.DeletedAt.HasValue && x.Email == email.Email);
     if (user == null)
     {
@@ -336,7 +338,27 @@ public class AuthService : BaseService, IAuthService
     return ApiResponse.Success();
 }
 
-  public async Task<ApiResponse> ResetPassword(UpdatePasswordDto resetPasswordDto)
+    public async Task<ApiResponse> ChangePassword(ChangePasswordDto account)
+    {
+        var user = await MainUnitOfWork.UserRepository.FindOneAsync(AccountId ?? Guid.Empty);
+        
+        // Check password
+        if (!account.OldPassword.VerifyPassword<User>(user!.Salt, user.Password))
+        {
+            throw new ApiException("Sai mật khẩu", StatusCode.BAD_REQUEST);
+        }
+        
+        user.Password = SecurityExtension.HashPassword<User>(account.NewPassword, user.Salt);
+
+        if (!await MainUnitOfWork.UserRepository.UpdateAsync(user, AccountId, CurrentDate))
+        {
+            throw new ApiException("Cập nhật thất bại", StatusCode.SERVER_ERROR);
+        }
+        
+        return ApiResponse.Success("Cập nhật thành công");
+    }
+
+    public async Task<ApiResponse> ResetPassword(UpdatePasswordDto resetPasswordDto)
   {
     var user = await MainUnitOfWork.UserRepository.GetQuery().SingleOrDefaultAsync(x => !x!.DeletedAt.HasValue && x.Email == resetPasswordDto.Email);
     if (user == null)

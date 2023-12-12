@@ -61,12 +61,19 @@ public class AuthController : BaseController
     {
         return await _authService.ResetPassword(updatePasswordDto);
     }
+    
     [HttpPost("check-token-device")]
     [SwaggerOperation("Check token device")]
     [AllowAnonymous]
-
     public async Task<ApiResponse> CheckTokenDevice(TokenDeviceDto tokenDto)
     {
         return await _tokenDeviceService.CheckTokenDevice(tokenDto);
+    }
+    
+    [HttpPost("change-password")]
+    [SwaggerOperation("Change password")]
+    public async Task<ApiResponse> ChangePassword(ChangePasswordDto accountDto)
+    {
+        return await _authService.ChangePassword(accountDto);
     }
 }

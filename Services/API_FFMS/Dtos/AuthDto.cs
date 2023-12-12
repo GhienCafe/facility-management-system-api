@@ -11,6 +11,12 @@ public class AccountCredentialLoginDto
     [Required] public string Password { get; set; } = string.Empty;
 }
 
+public class ChangePasswordDto
+{
+    [Required] public string OldPassword { get; set; } = null!;
+    [Required] public string NewPassword { get; set; } = null!;
+}
+
 public class AuthDto
 {
     public string? AccessToken { get; set; }
