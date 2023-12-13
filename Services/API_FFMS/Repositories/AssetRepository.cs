@@ -62,31 +62,37 @@ public class AssetRepository : IAssetRepository
     {
         await _context.Database.BeginTransactionAsync();
         now ??= DateTime.UtcNow;
+
+        var assetQuery = _context.Assets.Include(a => a.Type)
+                                        .Include(a => a.Model)
+                                        .ToList();
+
+        var typeQuery = _context.AssetTypes.Where(x => x.Unit == Unit.Quantity).Select(x => x.Id).ToList();
+        var modelQuery = _context.Models.Select(x => x.Id).ToList();
+
         try
         {
             foreach(var asset in assets)
             {
-                asset.Id = Guid.NewGuid();
-                asset.CreatedAt = now.Value;
-                asset.EditedAt = now.Value;
-                asset.CreatorId = creatorId;
-                asset.StartDateOfUse = now.Value;
-                asset.Status = AssetStatus.Operational;
-                asset.RequestStatus = RequestType.Operational;
-                _context.Assets.Add(asset);
-
-                var roomAsset = new RoomAsset
+                if(modelQuery.Any(x => x == asset.ModelId) && typeQuery.Any(x => x == asset.TypeId))
                 {
-                    FromDate = now.Value,
-                    AssetId = asset.Id,
-                    RoomId = GetWareHouse("207")!.Id,
-                    Status = AssetStatus.Operational,
-                    ToDate = null,
-                    Quantity = asset.Quantity,
-                    CreatedAt = now.Value,
-                    CreatorId = creatorId,
-                };
-                await _context.RoomAssets.AddAsync(roomAsset);
+                    var existAsset = _context.Assets.FirstOrDefault(x => x.TypeId == asset.TypeId && x.ModelId == asset.ModelId);
+                    if(existAsset != null)
+                    {
+                        existAsset.Quantity += asset.Quantity;
+                        _context.Entry(existAsset).State = EntityState.Modified;
+                    }
+
+                }
+                else
+                {
+                    asset.CreatedAt = now.Value;
+                    asset.EditedAt = now.Value;
+                    asset.CreatorId = creatorId;
+                    asset.Status = AssetStatus.Operational;
+                    asset.RequestStatus = RequestType.Operational;
+                    _context.Assets.Add(asset);
+                }
             }
 
             await _context.SaveChangesAsync();

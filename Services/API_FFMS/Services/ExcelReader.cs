@@ -22,17 +22,18 @@ namespace API_FFMS.Services
                     {
                         assets.Add(new ImportAssetDto
                         {
+                            Id = Guid.NewGuid(),
                             AssetName = dataRow.Cell(1).Value.ToString().Trim(),
-                            AssetCode = dataRow.Cell(2).Value.ToString()?.Trim(),
+                            AssetCode = dataRow.Cell(2).Value.ToString().Trim(),
                             TypeCode = dataRow.Cell(3).Value.ToString().Trim(),
                             ModelCode = dataRow.Cell(4).Value.ToString().Trim(),
-                            //Model = dataRow.Cell(5).Value.ToString().Trim(),
-                            ManufacturingYear = int.Parse(dataRow.Cell(5).Value.ToString().Trim()),
-                            SerialNumber = dataRow.Cell(6).Value.ToString()?.Trim(),
-                            Quantity = double.Parse(dataRow.Cell(7).Value.ToString().Trim()),
-                            Description = dataRow.Cell(8).Value.ToString()?.Trim(),
+                            ManufacturingYear = dataRow.Cell(5).Value.ToString().Trim(),
+                            SerialNumber = dataRow.Cell(6).Value.ToString().Trim(),
+                            Quantity = dataRow.Cell(7).Value.ToString().Trim(),
+                            Description = dataRow.Cell(8).Value.ToString().Trim(),
                             IsRented = dataRow.Cell(9).Value.ToString().Trim(),
-                            IsMovable = dataRow.Cell(10).Value.ToString().Trim()
+                            IsMovable = dataRow.Cell(10).Value.ToString().Trim(),
+                            RoomCode = dataRow.Cell(11).Value.ToString().Trim()
                         });
                     }
                 }

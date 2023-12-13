@@ -127,7 +127,7 @@ public class TaskRepository : ITaskRepository
                 assetCheck.Status = statusUpdate;
                 _context.Entry(assetCheck).State = EntityState.Modified;
 
-                var asset = await _context.Assets.Include(x => x.Type).FirstOrDefaultAsync(x => x.Id == assetCheck.Id);
+                var asset = await _context.Assets.Include(x => x.Type).FirstOrDefaultAsync(x => x.Id == assetCheck.AssetId);
                 var roomAsset = await _context.RoomAssets
                                 .FirstOrDefaultAsync(x => x.AssetId == asset!.Id && x.ToDate == null);
                 var assetLocation = await _context.Rooms
