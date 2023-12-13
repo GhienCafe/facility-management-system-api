@@ -1,5 +1,6 @@
 ﻿using API_FFMS.Services;
 using Microsoft.AspNetCore.Mvc;
+using Swashbuckle.AspNetCore.Annotations;
 
 namespace API_FFMS.Controllers
 {
@@ -38,6 +39,7 @@ namespace API_FFMS.Controllers
         }
 
         [HttpGet]
+        [SwaggerOperation("Export assets")]
         public async Task<IActionResult> ExportAsset()
         {
             var exportFile = await _taskExportService.ExportAsset();
@@ -48,7 +50,8 @@ namespace API_FFMS.Controllers
             );
         }
 
-        [HttpGet("export-ultra")]
+        [HttpGet("export-task")]
+        [SwaggerOperation("Export tasks")]
         public async Task<IActionResult> ExportTaskUltra()
         {
             var exportFile = await _taskExportService.ExportTaskUltra();

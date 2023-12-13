@@ -29,36 +29,38 @@ namespace API_FFMS.Controllers
         {
             using (var workbook = new XLWorkbook())
             {
-                var worksheet = workbook.Worksheets.Add("AssetTemplate");
+                var worksheet = workbook.Worksheets.Add("Thiết bị");
                 var currentRow = 1;
 
                 worksheet.Cell(currentRow, 1).Value = "Danh sách trang thiết bị";
                 worksheet.Cell(currentRow, 1).Style.Font.FontSize = 18;
                 worksheet.Cell(currentRow, 1).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
                 worksheet.Cell(currentRow, 1).Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
-                worksheet.Range(1, 1, 1, 10).Row(1).Merge();
-                worksheet.Range(1, 1, 1, 10).Style.Font.Bold = true;
+                worksheet.Range(1, 1, 1, 11).Row(1).Merge();
+                worksheet.Range(1, 1, 1, 11).Style.Font.Bold = true;
                 currentRow++;
 
                 worksheet.Cell(currentRow, 1).Value = "Tên thiết bị*";
                 worksheet.Cell(currentRow, 2).Value = "Mã thiết bị";
-                worksheet.Cell(currentRow, 3).Value = "Loại thiết bị";
-                //worksheet.Cell(currentRow, 4).Value = "Dòng sản phẩm";
-                worksheet.Cell(currentRow, 4).Value = "Dòng sản phẩm";
+                worksheet.Cell(currentRow, 3).Value = "Mã nhóm thiết bị";
+                worksheet.Cell(currentRow, 4).Value = "Mã dòng sản phẩm";
                 worksheet.Cell(currentRow, 5).Value = "Năm sản xuất";
                 worksheet.Cell(currentRow, 6).Value = "Số Seri";
                 worksheet.Cell(currentRow, 7).Value = "Số lượng";
                 worksheet.Cell(currentRow, 8).Value = "Mô tả";
                 worksheet.Cell(currentRow, 9).Value = "Thuê ngoài(Có/Không)";
                 worksheet.Cell(currentRow, 10).Value = "Có thể di chuyển(Có/Không)";
+                worksheet.Cell(currentRow, 11).Value = "Mã phòng";
 
-                var headerRange = worksheet.Range(worksheet.Cell(currentRow, 1), worksheet.Cell(currentRow, 10));
+                var headerRange = worksheet.Range(worksheet.Cell(currentRow, 1), worksheet.Cell(currentRow, 11));
                 headerRange.Style.Font.Bold = true;
                 headerRange.Style.Fill.BackgroundColor = XLColor.LightGray;
+                headerRange.Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
+                headerRange.Style.Border.InsideBorder = XLBorderStyleValues.Thin;
 
                 worksheet.Columns().AdjustToContents();
 
-                var assetTypesWorksheet = workbook.Worksheets.Add("AssetTypes");
+                var assetTypesWorksheet = workbook.Worksheets.Add("Nhóm thiết bị");
                 var assetTypesCurrentRow = 1;
                 var assetTypes = await _assetTypeService.GetAssetTypes();
 
@@ -74,11 +76,12 @@ namespace API_FFMS.Controllers
                 assetTypesWorksheet.Cell(assetTypesCurrentRow, 1).Value = "Tên nhóm thiết bị";
                 assetTypesWorksheet.Cell(assetTypesCurrentRow, 2).Value = "Mã nhóm thiết bị";
                 assetTypesWorksheet.Cell(assetTypesCurrentRow, 3).Value = "Mô tả";
-                assetTypesWorksheet.Cell(assetTypesCurrentRow, 4).Value = "Hình ảnh";
 
-                var assetTypesHeaderRange = assetTypesWorksheet.Range(assetTypesWorksheet.Cell(assetTypesCurrentRow, 1), assetTypesWorksheet.Cell(assetTypesCurrentRow, 4));
+                var assetTypesHeaderRange = assetTypesWorksheet.Range(assetTypesWorksheet.Cell(assetTypesCurrentRow, 1), assetTypesWorksheet.Cell(assetTypesCurrentRow, 3));
                 assetTypesHeaderRange.Style.Font.Bold = true;
                 assetTypesHeaderRange.Style.Fill.BackgroundColor = XLColor.LightGray;
+                assetTypesHeaderRange.Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
+                assetTypesHeaderRange.Style.Border.InsideBorder = XLBorderStyleValues.Thin;
 
                 foreach (var assetType in assetTypes.Data)
                 {
@@ -86,7 +89,6 @@ namespace API_FFMS.Controllers
                     assetTypesWorksheet.Cell(assetTypesCurrentRow, 1).Value = assetType.TypeName;
                     assetTypesWorksheet.Cell(assetTypesCurrentRow, 2).Value = assetType.TypeCode;
                     assetTypesWorksheet.Cell(assetTypesCurrentRow, 3).Value = assetType.Description;
-                    assetTypesWorksheet.Cell(assetTypesCurrentRow, 4).Value = assetType.ImageUrl;
                 }
                 assetTypesCurrentRow++;
                 //Models
@@ -101,39 +103,24 @@ namespace API_FFMS.Controllers
 
                 assetTypesCurrentRow++;
                 assetTypesWorksheet.Cell(assetTypesCurrentRow, 1).Value = "Tên Dòng sản phẩm";
-                assetTypesWorksheet.Cell(assetTypesCurrentRow, 2).Value = "Mô tả";
+                assetTypesWorksheet.Cell(assetTypesCurrentRow, 2).Value = "Mã dòng sản phẩm";
+                assetTypesWorksheet.Cell(assetTypesCurrentRow, 3).Value = "Mô tả";
 
-                var modelsHeaderRange = assetTypesWorksheet.Range(assetTypesWorksheet.Cell(assetTypesCurrentRow, 1), assetTypesWorksheet.Cell(assetTypesCurrentRow, 4));
+                var modelsHeaderRange = assetTypesWorksheet.Range(assetTypesWorksheet.Cell(assetTypesCurrentRow, 1), assetTypesWorksheet.Cell(assetTypesCurrentRow, 3));
                 modelsHeaderRange.Style.Font.Bold = true;
                 modelsHeaderRange.Style.Fill.BackgroundColor = XLColor.LightGray;
+                modelsHeaderRange.Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
+                modelsHeaderRange.Style.Border.InsideBorder = XLBorderStyleValues.Thin;
                 assetTypesCurrentRow++;
 
                 var models = await _modelService.GetModels();
                 foreach ( var model in models.Data)
                 {
                     assetTypesWorksheet.Cell(assetTypesCurrentRow, 1).Value = model.ModelName;
-                    assetTypesWorksheet.Cell(assetTypesCurrentRow, 2).Value = model.Description;
+                    assetTypesWorksheet.Cell(assetTypesCurrentRow, 2).Value = model.ModelCode;
+                    assetTypesWorksheet.Cell(assetTypesCurrentRow, 3).Value = model.Description;
                     assetTypesCurrentRow++;
                 }
-
-                //Brands
-                // assetTypesCurrentRow++;
-                //
-                // assetTypesWorksheet.Cell(assetTypesCurrentRow, 1).Value = "Danh sách nhãn hiệu";
-                // assetTypesWorksheet.Cell(assetTypesCurrentRow, 1).Style.Font.FontSize = 18;
-                // assetTypesWorksheet.Cell(assetTypesCurrentRow, 1).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
-                // assetTypesWorksheet.Cell(assetTypesCurrentRow, 1).Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
-                // assetTypesWorksheet.Range(assetTypesCurrentRow, 1, assetTypesCurrentRow, 4).Row(1).Merge();
-                // assetTypesWorksheet.Range(assetTypesCurrentRow, 1, assetTypesCurrentRow, 4).Style.Font.Bold = true;
-                //
-                // assetTypesCurrentRow++;
-                // assetTypesWorksheet.Cell(assetTypesCurrentRow, 1).Value = "Tên nhãn hiệu";
-                // assetTypesWorksheet.Cell(assetTypesCurrentRow, 2).Value = "Mô tả";
-                //
-                // var brandsHeaderRange = assetTypesWorksheet.Range(assetTypesWorksheet.Cell(assetTypesCurrentRow, 1), assetTypesWorksheet.Cell(assetTypesCurrentRow, 4));
-                // brandsHeaderRange.Style.Font.Bold = true;
-                // brandsHeaderRange.Style.Fill.BackgroundColor = XLColor.LightGray;
-                // assetTypesCurrentRow++;
 
                 assetTypesWorksheet.Columns().AdjustToContents();
 

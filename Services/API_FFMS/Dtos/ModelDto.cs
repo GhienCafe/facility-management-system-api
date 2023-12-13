@@ -5,6 +5,7 @@ namespace API_FFMS.Dtos;
 public class ModelDto : BaseDto
 {
     public string? ModelName { get; set; }
+    public string? ModelCode { get; set; }
     public string? Description { get; set; }
     public int? MaintenancePeriodTime { get; set; }
     public string? ImageUrl { get; set; }
