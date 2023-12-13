@@ -6,7 +6,6 @@ using MainData;
 using MainData.Entities;
 using MainData.Repositories;
 using Microsoft.EntityFrameworkCore;
-using System.Linq.Expressions;
 
 namespace API_FFMS.Services
 {
@@ -18,17 +17,20 @@ namespace API_FFMS.Services
     }
     public class ImportService : BaseService, IImportAssetService
     {
+        private readonly IRoomAssetRepository _roomAssetRepository;
         private readonly IAssetRepository _assetRepository;
         private List<ImportError> validationErrors;
         private List<ImportTransportError> validationAssetErrors;
 
         public ImportService(MainUnitOfWork mainUnitOfWork, IHttpContextAccessor httpContextAccessor,
-                             IMapperRepository mapperRepository, IAssetRepository assetRepository)
+                             IMapperRepository mapperRepository, IAssetRepository assetRepository,
+                             IRoomAssetRepository roomAssetRepository)
                              : base(mainUnitOfWork, httpContextAccessor, mapperRepository)
         {
             validationErrors = new List<ImportError>();
             validationAssetErrors = new List<ImportTransportError>();
             _assetRepository = assetRepository;
+            _roomAssetRepository = roomAssetRepository;
         }
 
         public async Task<ApiResponses<ImportTransportError>> ImportAssetsTransport(IFormFile formFile)
@@ -147,62 +149,58 @@ namespace API_FFMS.Services
                 throw new ApiException("Not supported file extension");
             }
 
-            try
+            var importDtos = ExcelReader.AssetReader(formFile.OpenReadStream());
+            await ValidationImport(importDtos);
+
+            var validDtos = importDtos.Where(a => !validationErrors.Any(e => e.Row == importDtos.IndexOf(a) + 3)).ToList(); ;
+
+            var assets = validDtos.Select(dto => new Asset
             {
-                var assetDtos = ExcelReader.AssetReader(formFile.OpenReadStream());
+                Id = dto.Id,
+                AssetName = dto.AssetName,
+                AssetCode = dto.AssetCode,
+                TypeId = GetAssetTypeByCode(dto.TypeCode),
+                Status = AssetStatus.Operational,
+                ManufacturingYear = int.Parse(dto.ManufacturingYear),
+                SerialNumber = dto.SerialNumber,
+                Quantity = double.Parse(dto.Quantity),
+                Description = dto.Description ?? "",
+                IsRented = IsTrueOrFalse(dto.IsRented!),
+                IsMovable = IsTrueOrFalse(dto.IsMovable!),
+                ModelId = GetModelByCode(dto.ModelCode),
+                ImageUrl = "",
+                StartDateOfUse = DateTime.Now,
+                LastCheckedDate = null,
+                LastMaintenanceTime = null
+            }).ToList();
 
-                var assets = assetDtos.Select(dto => new Asset
+            var roomAssets = validDtos.Where(dto => assets.Any(v => v.Id == dto.Id))
+                                          .Select(dto => new RoomAsset
+                                            {
+                                                RoomId = GetRoomId(dto.RoomCode),
+                                                AssetId = dto.Id,
+                                                Quantity = double.Parse(dto.Quantity)
+                                          }).ToList();
+
+            if (validationErrors.Count >= 0 && validDtos.Count >= 0)
+            {
+                if (!await _assetRepository.InsertAssets(assets, AccountId, CurrentDate))
                 {
-                    AssetName = dto.AssetName,
-                    AssetCode = dto.AssetCode,
-                    TypeId = dto.TypeCode == null ? null : GetAssetTypeByCode(dto.TypeCode!),
-                    Status = AssetStatus.Operational,
-                    ManufacturingYear = dto.ManufacturingYear,
-                    SerialNumber = dto.SerialNumber,
-                    Quantity = dto.Quantity,
-                    Description = dto.Description,
-                    IsRented = IsTrueOrFalse(dto.IsRented!),
-                    IsMovable = IsTrueOrFalse(dto.IsMovable!),
-                    ModelId = dto.ModelCode == null ? null : GetModelByName(dto.ModelCode!),
-                    ImageUrl = "",
-                    StartDateOfUse = DateTime.Now,
-                    LastCheckedDate = null,
-                    LastMaintenanceTime = null
-                }).ToList();
-
-                // Validation checks
-                CheckAllFieldsNotBlank(assetDtos);
-                CheckUniqueAssetCodes(assets);
-                await CheckExistTypeCode(assets);
-                await CheckUniqueAssetCodesInDatabase(assets);
-                await CheckExistModel(assets);
-                //await CheckTypeCodeExistInDatabase(assets);
-                CheckManufacturingYear(assets);
-                CheckQuantity(assets);
-                //CheckStatusValueRange(assets);
-
-                // Filter out assets with validation errors
-                var validAssets = assets.Where(a => !validationErrors.Any(e => e.Row == assets.IndexOf(a) + 3)).ToList();
-
-                if (validationErrors.Count >= 0 && validAssets.Count >= 0)
-                {
-                    if (!await _assetRepository.InsertAssets(validAssets, AccountId, CurrentDate))
-                    {
-                        throw new ApiException("Import assets failed", StatusCode.SERVER_ERROR);
-                    }
-
-                    return ApiResponses<ImportError>.Fail(validationErrors, StatusCode.MULTI_STATUS, "Hoàn tất nhập trang thiết bị vui lòng kiểm tra lại");
+                    throw new ApiException("Nhập danh sách thiết bị thất bại", StatusCode.SERVER_ERROR);
                 }
 
-                return ApiResponses<ImportError>.Success((IEnumerable<ImportError>)validAssets);
+                if (!await _roomAssetRepository.AddAssetToRooms(roomAssets, AccountId, CurrentDate))
+                {
+                    throw new ApiException("Thêm thiết bị vào phòng thất bại", StatusCode.SERVER_ERROR);
+                }
+
+                return ApiResponses<ImportError>.Fail(validationErrors, StatusCode.MULTI_STATUS, "Hoàn tất nhập trang thiết bị vui lòng kiểm tra lại");
             }
-            catch (Exception exception)
-            {
-                throw new ApiException(exception.Message);
-            }
+
+            return ApiResponses<ImportError>.Success((IEnumerable<ImportError>)assets);
         }
 
-        private Guid? GetAssetTypeByCode(string typeCode)
+        private Guid GetAssetTypeByCode(string typeCode)
         {
             var assetCategory = MainUnitOfWork.AssetTypeRepository.GetQuery()
                                 .Where(x => x!.TypeCode.Trim().ToLower()
@@ -217,11 +215,11 @@ namespace API_FFMS.Services
 
         }
 
-        private Guid? GetModelByName(string modelName)
+        private Guid GetModelByCode(string modelCode)
         {
             var model = MainUnitOfWork.ModelRepository.GetQuery()
-                                .Where(x => x!.ModelName!.Trim().ToLower()
-                                .Contains(modelName.Trim().ToLower()))
+                                .Where(x => x!.ModelCode!.Trim().ToLower()
+                                .Contains(modelCode.Trim().ToLower()))
                                 .FirstOrDefault();
             if (model == null)
             {
@@ -230,16 +228,22 @@ namespace API_FFMS.Services
             return model.Id;
         }
 
-        public Room? GetWareHouse(string roomName)
+        public Guid GetRoomId(string roomCode)
         {
-            var wareHouse = MainUnitOfWork.RoomRepository.GetQuery()
-                            .Where(x => x!.RoomName!.Trim()
-                            .Contains(roomName.Trim()))
-                            .FirstOrDefault();
-            return wareHouse;
+            var roomQuery = MainUnitOfWork.RoomRepository.GetQuery();
+
+            var room = roomQuery.Where(x => x!.RoomName!.Trim()
+                                .Contains(roomCode.Trim()))
+                                .FirstOrDefault();
+
+            room ??= roomQuery.Where(x => x!.RoomName!.Trim()
+                                .Contains("207".Trim()))
+                                .FirstOrDefault();
+
+            return room.Id;
         }
 
-        private bool IsTrueOrFalse(string value)
+        private static bool IsTrueOrFalse(string value)
         {
             if (value.Trim().Contains("Có"))
             {
@@ -255,52 +259,33 @@ namespace API_FFMS.Services
             }
         }
 
-        private async Task CheckExistTypeCode(List<Asset> assets)
+        private async Task ValidationImport(List<ImportAssetDto> assetDtos)
         {
+            var currentDate = DateTime.UtcNow.Year;
+            var minManufacturingYear = 2000;
+
             var typeCodes = await MainUnitOfWork.AssetTypeRepository.GetQuery()
                 .Select(x => x!.Id).ToListAsync();
 
-            foreach (var asset in assets)
-            {
-                if (!typeCodes.Contains((Guid)asset.TypeId))
-                {
-                    var row = assets.IndexOf(asset) + 3;
-                    validationErrors.Add(new ImportError
-                    {
-                        Row = row,
-                        ErrorMessage = $"Mã nhóm thiết bị ở dòng {row} không tồn tại"
-                    });
-                }
-            }
-        }
-
-        private async Task CheckExistModel(List<Asset> assets)
-        {
             var modelCodes = await MainUnitOfWork.ModelRepository.GetQuery()
                 .Select(x => x!.Id).ToListAsync();
 
-            foreach (var asset in assets)
-            {
-                if (!modelCodes.Contains((Guid)asset.ModelId))
-                {
-                    var row = assets.IndexOf(asset) + 3;
-                    validationErrors.Add(new ImportError
-                    {
-                        Row = row,
-                        ErrorMessage = $"Dòng sản phẩm ở dòng {row} không tồn tại"
-                    });
-                }
-            }
-        }
+            var assetCodes = await MainUnitOfWork.AssetRepository.GetQuery()
+                .Select(x => x!.AssetCode)
+                .ToListAsync();
 
-        private void CheckAllFieldsNotBlank(List<ImportAssetDto> assetDtos)
-        {
+            var roomCodes = await MainUnitOfWork.RoomRepository.GetQuery()
+                .Select(x => x!.RoomCode)
+                .ToListAsync();
+
             foreach (var assetDto in assetDtos)
             {
+                //Check blank
                 if (string.IsNullOrWhiteSpace(assetDto.AssetName) ||
                     string.IsNullOrWhiteSpace(assetDto.TypeCode) ||
                     string.IsNullOrWhiteSpace(assetDto.ManufacturingYear.ToString()) ||
-                    string.IsNullOrWhiteSpace(assetDto.Quantity.ToString()))
+                    string.IsNullOrWhiteSpace(assetDto.Quantity.ToString())
+                    )
                 {
                     var row = assetDtos.IndexOf(assetDto) + 3;
                     validationErrors.Add(new ImportError
@@ -309,25 +294,89 @@ namespace API_FFMS.Services
                         ErrorMessage = $"Tất cả các thông tin phải được điền, đang trống tại dòng {row}"
                     });
                 }
-            }
-        }
 
-        private void CheckUniqueAssetCodes(List<Asset> assets)
-        {
-            var duplicateCodes = assets
-                .GroupBy(a => a.AssetCode)
-                .Where(g => g.Count() > 1)
-                .Select(g => g.Key)
-                .ToList();
+                //Check Exist Model
+                if (!modelCodes.Contains(GetModelByCode(assetDto.ModelCode)))
+                {
+                    var row = assetDtos.IndexOf(assetDto) + 3;
+                    validationErrors.Add(new ImportError
+                    {
+                        Row = row,
+                        ErrorMessage = $"Dòng sản phẩm ở dòng {row} không tồn tại"
+                    });
+                }
+
+                //Check Unique Asset Codes In Database
+                if (assetCodes.Contains(assetDto.AssetCode))
+                {
+                    var row = assetDtos.IndexOf(assetDto) + 3;
+                    validationErrors.Add(new ImportError
+                    {
+                        Row = row,
+                        ErrorMessage = $"Duplicate AssetCode '{assetDto.AssetCode}' tại dòng {row}"
+                    });
+                }
+
+                //Check Exist Type Code
+                if (!typeCodes.Contains(GetAssetTypeByCode(assetDto.TypeCode)))
+                {
+                    var row = assetDtos.IndexOf(assetDto) + 3;
+                    validationErrors.Add(new ImportError
+                    {
+                        Row = row,
+                        ErrorMessage = $"Mã nhóm thiết bị ở dòng {row} không tồn tại"
+                    });
+                }
+
+                //Check Manufacturing Year
+                if (!int.TryParse(assetDto.ManufacturingYear.ToString(), out int manufacturingYear) || manufacturingYear < minManufacturingYear || manufacturingYear > currentDate)
+                {
+                    var row = assetDtos.IndexOf(assetDto) + 3;
+                    validationErrors.Add(new ImportError
+                    {
+                        Row = row,
+                        ErrorMessage = $"Năm sản xuất tại dòng {row} không phù hợp hoặc không trong phạm vi {minManufacturingYear}-{currentDate}"
+                    });
+                }
+
+                //Check Quantity
+                if (!double.TryParse(assetDto.Quantity.ToString(), out double quantity) || double.Parse(assetDto.Quantity) <= 0)
+                {
+                    var row = assetDtos.IndexOf(assetDto) + 3;
+                    validationErrors.Add(new ImportError
+                    {
+                        Row = row,
+                        ErrorMessage = $"Số lượng tại dòng {row} sai định dạng"
+                    });
+                }
+
+                //Check Room Code
+                if (!roomCodes.Contains(assetDto.RoomCode))
+                {
+                    var row = assetDtos.IndexOf(assetDto) + 3;
+                    validationErrors.Add(new ImportError
+                    {
+                        Row = 0,
+                        ErrorMessage = $"Mã phòng tại dòng {row} không tồn tại, thiết bị được chuyển vào 'kho'"
+                    });
+                }
+            }
+
+            //Check unique asset code
+            var duplicateCodes = assetDtos
+            .GroupBy(a => a.AssetCode)
+            .Where(g => g.Count() > 1)
+            .Select(g => g.Key)
+            .ToList();
 
             if (duplicateCodes.Any())
             {
-                var duplicates = assets
+                var duplicates = assetDtos
                     .Where(a => duplicateCodes.Contains(a.AssetCode))
                     .Select(a => new
                     {
                         AssetCode = a.AssetCode,
-                        Row = assets.IndexOf(a) + 3 // +2 because Excel rows are 1-based, and we skip the header row
+                        Row = assetDtos.IndexOf(a) + 3 // +2 because Excel rows are 1-based, and we skip the header row
                     })
                     .ToList();
 
@@ -345,95 +394,111 @@ namespace API_FFMS.Services
             }
         }
 
-        private async Task CheckUniqueAssetCodesInDatabase(List<Asset> assets)
-        {
-            var assetCodes = await MainUnitOfWork.AssetRepository.GetQuery()
-                .Select(x => x!.AssetCode)
-                .ToListAsync();
-            foreach (var asset in assets)
-            {
-                if (assetCodes.Contains(asset.AssetCode))
-                {
-                    var row = assets.IndexOf(asset) + 3;
-                    validationErrors.Add(new ImportError
-                    {
-                        Row = row,
-                        ErrorMessage = $"Duplicate AssetCode '{asset.AssetCode}' tại dòng {row}"
-                    });
-                }
-            }
-        }
+        //private async Task ValidationImport(List<Asset> assets)
+        //{
+        //    var currentDate = DateTime.UtcNow.Year;
+        //    var minManufacturingYear = 2000;
 
-        private async Task CheckTypeCodeExistInDatabase(List<Asset> assets)
-        {
-            foreach (var asset in assets)
-            {
-                var existingCategory = await MainUnitOfWork.AssetTypeRepository.GetQuery()
-                                             .Where(a => a!.TypeCode.Contains(asset.Type!.TypeCode))
-                                             .FirstOrDefaultAsync();
+        //    var typeCodes = await MainUnitOfWork.AssetTypeRepository.GetQuery()
+        //        .Select(x => x!.Id).ToListAsync();
 
-                if (existingCategory == null)
-                {
-                    var row = assets.IndexOf(asset) + 3;
-                    validationErrors.Add(new ImportError
-                    {
-                        Row = row,
-                        ErrorMessage = $"Nhóm thiết bị '{asset.Type}' tại dòng {row} không tồn tại"
-                    });
-                }
-            }
-        }
+        //    var modelCodes = await MainUnitOfWork.ModelRepository.GetQuery()
+        //        .Select(x => x!.Id).ToListAsync();
 
-        private void CheckManufacturingYear(List<Asset> assets)
-        {
-            var currentDate = DateTime.UtcNow.Year;
-            var minManufacturingYear = 2000;
+        //    var assetCodes = await MainUnitOfWork.AssetRepository.GetQuery()
+        //        .Select(x => x!.AssetCode)
+        //        .ToListAsync();
 
-            foreach (var asset in assets)
-            {
-                if (!int.TryParse(asset.ManufacturingYear.ToString(), out int manufacturingYear) || manufacturingYear < minManufacturingYear || manufacturingYear > currentDate)
-                {
-                    var row = assets.IndexOf(asset) + 3;
-                    validationErrors.Add(new ImportError
-                    {
-                        Row = row,
-                        ErrorMessage = $"Năm sản xuất tại dòng {row} không phù hợp hoặc không trong phạm vi {minManufacturingYear}-{currentDate}"
-                    });
-                }
-            }
-        }
+            
 
+        //    foreach (var asset in assets)
+        //    {
+        //        //Check Exist Model
+        //        if (!modelCodes.Contains((Guid)asset.ModelId))
+        //        {
+        //            var row = assets.IndexOf(asset) + 3;
+        //            validationErrors.Add(new ImportError
+        //            {
+        //                Row = row,
+        //                ErrorMessage = $"Dòng sản phẩm ở dòng {row} không tồn tại"
+        //            });
+        //        }
 
-        private void CheckQuantity(List<Asset> assets)
-        {
-            foreach (var asset in assets)
-            {
-                if (asset.Quantity <= 0)
-                {
-                    var row = assets.IndexOf(asset) + 3;
-                    validationErrors.Add(new ImportError
-                    {
-                        Row = row,
-                        ErrorMessage = $"Số lượng tại dòng {row} phải lớn hơn 0"
-                    });
-                }
-            }
-        }
+        //        //Check Unique Asset Codes In Database
+        //        if (assetCodes.Contains(asset.AssetCode))
+        //        {
+        //            var row = assets.IndexOf(asset) + 3;
+        //            validationErrors.Add(new ImportError
+        //            {
+        //                Row = row,
+        //                ErrorMessage = $"Duplicate AssetCode '{asset.AssetCode}' tại dòng {row}"
+        //            });
+        //        }
 
-        private void CheckStatusValueRange(List<Asset> assets)
-        {
-            foreach (var asset in assets)
-            {
-                if (asset.Status is < 0 or > (AssetStatus)11)
-                {
-                    var row = assets.IndexOf(asset) + 3;
-                    validationErrors.Add(new ImportError
-                    {
-                        Row = row,
-                        ErrorMessage = $"Status value must be between 0 and 10 for row {row}"
-                    });
-                }
-            }
-        }
+        //        //Check Exist Type Code
+        //        if (!typeCodes.Contains((Guid)asset.TypeId))
+        //        {
+        //            var row = assets.IndexOf(asset) + 3;
+        //            validationErrors.Add(new ImportError
+        //            {
+        //                Row = row,
+        //                ErrorMessage = $"Mã nhóm thiết bị ở dòng {row} không tồn tại"
+        //            });
+        //        }
+
+        //        //Check Manufacturing Year
+        //        if (!int.TryParse(asset.ManufacturingYear.ToString(), out int manufacturingYear) || manufacturingYear < minManufacturingYear || manufacturingYear > currentDate)
+        //        {
+        //            var row = assets.IndexOf(asset) + 3;
+        //            validationErrors.Add(new ImportError
+        //            {
+        //                Row = row,
+        //                ErrorMessage = $"Năm sản xuất tại dòng {row} không phù hợp hoặc không trong phạm vi {minManufacturingYear}-{currentDate}"
+        //            });
+        //        }
+
+        //        //Check Quantity
+        //        if (!int.TryParse(asset.Quantity.ToString(), out int quantity) || asset.Quantity <= 0)
+        //        {
+        //            var row = assets.IndexOf(asset) + 3;
+        //            validationErrors.Add(new ImportError
+        //            {
+        //                Row = row,
+        //                ErrorMessage = $"Số lượng tại dòng {row} sai định dạng"
+        //            });
+        //        }
+        //    }
+
+        //    //Check unique asset code
+        //    var duplicateCodes = assets
+        //    .GroupBy(a => a.AssetCode)
+        //    .Where(g => g.Count() > 1)
+        //    .Select(g => g.Key)
+        //    .ToList();
+
+        //    if (duplicateCodes.Any())
+        //    {
+        //        var duplicates = assets
+        //            .Where(a => duplicateCodes.Contains(a.AssetCode))
+        //            .Select(a => new
+        //            {
+        //                AssetCode = a.AssetCode,
+        //                Row = assets.IndexOf(a) + 3 // +2 because Excel rows are 1-based, and we skip the header row
+        //            })
+        //            .ToList();
+
+        //        var duplicateError = string.Join(", ", duplicates.Select(d => $"'{d.AssetCode}' tại dòng {d.Row}"));
+        //        validationErrors.Add(new ImportError
+        //        {
+        //            ErrorMessage = $"Duplicate AssetCodes: {duplicateError}"
+        //        });
+        //        // Set the Row property for each validation error
+        //        foreach (var error in validationErrors.Where(e => e.ErrorMessage!.Contains("Duplicate AssetCodes")))
+        //        {
+        //            var assetCode = error.ErrorMessage!.Split('\'')[1];
+        //            error.Row = duplicates.First(d => d.AssetCode == assetCode).Row;
+        //        }
+        //    }
+        //}
     }
 }

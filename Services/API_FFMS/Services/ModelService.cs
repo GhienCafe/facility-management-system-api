@@ -142,6 +142,7 @@ namespace API_FFMS.Services
             {
                 Id = x!.Id,
                 ModelName = x.ModelName,
+                ModelCode = x.ModelCode,
                 Description = x.Description,
                 ImageUrl = x.ImageUrl,
                 CreatedAt = x.CreatedAt,
