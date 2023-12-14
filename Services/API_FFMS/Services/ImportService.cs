@@ -74,7 +74,7 @@ namespace API_FFMS.Services
 
                 }
 
-                return ApiResponses<ImportTransportError>.Fail(validationAssetErrors, StatusCode.UNPROCESSABLE_ENTITY, "Một vài thiết bị được thêm mới có thể lỗi trong quá trình xác thực");
+                return ApiResponses<ImportTransportError>.Response(validationAssetErrors, StatusCode.UNPROCESSABLE_ENTITY, "Một vài thiết bị được thêm mới có thể lỗi trong quá trình xác thực");
 
             }
             catch (Exception exception)
@@ -174,6 +174,8 @@ namespace API_FFMS.Services
                 LastMaintenanceTime = null
             }).ToList();
 
+            var totalCount = assets.Count();
+
             var roomAssets = validDtos.Where(dto => assets.Any(v => v.Id == dto.Id))
                                           .Select(dto => new RoomAsset
                                             {
@@ -194,7 +196,7 @@ namespace API_FFMS.Services
                     throw new ApiException("Thêm thiết bị vào phòng thất bại", StatusCode.SERVER_ERROR);
                 }
 
-                return ApiResponses<ImportError>.Fail(validationErrors, StatusCode.MULTI_STATUS, "Hoàn tất nhập trang thiết bị vui lòng kiểm tra lại");
+                return ApiResponses<ImportError>.Response(validationErrors, StatusCode.MULTI_STATUS, "Hoàn tất nhập trang thiết bị vui lòng kiểm tra lại");
             }
 
             return ApiResponses<ImportError>.Success((IEnumerable<ImportError>)assets);
