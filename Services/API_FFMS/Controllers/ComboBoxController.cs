@@ -16,8 +16,8 @@ public class ComboBoxController : BaseController
 
     [HttpGet("room")]
     [SwaggerOperation("Get room combo box")]
-    public async Task<ApiResponses<RoomComboBoxDto>> GetRoomBomboBoxs()
+    public async Task<ApiResponses<RoomComboBoxDto>> GetRoomBomboBoxs([FromQuery] ComboBoxQueryDto queryDto)
     {
-        return await _comboBoxService.GetRoomBomboBoxs();
+        return await _comboBoxService.GetRoomBomboBoxs(queryDto);
     }
 }

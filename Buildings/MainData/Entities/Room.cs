@@ -60,7 +60,7 @@ public enum RoomState
 public enum RoomAssetStatus
 {
     [Display(Name = "Phòng không có thiết bị hư hỏng")]
-    [Color("#00a652")]
+    [Color("#76bd84")]
     Operational = 1,
 
     [Display(Name = "Phòng có một vài thiết bị hư hỏng")]
