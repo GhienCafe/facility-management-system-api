@@ -142,7 +142,7 @@ namespace API_FFMS.Services
                             });
                     if (roomAsset != null)
                     {
-                        if (asset.Type?.IsIdentified == true || asset.Type?.Unit == Unit.Individual)
+                        if (asset.Type!.IsIdentified == true || asset.Type.Unit == Unit.Individual)
                         {
 
                             if (createDto.FromRoomId == toRoom!.Id)
@@ -163,7 +163,7 @@ namespace API_FFMS.Services
                             };
                             transportationDetails.Add(transpsortDetail);
                         }
-                        else if (asset.Type?.IsIdentified == false || asset.Type?.Unit == Unit.Quantity)
+                        else if (asset.Type.IsIdentified == false || asset.Type.Unit == Unit.Quantity)
                         {
                             var assetTransportDto = createDto.Assets!.FirstOrDefault(dto => dto.AssetId == asset.Id);
                             if(assetTransportDto != null && assetTransportDto.Quantity > roomAsset.Quantity)
@@ -192,7 +192,7 @@ namespace API_FFMS.Services
                 throw new ApiException("Tạo yêu cầu thất bại", StatusCode.SERVER_ERROR);
             }
 
-            return ApiResponse.Created("Gửi yêu cầu thành công");
+            return ApiResponse.Created("Tạo yêu cầu thành công");
         }
 
         public async Task<ApiResponse> Delete(Guid id)

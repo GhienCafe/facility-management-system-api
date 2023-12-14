@@ -17,6 +17,7 @@ public class ModelCreateDto
 {
     public Guid BrandId { get; set; }
     public string? ModelName { get; set; }
+    public string? ModelCode { get; set; }
     public string? Description { get; set; }
     public string? ImageUrl { get; set; }
     public int? MaintenancePeriodTime { get; set; }
@@ -25,6 +26,7 @@ public class ModelCreateDto
 public class ModelUpdateDto
 {
     public string? ModelName { get; set; }
+    public string? ModelCode { get; set; }
     public string? Description { get; set; }
     public string? ImageUrl { get; set; }
     public int? MaintenancePeriodTime { get; set; }
