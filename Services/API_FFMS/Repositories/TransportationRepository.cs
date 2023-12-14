@@ -334,7 +334,7 @@ public class TransportationRepository : ITransportationRepository
                                 {
                                     fromRoomAsset.Quantity = 0;
                                     fromRoomAsset.ToDate = now.Value;
-                                    _context.Entry(fromRoomAsset).State = EntityState.Modified;
+                                    //_context.Entry(fromRoomAsset).State = EntityState.Modified;
                                 }
                                 _context.Entry(fromRoomAsset).State = EntityState.Modified;
                             }

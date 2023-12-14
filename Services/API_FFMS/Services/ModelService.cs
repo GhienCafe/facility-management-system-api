@@ -113,6 +113,7 @@ namespace API_FFMS.Services
             {
                 Id = x!.Id,
                 ModelName = x.ModelName,
+                ModelCode = x.ModelCode,
                 Description = x.Description,
                 ImageUrl = x.ImageUrl,
                 Brand = x.Brand != null ? new BrandDto
@@ -165,6 +166,7 @@ namespace API_FFMS.Services
             }
 
             existingModel.ModelName = updateDto.ModelName ?? existingModel.ModelName;
+            existingModel.ModelCode = updateDto.ModelCode ?? existingModel.ModelCode;
             existingModel.Description = updateDto.Description ?? existingModel.Description;
             existingModel.MaintenancePeriodTime =
                 updateDto.MaintenancePeriodTime ?? existingModel.MaintenancePeriodTime;

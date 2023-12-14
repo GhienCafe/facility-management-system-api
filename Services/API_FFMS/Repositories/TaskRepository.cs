@@ -236,7 +236,7 @@ public class TaskRepository : ITaskRepository
                 transportation.Status = statusUpdate;
                 _context.Entry(transportation).State = EntityState.Modified;
 
-                var assetIds = transportation.TransportationDetails?.Select(td => td.AssetId).ToList();
+                var assetIds = transportation.TransportationDetails!.Select(td => td.AssetId).ToList();
                 var assets = await _context.Assets
                             .Include(a => a.Type)
                             .Where(asset => assetIds!.Contains(asset.Id))

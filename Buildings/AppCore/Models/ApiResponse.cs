@@ -85,7 +85,7 @@ public class ApiResponses<T> : ApiResponse
         };
     }
 
-    public static ApiResponses<T> Fail(IEnumerable<T> data, StatusCode statusCode, string message)
+    public static ApiResponses<T> Response(IEnumerable<T> data, StatusCode statusCode, string message)
     {
         return new ApiResponses<T>
         {
