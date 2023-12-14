@@ -1,7 +1,13 @@
-﻿namespace API_FFMS.Dtos;
+﻿using AppCore.Models;
+
+namespace API_FFMS.Dtos;
 
 public class ComboBoxDto
 {
+}
+
+public class ComboBoxQueryDto {
+    public string? Keyword { get; set; }
 }
 
 

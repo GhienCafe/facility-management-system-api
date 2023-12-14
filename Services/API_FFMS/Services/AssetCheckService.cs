@@ -284,11 +284,7 @@ public class AssetCheckService : BaseService, IAssetCheckService
                          join asset in MainUnitOfWork.AssetRepository.GetQuery() on assetCheck.AssetId equals asset.Id into
                              assetGroup
                          from asset in assetGroup.DefaultIfEmpty()
-                         join assetRoom in MainUnitOfWork.RoomAssetRepository.GetQuery() on asset.Id equals assetRoom.AssetId into
-                             assetRoomGroup
-                         from assetRoom in assetRoomGroup.DefaultIfEmpty()
-                         where assetRoom.ToDate == null
-                         join location in MainUnitOfWork.RoomRepository.GetQuery() on assetRoom.RoomId equals location.Id into
+                         join location in MainUnitOfWork.RoomRepository.GetQuery() on assetCheck.RoomId equals location.Id into
                              locationGroup
                          from location in locationGroup.DefaultIfEmpty()
                          select new

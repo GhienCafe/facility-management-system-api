@@ -10,7 +10,7 @@ namespace API_FFMS.Services;
 
 public interface IComboBoxService : IBaseService
 {
-    Task<ApiResponses<RoomComboBoxDto>> GetRoomBomboBoxs();
+    Task<ApiResponses<RoomComboBoxDto>> GetRoomBomboBoxs(ComboBoxQueryDto queryDto);
 }
 
 public class ComboBoxService : BaseService, IComboBoxService
@@ -21,9 +21,16 @@ public class ComboBoxService : BaseService, IComboBoxService
     {
     }
 
-    public async Task<ApiResponses<RoomComboBoxDto>> GetRoomBomboBoxs()
+    public async Task<ApiResponses<RoomComboBoxDto>> GetRoomBomboBoxs(ComboBoxQueryDto queryDto)
     {
+        var keyword = queryDto.Keyword?.Trim().ToLower();
         var roomQuery = MainUnitOfWork.RoomRepository.GetQuery();
+
+        if (!string.IsNullOrEmpty(keyword))
+        {
+            roomQuery = roomQuery.Where(x => x!.RoomName!.ToLower().Contains(keyword) ||
+                                             x.RoomCode.ToLower().Contains(keyword));
+        }
 
         var response = from room in roomQuery
                        join status in MainUnitOfWork.RoomStatusRepository.GetQuery() on room.StatusId equals status.Id
