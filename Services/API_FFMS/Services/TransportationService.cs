@@ -66,11 +66,6 @@ namespace API_FFMS.Services
                 {
                     throw new ApiException($"Thiết bị {a.Asset.AssetCode} đang trong một yêu cầu khác", StatusCode.SERVER_ERROR);
                 }
-                var correspondingDto = createDto.Assets!.FirstOrDefault(dto => dto.AssetId == a.Asset.Id);
-                if (correspondingDto != null)
-                {
-                    a.Asset.Quantity = correspondingDto.Quantity ?? 0;
-                }
             }
             var totalQuantity = createDto.Assets?.Sum(assetDto => assetDto.Quantity);
 
