@@ -2,6 +2,7 @@
 
 public class AssetCheckDto : BaseRequestDto
 {
+    public Guid RoomId { get; set; }
     public bool? IsVerified { get; set; }
     public AssetBaseDto? Asset { get; set; }
     public RoomBaseDto? Location { get; set; }

@@ -9,6 +9,7 @@ using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
 using Newtonsoft.Json;
 using Microsoft.AspNetCore.Http.HttpResults;
+using DocumentFormat.OpenXml.Spreadsheet;
 
 namespace API_FFMS.Services;
 
@@ -142,7 +143,7 @@ public class AssetCheckService : BaseService, IAssetCheckService
         var assetCheck = await MainUnitOfWork.AssetCheckRepository.FindOneAsync<AssetCheckDto>(
             new Expression<Func<AssetCheck, bool>>[]
             {
-                x => !x.DeletedAt.HasValue,
+                    x => !x.DeletedAt.HasValue,
                     x => x.Id == id
             });
         if (assetCheck == null)
@@ -161,22 +162,6 @@ public class AssetCheckService : BaseService, IAssetCheckService
         {
             assetCheck.Asset.StatusObj = assetCheck.Asset.Status.GetValue();
             assetCheck.Asset.RequestStatusObj = assetCheck.Asset.RequestStatus.GetValue();
-            var location = await MainUnitOfWork.RoomAssetRepository.FindOneAsync<RoomAsset>(
-                new Expression<Func<RoomAsset, bool>>[]
-                {
-                    x => !x.DeletedAt.HasValue,
-                    x => x.AssetId == assetCheck.Asset.Id,
-                    x => x.ToDate == null
-                });
-            if (location != null)
-            {
-                assetCheck.Location = await MainUnitOfWork.RoomRepository.FindOneAsync<RoomBaseDto>(
-                        new Expression<Func<Room, bool>>[]
-                        {
-                            x => !x.DeletedAt.HasValue,
-                            x => x.Id == location.RoomId
-                        });
-            }
 
             assetCheck.AssetType = await MainUnitOfWork.AssetTypeRepository.FindOneAsync<AssetTypeDto>(
                 new Expression<Func<AssetType, bool>>[]
@@ -194,6 +179,13 @@ public class AssetCheckService : BaseService, IAssetCheckService
                     });
             }
         }
+
+        assetCheck.Location = await MainUnitOfWork.RoomRepository.FindOneAsync<RoomBaseDto>(
+                        new Expression<Func<Room, bool>>[]
+                        {
+                            x => !x.DeletedAt.HasValue,
+                            x => x.Id == assetCheck.RoomId
+                        });
 
         assetCheck.AssignTo = await MainUnitOfWork.UserRepository.FindOneAsync<UserBaseDto>(
             new Expression<Func<User, bool>>[]
@@ -302,6 +294,7 @@ public class AssetCheckService : BaseService, IAssetCheckService
             Id = x.AssetCheck.Id,
             IsVerified = x.AssetCheck.IsVerified,
             AssetId = x.AssetCheck.AssetId,
+            RoomId = x.Location.Id,
             Description = x.AssetCheck.Description,
             RequestCode = x.AssetCheck.RequestCode,
             RequestDate = x.AssetCheck.RequestDate,
