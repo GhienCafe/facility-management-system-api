@@ -41,12 +41,12 @@ namespace API_FFMS.Controllers
                 currentRow++;
 
                 worksheet.Cell(currentRow, 1).Value = "Tên thiết bị*";
-                worksheet.Cell(currentRow, 2).Value = "Mã thiết bị";
-                worksheet.Cell(currentRow, 3).Value = "Mã nhóm thiết bị";
-                worksheet.Cell(currentRow, 4).Value = "Mã dòng sản phẩm";
-                worksheet.Cell(currentRow, 5).Value = "Năm sản xuất";
+                worksheet.Cell(currentRow, 2).Value = "Mã thiết bị*";
+                worksheet.Cell(currentRow, 3).Value = "Mã nhóm thiết bị*";
+                worksheet.Cell(currentRow, 4).Value = "Mã dòng sản phẩm*";
+                worksheet.Cell(currentRow, 5).Value = "Năm sản xuất*";
                 worksheet.Cell(currentRow, 6).Value = "Số Seri";
-                worksheet.Cell(currentRow, 7).Value = "Số lượng";
+                worksheet.Cell(currentRow, 7).Value = "Số lượng*";
                 worksheet.Cell(currentRow, 8).Value = "Mô tả";
                 worksheet.Cell(currentRow, 9).Value = "Thuê ngoài(Có/Không)";
                 worksheet.Cell(currentRow, 10).Value = "Có thể di chuyển(Có/Không)";

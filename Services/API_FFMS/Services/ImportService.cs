@@ -165,8 +165,8 @@ namespace API_FFMS.Services
                 SerialNumber = dto.SerialNumber,
                 Quantity = double.Parse(dto.Quantity),
                 Description = dto.Description ?? "",
-                IsRented = IsTrueOrFalse(dto.IsRented!),
-                IsMovable = IsTrueOrFalse(dto.IsMovable!),
+                IsRented = IsTrueOrFalse(dto.IsRented),
+                IsMovable = IsTrueOrFalse(dto.IsMovable),
                 ModelId = GetModelByCode(dto.ModelCode),
                 ImageUrl = "",
                 StartDateOfUse = DateTime.Now,
@@ -245,19 +245,19 @@ namespace API_FFMS.Services
             return room.Id;
         }
 
-        private static bool IsTrueOrFalse(string value)
+        private static bool IsTrueOrFalse(string? value)
         {
-            if (value.Trim().Contains("Có"))
+            if (value != null &&  value.Trim().Contains("Có"))
             {
                 return true;
             }
-            else if (value.Trim().Contains("Không"))
+            else if (value != null &&  value.Trim().Contains("Không"))
             {
                 return false;
             }
             else
             {
-                throw new ApiException("Input must be 'Có' or 'Không'");
+                return false;
             }
         }
 
@@ -284,7 +284,9 @@ namespace API_FFMS.Services
             {
                 //Check blank
                 if (string.IsNullOrWhiteSpace(assetDto.AssetName) ||
+                    string.IsNullOrWhiteSpace(assetDto.AssetCode) ||
                     string.IsNullOrWhiteSpace(assetDto.TypeCode) ||
+                    string.IsNullOrWhiteSpace(assetDto.ModelCode) ||
                     string.IsNullOrWhiteSpace(assetDto.ManufacturingYear.ToString()) ||
                     string.IsNullOrWhiteSpace(assetDto.Quantity.ToString())
                     )
@@ -293,8 +295,35 @@ namespace API_FFMS.Services
                     validationErrors.Add(new ImportError
                     {
                         Row = row,
-                        ErrorMessage = $"Tất cả các thông tin phải được điền, đang trống tại dòng {row}"
+                        ErrorMessage = $"Không được để trống các thông tin bắt buộc(*), đang để trống tại dòng {row}"
                     });
+                }
+
+                //Check IsRent is "Có" or "Không"
+                if(assetDto.IsRented != null)
+                {
+                    if (!assetDto.IsRented.Trim().Contains("Có") || !assetDto.IsRented.Trim().Contains("Không"))
+                    {
+                        var row = assetDtos.IndexOf(assetDto) + 3;
+                        validationErrors.Add(new ImportError
+                        {
+                            Row = row,
+                            ErrorMessage = $"'Thuê ngoài' hoặc 'Di chuyển' chỉ nhập có hoặc không, kiểm tra dòng {row}"
+                        });
+                    }
+                }
+
+                if (assetDto.IsMovable != null)
+                {
+                    if (!assetDto.IsMovable.Trim().Contains("Có") || !assetDto.IsMovable.Trim().Contains("Không"))
+                    {
+                        var row = assetDtos.IndexOf(assetDto) + 3;
+                        validationErrors.Add(new ImportError
+                        {
+                            Row = row,
+                            ErrorMessage = $"'Thuê ngoài' hoặc 'Di chuyển' chỉ nhập có hoặc không, kiểm tra dòng {row}"
+                        });
+                    }
                 }
 
                 //Check Exist Model
@@ -315,7 +344,7 @@ namespace API_FFMS.Services
                     validationErrors.Add(new ImportError
                     {
                         Row = row,
-                        ErrorMessage = $"Duplicate AssetCode '{assetDto.AssetCode}' tại dòng {row}"
+                        ErrorMessage = $"Mã thiết bị '{assetDto.AssetCode}' tại dòng {row} đã tồn tại"
                     });
                 }
 
@@ -359,7 +388,7 @@ namespace API_FFMS.Services
                     validationErrors.Add(new ImportError
                     {
                         Row = 0,
-                        ErrorMessage = $"Mã phòng tại dòng {row} không tồn tại, thiết bị được chuyển vào 'kho'"
+                        ErrorMessage = $"Mã phòng tại dòng {row} không tồn tại, thiết bị được chuyển vào 'Kho'"
                     });
                 }
             }
@@ -395,112 +424,5 @@ namespace API_FFMS.Services
                 }
             }
         }
-
-        //private async Task ValidationImport(List<Asset> assets)
-        //{
-        //    var currentDate = DateTime.UtcNow.Year;
-        //    var minManufacturingYear = 2000;
-
-        //    var typeCodes = await MainUnitOfWork.AssetTypeRepository.GetQuery()
-        //        .Select(x => x!.Id).ToListAsync();
-
-        //    var modelCodes = await MainUnitOfWork.ModelRepository.GetQuery()
-        //        .Select(x => x!.Id).ToListAsync();
-
-        //    var assetCodes = await MainUnitOfWork.AssetRepository.GetQuery()
-        //        .Select(x => x!.AssetCode)
-        //        .ToListAsync();
-
-            
-
-        //    foreach (var asset in assets)
-        //    {
-        //        //Check Exist Model
-        //        if (!modelCodes.Contains((Guid)asset.ModelId))
-        //        {
-        //            var row = assets.IndexOf(asset) + 3;
-        //            validationErrors.Add(new ImportError
-        //            {
-        //                Row = row,
-        //                ErrorMessage = $"Dòng sản phẩm ở dòng {row} không tồn tại"
-        //            });
-        //        }
-
-        //        //Check Unique Asset Codes In Database
-        //        if (assetCodes.Contains(asset.AssetCode))
-        //        {
-        //            var row = assets.IndexOf(asset) + 3;
-        //            validationErrors.Add(new ImportError
-        //            {
-        //                Row = row,
-        //                ErrorMessage = $"Duplicate AssetCode '{asset.AssetCode}' tại dòng {row}"
-        //            });
-        //        }
-
-        //        //Check Exist Type Code
-        //        if (!typeCodes.Contains((Guid)asset.TypeId))
-        //        {
-        //            var row = assets.IndexOf(asset) + 3;
-        //            validationErrors.Add(new ImportError
-        //            {
-        //                Row = row,
-        //                ErrorMessage = $"Mã nhóm thiết bị ở dòng {row} không tồn tại"
-        //            });
-        //        }
-
-        //        //Check Manufacturing Year
-        //        if (!int.TryParse(asset.ManufacturingYear.ToString(), out int manufacturingYear) || manufacturingYear < minManufacturingYear || manufacturingYear > currentDate)
-        //        {
-        //            var row = assets.IndexOf(asset) + 3;
-        //            validationErrors.Add(new ImportError
-        //            {
-        //                Row = row,
-        //                ErrorMessage = $"Năm sản xuất tại dòng {row} không phù hợp hoặc không trong phạm vi {minManufacturingYear}-{currentDate}"
-        //            });
-        //        }
-
-        //        //Check Quantity
-        //        if (!int.TryParse(asset.Quantity.ToString(), out int quantity) || asset.Quantity <= 0)
-        //        {
-        //            var row = assets.IndexOf(asset) + 3;
-        //            validationErrors.Add(new ImportError
-        //            {
-        //                Row = row,
-        //                ErrorMessage = $"Số lượng tại dòng {row} sai định dạng"
-        //            });
-        //        }
-        //    }
-
-        //    //Check unique asset code
-        //    var duplicateCodes = assets
-        //    .GroupBy(a => a.AssetCode)
-        //    .Where(g => g.Count() > 1)
-        //    .Select(g => g.Key)
-        //    .ToList();
-
-        //    if (duplicateCodes.Any())
-        //    {
-        //        var duplicates = assets
-        //            .Where(a => duplicateCodes.Contains(a.AssetCode))
-        //            .Select(a => new
-        //            {
-        //                AssetCode = a.AssetCode,
-        //                Row = assets.IndexOf(a) + 3 // +2 because Excel rows are 1-based, and we skip the header row
-        //            })
-        //            .ToList();
-
-        //        var duplicateError = string.Join(", ", duplicates.Select(d => $"'{d.AssetCode}' tại dòng {d.Row}"));
-        //        validationErrors.Add(new ImportError
-        //        {
-        //            ErrorMessage = $"Duplicate AssetCodes: {duplicateError}"
-        //        });
-        //        // Set the Row property for each validation error
-        //        foreach (var error in validationErrors.Where(e => e.ErrorMessage!.Contains("Duplicate AssetCodes")))
-        //        {
-        //            var assetCode = error.ErrorMessage!.Split('\'')[1];
-        //            error.Row = duplicates.First(d => d.AssetCode == assetCode).Row;
-        //        }
-        //    }
-        //}
     }
 }
