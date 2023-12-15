@@ -251,8 +251,15 @@ public class TaskRepository : ITaskRepository
 
                     foreach (var asset in assets)
                     {
+                        var transportDetail = await _context.TransportationDetails
+                                                        .FirstOrDefaultAsync(x => x.TransportationId == transportation.Id &&
+                                                                                  x.AssetId == asset.Id);
+                        var fromRoomAsset = await _context.RoomAssets.FirstOrDefaultAsync(x => x.AssetId == asset.Id &&
+                                                                                           x.RoomId == transportDetail!.FromRoomId &&
+                                                                                           x.ToDate == null);
+
                         var roomAsset = await _context.RoomAssets.FirstOrDefaultAsync(x => x.AssetId == asset.Id && x.ToDate == null);
-                        var fromRoom = await _context.Rooms.FirstOrDefaultAsync(x => x.Id == roomAsset!.RoomId && roomAsset.AssetId == asset.Id);
+                        var fromRoom = await _context.Rooms.FirstOrDefaultAsync(x => x.Id == transportDetail!.FromRoomId);
 
                         if (asset.Type!.Unit == Unit.Individual || asset.Type.IsIdentified == true)
                         {
