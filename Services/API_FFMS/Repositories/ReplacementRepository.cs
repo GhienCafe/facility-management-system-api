@@ -319,16 +319,20 @@ namespace API_FFMS.Repositories
 
                 //ROOMASSET
                 var roomAsset = await _context.RoomAssets
-                                    .FirstOrDefaultAsync(x => x.AssetId == asset!.Id && x.ToDate == null);
+                                    .FirstOrDefaultAsync(x => x.AssetId == replacement.AssetId &&
+                                                              x.RoomId == replacement.RoomId &&
+                                                              x.ToDate == null);
                 var roomAssetNew = await _context.RoomAssets
-                                .FirstOrDefaultAsync(x => x.AssetId == newAsset!.Id && x.ToDate == null);
+                                .FirstOrDefaultAsync(x => x.AssetId == replacement.NewAssetId &&
+                                                              x.RoomId == replacement.NewRoomId &&
+                                                              x.ToDate == null);
 
                 //LOCATION
                 var assetLocation = await _context.Rooms
-                                .FirstOrDefaultAsync(x => x.Id == roomAsset!.RoomId && roomAsset.AssetId == asset!.Id);
+                                .FirstOrDefaultAsync(x => x.Id == replacement.RoomId);
 
                 var newAssetLocation = await _context.Rooms
-                                .FirstOrDefaultAsync(x => x.Id == roomAssetNew!.RoomId && roomAssetNew.AssetId == newAsset!.Id);
+                                .FirstOrDefaultAsync(x => x.Id == replacement.NewRoomId);
 
                 var reports = await _context.MediaFiles.FirstOrDefaultAsync(x => x.ItemId == replacement.Id && !x.IsReject && x.IsReported);
 
@@ -384,7 +388,7 @@ namespace API_FFMS.Repositories
                     {
                         Id = Guid.NewGuid(),
                         AssetId = replacement.NewAssetId,
-                        RoomId = assetLocation!.Id,
+                        RoomId = replacement.RoomId,
                         Status = asset!.Status,
                         FromDate = now.Value,
                         Quantity = roomAsset!.Quantity,
@@ -398,7 +402,7 @@ namespace API_FFMS.Repositories
                     {
                         Id = Guid.NewGuid(),
                         AssetId = replacement.AssetId,
-                        RoomId = newAssetLocation!.Id,
+                        RoomId = replacement.NewRoomId,
                         Status = newAsset!.Status,
                         FromDate = now.Value,
                         Quantity = roomAssetNew!.Quantity,
