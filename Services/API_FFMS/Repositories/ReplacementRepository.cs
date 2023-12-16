@@ -205,7 +205,7 @@ namespace API_FFMS.Repositories
                 }
 
                 var newAsset = await _context.Assets.FindAsync(replacement.NewAssetId);
-                if(newAsset != null)
+                if (newAsset != null)
                 {
                     newAsset.RequestStatus = RequestType.Replacement;
                     _context.Entry(newAsset).State = EntityState.Modified;
@@ -338,27 +338,37 @@ namespace API_FFMS.Repositories
                     replacement.CompletionDate = now.Value;
                     _context.Entry(replacement).State = EntityState.Modified;
 
-                    asset!.Status = roomAsset!.Status;
-                    asset.RequestStatus = RequestType.Operational;
-                    asset.EditedAt = now.Value;
-                    asset.EditorId = editorId;
-                    _context.Entry(asset).State = EntityState.Modified;
+                    if (asset != null)
+                    {
+                        asset.RequestStatus = RequestType.Operational;
+                        asset.EditedAt = now.Value;
+                        asset.EditorId = editorId;
+                        _context.Entry(asset).State = EntityState.Modified;
+                    }
 
-                    newAsset!.Status = roomAssetNew!.Status;
-                    newAsset.RequestStatus = RequestType.Operational;
-                    newAsset.EditedAt = now.Value;
-                    newAsset.EditorId = editorId;
-                    _context.Entry(newAsset).State = EntityState.Modified;
+                    if (newAsset != null)
+                    {
+                        newAsset.RequestStatus = RequestType.Operational;
+                        newAsset.EditedAt = now.Value;
+                        newAsset.EditorId = editorId;
+                        _context.Entry(newAsset).State = EntityState.Modified;
+                    }
 
-                    roomAsset.ToDate = now.Value;
-                    roomAsset.EditorId = editorId;
-                    roomAsset.EditedAt = now.Value;
-                    _context.Entry(roomAsset).State = EntityState.Modified;
+                    if (roomAsset != null)
+                    {
+                        roomAsset.ToDate = now.Value;
+                        roomAsset.EditorId = editorId;
+                        roomAsset.EditedAt = now.Value;
+                        _context.Entry(roomAsset).State = EntityState.Modified;
+                    }
 
-                    roomAssetNew.ToDate = now.Value;
-                    roomAssetNew.EditorId = editorId;
-                    roomAssetNew.EditedAt = now.Value;
-                    _context.Entry(roomAssetNew).State = EntityState.Modified;
+                    if (roomAssetNew != null)
+                    {
+                        roomAssetNew.ToDate = now.Value;
+                        roomAssetNew.EditorId = editorId;
+                        roomAssetNew.EditedAt = now.Value;
+                        _context.Entry(roomAssetNew).State = EntityState.Modified;
+                    }
 
                     assetLocation!.State = RoomState.Operational;
                     assetLocation.EditedAt = now.Value;
@@ -375,9 +385,9 @@ namespace API_FFMS.Repositories
                         Id = Guid.NewGuid(),
                         AssetId = replacement.NewAssetId,
                         RoomId = assetLocation!.Id,
-                        Status = roomAsset!.Status,
+                        Status = asset!.Status,
                         FromDate = now.Value,
-                        Quantity = roomAsset.Quantity,
+                        Quantity = roomAsset!.Quantity,
                         ToDate = null,
                         CreatorId = editorId,
                         CreatedAt = now.Value,
@@ -389,9 +399,9 @@ namespace API_FFMS.Repositories
                         Id = Guid.NewGuid(),
                         AssetId = replacement.AssetId,
                         RoomId = newAssetLocation!.Id,
-                        Status = roomAssetNew!.Status,
+                        Status = newAsset!.Status,
                         FromDate = now.Value,
-                        Quantity = roomAssetNew.Quantity,
+                        Quantity = roomAssetNew!.Quantity,
                         ToDate = null,
                         CreatorId = editorId,
                         CreatedAt = now.Value,
@@ -450,27 +460,38 @@ namespace API_FFMS.Repositories
                         _context.Entry(reports).State = EntityState.Modified;
                     }
 
-                    asset!.Status = roomAsset!.Status;
-                    asset.RequestStatus = RequestType.Operational;
-                    asset.EditedAt = now.Value;
-                    asset.EditorId = editorId;
-                    _context.Entry(asset).State = EntityState.Modified;
+                    if (asset != null)
+                    {
+                        asset.RequestStatus = RequestType.Operational;
+                        asset.EditedAt = now.Value;
+                        asset.EditorId = editorId;
+                        _context.Entry(asset).State = EntityState.Modified;
+                    }
 
-                    newAsset!.Status = roomAssetNew!.Status;
-                    newAsset.RequestStatus = RequestType.Operational;
-                    newAsset.EditedAt = now.Value;
-                    newAsset.EditorId = editorId;
-                    _context.Entry(newAsset).State = EntityState.Modified;
 
-                    assetLocation!.State = RoomState.Operational;
-                    assetLocation.EditedAt = now.Value;
-                    assetLocation.EditorId = editorId;
-                    _context.Entry(assetLocation).State = EntityState.Modified;
+                    if (newAsset != null)
+                    {
+                        newAsset.RequestStatus = RequestType.Operational;
+                        newAsset.EditedAt = now.Value;
+                        newAsset.EditorId = editorId;
+                        _context.Entry(newAsset).State = EntityState.Modified;
+                    }
 
-                    newAssetLocation!.State = RoomState.Operational;
-                    newAssetLocation.EditedAt = now.Value;
-                    newAssetLocation.EditorId = editorId;
-                    _context.Entry(newAssetLocation).State = EntityState.Modified;
+                    if (assetLocation != null)
+                    {
+                        assetLocation.State = RoomState.Operational;
+                        assetLocation.EditedAt = now.Value;
+                        assetLocation.EditorId = editorId;
+                        _context.Entry(assetLocation).State = EntityState.Modified;
+                    }
+
+                    if (newAssetLocation != null)
+                    {
+                        newAssetLocation!.State = RoomState.Operational;
+                        newAssetLocation.EditedAt = now.Value;
+                        newAssetLocation.EditorId = editorId;
+                        _context.Entry(newAssetLocation).State = EntityState.Modified;
+                    }
 
                     var notification = new Notification
                     {
