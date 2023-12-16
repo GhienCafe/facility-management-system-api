@@ -8,6 +8,7 @@ using MainData.Repositories;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
 using Newtonsoft.Json;
+using DocumentFormat.OpenXml.Spreadsheet;
 
 namespace API_FFMS.Services
 {
@@ -38,12 +39,14 @@ namespace API_FFMS.Services
             {
                 throw new ApiException("Không tìm thấy thiết bị cần thay thế", StatusCode.NOT_FOUND);
             }
+            var roomAsset = MainUnitOfWork.RoomAssetRepository.GetQuery().Where(x => x!.AssetId == asset.Id && x.ToDate == null).FirstOrDefault();
 
             var newAsset = await MainUnitOfWork.AssetRepository.FindOneAsync(createDto.NewAssetId);
             if (newAsset == null)
             {
                 throw new ApiException("Không tìm thấy thiết bị để thay thế", StatusCode.NOT_FOUND);
             }
+            var newRoomAsset = MainUnitOfWork.RoomAssetRepository.GetQuery().Where(x => x!.AssetId == newAsset.Id && x.ToDate == null).FirstOrDefault();
 
             if (asset.RequestStatus == RequestType.Replacement)
             {
@@ -56,6 +59,8 @@ namespace API_FFMS.Services
             }
 
             var replacement = createDto.ProjectTo<ReplaceCreateDto, Replacement>();
+            replacement.RoomId = roomAsset!.RoomId;
+            replacement.NewAssetId = newRoomAsset!.RoomId;
             replacement.Description = createDto.Description ?? "Yêu cầu thay thế";
             replacement.RequestCode = GenerateRequestCode();
 
@@ -175,18 +180,13 @@ namespace API_FFMS.Services
                         x => !x.DeletedAt.HasValue,
                         x => x.AssetId == replacement.Asset.Id
                     });
-                if (location != null)
-                {
-                    replacement.AssetLocation = await MainUnitOfWork.RoomRepository.FindOneAsync<AssetLocation>(
+            }
+            replacement.AssetLocation = await MainUnitOfWork.RoomRepository.FindOneAsync<AssetLocation>(
                             new Expression<Func<Room, bool>>[]
                             {
                                 x => !x.DeletedAt.HasValue,
-                                x => x.Id == location.RoomId
+                                x => x.Id == replacement.RoomId
                             });
-                    replacement.StatusBefore = location.Status;
-                    replacement.StatusBeforeObj = location.Status.GetValue();
-                }
-            }
 
             replacement.NewAsset = await MainUnitOfWork.AssetRepository.FindOneAsync<AssetBaseDto>(
                 new Expression<Func<Asset, bool>>[]
@@ -205,16 +205,13 @@ namespace API_FFMS.Services
                         x => !x.DeletedAt.HasValue,
                         x => x.AssetId == replacement.NewAsset.Id
                     });
-                if (location != null)
-                {
-                    replacement.NewAssetLocation = await MainUnitOfWork.RoomRepository.FindOneAsync<AssetLocation>(
+            }
+            replacement.NewAssetLocation = await MainUnitOfWork.RoomRepository.FindOneAsync<AssetLocation>(
                             new Expression<Func<Room, bool>>[]
                             {
                                 x => !x.DeletedAt.HasValue,
-                                x => x.Id == location.RoomId
+                                x => x.Id == replacement.NewRoomId
                             });
-                }
-            }
 
             replacement.AssetType = await MainUnitOfWork.AssetTypeRepository.FindOneAsync<AssetTypeDto>(
                 new Expression<Func<AssetType, bool>>[]
@@ -357,6 +354,8 @@ namespace API_FFMS.Services
                 Checkin = x.Replacement.Checkin,
                 Result = x.Replacement.Result,
                 AssetId = x.Replacement.AssetId,
+                RoomId = x.Replacement.RoomId,
+                NewRoomId = x.Replacement.NewRoomId,
                 NewAssetId = x.Replacement.NewAssetId,
                 CreatedAt = x.Replacement.CreatedAt,
                 CreatorId = x.Replacement.CreatorId ?? Guid.Empty,

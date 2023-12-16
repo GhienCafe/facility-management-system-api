@@ -515,10 +515,10 @@ public class TaskRepository : ITaskRepository
 
                 //LOCATION
                 var assetLocation = await _context.Rooms
-                                .FirstOrDefaultAsync(x => x.Id == roomAsset!.RoomId && roomAsset.AssetId == asset!.Id);
+                                .FirstOrDefaultAsync(x => x.Id == replacement.RoomId);
 
                 var newAssetLocation = await _context.Rooms
-                                .FirstOrDefaultAsync(x => x.Id == roomAssetNew!.RoomId && roomAssetNew.AssetId == newAsset!.Id);
+                                .FirstOrDefaultAsync(x => x.Id == replacement.NewRoomId);
 
                 if (replacement.Status == RequestStatus.InProgress)
                 {

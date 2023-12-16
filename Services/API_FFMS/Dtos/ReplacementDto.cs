@@ -5,7 +5,9 @@ namespace API_FFMS.Dtos;
 
 public class ReplaceDto : BaseRequestDto
 {
-    public Guid? NewAssetId { get; set; }
+    public Guid RoomId { get; set; }
+    public Guid NewRoomId { get; set; }
+    public Guid NewAssetId { get; set; }
     public AssetStatus? StatusBefore { get; set; }
     public EnumValue? StatusBeforeObj { get; set; }
     public AssetBaseDto? Asset { get; set; }
