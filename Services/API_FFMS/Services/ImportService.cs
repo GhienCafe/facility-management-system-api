@@ -302,7 +302,7 @@ namespace API_FFMS.Services
                 //Check IsRent is "Có" or "Không"
                 if(assetDto.IsRented != null)
                 {
-                    if (!assetDto.IsRented.Trim().Contains("Có") || !assetDto.IsRented.Trim().Contains("Không"))
+                    if (!assetDto.IsRented.Trim().Contains("Có") && !assetDto.IsRented.Trim().Contains("Không"))
                     {
                         var row = assetDtos.IndexOf(assetDto) + 3;
                         validationErrors.Add(new ImportError
@@ -315,7 +315,7 @@ namespace API_FFMS.Services
 
                 if (assetDto.IsMovable != null)
                 {
-                    if (!assetDto.IsMovable.Trim().Contains("Có") || !assetDto.IsMovable.Trim().Contains("Không"))
+                    if (!assetDto.IsMovable.Trim().Contains("Có") && !assetDto.IsMovable.Trim().Contains("Không"))
                     {
                         var row = assetDtos.IndexOf(assetDto) + 3;
                         validationErrors.Add(new ImportError
