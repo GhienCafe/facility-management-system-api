@@ -72,27 +72,23 @@ public class AssetRepository : IAssetRepository
 
         try
         {
-            foreach(var asset in assets)
+            foreach (var asset in assets)
             {
-                if(modelQuery.Any(x => x == asset.ModelId) && typeQuery.Any(x => x == asset.TypeId))
+                if (modelQuery.Any(x => x == asset.ModelId) && typeQuery.Any(x => x == asset.TypeId))
                 {
                     var existAsset = _context.Assets.FirstOrDefault(x => x.TypeId == asset.TypeId && x.ModelId == asset.ModelId);
-                    if(existAsset != null)
+                    if (existAsset != null)
                     {
                         existAsset.Quantity += asset.Quantity;
                         _context.Entry(existAsset).State = EntityState.Modified;
                     }
-
                 }
-                else
-                {
-                    asset.CreatedAt = now.Value;
-                    asset.EditedAt = now.Value;
-                    asset.CreatorId = creatorId;
-                    asset.Status = AssetStatus.Operational;
-                    asset.RequestStatus = RequestType.Operational;
-                    _context.Assets.Add(asset);
-                }
+                asset.CreatedAt = now.Value;
+                asset.EditedAt = now.Value;
+                asset.CreatorId = creatorId;
+                asset.Status = AssetStatus.Operational;
+                asset.RequestStatus = RequestType.Operational;
+                _context.Assets.Add(asset);
             }
 
             await _context.SaveChangesAsync();
