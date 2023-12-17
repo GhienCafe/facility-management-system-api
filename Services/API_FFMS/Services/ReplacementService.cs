@@ -60,7 +60,7 @@ namespace API_FFMS.Services
 
             var replacement = createDto.ProjectTo<ReplaceCreateDto, Replacement>();
             replacement.RoomId = roomAsset!.RoomId;
-            replacement.NewAssetId = newRoomAsset!.RoomId;
+            replacement.NewRoomId = newRoomAsset!.RoomId;
             replacement.Description = createDto.Description ?? "Yêu cầu thay thế";
             replacement.RequestCode = GenerateRequestCode();
 
