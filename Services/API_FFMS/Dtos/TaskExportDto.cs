@@ -68,9 +68,12 @@ public class TaskExportDto
     [Display(Name = "Ngày yêu cầu")]
     public DateTime? RequestDate { get; set; }
 
-    [JsonConverter(typeof(LocalTimeZoneDateTimeConverter))]
+    [Display(Name = "Độ ưu tiên")]
+    public string? Priority { get; set; }
+
+  //  [JsonConverter(typeof(LocalTimeZoneDateTimeConverter))]
     [Display(Name = "Ngày hoàn thành")]
-    public DateTime? CompletionDate { get; set; }
+    public string? CompletionDate { get; set; }
 
     [Display(Name = "Tên thiết bị")]
     public string? AssetName { get; set; }
@@ -98,6 +101,14 @@ public class TaskExportDto
 
     [Display(Name = "Chú thích")]
     public string? Notes { get; set; }
+
+    [JsonConverter(typeof(LocalTimeZoneDateTimeConverter))]
+    [Display(Name = "Ngày thực hiện")]
+    public DateTime? Checkin { get; set; }
+
+    [JsonConverter(typeof(LocalTimeZoneDateTimeConverter))]
+    [Display(Name = "Ngày báo cáo")]
+    public DateTime? Checkout { get; set; }
 
     [Display(Name = "Kết quả")]
     public string? Result { get; set; }

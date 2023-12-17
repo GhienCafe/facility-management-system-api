@@ -83,12 +83,15 @@ public class AssetRepository : IAssetRepository
                         _context.Entry(existAsset).State = EntityState.Modified;
                     }
                 }
-                asset.CreatedAt = now.Value;
-                asset.EditedAt = now.Value;
-                asset.CreatorId = creatorId;
-                asset.Status = AssetStatus.Operational;
-                asset.RequestStatus = RequestType.Operational;
-                _context.Assets.Add(asset);
+                else
+                {
+                    asset.CreatedAt = now.Value;
+                    asset.EditedAt = now.Value;
+                    asset.CreatorId = creatorId;
+                    asset.Status = AssetStatus.Operational;
+                    asset.RequestStatus = RequestType.Operational;
+                    _context.Assets.Add(asset);
+                }
             }
 
             await _context.SaveChangesAsync();

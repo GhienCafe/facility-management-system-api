@@ -178,7 +178,21 @@ public class RoomAssetRepository : IRoomAssetRepository
 
         try
         {
-            await _context.RoomAssets.AddRangeAsync(roomAssets);
+            foreach(var roomAsset in roomAssets)
+            {
+                var existRoomAsset = await _context.RoomAssets.FirstOrDefaultAsync(x => x.RoomId == roomAsset.RoomId &&
+                                                                                        x.AssetId == roomAsset.AssetId &&
+                                                                                        x.ToDate == null);
+                if (existRoomAsset != null)
+                {
+                    existRoomAsset.Quantity += roomAsset.Quantity;
+                    _context.Entry(existRoomAsset).State = EntityState.Modified;
+                }
+                else
+                {
+                    await _context.RoomAssets.AddAsync(roomAsset);
+                }
+            }
 
             await _context.SaveChangesAsync();
             await _context.Database.CommitTransactionAsync();
