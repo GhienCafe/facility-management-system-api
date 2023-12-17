@@ -112,21 +112,24 @@ public class TaskExportService : BaseService, ITaskExportService
         {
             RequestCode = x.Repairation.RequestCode,
             RequestDate = x.Repairation.RequestDate,
-            CompletionDate = x.Repairation.CompletionDate,
+            CompletionDate = x.Repairation.CompletionDate.ToString() ?? "Chưa hoàn thành",
+            Priority = x.Repairation.Priority.GetValue().DisplayName,
             AssetName = x.Asset.AssetName,
             Category = x.Category.CategoryName,
             TypeName = x.AssetType.TypeName,
             AssignedTo = x.User.Fullname,
             Status = x.Repairation.Status!.GetValue().DisplayName,
             Description = x.Repairation.Description,
+            Checkin = x.Repairation.Checkin,
+            Checkout = x.Repairation.Checkout,
             Notes = x.Repairation.Notes,
             Result = x.Repairation.Result,
             IsInternal = IsInternal(x.Repairation.IsInternal)
-        }).ToListAsync();
+        }).OrderByDescending(x => x.RequestDate).ToListAsync();
         if(repairations != null)
         {
             itemsList.Add(repairations);
-            sheetNames.Add("Repairation");
+            sheetNames.Add("Sửa chữa");
             titles.Add("Lịch sử sửa chữa");
         }
 
@@ -153,7 +156,8 @@ public class TaskExportService : BaseService, ITaskExportService
         {
             RequestCode = x.Maintenance.RequestCode,
             RequestDate = x.Maintenance.RequestDate,
-            CompletionDate = x.Maintenance.CompletionDate,
+            CompletionDate = x.Maintenance.CompletionDate.ToString() ?? "Chưa hoàn thành",
+            Priority = x.Maintenance.Priority.GetValue().DisplayName,
             AssetName = x.Asset.AssetName,
             Category = x.Category.CategoryName,
             TypeName = x.AssetType.TypeName,
@@ -161,13 +165,15 @@ public class TaskExportService : BaseService, ITaskExportService
             Status = x.Maintenance.Status!.GetValue().DisplayName,
             Description = x.Maintenance.Description,
             Notes = x.Maintenance.Notes,
+            Checkin = x.Maintenance.Checkin,
+            Checkout = x.Maintenance.Checkout,
             Result = x.Maintenance.Result,
             IsInternal = IsInternal(x.Maintenance.IsInternal)
-        }).ToListAsync();
+        }).OrderByDescending(x => x.RequestDate).ToListAsync();
         if (maintenances != null)
         {
             itemsList.Add(maintenances);
-            sheetNames.Add("Maintenance");
+            sheetNames.Add("Bảo trì");
             titles.Add("Lịch sử bảo trì");
         }
 
@@ -182,9 +188,7 @@ public class TaskExportService : BaseService, ITaskExportService
                                     join assetType in MainUnitOfWork.AssetTypeRepository.GetQuery() on asset.TypeId equals assetType.Id into assetTypeGroup
                                   from assetType in assetTypeGroup.DefaultIfEmpty()
                                     join category in MainUnitOfWork.CategoryRepository.GetQuery() on assetType.CategoryId equals category.Id
-                                    join assetRoom in MainUnitOfWork.RoomAssetRepository.GetQuery() on asset.Id equals assetRoom.AssetId into assetRoomGroup
-                                  from assetRoom in assetRoomGroup.DefaultIfEmpty()
-                                    join location in MainUnitOfWork.RoomRepository.GetQuery() on assetRoom.RoomId equals location.Id
+                                    join location in MainUnitOfWork.RoomRepository.GetQuery() on assetCheck.RoomId equals location.Id
                                   select new
                                   {
                                       AssetCheck = assetCheck,
@@ -198,22 +202,25 @@ public class TaskExportService : BaseService, ITaskExportService
         {
             RequestCode = x.AssetCheck.RequestCode,
             RequestDate = x.AssetCheck.RequestDate,
-            CompletionDate = x.AssetCheck.CompletionDate,
+            CompletionDate = x.AssetCheck.CompletionDate.ToString() ?? "Chưa hoàn thành",
             AssetName = x.Asset.AssetName,
+            Priority = x.AssetCheck.Priority.GetValue().DisplayName,
             Category = x.Category.CategoryName,
             TypeName = x.AssetType.TypeName,
             Location = x.Location.RoomName,
             AssignedTo = x.User.Fullname,
-            Status = x.AssetCheck.Status!.GetValue().DisplayName,
+            Status = x.AssetCheck.Status.GetValue().DisplayName,
             Description = x.AssetCheck.Description,
             Notes = x.AssetCheck.Notes,
+            Checkin = x.AssetCheck.Checkin,
+            Checkout = x.AssetCheck.Checkout,
             Result = x.AssetCheck.Result,
             IsInternal = IsInternal(x.AssetCheck.IsInternal)
-        }).ToListAsync();
+        }).OrderByDescending(x => x.RequestDate).ToListAsync();
         if (assetChecks != null)
         {
             itemsList.Add(assetChecks);
-            sheetNames.Add("AssetCheck");
+            sheetNames.Add("Kiểm tra");
             titles.Add("Lịch sử kiểm tra");
         }
 
@@ -241,7 +248,8 @@ public class TaskExportService : BaseService, ITaskExportService
         {
             RequestCode = x.Replacement.RequestCode,
             RequestDate = x.Replacement.RequestDate,
-            CompletionDate = x.Replacement.CompletionDate,
+            CompletionDate = x.Replacement.CompletionDate.ToString() ?? "Chưa hoàn thành",
+            Priority = x.Replacement.Priority.GetValue().DisplayName,
             AssetName = x.Asset.AssetName,
             Category = x.Category.CategoryName,
             TypeName = x.AssetType.TypeName,
@@ -250,13 +258,15 @@ public class TaskExportService : BaseService, ITaskExportService
             Status = x.Replacement.Status!.GetValue().DisplayName,
             Description = x.Replacement.Description,
             Notes = x.Replacement.Notes,
+            Checkin = x.Replacement.Checkin,
+            Checkout = x.Replacement.Checkout,
             Result = x.Replacement.Result,
             IsInternal = IsInternal(x.Replacement.IsInternal)
-        }).ToListAsync();
+        }).OrderByDescending(x => x.RequestDate).ToListAsync();
         if (replacements != null)
         {
             itemsList.Add(replacements);
-            sheetNames.Add("Replacement");
+            sheetNames.Add("Thay thế");
             titles.Add("Lịch sử thay thế");
         }
 
@@ -271,25 +281,28 @@ public class TaskExportService : BaseService, ITaskExportService
         {
             RequestCode = x!.RequestCode,
             RequestDate = x.RequestDate,
-            CompletionDate = x.CompletionDate,
+            CompletionDate = x.CompletionDate.ToString() ?? "Chưa hoàn thành",
             AssignedTo = x.User!.Fullname,
-            Status = x.Status.GetValue()!.DisplayName,
+            Status = x.Status.GetValue().DisplayName,
+            Priority = x.Priority.GetValue().DisplayName,
             Description = x.Description,
             Notes = x.Notes,
+            Checkin = x.Checkin,
+            Checkout= x.Checkout,
             Result = x.Result,
             IsInternal = IsInternal(x.IsInternal),
             Assets = MainUnitOfWork.TransportationDetailRepository.GetQuery()
                             .Where(ta => ta!.TransportationId == x.Id)
                             .Select(ta => new AssetTransportExportDto
                             {
-                                AssetName = ta!.Asset!.AssetName
+                                AssetName = ta!.Asset!.AssetName + " Số lượng(cái): " + ta.Quantity
                             }).ToList()
-        }).ToListAsync();
+        }).OrderByDescending(x => x.RequestDate).ToListAsync();
 
         if (transportations != null)
         {
             itemsList.Add(transportations);
-            sheetNames.Add("Transportation");
+            sheetNames.Add("Vận chuyển");
             titles.Add("Lịch sử vận chuyển");
         }
 
@@ -300,7 +313,7 @@ public class TaskExportService : BaseService, ITaskExportService
             6);
         return new ExportFile
         {
-            FileName = $"Tasks Export",
+            FileName = $"Danh sách phiếu yêu cầu",
             Stream = streamFile
         };
     }

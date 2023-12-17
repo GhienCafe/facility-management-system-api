@@ -179,7 +179,7 @@ namespace API_FFMS.Services
                                           {
                                               Id = Guid.NewGuid(),
                                               RoomId = GetRoomId(dto.RoomCode),
-                                              AssetId = dto.Id,
+                                              AssetId = GetAssetId(dto),
                                               Quantity = double.Parse(dto.Quantity),
                                               Status = AssetStatus.Operational,
                                               FromDate = CurrentDate,
@@ -217,7 +217,15 @@ namespace API_FFMS.Services
             }
 
             return assetCategory.Id;
+        }
 
+        private AssetType GetTypeByCode(string typeCode)
+        {
+            var assetCategory = MainUnitOfWork.AssetTypeRepository.GetQuery()
+                                .Where(x => x!.TypeCode.Trim().ToLower()
+                                .Contains(typeCode.Trim().ToLower()))
+                                .FirstOrDefault();
+            return assetCategory;
         }
 
         private Guid GetModelByCode(string modelCode)
@@ -248,13 +256,37 @@ namespace API_FFMS.Services
             return room.Id;
         }
 
+        public Guid GetAssetId(ImportAssetDto dto)
+        {
+            var assetId = new Guid();
+            var typeId = MainUnitOfWork.AssetTypeRepository.GetQuery()
+                                                           .Where(x => x!.Unit == Unit.Quantity &&
+                                                                       x.TypeCode == dto.TypeCode)
+                                                           .Select(x => x!.Id)
+                                                           .FirstOrDefault();
+            var modelId = GetModelByCode(dto.ModelCode);
+
+            var asset = MainUnitOfWork.AssetRepository.GetQuery()
+                                                      .FirstOrDefault(x => x!.TypeId == typeId &&
+                                                                           x.ModelId == modelId);
+            if (asset != null)
+            {
+                assetId = asset.Id;
+            }
+            else
+            {
+                assetId = dto.Id;
+            }
+            return assetId;
+        }
+
         private static bool IsTrueOrFalse(string? value)
         {
-            if (value != null &&  value.Trim().Contains("Có"))
+            if (value != null && value.Trim().Contains("Có"))
             {
                 return true;
             }
-            else if (value != null &&  value.Trim().Contains("Không"))
+            else if (value != null && value.Trim().Contains("Không"))
             {
                 return false;
             }
@@ -269,8 +301,7 @@ namespace API_FFMS.Services
             var currentDate = DateTime.UtcNow.Year;
             var minManufacturingYear = 2000;
 
-            var typeCodes = await MainUnitOfWork.AssetTypeRepository.GetQuery()
-                .Select(x => x!.Id).ToListAsync();
+            var typeCodes = await MainUnitOfWork.AssetTypeRepository.GetQuery().ToListAsync();
 
             var modelCodes = await MainUnitOfWork.ModelRepository.GetQuery()
                 .Select(x => x!.Id).ToListAsync();
@@ -285,6 +316,8 @@ namespace API_FFMS.Services
 
             foreach (var assetDto in assetDtos)
             {
+                var getTypeByCode = GetTypeByCode(assetDto.TypeCode).Unit;
+
                 //Check blank
                 if (string.IsNullOrWhiteSpace(assetDto.AssetName) ||
                     string.IsNullOrWhiteSpace(assetDto.AssetCode) ||
@@ -303,7 +336,7 @@ namespace API_FFMS.Services
                 }
 
                 //Check IsRent is "Có" or "Không"
-                if(assetDto.IsRented != null)
+                if (assetDto.IsRented != null)
                 {
                     if (!assetDto.IsRented.Trim().Contains("Có") && !assetDto.IsRented.Trim().Contains("Không"))
                     {
@@ -341,7 +374,7 @@ namespace API_FFMS.Services
                 }
 
                 //Check Unique Asset Codes In Database
-                if (assetCodes.Contains(assetDto.AssetCode))
+                if (getTypeByCode != Unit.Quantity && assetCodes.Contains(assetDto.AssetCode))
                 {
                     var row = assetDtos.IndexOf(assetDto) + 3;
                     validationErrors.Add(new ImportError
@@ -352,7 +385,7 @@ namespace API_FFMS.Services
                 }
 
                 //Check Exist Type Code
-                if (!typeCodes.Contains(GetAssetTypeByCode(assetDto.TypeCode)))
+                if (!typeCodes.Select(x => x!.Id).Contains(GetAssetTypeByCode(assetDto.TypeCode)))
                 {
                     var row = assetDtos.IndexOf(assetDto) + 3;
                     validationErrors.Add(new ImportError
@@ -397,7 +430,10 @@ namespace API_FFMS.Services
             }
 
             //Check unique asset code
+            var typeQuantity = typeCodes.Where(x => x!.Unit == Unit.Quantity).Select(x => x!.TypeCode).ToList();
+
             var duplicateCodes = assetDtos
+            .Where(a => !typeQuantity.Contains(a.TypeCode))
             .GroupBy(a => a.AssetCode)
             .Where(g => g.Count() > 1)
             .Select(g => g.Key)
