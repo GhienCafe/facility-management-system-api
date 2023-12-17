@@ -161,58 +161,17 @@ public class VirtualizeService : BaseService, IVirtualizeService
 
     public async Task<ApiResponse<VirtualDashboard>> GetVirtualDashBoard()
     {
-        var virtualDashboard = new VirtualDashboard();
+        var assetQuery = MainUnitOfWork.AssetRepository.GetQuery().Select(x => x.Quantity).Sum();
 
-        virtualDashboard.TotalAsset = await MainUnitOfWork.AssetRepository.CountAsync(null);
-        virtualDashboard.TotalFloor = await MainUnitOfWork.FloorRepository.CountAsync(null);
-        virtualDashboard.TotalRoom = await MainUnitOfWork.RoomRepository.CountAsync(null);
-        virtualDashboard.TotalAssetType = await MainUnitOfWork.AssetTypeRepository.CountAsync(null);
-        virtualDashboard.TotalUser = await MainUnitOfWork.UserRepository.CountAsync(null);
+        var virtualDashboard = new VirtualDashboard
+        {
+            TotalAsset = (int)assetQuery,
+            TotalFloor = await MainUnitOfWork.FloorRepository.CountAsync(null),
+            TotalRoom = await MainUnitOfWork.RoomRepository.CountAsync(null),
+            TotalAssetType = await MainUnitOfWork.AssetTypeRepository.CountAsync(null),
+            TotalUser = await MainUnitOfWork.UserRepository.CountAsync(null)
+        };
 
         return ApiResponse<VirtualDashboard>.Success(virtualDashboard);
     }
-
-    //public RoomAssetStatus GetRoomAssetStatus(Guid roomId)
-    //{
-    //    var roomAssets = MainUnitOfWork.RoomAssetRepository.GetQuery()
-    //        .Where(x => x!.RoomId == roomId && x.ToDate == null);
-
-    //    var currentQuantityAssetInRoom = roomAssets.Sum(x => x!.Quantity);
-
-    //    var assetIdsInRoom = roomAssets.Select(ra => ra!.AssetId);
-
-    //    var assetInRooms = MainUnitOfWork.AssetRepository.GetQuery()
-    //        .Where(x => assetIdsInRoom.Contains(x!.Id) && x.Status == AssetStatus.Damaged);
-
-    //    var currentAssetDamagedInRoom = assetInRooms.Sum(x => x!.Quantity);
-
-    //    var roomAssetStatus = RoomAssetStatus.Operational;
-
-    //    if (currentQuantityAssetInRoom > 0 && currentAssetDamagedInRoom == 0)
-    //    {
-    //        roomAssetStatus = RoomAssetStatus.Operational;
-    //    }
-    //    else if (currentAssetDamagedInRoom > 0 && currentAssetDamagedInRoom <= 5)
-    //    {
-    //        roomAssetStatus = RoomAssetStatus.Notice;
-    //    }
-    //    else if (currentAssetDamagedInRoom > 5 && currentAssetDamagedInRoom <= 15)
-    //    {
-    //        roomAssetStatus = RoomAssetStatus.Caution;
-    //    }
-    //    else if (currentAssetDamagedInRoom > 15 && currentAssetDamagedInRoom <= 30)
-    //    {
-    //        roomAssetStatus = RoomAssetStatus.Warning;
-    //    }
-    //    else if (currentQuantityAssetInRoom > 0 && currentAssetDamagedInRoom == currentQuantityAssetInRoom)
-    //    {
-    //        roomAssetStatus = RoomAssetStatus.Danger;
-    //    }
-    //    else if (currentQuantityAssetInRoom == 0)
-    //    {
-    //        roomAssetStatus = RoomAssetStatus.Empty;
-    //    }
-
-    //    return roomAssetStatus;
-    //}
 }

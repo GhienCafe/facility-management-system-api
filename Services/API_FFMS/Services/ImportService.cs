@@ -152,7 +152,7 @@ namespace API_FFMS.Services
             var importDtos = ExcelReader.AssetReader(formFile.OpenReadStream());
             await ValidationImport(importDtos);
 
-            var validDtos = importDtos.Where(a => !validationErrors.Any(e => e.Row == importDtos.IndexOf(a) + 3)).ToList(); ;
+            var validDtos = importDtos.Where(a => !validationErrors.Any(e => e.Row == importDtos.IndexOf(a) + 3)).ToList();
 
             var assets = validDtos.Select(dto => new Asset
             {
@@ -174,14 +174,17 @@ namespace API_FFMS.Services
                 LastMaintenanceTime = null
             }).ToList();
 
-            var totalCount = assets.Count();
-
             var roomAssets = validDtos.Where(dto => assets.Any(v => v.Id == dto.Id))
                                           .Select(dto => new RoomAsset
-                                            {
-                                                RoomId = GetRoomId(dto.RoomCode),
-                                                AssetId = dto.Id,
-                                                Quantity = double.Parse(dto.Quantity)
+                                          {
+                                              Id = Guid.NewGuid(),
+                                              RoomId = GetRoomId(dto.RoomCode),
+                                              AssetId = dto.Id,
+                                              Quantity = double.Parse(dto.Quantity),
+                                              Status = AssetStatus.Operational,
+                                              FromDate = CurrentDate,
+                                              CreatedAt = CurrentDate,
+                                              CreatorId = AccountId
                                           }).ToList();
 
             if (validationErrors.Count >= 0 && validDtos.Count >= 0)
@@ -191,7 +194,7 @@ namespace API_FFMS.Services
                     throw new ApiException("Nhập danh sách thiết bị thất bại", StatusCode.SERVER_ERROR);
                 }
 
-                if (!await _roomAssetRepository.AddAssetToRooms(roomAssets, AccountId, CurrentDate))
+                if (!await _roomAssetRepository.ImportAssetToRoom(roomAssets, AccountId, CurrentDate))
                 {
                     throw new ApiException("Thêm thiết bị vào phòng thất bại", StatusCode.SERVER_ERROR);
                 }
@@ -407,7 +410,7 @@ namespace API_FFMS.Services
                     .Select(a => new
                     {
                         AssetCode = a.AssetCode,
-                        Row = assetDtos.IndexOf(a) + 3 // +2 because Excel rows are 1-based, and we skip the header row
+                        Row = assetDtos.IndexOf(a) + 3
                     })
                     .ToList();
 
