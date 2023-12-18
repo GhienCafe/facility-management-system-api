@@ -126,3 +126,8 @@ public class CheckDatesDto : BaseDto
 {
     public DateTime InventoryDate { get; set; }
 }
+
+public class InventotyUpdateDto : BaseRequestUpdateDto
+{
+    public List<RoomInvenCheckCretaeDto>? Rooms { get; set; }
+}

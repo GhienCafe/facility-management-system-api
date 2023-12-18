@@ -6,7 +6,7 @@ namespace MainData.Entities;
 
 public class TransportationDetail : BaseEntity
 {
-    public Guid? AssetId { get; set; }
+    public Guid AssetId { get; set; }
     public Guid? TransportationId { get; set; }
     public Guid? FromRoomId { get; set; }
     public DateTime? RequestDate { get; set; }

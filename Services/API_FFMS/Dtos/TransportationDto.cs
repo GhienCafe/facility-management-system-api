@@ -74,3 +74,10 @@ public class AssetTransportDto
 }
 
 public class TransportationQueryDto : BaseRequestQueryDto { }
+
+public class TransportationUpdateDto : BaseRequestUpdateDto 
+{
+    public List<AssetTransportDto>? Assets { get; set; }
+    public Guid? ToRoomId { get; set; }
+    public Guid? FromRoomId { get; set; }
+}

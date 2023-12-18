@@ -58,6 +58,11 @@ namespace API_FFMS.Services
                 throw new ApiException($"Thiết bị {newAsset.AssetCode} đang trong một yêu cầu khác", StatusCode.BAD_REQUEST);
             }
 
+            if (newAsset.Status != AssetStatus.Damaged)
+            {
+                throw new ApiException($"Thiết bị {newAsset.AssetCode} cũng đang bị hư hại", StatusCode.BAD_REQUEST);
+            }
+
             var replacement = createDto.ProjectTo<ReplaceCreateDto, Replacement>();
             replacement.RoomId = roomAsset!.RoomId;
             replacement.NewRoomId = newRoomAsset!.RoomId;
@@ -474,6 +479,11 @@ namespace API_FFMS.Services
                 if (assetUpdate.RequestStatus != RequestType.Operational)
                 {
                     throw new ApiException($"Thiết bị {assetUpdate.AssetCode} đang trong một yêu cầu khác", StatusCode.BAD_REQUEST);
+                }
+
+                if (assetUpdate.Status != AssetStatus.Damaged)
+                {
+                    throw new ApiException($"Thiết bị {assetUpdate.AssetCode} cũng đang bị hư hại", StatusCode.BAD_REQUEST);
                 }
             }
             else if (updateDto.NewAssetId != null && updateDto.NewAssetId == existingReplace.NewAssetId)

@@ -10,7 +10,12 @@ public interface IInventoryCheckRepository
 {
     Task<bool> InsertInventoryCheck(InventoryCheck inventoryCheck, List<Room?> rooms, List<Report>? mediaFiles, Guid? creatorId, DateTime? now = null);
     Task<bool> ConfirmOrReject(InventoryCheck inventoryCheck, BaseUpdateStatusDto? confirmOrRejectDto, Guid? editorId, DateTime? now = null);
-    Task<bool> UpdateInventoryCheck(InventoryCheck inventoryCheck, List<Report?> additionMediaFiles, List<Report?> removalMediaFiles, Guid? editorId, DateTime? now = null);
+    Task<bool> UpdateInventory(InventoryCheck inventoryCheck,
+                                    List<Report?> additionMediaFiles,
+                                    List<Report?> removalMediaFiles,
+                                    List<InventoryCheckDetail?> additionInventoryDetails,
+                                    List<InventoryCheckDetail?> removalInventoryDetails,
+                                    Guid? editorId, DateTime? now = null);
 }
 
 public class InventoryCheckRepository : IInventoryCheckRepository
@@ -49,7 +54,7 @@ public class InventoryCheckRepository : IInventoryCheckRepository
                     {
                         if (asset != null)
                         {
-                            var roomAssets = _context.RoomAssets
+                            var roomAsset = _context.RoomAssets
                                                 .Where(ra => ra.RoomId == room.Id && ra.AssetId == asset.Id && ra.ToDate == null)
                                                 .FirstOrDefault();
                             var inventoryCheckDetail = new InventoryCheckDetail
@@ -61,7 +66,7 @@ public class InventoryCheckRepository : IInventoryCheckRepository
                                 CreatedAt = now.Value,
                                 RoomId = room.Id,
                                 StatusBefore = asset.Status,
-                                QuantityBefore = roomAssets!.Quantity
+                                QuantityBefore = roomAsset!.Quantity
                             };
 
                             await _context.InventoryCheckDetails.AddAsync(inventoryCheckDetail);
@@ -246,7 +251,12 @@ public class InventoryCheckRepository : IInventoryCheckRepository
         }
     }
 
-    public async Task<bool> UpdateInventoryCheck(InventoryCheck inventoryCheck, List<Report?> additionMediaFiles, List<Report?> removalMediaFiles, Guid? editorId, DateTime? now = null)
+    public async Task<bool> UpdateInventory(InventoryCheck inventoryCheck,
+                                                 List<Report?> additionMediaFiles,
+                                                 List<Report?> removalMediaFiles,
+                                                 List<InventoryCheckDetail?> additionInventoryDetails,
+                                                 List<InventoryCheckDetail?> removalInventoryDetails,
+                                                 Guid? editorId, DateTime? now = null)
     {
         await _context.Database.BeginTransactionAsync();
         now ??= DateTime.UtcNow;
@@ -260,25 +270,50 @@ public class InventoryCheckRepository : IInventoryCheckRepository
                                                 .Where(x => x.ItemId == inventoryCheck.Id && !x.DeletedAt.HasValue)
                                                 .ToList();
 
+            var inventoryDetails = _context.InventoryCheckDetails.AsNoTracking()
+                                                .Where(x => x.InventoryCheckId == inventoryCheck.Id && !x.DeletedAt.HasValue)
+                                                .ToList();
+
+            if(additionInventoryDetails.Count > 0)
+            {
+                foreach(var item in additionInventoryDetails)
+                {
+                    if(item != null)
+                    {
+                        _context.InventoryCheckDetails.Add(item);
+                    }
+                }
+            }
+
+            if (removalInventoryDetails.Count > 0)
+            {
+                foreach (var item in removalInventoryDetails)
+                {
+                    if (item != null)
+                    {
+                        _context.InventoryCheckDetails.Remove(item);
+                    }
+                }
+            }
+
             if (additionMediaFiles.Count > 0)
             {
-                foreach (var mediaFile in additionMediaFiles)
+                foreach (var item in additionMediaFiles)
                 {
-                    if (mediaFile != null)
+                    if (item != null)
                     {
-                        _context.MediaFiles.Add(mediaFile);
+                        _context.MediaFiles.Add(item);
                     }
-
                 }
             }
 
             if (removalMediaFiles.Count > 0)
             {
-                foreach (var mediaFile in removalMediaFiles)
+                foreach (var item in removalMediaFiles)
                 {
-                    if (mediaFile != null)
+                    if (item != null)
                     {
-                        _context.MediaFiles.Remove(mediaFile);
+                        _context.MediaFiles.Remove(item);
                     }
                 }
             }

@@ -12,7 +12,12 @@ public interface ITransportationRepository
     Task<bool> DeleteTransport(Transportation transportation, Guid? deleterId, DateTime? now = null);
     Task<bool> DeleteMulti(List<Transportation?> transportations, Guid? deleterId, DateTime? now = null);
     Task<bool> InsertTransportation(Transportation transportation, List<TransportationDetail> transportationDetails, List<Report>? mediaFiles, Guid? creatorId, DateTime? now = null);
-    Task<bool> UpdateTransportation(Transportation transportation, List<Report?> additionMediaFiles, List<Report?> removalMediaFiles, Guid? editorId, DateTime? now = null);
+    Task<bool> UpdateTransportation(Transportation transportation,
+                                    List<Report?> additionMediaFiles,
+                                    List<Report?> removalMediaFiles,
+                                    List<TransportationDetail?> additionTransportDetails,
+                                    List<TransportationDetail?> removalTransportDetails,
+                                    Guid? editorId, DateTime? now = null);
 }
 public class TransportationRepository : ITransportationRepository
 {
@@ -472,8 +477,12 @@ public class TransportationRepository : ITransportationRepository
         }
     }
 
-    public async Task<bool> UpdateTransportation(Transportation transportation, List<Report?> additionMediaFiles,
-                                                 List<Report?> removalMediaFiles, Guid? editorId, DateTime? now = null)
+    public async Task<bool> UpdateTransportation(Transportation transportation,
+                                                 List<Report?> additionMediaFiles,
+                                                 List<Report?> removalMediaFiles,
+                                                 List<TransportationDetail?> additionTransportDetails,
+                                                 List<TransportationDetail?> removalTransportDetails,
+                                                 Guid? editorId, DateTime? now = null)
     {
         await _context.Database.BeginTransactionAsync();
         now ??= DateTime.UtcNow;
@@ -486,6 +495,32 @@ public class TransportationRepository : ITransportationRepository
             var mediaFiles = _context.MediaFiles.AsNoTracking()
                                                 .Where(x => x.ItemId == transportation.Id && !x.DeletedAt.HasValue)
                                                 .ToList();
+
+            var transportDetails = _context.TransportationDetails.AsNoTracking()
+                                                .Where(x => x.TransportationId == transportation.Id && !x.DeletedAt.HasValue)
+                                                .ToList();
+
+            if (additionTransportDetails.Count > 0)
+            {
+                foreach (var item in additionTransportDetails)
+                {
+                    if (item != null)
+                    {
+                        _context.TransportationDetails.Add(item);
+                    }
+                }
+            }
+
+            if (removalTransportDetails.Count > 0)
+            {
+                foreach (var item in removalTransportDetails)
+                {
+                    if (item != null)
+                    {
+                        _context.TransportationDetails.Remove(item);
+                    }
+                }
+            }
 
             if (additionMediaFiles.Count > 0)
             {

@@ -52,7 +52,7 @@ namespace API_FFMS.Controllers
 
         [HttpPut("{id:guid}")]
         [SwaggerOperation("Update a repair")]
-        public async Task<ApiResponse> Update(Guid id, BaseRequestUpdateDto updateDto)
+        public async Task<ApiResponse> Update(Guid id, RepairUpdateDto updateDto)
         {
             return await _service.Update(id, updateDto);
         }

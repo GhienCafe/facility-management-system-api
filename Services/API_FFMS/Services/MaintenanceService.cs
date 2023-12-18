@@ -263,7 +263,7 @@ public class MaintenanceService : BaseService, IMaintenanceService
         //var assetType = await MainUnitOfWork.AssetTypeRepository.FindOneAsync((Guid)createDto.AssetTypeId!);
 
         if (asset == null)
-            throw new ApiException("Không cần tồn tại trang thiết bị", StatusCode.NOT_FOUND);
+            throw new ApiException("Không tồn tại trang thiết bị", StatusCode.NOT_FOUND);
 
         if (asset.RequestStatus == RequestType.Maintenance)
             throw new ApiException("Đã có yêu cầu bảo trì cho thiết bị này", StatusCode.ALREADY_EXISTS);
@@ -323,7 +323,7 @@ public class MaintenanceService : BaseService, IMaintenanceService
             var assetUpdate = await MainUnitOfWork.AssetRepository.FindOneAsync((Guid)updateDto.AssetId);
             if (assetUpdate == null)
             {
-                throw new ApiException("Không cần tồn tại trang thiết bị", StatusCode.NOT_FOUND);
+                throw new ApiException("Không tồn tại trang thiết bị", StatusCode.NOT_FOUND);
             }
 
             if (assetUpdate.RequestStatus == RequestType.Maintenance)
@@ -374,7 +374,7 @@ public class MaintenanceService : BaseService, IMaintenanceService
         foreach(var asset in assets)
         {
             if (asset == null)
-                throw new ApiException("Không cần tồn tại trang thiết bị", StatusCode.NOT_FOUND);
+                throw new ApiException("Không tồn tại trang thiết bị", StatusCode.NOT_FOUND);
 
             if (asset.RequestStatus == RequestType.Maintenance)
                 throw new ApiException($"Đã có yêu cầu bảo trì cho thiết bị {asset.AssetCode}", StatusCode.ALREADY_EXISTS);
