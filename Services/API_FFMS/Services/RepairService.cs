@@ -8,6 +8,7 @@ using MainData.Repositories;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
 using Newtonsoft.Json;
+using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace API_FFMS.Services
 {
@@ -17,7 +18,7 @@ namespace API_FFMS.Services
         Task<ApiResponse> CreateRepair(RepairCreateDto createDto);
         Task<ApiResponse> CreateMulti(List<RepairCreateDto> createDtos);
         Task<ApiResponse<RepairDto>> GetRepair(Guid id);
-        Task<ApiResponse> Update(Guid id, BaseRequestUpdateDto updateDto);
+        Task<ApiResponse> Update(Guid id, RepairUpdateDto updateDto);
         Task<ApiResponse> Delete(Guid id);
         Task<ApiResponse> DeleteMulti(DeleteMutilDto deleteDto);
         Task<ApiResponse> ConfirmOrReject(Guid id, BaseUpdateStatusDto confirmOrRejectDto);
@@ -37,7 +38,7 @@ namespace API_FFMS.Services
             var asset = await MainUnitOfWork.AssetRepository.FindOneAsync(createDto.AssetId);
 
             if (asset == null)
-                throw new ApiException("Không cần tồn tại trang thiết bị", StatusCode.NOT_FOUND);
+                throw new ApiException("Không tồn tại trang thiết bị", StatusCode.NOT_FOUND);
 
             if (asset.RequestStatus == RequestType.Repairation)
             {
@@ -399,7 +400,7 @@ namespace API_FFMS.Services
                 (int)Math.Ceiling(totalCount / (double)queryDto.PageSize));
         }
 
-        public async Task<ApiResponse> Update(Guid id, BaseRequestUpdateDto updateDto)
+        public async Task<ApiResponse> Update(Guid id, RepairUpdateDto updateDto)
         {
 
             var existingRepair = await MainUnitOfWork.RepairRepository.FindOneAsync(id);
@@ -426,7 +427,7 @@ namespace API_FFMS.Services
                 var assetUpdate = await MainUnitOfWork.AssetRepository.FindOneAsync((Guid)updateDto.AssetId);
                 if (assetUpdate == null)
                 {
-                    throw new ApiException("Không cần tồn tại trang thiết bị", StatusCode.NOT_FOUND);
+                    throw new ApiException("Không tồn tại trang thiết bị", StatusCode.NOT_FOUND);
                 }
 
                 if (assetUpdate.RequestStatus == RequestType.Repairation)
@@ -446,18 +447,25 @@ namespace API_FFMS.Services
 
             var mediaFileQuery = MainUnitOfWork.MediaFileRepository.GetQuery().Where(x => x!.ItemId == id).ToList();
 
-            var newMediaFile = updateDto.RelatedFiles != null ? updateDto.RelatedFiles.Select(dto => new Report
+            var newReports = new List<Report>();
+            if(updateDto.RelatedFiles != null)
             {
-                FileName = dto.FileName,
-                Uri = dto.Uri,
-                CreatedAt = CurrentDate,
-                CreatorId = AccountId,
-                ItemId = id,
-                FileType = FileType.File
-            }).ToList() : new List<Report>();
+                var listUrisJson = JsonConvert.SerializeObject(updateDto.RelatedFiles);
+                var newReport = new Report
+                {
+                    FileName = string.Empty,
+                    Uri = listUrisJson,
+                    Content = string.Empty,
+                    FileType = FileType.File,
+                    ItemId = id,
+                    IsVerified = false,
+                    IsReported = false,
+                };
+                newReports.Add(newReport);
+            }
 
-            var additionMediaFiles = newMediaFile.Except(mediaFileQuery).ToList();
-            var removalMediaFiles = mediaFileQuery.Except(newMediaFile).ToList();
+            var additionMediaFiles = newReports.Except(mediaFileQuery).ToList();
+            var removalMediaFiles = mediaFileQuery.Except(newReports).ToList();
 
             if (!await _repairRepository.UpdateRepair(existingRepair, additionMediaFiles, removalMediaFiles, AccountId, CurrentDate))
             {

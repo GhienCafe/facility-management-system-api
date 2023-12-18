@@ -1,6 +1,4 @@
-﻿using MainData.Entities;
-
-namespace API_FFMS.Dtos;
+﻿namespace API_FFMS.Dtos;
 
 public class RepairDto : BaseRequestDto
 {
@@ -15,3 +13,5 @@ public class RepairDto : BaseRequestDto
 public class RepairCreateDto : BaseRequestCreateDto { }
 
 public class RepairQueryDto : BaseRequestQueryDto { }
+
+public class RepairUpdateDto : BaseRequestUpdateDto { }

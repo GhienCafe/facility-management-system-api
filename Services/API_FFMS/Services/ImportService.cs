@@ -140,13 +140,13 @@ namespace API_FFMS.Services
 
             if (formFile == null)
             {
-                throw new ApiException("Not recognized file");
+                throw new ApiException("Không nhận diện được tập tin");
             }
 
             string[] extensions = { ".xlsx", ".xls" };
             if (!extensions.Contains(Path.GetExtension(formFile.FileName)))
             {
-                throw new ApiException("Not supported file extension");
+                throw new ApiException("Không hỗ trợ mẫu tập tin này");
             }
 
             var importDtos = ExcelReader.AssetReader(formFile.OpenReadStream());
@@ -344,7 +344,7 @@ namespace API_FFMS.Services
                         validationErrors.Add(new ImportError
                         {
                             Row = row,
-                            ErrorMessage = $"'Thuê ngoài' hoặc 'Di chuyển' chỉ nhập có hoặc không, kiểm tra dòng {row}"
+                            ErrorMessage = $"'Thuê ngoài' hoặc 'Di chuyển' chỉ nhập 'Có' hoặc 'Không', kiểm tra dòng {row}"
                         });
                     }
                 }
@@ -357,7 +357,7 @@ namespace API_FFMS.Services
                         validationErrors.Add(new ImportError
                         {
                             Row = row,
-                            ErrorMessage = $"'Thuê ngoài' hoặc 'Di chuyển' chỉ nhập có hoặc không, kiểm tra dòng {row}"
+                            ErrorMessage = $"'Thuê ngoài' hoặc 'Di chuyển' chỉ nhập 'Có' hoặc 'Không', kiểm tra dòng {row}"
                         });
                     }
                 }
@@ -369,7 +369,7 @@ namespace API_FFMS.Services
                     validationErrors.Add(new ImportError
                     {
                         Row = row,
-                        ErrorMessage = $"Dòng sản phẩm ở dòng {row} không tồn tại"
+                        ErrorMessage = $"Dòng sản phẩm tại dòng {row} không tồn tại"
                     });
                 }
 
@@ -391,7 +391,7 @@ namespace API_FFMS.Services
                     validationErrors.Add(new ImportError
                     {
                         Row = row,
-                        ErrorMessage = $"Mã nhóm thiết bị ở dòng {row} không tồn tại"
+                        ErrorMessage = $"Mã nhóm thiết bị tại dòng {row} không tồn tại"
                     });
                 }
 

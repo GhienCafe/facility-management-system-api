@@ -15,7 +15,7 @@ public interface IInventoryCheckService : IBaseService
     Task<ApiResponse> Create(InventoryCheckCreateDto createDto);
     Task<ApiResponse<InventoryCheckDto>> GetInventoryCheck(Guid id);
     Task<ApiResponses<InventoryCheckDto>> GetInventoryChecks(InventoryCheckQueryDto queryDto);
-    Task<ApiResponse> Update(Guid id, BaseRequestUpdateDto updateDto);
+    Task<ApiResponse> Update(Guid id, InventotyUpdateDto updateDto);
     Task<ApiResponse> Delete(Guid id);
     Task<ApiResponse> ConfirmOrReject(Guid id, BaseUpdateStatusDto confirmOrRejectDto);
 }
@@ -33,6 +33,10 @@ public class InventoryCheckService : BaseService, IInventoryCheckService
 
     public async Task<ApiResponse> Create(InventoryCheckCreateDto createDto)
     {
+        if(createDto.Rooms == null || createDto.Rooms.Count <= 0)
+        {
+            throw new ApiException("Chưa điền thông tin phòng", StatusCode.BAD_REQUEST);
+        }
 
         var rooms = await MainUnitOfWork.RoomRepository.FindAsync(
             new Expression<Func<Room, bool>>[]
@@ -41,20 +45,34 @@ public class InventoryCheckService : BaseService, IInventoryCheckService
                     x => createDto.Rooms!.Select(x => x.RoomId).Contains(x.Id)
             }, null);
 
-        var roomAssets = await MainUnitOfWork.RoomAssetRepository.FindAsync(
-            new Expression<Func<RoomAsset, bool>>[]
-            {
-                    x => !x.DeletedAt.HasValue,
-                    x => rooms.Select(r => r!.Id).Contains(x.RoomId),
-                    x => x.ToDate == null
-            }, null);
+        var roomAssetQuery = MainUnitOfWork.RoomAssetRepository.GetQuery();
 
-        var assets = await MainUnitOfWork.AssetRepository.FindAsync(
-            new Expression<Func<Asset, bool>>[]
+        foreach(var room in rooms)
+        {
+            if (room != null)
             {
-                    x => !x.DeletedAt.HasValue,
-                    x => roomAssets.Select(ra => ra!.AssetId).Contains(x.Id)
-            }, null);
+                var roomAsset = roomAssetQuery.Where(x => x.RoomId == room.Id && x.ToDate == null).ToList();
+                if(roomAsset.All(r => r == null))
+                {
+                    throw new ApiException($"Phòng {room.RoomCode} không có thiết bị, không thể tạo yêu cầu", StatusCode.BAD_REQUEST);
+                }
+            }
+        }
+
+        //var roomAssets = await MainUnitOfWork.RoomAssetRepository.FindAsync(
+        //    new Expression<Func<RoomAsset, bool>>[]
+        //    {
+        //            x => !x.DeletedAt.HasValue,
+        //            x => rooms.Select(r => r!.Id).Contains(x.RoomId),
+        //            x => x.ToDate == null
+        //    }, null);
+
+        //var assets = await MainUnitOfWork.AssetRepository.FindAsync(
+        //    new Expression<Func<Asset, bool>>[]
+        //    {
+        //            x => !x.DeletedAt.HasValue,
+        //            x => roomAssets.Select(ra => ra!.AssetId).Contains(x.Id)
+        //    }, null);
 
         // For storing json in column
         var mediaFiles = new List<Report>();
@@ -208,7 +226,7 @@ public class InventoryCheckService : BaseService, IInventoryCheckService
         return ApiResponse<InventoryCheckDto>.Success(inventoryCheck);
     }
 
-    public async Task<ApiResponse> Update(Guid id, BaseRequestUpdateDto updateDto)
+    public async Task<ApiResponse> Update(Guid id, InventotyUpdateDto updateDto)
     {
         var existinginventoryCheck = await MainUnitOfWork.InventoryCheckRepository.FindOneAsync(id);
         if (existinginventoryCheck == null)
@@ -221,15 +239,20 @@ public class InventoryCheckService : BaseService, IInventoryCheckService
             throw new ApiException("Chỉ được cập nhật yêu cầu đang có trạng thái chưa bắt đầu", StatusCode.NOT_FOUND);
         }
 
+        if (updateDto.Rooms == null || updateDto.Rooms.Count <= 0)
+        {
+            throw new ApiException("Chưa điền thông tin phòng", StatusCode.BAD_REQUEST);
+        }
+
         existinginventoryCheck.Description = updateDto.Description ?? existinginventoryCheck.Description;
         existinginventoryCheck.Notes = updateDto.Notes ?? existinginventoryCheck.Notes;
         existinginventoryCheck.Priority = updateDto.Priority ?? existinginventoryCheck.Priority;
         existinginventoryCheck.AssignedTo = updateDto.AssignedTo ?? existinginventoryCheck.AssignedTo;
         existinginventoryCheck.IsInternal = updateDto.IsInternal ?? existinginventoryCheck.IsInternal;
 
+        //Update Reports
         var mediaFileQuery = MainUnitOfWork.MediaFileRepository.GetQuery().Where(x => x!.ItemId == id).ToList();
-
-        var newMediaFile = updateDto.RelatedFiles.Select(dto => new Report
+        var newMediaFile = updateDto.RelatedFiles != null ? updateDto.RelatedFiles.Select(dto => new Report
         {
             FileName = dto.FileName,
             Uri = dto.Uri,
@@ -237,12 +260,63 @@ public class InventoryCheckService : BaseService, IInventoryCheckService
             CreatorId = AccountId,
             ItemId = id,
             FileType = FileType.File
-        }).ToList() ?? new List<Report>();
-
+        }).ToList() : new List<Report>();
         var additionMediaFiles = newMediaFile.Except(mediaFileQuery).ToList();
         var removalMediaFiles = mediaFileQuery.Except(newMediaFile).ToList();
 
-        if (!await _repository.UpdateInventoryCheck(existinginventoryCheck, additionMediaFiles, removalMediaFiles, AccountId, CurrentDate))
+        //Update Room
+        var inventoryDetailQuery = MainUnitOfWork.InventoryCheckDetailRepository.GetQuery().Where(x => x!.InventoryCheckId == id);
+        var currentRoomIds = inventoryDetailQuery.Select(x => x!.RoomId).ToList();
+
+        var newRoomIds = updateDto.Rooms != null ? updateDto.Rooms.Select(dto => dto.RoomId).ToList() : new List<Guid>();
+
+        var additionRooms = newRoomIds.Except(currentRoomIds).ToList();
+        var removalRooms = currentRoomIds.Except(newRoomIds).ToList();
+
+        var rooms = MainUnitOfWork.RoomRepository.GetQuery().Where(x => additionRooms.Contains(x.Id)).ToList();
+        var roomAssetQuery = MainUnitOfWork.RoomAssetRepository.GetQuery();
+        var additionInventoryDetails = new List<InventoryCheckDetail?>();
+        foreach (var room in rooms)
+        {
+            if (room != null)
+            {
+                var roomAssets = roomAssetQuery.Include(x => x!.Asset).Where(x => x!.RoomId == room.Id && x.ToDate == null).ToList();
+                if (roomAssets.All(x => x == null))
+                {
+                    throw new ApiException($"Phòng {room.RoomCode} không có thiết bị, không thể tạo yêu cầu", StatusCode.BAD_REQUEST);
+                }
+
+                var assets = roomAssets.Select(ra => ra!.Asset).ToList();
+                foreach (var asset in assets)
+                {
+                    if (asset != null)
+                    {
+                        var roomAsset = roomAssets.FirstOrDefault(ra => ra!.RoomId == room.Id && ra.AssetId == asset.Id && ra.ToDate == null);
+                        var inventoryCheckDetail = new InventoryCheckDetail
+                        {
+                            Id = Guid.NewGuid(),
+                            AssetId = asset.Id,
+                            InventoryCheckId = id,
+                            CreatorId = AccountId,
+                            CreatedAt = CurrentDate,
+                            RoomId = room.Id,
+                            StatusBefore = asset.Status,
+                            QuantityBefore = roomAsset!.Quantity
+                        };
+                        additionInventoryDetails.Add(inventoryCheckDetail);
+                    }
+                }
+            }
+        }
+
+        var removalInventoryDetails = inventoryDetailQuery.Where(x => removalRooms.Contains(x!.RoomId)).ToList();
+
+        if (!await _repository.UpdateInventory(existinginventoryCheck,
+                                               additionMediaFiles,
+                                               removalMediaFiles,
+                                               additionInventoryDetails,
+                                               removalInventoryDetails,
+                                               AccountId, CurrentDate))
         {
             throw new ApiException("Cập nhật thông tin yêu cầu thất bại", StatusCode.SERVER_ERROR);
         }

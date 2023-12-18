@@ -45,7 +45,7 @@ public class InventoryCheckController : BaseController
 
     [HttpPut("{id:guid}")]
     [SwaggerOperation("Update a inventory check")]
-    public async Task<ApiResponse> Update(Guid id, BaseRequestUpdateDto updateDto)
+    public async Task<ApiResponse> Update(Guid id, InventotyUpdateDto updateDto)
     {
         return await _inventoryCheckService.Update(id, updateDto);
     }

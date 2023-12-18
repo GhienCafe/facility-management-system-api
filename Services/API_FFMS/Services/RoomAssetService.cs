@@ -298,7 +298,7 @@ namespace API_FFMS.Services
                 {
                     if (x.Asset != null)
                     {
-                        x.Asset.StatusObj = x.Asset.Status?.GetValue();
+                        x.Asset.StatusObj = x.Asset.Status.GetValue();
                     }
                 });
 
