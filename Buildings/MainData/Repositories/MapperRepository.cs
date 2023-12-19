@@ -37,7 +37,10 @@ public class MapperRepository : IMapperRepository
             }).ToList();
         dtos = dtos.Select(x =>
         {
-            x.Creator = accountCreators.FirstOrDefault(z => z.Id == x.CreatorId);
+            x.Creator = accountCreators.FirstOrDefault(z => z.Id == x.CreatorId) ?? new AccountCreator
+            {
+                Fullname = "System"
+            };
             return x;
         }).ToList();
         await Task.Delay(1);
