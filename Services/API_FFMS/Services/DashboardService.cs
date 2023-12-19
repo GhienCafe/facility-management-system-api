@@ -140,11 +140,11 @@ public class DashboardService : BaseService, IDashboardService
         {
             return new TaskStatisticDetailDto
             {
-                Total = filteredTasks.Count,
-                Process = filteredTasks.Count(t => t!.Status == RequestStatus.InProgress),
-                Complete = filteredTasks.Count(t => t!.Status == RequestStatus.Done),
-                Waiting = filteredTasks.Count(t => t!.Status == RequestStatus.NotStart),
-                Reported = filteredTasks.Count(t => t!.Status == RequestStatus.Reported)
+                Total = filteredTasks.Count(t => t.Status != RequestStatus.Cancelled),
+                Process = filteredTasks.Count(t => t.Status == RequestStatus.InProgress),
+                Complete = filteredTasks.Count(t => t.Status == RequestStatus.Done),
+                Waiting = filteredTasks.Count(t => t.Status == RequestStatus.NotStart),
+                Reported = filteredTasks.Count(t => t.Status == RequestStatus.Reported)
             };
         }
         return null;
