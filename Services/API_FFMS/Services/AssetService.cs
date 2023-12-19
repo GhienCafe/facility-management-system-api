@@ -260,13 +260,19 @@ public class AssetService : BaseService, IAssetService
         {
             throw new ApiException("Không tìm thấy trang thiết bị", StatusCode.NOT_FOUND);
         }
+        var roomAsset = MainUnitOfWork.RoomAssetRepository.GetQuery().Where(x => x.AssetId == id && x.ToDate == null).FirstOrDefault();
 
         existingAsset.TypeId = updateDto.TypeId ?? existingAsset.TypeId;
         existingAsset.ModelId = updateDto.ModelId ?? existingAsset.ModelId;
         existingAsset.IsRented = updateDto.IsRented ?? existingAsset.IsRented;
         existingAsset.TypeId = updateDto.TypeId ?? existingAsset.TypeId;
         existingAsset.AssetName = updateDto.AssetName ?? existingAsset.AssetName;
-        existingAsset.Status = updateDto.Status ?? existingAsset.Status;
+        //existingAsset.Status = updateDto.Status != null ? 
+        if(updateDto.Status != null)
+        {
+            existingAsset.Status = (AssetStatus)updateDto.Status;
+            roomAsset.Status = (AssetStatus)updateDto.Status;
+        }
         existingAsset.ManufacturingYear = updateDto.ManufacturingYear ?? existingAsset.ManufacturingYear;
         existingAsset.SerialNumber = updateDto.SerialNumber ?? existingAsset.SerialNumber;
         existingAsset.Quantity = updateDto.Quantity ?? existingAsset.Quantity;
