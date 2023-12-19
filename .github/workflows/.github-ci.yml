@@ -52,4 +52,5 @@ jobs:
             -e REDIS_PWD="${{ secrets.REDIS_PWD }}" \
             -e FIREBASE_ISSUER="${{ secrets.FIREBASE_ISSUER }}" \
             -e FIREBASE_AUDIENCE="${{ secrets.FIREBASE_AUDIENCE }}" \
+            -e ASPNETCORE_ENVIRONMENT="${{ secrets.ASPNETCORE_ENVIRONMENT }}" \
             ${{ secrets.REGISTRY }}/${{ secrets.DOCKER_IMAGE }}:latest
