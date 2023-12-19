@@ -197,12 +197,8 @@ public class TransportationService : BaseService, ITransportationService
 
     public async Task<ApiResponse> Delete(Guid id)
     {
-        var existingTransport = await MainUnitOfWork.TransportationRepository.FindOneAsync(
-            new Expression<Func<Transportation, bool>>[]
-            {
-                x => !x.DeletedAt.HasValue,
-                x => x.Id == id
-            });
+        var existingTransport = await MainUnitOfWork.TransportationRepository.GetQuery().Include(x => x.TransportationDetails)
+                                        .Where(x => x.Id == id).FirstOrDefaultAsync();
         if (existingTransport == null)
         {
             throw new ApiException("Không tìm thấy yêu cầu vận chuyển này", StatusCode.NOT_FOUND);
