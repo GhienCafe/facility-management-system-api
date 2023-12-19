@@ -105,7 +105,6 @@ public class NotificationService : BaseService, INotificationService
                 }
                 else
                 {
-                    // Code smell
                     item.RedirectPath = "inventory-check/add";
                 }
                
