@@ -1,8 +1,6 @@
-﻿using System.Linq.Expressions;
-using API_FFMS.Dtos;
+﻿using API_FFMS.Dtos;
 using AppCore.Extensions;
 using AppCore.Models;
-using DocumentFormat.OpenXml.Spreadsheet;
 using MainData;
 using MainData.Entities;
 using MainData.Repositories;
@@ -88,7 +86,7 @@ public class VirtualizeService : BaseService, IVirtualizeService
              } into groupedData
              select new VirtualizeRoomDto
              {
-                 TotalAssets = groupedData.Count(item => item.ga.ToDate == null && item.ga.Room != null),
+                 TotalAssets = (int?)groupedData.Where(item => item.ga.ToDate == null && item.ga.Room != null).Sum(item => item.ga.Quantity),
                  TotalNormalAssets = groupedData.Count(item => item.ga.ToDate == null && item.ga.Status == AssetStatus.Operational),
                  TotalDamagedAssets = groupedData.Count(item => item.ga.ToDate == null && item.ga.Status == AssetStatus.Damaged),
                  TotalOtherAssets = groupedData.Count(item => item.ga.ToDate == null && item.ga.Status != AssetStatus.Operational && item.ga.Status != AssetStatus.Damaged),
@@ -149,9 +147,7 @@ public class VirtualizeService : BaseService, IVirtualizeService
 
             room.StatusBaseOnAsset = totalDamaged switch
             {
-                > 0 and < 5 => RoomAssetStatus.Notice.GetValue(),
-                >= 5 and < 10 => RoomAssetStatus.Caution.GetValue(),
-                >= 10 => RoomAssetStatus.Danger.GetValue(),
+                > 0 => RoomAssetStatus.Notice.GetValue(),
                 _ => RoomAssetStatus.Operational.GetValue()
             };
         }
