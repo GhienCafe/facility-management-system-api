@@ -30,6 +30,8 @@ public class TaskDetailDto : BaseRequestDto
     public AssetBaseDto? NewAsset { get; set; }
     //Transport
     public Guid? ToRoomId { get; set; }
+    public Guid? RoomId { get; set; }
+    public Guid? NewRoomId { get; set; }
     //public int? Quantity { get; set; }
     public RoomBaseDto? ToRoom { get; set; } // ToRoom, //NewRoom
     public List<FromRoomAssetDto>? Assets { get; set; }
