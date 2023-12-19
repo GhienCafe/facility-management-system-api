@@ -198,8 +198,6 @@ namespace API_FFMS.Services
 
         public async Task<ApiResponses<RoomAssetBaseDto>> GetItems(RoomAssetQueryDto queryDto)
         {
-            try
-            {
                 var keyword = queryDto.Keyword?.Trim().ToLower();
 
                 var roomAssetDataset = MainUnitOfWork.RoomAssetRepository.GetQuery()
@@ -310,13 +308,6 @@ namespace API_FFMS.Services
                     queryDto.PageSize,
                     queryDto.Page,
                     (int)Math.Ceiling(totalCount / (double)queryDto.PageSize));
-            }
-            catch (Exception ex)
-            {
-                throw new Exception(ex.Message);
-            }
-
-
         }
 
         public async Task<ApiResponse<RoomAssetDetailDto>> GetItem(Guid id)

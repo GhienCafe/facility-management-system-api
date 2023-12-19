@@ -343,18 +343,25 @@ public class MaintenanceService : BaseService, IMaintenanceService
 
         var mediaFileQuery = MainUnitOfWork.MediaFileRepository.GetQuery().Where(x => x!.ItemId == id).ToList();
 
-        var newMediaFile = updateDto.RelatedFiles != null ? updateDto.RelatedFiles.Select(dto => new Report
+        var newReports = new List<Report>();
+        if (updateDto.RelatedFiles != null)
         {
-            FileName = dto.FileName,
-            Uri = dto.Uri,
-            CreatedAt = CurrentDate,
-            CreatorId = AccountId,
-            ItemId = id,
-            FileType = FileType.File
-        }).ToList() : new List<Report>();
+            var listUrisJson = JsonConvert.SerializeObject(updateDto.RelatedFiles);
+            var newReport = new Report
+            {
+                FileName = string.Empty,
+                Uri = listUrisJson,
+                Content = string.Empty,
+                FileType = FileType.File,
+                ItemId = id,
+                IsVerified = false,
+                IsReported = false,
+            };
+            newReports.Add(newReport);
+        }
 
-        var additionMediaFiles = newMediaFile.Except(mediaFileQuery).ToList();
-        var removalMediaFiles = mediaFileQuery.Except(newMediaFile).ToList();
+        var additionMediaFiles = newReports.Except(mediaFileQuery).ToList();
+        var removalMediaFiles = mediaFileQuery.Except(newReports).ToList();
 
         if (!await _maintenanceRepository.UpdateMaintenance(maintenance, additionMediaFiles, removalMediaFiles, AccountId, CurrentDate))
             throw new ApiException("Cập nhật thất bại", StatusCode.SERVER_ERROR);
