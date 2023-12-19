@@ -36,10 +36,7 @@ public static class AddConfigServiceCollectionExtensions
             });
         });
 
-        if (EnvironmentExtension.GetEnvironment() == "Development")
-        {
-            services.AddConfigSwagger();
-        }
+        services.AddConfigSwagger();
         services.AddHttpContextAccessor();
 
         // Config firebase
@@ -107,7 +104,10 @@ public static class AddConfigServiceCollectionExtensions
 
         app.UseCors(MyAllowAllOrigins);
 
-        app.UseConfigSwagger();
+        if (EnvironmentExtension.GetEnvironment() == "Development")
+        {
+            app.UseConfigSwagger();
+        }
         app.UseAuthentication();
         app.UseMiddleware<HandleResponseMiddleware>();
     }
