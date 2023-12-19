@@ -4,6 +4,7 @@ using MainData;
 using MainData.Entities;
 using MainData.Repositories;
 using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 
 namespace Worker_Notify.Services
 {
@@ -12,6 +13,7 @@ namespace Worker_Notify.Services
     public interface IShortTermNotificationService : IBaseService
     {
         Task SendTask();
+        Task CreateSystemNotification();
     }
 
     public class ShortTermNotificationService : BaseService, IShortTermNotificationService
@@ -126,6 +128,66 @@ namespace Worker_Notify.Services
             catch (Exception ex)
             {
                 Console.WriteLine($"Error in SendAndMarkAsSent: {ex.Message}");
+            }
+        }
+
+        public async Task CreateSystemNotification()
+        {
+            try
+            {
+                var inventoryConfig = await MainUnitOfWork.InventoryCheckConfigRepository.FindOneAsync(null);
+        
+                if (inventoryConfig != null)
+                {
+                    var currentDate = DateTime.UtcNow;
+                    var checkDates = await MainUnitOfWork.InventoryDetailConfigRepository
+                        .GetQuery()
+                        .Where(x => x.InventoryConfigId == inventoryConfig.Id 
+                                    && x.InventoryDate > currentDate)
+                        .Select(x => x.InventoryDate)
+                        .ToListAsync();
+
+                    checkDates = checkDates.Where(x =>
+                        x.Date.Subtract(currentDate.Date).Days <= inventoryConfig.NotificationDays).ToList();
+            
+                    var userIds = await MainUnitOfWork.UserRepository.GetQuery()
+                        .Where(x => x.Role == UserRole.Manager).Select(x => x.Id).ToListAsync();
+                
+                    var notificationsToAdd = new List<Notification>();
+
+                    foreach (var date in checkDates)
+                    {
+                        foreach (var userId in userIds)
+                        {
+                            // if (date.Date.Subtract(currentDate.Date).Days <= inventoryConfig.NotificationDays)
+                            // {
+                                var notification = new Notification
+                                {
+                                    Content = "Sắp tới đợt kiểm kê đã đặt",
+                                    Status = NotificationStatus.Waiting,
+                                    Type = NotificationType.Info,
+                                    IsRead = false,
+                                    Title = "Nhắc lịch kiểm kê",
+                                    ShortContent = "Nhắc lịch kiểm kê",
+                                    UserId = userId,
+                                    ItemId = inventoryConfig.Id
+                                };
+
+                                notificationsToAdd.Add(notification);
+                           // }
+                        }
+                    }
+
+                    // Add notifications to the database
+                    if (notificationsToAdd.Any())
+                    {
+                        await MainUnitOfWork.NotificationRepository.InsertAsync(notificationsToAdd, Guid.Empty, CurrentDate);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error: {ex.Message}");
             }
         }
     }

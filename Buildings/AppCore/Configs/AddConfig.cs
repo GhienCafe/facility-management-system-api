@@ -35,9 +35,13 @@ public static class AddConfigServiceCollectionExtensions
                     .WithExposedHeaders("location", "Content-Disposition", "Link", "X-Total-Count", "X-Limit");
             });
         });
-        services.AddConfigSwagger();
+
+        if (EnvironmentExtension.GetEnvironment() == "Development")
+        {
+            services.AddConfigSwagger();
+        }
         services.AddHttpContextAccessor();
-        
+
         // Config firebase
         services.AddFirebaseAuthentication(EnvironmentExtension.GetFirebaseIssuer(),
             EnvironmentExtension.GetFirebaseAudience());

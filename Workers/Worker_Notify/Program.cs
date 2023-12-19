@@ -15,20 +15,19 @@ IHost host = Host.CreateDefaultBuilder(args)
             options.UseSqlServer(connectionString, b =>
             {
                 b.CommandTimeout(1200);
-              //  b.EnableRetryOnFailure(3, TimeSpan.FromSeconds(5), null);
+                //  b.EnableRetryOnFailure(3, TimeSpan.FromSeconds(5), null);
             });
             options.UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking);
             options.EnableDetailedErrors();
         });
-        
+
         services.AddHttpContextAccessor();
         services.AddScoped<IMapperRepository, MapperRepository>();
         services.AddScoped<MainUnitOfWork>();
 
         services.AddScoped<IShortTermNotificationService, ShortTermNotificationService>();
         services.AddScoped<ISendNotification, SendNotification>();
-        services.AddScoped<IInventoryConfigService, InventoryConfigService>();
-        
+
         // Worker for push notification
         services.AddHostedService<Worker>();
         // Worker for create notification

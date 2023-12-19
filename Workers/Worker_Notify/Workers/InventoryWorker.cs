@@ -1,51 +1,59 @@
-﻿using Worker_Notify.Services;
+﻿using System;
+using System.Threading;
+using System.Threading.Tasks;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using Worker_Notify.Services;
 
 namespace Worker_Notify.Workers
 {
     public class InventoryWorker : BackgroundService
     {
         private readonly ILogger<InventoryWorker> _logger;
-        private readonly IServiceScopeFactory _serviceScopeFactory;
+        private readonly IServiceProvider _serviceProvider;
         private readonly TimeZoneInfo _localTimeZone = TimeZoneInfo.Local;
 
         private Timer _timer;
 
-        public InventoryWorker(ILogger<InventoryWorker> logger, IServiceScopeFactory serviceScopeFactory)
+        public InventoryWorker(ILogger<InventoryWorker> logger, IServiceProvider serviceProvider)
         {
             _logger = logger;
-            _serviceScopeFactory = serviceScopeFactory;
+            _serviceProvider = serviceProvider;
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            _timer = new Timer(DoWork, null, GetDelay(), TimeSpan.FromHours(24));
+            // Wait until 6:00 AM for the first execution
+            var delay = CalculateDelayUntilNextExecution();
+            _timer = new Timer(async _ =>
+            {
+                await DoWork();
+                _logger.LogInformation("Worker running at: {time}", DateTimeOffset.Now);
+            }, null, delay, TimeSpan.FromHours(24)); // Schedule to run every 24 hours
 
             await Task.Delay(Timeout.Infinite, stoppingToken);
         }
 
-        private TimeSpan GetDelay()
+        private async Task DoWork()
         {
-            DateTime now = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, _localTimeZone);
-            DateTime scheduledTime = new DateTime(now.Year, now.Month, now.Day, 6, 0, 0);
-
-            if (scheduledTime <= now)
+            using (var scope = _serviceProvider.CreateScope())
             {
-                scheduledTime = scheduledTime.AddDays(1);
+                var appNotificationService = scope.ServiceProvider.GetRequiredService<IShortTermNotificationService>();
+                await appNotificationService.CreateSystemNotification();
             }
-            TimeSpan delay = scheduledTime - now;
-            return delay < TimeSpan.Zero ? TimeSpan.Zero : delay;
         }
 
-        private void DoWork(object state)
+        private TimeSpan CalculateDelayUntilNextExecution()
         {
-            using (var scope = _serviceScopeFactory.CreateScope())
+            DateTime now = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, _localTimeZone);
+            DateTime scheduledTime = new DateTime(now.Year, now.Month, now.Day, 06, 00, 0); // Scheduled time at 6 AM
+
+            if (now > scheduledTime)
             {
-                var inventoryConfigService = scope.ServiceProvider.GetRequiredService<IInventoryConfigService>();
-                DateTime localTime = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, _localTimeZone);
-                inventoryConfigService.CreateSystemNotification();
-                _logger.LogInformation("Worker running at: {time}", localTime);
-                _timer.Change(GetDelay(), TimeSpan.FromHours(24));
+                scheduledTime = scheduledTime.AddDays(1); // If it's past 6 AM today, schedule for 6 AM tomorrow
             }
+
+            return scheduledTime - now;
         }
 
         public override async Task StopAsync(CancellationToken cancellationToken)
