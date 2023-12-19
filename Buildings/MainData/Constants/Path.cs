@@ -22,7 +22,7 @@ public static class RequestTypeMetadata
             case RequestType.InventoryCheck:
                 return "inventory-check" + url;
             default:
-                return "portal/inventory-check-config" + url;
+                return string.Empty;
         }
     }
 }
