@@ -63,8 +63,8 @@ public enum RoomAssetStatus
     [Color("#76bd84")]
     Operational = 1,
 
-    [Display(Name = "Phòng có thiết bị hư hỏng")]
-    [Color("#da1b20")]
+    [Display(Name = "Phòng có một vài thiết bị hư hỏng")]
+    [Color("#0779b8")]
     Notice = 2,
 
     [Display(Name = "Phòng có nhiều thiết bị hư hỏng")]
@@ -75,7 +75,7 @@ public enum RoomAssetStatus
     [Color("#f69220")]
     Warning = 4,
 
-    [Display(Name = "Toàn bộ thiết bị trong phòng đều hư hỏng")]
+    [Display(Name = "Phòng có thiết bị hư hỏng")]
     [Color("#da1b20")]
     Danger = 5,
 

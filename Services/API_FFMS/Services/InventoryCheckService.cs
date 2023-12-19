@@ -275,7 +275,7 @@ public class InventoryCheckService : BaseService, IInventoryCheckService
         var inventoryDetailQuery = MainUnitOfWork.InventoryCheckDetailRepository.GetQuery().Where(x => x!.InventoryCheckId == id);
         var currentRoomIds = inventoryDetailQuery.Select(x => x!.RoomId).ToList();
 
-        var newRoomIds = updateDto.Rooms != null ? updateDto.Rooms.Select(dto => dto.RoomId).ToList() : new List<Guid>();
+        var newRoomIds = updateDto.Rooms != null ? updateDto.Rooms.Select(dto => dto.Id).ToList() : new List<Guid>();
 
         var additionRooms = newRoomIds.Except(currentRoomIds).ToList();
         var removalRooms = currentRoomIds.Except(newRoomIds).ToList();
