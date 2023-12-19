@@ -129,5 +129,11 @@ public class CheckDatesDto : BaseDto
 
 public class InventotyUpdateDto : BaseRequestUpdateDto
 {
-    public List<RoomInvenCheckCretaeDto>? Rooms { get; set; }
+    public List<RoomInvenCheckUpdateDto>? Rooms { get; set; }
+}
+
+public class RoomInvenCheckUpdateDto
+{
+    [Required(ErrorMessage = "Thêm phòng cần kiểm tra")]
+    public required Guid Id { get; set; }
 }
