@@ -94,12 +94,21 @@ public class NotificationService : BaseService, INotificationService
 
         if (HttpContextAccessor.HttpContext?.User.GetRole() != UserRole.Staff.ToString())
         {
-            foreach (var item in notifications.Where(item => item.ItemId != null))
+            foreach (var item in notifications)
             {
-                var task = (await MainUnitOfWork.TaskRepository
-                    .GetQueryAll().FirstOrDefaultAsync(x => x!.Id == item.ItemId));
-                item.RedirectPath =  RequestTypeMetadata
-                    .GetRedirectPath(task?.Type) + item.ItemId;
+                if (item.ItemId != null)
+                {
+                    var task = (await MainUnitOfWork.TaskRepository
+                        .GetQueryAll().FirstOrDefaultAsync(x => x!.Id == item.ItemId));
+                    item.RedirectPath =  RequestTypeMetadata
+                        .GetRedirectPath(task?.Type) + item.ItemId;
+                }
+                else
+                {
+                    // Code smell
+                    item.RedirectPath = "inventory-check/add";
+                }
+               
             }
         }
         notifications = await _mapperRepository.MapCreator(notifications);

@@ -169,8 +169,7 @@ namespace Worker_Notify.Services
                                     IsRead = false,
                                     Title = "Nhắc lịch kiểm kê",
                                     ShortContent = "Nhắc lịch kiểm kê",
-                                    UserId = userId,
-                                    ItemId = inventoryConfig.Id
+                                    UserId = userId
                                 };
 
                                 notificationsToAdd.Add(notification);
