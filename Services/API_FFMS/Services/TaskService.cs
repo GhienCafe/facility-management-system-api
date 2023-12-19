@@ -45,7 +45,7 @@ public class TaskService : BaseService, ITaskService
             IsVerified = createDto.IsVerified ?? false,
             IsReported = true,
         };
-        
+
         reports.Add(report);
 
         var reportedTask = await MainUnitOfWork.TaskRepository.FindOneAsync(createDto.ItemId ?? Guid.Empty);
@@ -316,22 +316,12 @@ public class TaskService : BaseService, ITaskService
                     x => x.Id == replacementTask.AssetId
                 });
 
-            var location = await MainUnitOfWork.RoomAssetRepository.FindOneAsync<RoomAsset>(
-                new Expression<Func<RoomAsset, bool>>[]
+            replacementTask.CurrentRoom = await MainUnitOfWork.RoomRepository.FindOneAsync<RoomBaseDto>(
+                new Expression<Func<Room, bool>>[]
                 {
-                    x => !x.DeletedAt.HasValue,
-                    x => x.AssetId == replacementTask.Asset!.Id,
-                    x => x.ToDate == null
-                });
-            if (location != null)
-            {
-                replacementTask.CurrentRoom = await MainUnitOfWork.RoomRepository.FindOneAsync<RoomBaseDto>(
-                    new Expression<Func<Room, bool>>[]
-                    {
                         x => !x.DeletedAt.HasValue,
-                        x => x.Id == location.RoomId
-                    });
-            }
+                        x => x.Id == replacementTask.RoomId
+                });
 
             replacementTask.NewAsset = await MainUnitOfWork.AssetRepository.FindOneAsync<AssetBaseDto>(
                 new Expression<Func<Asset, bool>>[]
@@ -339,22 +329,14 @@ public class TaskService : BaseService, ITaskService
                     x => !x.DeletedAt.HasValue,
                     x => x.Id == replacementTask.NewAssetId
                 });
-            var toLocation = await MainUnitOfWork.RoomAssetRepository.FindOneAsync<RoomAsset>(
-                new Expression<Func<RoomAsset, bool>>[]
+
+            replacementTask.ToRoom = await MainUnitOfWork.RoomRepository.FindOneAsync<RoomBaseDto>(
+                new Expression<Func<Room, bool>>[]
                 {
-                    x => !x.DeletedAt.HasValue,
-                    x => x.AssetId == replacementTask.NewAsset!.Id,
-                    x => x.ToDate == null
-                });
-            if (toLocation != null)
-            {
-                replacementTask.ToRoom = await MainUnitOfWork.RoomRepository.FindOneAsync<RoomBaseDto>(
-                    new Expression<Func<Room, bool>>[]
-                    {
                         x => !x.DeletedAt.HasValue,
-                        x => x.Id == toLocation.RoomId
-                    });
-            }
+                        x => x.Id == replacementTask.NewRoomId
+                });
+
 
             replacementTask.RequestCode = replacementTask.RequestCode;
             replacementTask.RequestDate = replacementTask.RequestDate;
@@ -471,7 +453,7 @@ public class TaskService : BaseService, ITaskService
 
     public async Task<ApiResponses<TaskBaseDto>> GetTasks(TaskQueryDto queryDto)
     {
-  
+
         var combinedTasks = MainUnitOfWork.TaskRepository.GetQuery()
             .Where(x => x.AssignedTo == AccountId);
 
