@@ -147,7 +147,7 @@ public class VirtualizeService : BaseService, IVirtualizeService
 
             room.StatusBaseOnAsset = totalDamaged switch
             {
-                > 0 => RoomAssetStatus.Notice.GetValue(),
+                > 0 => RoomAssetStatus.Danger.GetValue(),
                 _ => RoomAssetStatus.Operational.GetValue()
             };
         }
